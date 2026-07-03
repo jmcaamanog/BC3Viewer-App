@@ -494,20 +494,15 @@ body {
         font-size: 0.7rem;
     }
 
-    /* Hide less important columns on mobile */
-    .tree-header {
-        grid-template-columns: 1fr 90px 120px;
-    }
-
-    .tree-node-row {
-        grid-template-columns: 1fr 90px 120px;
-    }
-
-    /* Hide Unit and Quantity columns */
+    /* Hide Unit, Summary, Quantity and Proportion columns */
     .tree-header div:nth-child(2),
+    .tree-header div:nth-child(3),
     .tree-header div:nth-child(4),
+    .tree-header div:nth-child(6),
     .col-unit,
-    .col-quantity {
+    .col-summary,
+    .col-quantity,
+    .col-proportion {
         display: none;
     }
 
@@ -517,19 +512,13 @@ body {
         grid-column: 1;
     }
 
-    .tree-header div:nth-child(3),
-    .col-summary {
-        display: none;
-        /* Hide summary on very small screens */
-    }
-
     .tree-header div:nth-child(5),
     .col-price {
         grid-column: 2;
         text-align: right;
     }
 
-    .tree-header div:nth-child(6),
+    .tree-header div:nth-child(7),
     .col-amount {
         grid-column: 3;
         text-align: right;
@@ -3344,4 +3333,4 @@ body.dark-theme .badge-critical-tree {
     }
 }
 
-
+

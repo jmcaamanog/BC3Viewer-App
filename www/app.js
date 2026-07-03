@@ -491,9 +491,13 @@ function renderCurrentLevel() {
     const header = document.createElement('div');
     header.className = 'tree-header';
     header.id = 'treeHeader';
-    if (window.columnWidths && window.columnWidths.length >= 5) {
+
+    const isMobile = isMobileMode();
+    if (window.columnWidths && window.columnWidths.length >= 6) {
         const w = window.columnWidths;
-        header.style.gridTemplateColumns = `${w[0]}px ${w[1]}px 1fr ${w[2]}px ${w[3]}px ${w[4]}px`;
+        header.style.gridTemplateColumns = isMobile
+            ? "1fr 90px 120px"
+            : `${w[0]}px ${w[1]}px 1fr ${w[2]}px ${w[3]}px ${w[4]}px ${w[5]}px`;
     }
     
     const colHCode = document.createElement('div');
@@ -629,8 +633,13 @@ function renderCurrentLevel() {
 function updateGridTemplate() {
     if (!window.columnWidths || window.columnWidths.length < 6) return;
     
+    const isMobile = isMobileMode();
     const w = window.columnWidths;
-    const template = `${w[0]}px ${w[1]}px 1fr ${w[2]}px ${w[3]}px ${w[4]}px ${w[5]}px`;
+
+    // Si es móvil, dejamos que el CSS controle las columnas o aplicamos el template móvil
+    const template = isMobile
+        ? "1fr 90px 120px"
+        : `${w[0]}px ${w[1]}px 1fr ${w[2]}px ${w[3]}px ${w[4]}px ${w[5]}px`;
 
     // Update header
     const header = document.getElementById('treeHeader');
@@ -640,13 +649,18 @@ function updateGridTemplate() {
         // Update individual header column widths (excluding summary 1fr)
         const cols = header.children;
         if (cols.length >= 7) {
-            cols[0].style.width = w[0] + 'px';
-            cols[1].style.width = w[1] + 'px';
-            // cols[2] is Resumen (1fr), we don't set a fixed width on it
-            cols[3].style.width = w[2] + 'px';
-            cols[4].style.width = w[3] + 'px';
-            cols[5].style.width = w[4] + 'px';
-            cols[6].style.width = w[5] + 'px';
+            if (isMobile) {
+                // En móvil reseteamos anchos fijos
+                Array.from(cols).forEach(c => c.style.width = '');
+            } else {
+                cols[0].style.width = w[0] + 'px';
+                cols[1].style.width = w[1] + 'px';
+                // cols[2] is Resumen (1fr), we don't set a fixed width on it
+                cols[3].style.width = w[2] + 'px';
+                cols[4].style.width = w[3] + 'px';
+                cols[5].style.width = w[4] + 'px';
+                cols[6].style.width = w[5] + 'px';
+            }
         }
     }
 
@@ -973,9 +987,13 @@ function createNode(code, isRoot = false, depth = 0, qty = 1, mobileMode = false
     if (window.currentCriticalPath && window.currentCriticalPath.has(code)) {
         row.classList.add('tree-node-row--critical');
     }
-    if (window.columnWidths && window.columnWidths.length >= 5) {
+
+    const isMobile = isMobileMode();
+    if (window.columnWidths && window.columnWidths.length >= 6) {
         const w = window.columnWidths;
-        row.style.gridTemplateColumns = `${w[0]}px ${w[1]}px 1fr ${w[2]}px ${w[3]}px ${w[4]}px`;
+        row.style.gridTemplateColumns = isMobile
+            ? "1fr 90px 120px"
+            : `${w[0]}px ${w[1]}px 1fr ${w[2]}px ${w[3]}px ${w[4]}px ${w[5]}px`;
     }
 
     if (isChapter) {
