@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log
+
+# Tauri build directory
+src-tauri/target/
+src-tauri/binaries/
+
+# Capacitor android/ios native builds
+android/
+ios/
