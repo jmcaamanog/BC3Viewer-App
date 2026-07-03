@@ -4,6 +4,14 @@ Este repositorio contiene la versión autónoma, multiplataforma y 100% offline 
 
 El objetivo de este proyecto es empaquetar y distribuir el visualizador web original como aplicaciones nativas de escritorio (**Windows**) y dispositivos móviles (**Android**), mejorando la privacidad, eliminando la necesidad de servidores locales (PHP) y habilitando el uso offline en cualquier lugar.
 
+> [!IMPORTANT]
+> **🚀 DESCARGA DIRECTA DE PROGRAMAS:**
+> Si no quieres compilar el código tú mismo y solo quieres utilizar la aplicación, puedes descargar directamente los ejecutables listos para usar en la carpeta **[/PROGRAMAS](file:///c:/Users/Jose/OneDrive/1_HOBBIES/004_PROYECTOS/000_proyectos/083_PROGRAMACION%20PYTHON/000_GITHUB/000_otros/rafa/BC3Viewer-App/PROGRAMAS/)**:
+> *   **Windows Installer (.exe):** [BC3_Viewer_Windows_Installer.exe](file:///c:/Users/Jose/OneDrive/1_HOBBIES/004_PROYECTOS/000_proyectos/083_PROGRAMACION%20PYTHON/000_GITHUB/000_otros/rafa/BC3Viewer-App/PROGRAMAS/BC3_Viewer_Windows_Installer.exe)
+> *   **Windows Package (.msi):** [BC3_Viewer_Windows_Installer.msi](file:///c:/Users/Jose/OneDrive/1_HOBBIES/004_PROYECTOS/000_proyectos/083_PROGRAMACION%20PYTHON/000_GITHUB/000_otros/rafa/BC3Viewer-App/PROGRAMAS/BC3_Viewer_Windows_Installer.msi)
+> *   **Android App (.apk):** [BC3_Viewer_Android.apk](file:///c:/Users/Jose/OneDrive/1_HOBBIES/004_PROYECTOS/000_proyectos/083_PROGRAMACION%20PYTHON/000_GITHUB/000_otros/rafa/BC3Viewer-App/PROGRAMAS/BC3_Viewer_Android.apk)
+> *   También dispones de un presupuesto de ejemplo para probarlo inmediatamente en la carpeta **[/PROGRAMAS/BC3 EJEMPLO](file:///c:/Users/Jose/OneDrive/1_HOBBIES/004_PROYECTOS/000_proyectos/083_PROGRAMACION%20PYTHON/000_GITHUB/000_otros/rafa/BC3Viewer-App/PROGRAMAS/BC3%20EJEMPLO/)**.
+
 ---
 
 ## 🛠️ ¿Qué se ha hecho en este repositorio?
@@ -68,3 +76,20 @@ El objetivo de este proyecto es empaquetar y distribuir el visualizador web orig
 4.  **Generar APK:**
     *   Desde Android Studio ve a: **Build > Build Bundle(s) / APK(s) > Build APK(s)**.
     *   Una vez compilado, haz clic en **Locate** en el aviso emergente para obtener tu archivo `app-debug.apk`.
+
+---
+
+## Sobre el Proyecto Original
+
+BC3php fue creado por **System Arquitectura** (https://www.systemarquitectura.com), empresa con sede en Malaga especializada en proyectos de arquitectura industrial, logistica, corporativa y residencial.
+
+Esta version ampliada mantiene todos los creditos del autor original y anade funcionalidades avanzadas orientadas al uso profesional diario del Arquitecto Tecnico y Director de Obra.
+
+## 👨‍💻 Autor de la versión mejorada
+
+Jose Manuel Caamaño González | Arquitecto Técnico & BIM Manager.
+Digital Product Lead | ConTech & Digital Twin SaaS | BIM, Energy Modeling & Sustainability | Data Analytics (SQL, Power BI)
+
+Hecho con código y café desde A Coruña. ☕
+
+Jose Manuel Caamaño González | [LinkedIn](https://www.linkedin.com/in/jmcaamanog/)
