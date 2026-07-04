@@ -1,15 +1,15 @@
-# BC3 Viewer Multiplataforma (Windows / Android: PRÓXIMAMENTE)
+# BC3 Viewer Multiplataforma (Windows & Android)
 
 Este repositorio contiene la versión autónoma, multiplataforma y 100% offline del **BC3 Viewer (Visualizador Premium de Presupuestos FIEBDC-3)**.
 
-El objetivo de este proyecto es empaquetar y distribuir el visualizador web original como aplicaciones nativas de escritorio (**Windows**) y dispositivos móviles (**Android: PRÓXIMAMENTE**), mejorando la privacidad, eliminando la necesidad de servidores locales (PHP) y habilitando el uso offline en cualquier lugar.
+El objetivo de este proyecto es empaquetar y distribuir el visualizador web original como aplicaciones nativas de escritorio (**Windows**) y dispositivos móviles (**Android**), mejorando la privacidad, eliminando la necesidad de servidores locales (PHP) y habilitando el uso offline en cualquier lugar.
 
 > [!IMPORTANT]
 > **🚀 DESCARGA DIRECTA DE PROGRAMAS:**
 > Si no quieres compilar el código tú mismo y solo quieres utilizar la aplicación, puedes descargar directamente los ejecutables listos para usar en la carpeta **[/PROGRAMAS](file:///c:/Users/Jose/OneDrive/1_HOBBIES/004_PROYECTOS/000_proyectos/083_PROGRAMACION%20PYTHON/000_GITHUB/000_otros/rafa/BC3Viewer-App/PROGRAMAS/)**:
 > *   **Windows Installer (.exe):** [BC3_Viewer_Windows_Installer.exe](file:///c:/Users/Jose/OneDrive/1_HOBBIES/004_PROYECTOS/000_proyectos/083_PROGRAMACION%20PYTHON/000_GITHUB/000_otros/rafa/BC3Viewer-App/PROGRAMAS/BC3_Viewer_Windows_Installer.exe)
 > *   **Windows Package (.msi):** [BC3_Viewer_Windows_Installer.msi](file:///c:/Users/Jose/OneDrive/1_HOBBIES/004_PROYECTOS/000_proyectos/083_PROGRAMACION%20PYTHON/000_GITHUB/000_otros/rafa/BC3Viewer-App/PROGRAMAS/BC3_Viewer_Windows_Installer.msi)
-> *   **Android App (.apk):** 📱 (Soporte nativo **PRÓXIMAMENTE** - Actualmente en desarrollo y pruebas)
+> *   **Android App (.apk):** 📱 Compílalo tú mismo con Android Studio (o coloca tu `app-debug.apk` compilado en la carpeta `PROGRAMAS/` para descarga rápida).
 > *   También dispones de un presupuesto de ejemplo para probarlo inmediatamente en la carpeta **[/PROGRAMAS/BC3 EJEMPLO](file:///c:/Users/Jose/OneDrive/1_HOBBIES/004_PROYECTOS/000_proyectos/083_PROGRAMACION%20PYTHON/000_GITHUB/000_otros/rafa/BC3Viewer-App/PROGRAMAS/BC3%20EJEMPLO/)**._
 
 ---
@@ -24,8 +24,10 @@ El objetivo de este proyecto es empaquetar y distribuir el visualizador web orig
     *   Inicializamos e integramos **Tauri** (`src-tauri/`).
     *   Configuramos el ejecutable nativo para servir el directorio web local `/www` sin ningún servidor de desarrollo intermedio.
     *   Compilamos e instalamos las herramientas para generar paquetes de instalación `.exe` (NSIS) y `.msi` (WiX) ultra-ligeros (1.6 MB).
-3.  **Integración de Soporte Móvil (Android: PRÓXIMAMENTE):**
-    *   *En desarrollo:* Se planea reintroducir el soporte móvil utilizando **Capacitor** para empaquetar los activos web y generar un archivo `.apk` de instalación nativa 100% offline para dispositivos Android.
+3.  **Integración de Soporte Móvil (Android con Capacitor):**
+    *   Inicializamos **Capacitor** e integramos el soporte de plataforma Android (`android/`).
+    *   Sincronizamos todos los activos de la carpeta `/www` al directorio nativo de assets de Android para un funcionamiento 100% sin conexión a internet.
+    *   Listo para compilarse como app nativa en formato `.apk` compatible con móviles y tabletas Android.
 
 ---
 
@@ -38,7 +40,7 @@ El objetivo de este proyecto es empaquetar y distribuir el visualizador web orig
     *   `app.js`: Lógica interactiva completa, certificaciones, Gantt, exportadores locales y carga local de ficheros.
     *   *Librerías locales:* `chart.min.js`, `xlsx.full.min.js`, `jspdf.umd.min.js` y `jspdf.plugin.autotable.min.js` (cargadas en local para garantizar el funcionamiento offline).
 *   **`/src-tauri`**: Lógica de envoltura nativa en Rust para compilar la aplicación de Windows.
-*   **`/android`**: (PRÓXIMAMENTE) Código de la aplicación nativa de Android autogenerado y sincronizado por Capacitor (removido temporalmente).
+*   **`/android`**: Código de la aplicación nativa de Android autogenerado y sincronizado por Capacitor.
 *   `package.json`: Configuración de dependencias de Node.js y scripts de compilación.
 
 ---
@@ -61,9 +63,19 @@ El objetivo de este proyecto es empaquetar y distribuir el visualizador web orig
     ```
     *Los instaladores se guardarán en `src-tauri/target/release/bundle/msi/` y `/nsis/`.*
 
-### 📱 Construir para Android (Capacitor - PRÓXIMAMENTE)
-
-El soporte nativo para compilar en Android con Capacitor se encuentra desactivado temporalmente para llevar a cabo tareas de limpieza y refactorización. Se reintroducirá próximamente.
+### 📱 Construir para Android (Capacitor)
+1.  **Prerrequisitos:** Instalar [Android Studio](https://developer.android.com/studio) y configurar el SDK de Android.
+2.  **Sincronizar cambios web:** *(Cada vez que edites algo en `/www` antes de compilar)*:
+    ```bash
+    npx cap sync
+    ```
+3.  **Abrir en Android Studio:**
+    ```bash
+    npx cap open android
+    ```
+4.  **Generar APK:**
+    *   Desde Android Studio ve a: **Build > Build Bundle(s) / APK(s) > Build APK(s)**.
+    *   Una vez compilado, haz clic en **Locate** en el aviso emergente para obtener tu archivo `app-debug.apk`.
 
 ---
 

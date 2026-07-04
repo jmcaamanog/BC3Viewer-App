@@ -1,0 +1,8 @@
+{
+  "appId": "com.tudominio.bc3viewer",
+  "appName": "BC3 Viewer",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}

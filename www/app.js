@@ -7323,3 +7323,21 @@ if (exportCertPdfBtn) {
     });
 }
 
+// Lógica de colapsar y expandir cabecera (Optimización móvil)
+const collapseHeaderBtn = document.getElementById('collapseHeaderBtn');
+const expandHeaderBtn = document.getElementById('expandHeaderBtn');
+const mainHeader = document.querySelector('.main-header');
+
+if (collapseHeaderBtn && expandHeaderBtn && mainHeader) {
+    collapseHeaderBtn.addEventListener('click', () => {
+        mainHeader.classList.add('collapsed');
+        expandHeaderBtn.style.display = 'flex';
+    });
+    
+    expandHeaderBtn.addEventListener('click', () => {
+        mainHeader.classList.remove('collapsed');
+        expandHeaderBtn.style.display = 'none';
+    });
+}
+
+

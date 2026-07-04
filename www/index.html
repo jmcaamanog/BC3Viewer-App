@@ -70,8 +70,9 @@
                 </form>
             </div>
 
-            <!-- Botones del extremo derecho: Menú Ajustes (Engranaje) -->
-            <div class="right-controls">
+            <!-- Botones del extremo derecho: Menú Ajustes (Engranaje) y Ocultar Cabecera -->
+            <div class="right-controls" style="display: flex; align-items: center; gap: 8px;">
+                <button type="button" id="collapseHeaderBtn" class="header-toggle-btn" title="Ocultar Cabecera" style="background:none; border:none; font-size:1.1rem; cursor:pointer; padding:4px; color: var(--text-secondary);">🔼</button>
                 <div class="dropdown" id="settingsDropdown">
                     <button type="button" class="settings-toggle-btn" id="settingsBtn" aria-label="Ajustes" title="Ajustes">⚙️</button>
                     <div class="dropdown-content dropdown-content-right" style="right: 0; left: auto; min-width: 160px;">
@@ -935,6 +936,9 @@
 
     <!-- Área de impresión oculta para Certificación en PDF -->
     <div id="certPrintArea"></div>
+
+    <!-- Botón flotante para restaurar cabecera cuando está oculta -->
+    <button type="button" id="expandHeaderBtn" class="floating-expand-btn" style="display: none;" title="Mostrar Cabecera">🔽</button>
 
     <script src="jspdf.umd.min.js"></script>
     <script src="jspdf.plugin.autotable.min.js"></script>
