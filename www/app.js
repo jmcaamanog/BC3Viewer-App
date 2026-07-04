@@ -416,23 +416,36 @@ function updateBreadcrumbs() {
     rootItem.onclick = () => navigateToLevel(null);
     path.appendChild(rootItem);
 
-    // Add navigation stack items
-    navigationStack.forEach((item, index) => {
-        const separator = document.createElement('span');
-        separator.className = 'breadcrumb-separator';
-        separator.textContent = '›';
-        path.appendChild(separator);
+    // Add navigation stack items (compact on mobile)
+    if (navigationStack.length <= 1) {
+        navigationStack.forEach((item, index) => {
+            const separator = document.createElement('span');
+            separator.className = 'breadcrumb-separator';
+            separator.textContent = ' › ';
+            path.appendChild(separator);
 
+            const breadcrumbItem = document.createElement('span');
+            breadcrumbItem.className = index === navigationStack.length - 1 ? 'breadcrumb-current' : 'breadcrumb-item';
+            breadcrumbItem.textContent = item.title;
+
+            if (index < navigationStack.length - 1) {
+                breadcrumbItem.onclick = () => navigateToLevel(item.code);
+            }
+
+            path.appendChild(breadcrumbItem);
+        });
+    } else {
+        const separator1 = document.createElement('span');
+        separator1.className = 'breadcrumb-separator';
+        separator1.textContent = ' › ... › ';
+        path.appendChild(separator1);
+
+        const lastItem = navigationStack[navigationStack.length - 1];
         const breadcrumbItem = document.createElement('span');
-        breadcrumbItem.className = index === navigationStack.length - 1 ? 'breadcrumb-current' : 'breadcrumb-item';
-        breadcrumbItem.textContent = item.title;
-
-        if (index < navigationStack.length - 1) {
-            breadcrumbItem.onclick = () => navigateToLevel(item.code);
-        }
-
+        breadcrumbItem.className = 'breadcrumb-current';
+        breadcrumbItem.textContent = lastItem.title;
         path.appendChild(breadcrumbItem);
-    });
+    }
 
     // Back button handler
     backBtn.onclick = () => {

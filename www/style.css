@@ -505,11 +505,35 @@ body {
         grid-template-columns: 1fr 1fr 90px !important;
         grid-template-rows: auto auto auto !important;
         gap: 3px 6px !important;
-        padding: 6px 8px !important;
+        padding: 8px 10px !important;
         height: auto !important;
         min-height: unset !important;
         border-bottom: 1px solid var(--border-color) !important;
         align-items: center !important;
+        position: relative !important;
+    }
+
+    /* Add navigation chevron for subchapters / drillable nodes on mobile */
+    .tree-node-row.has-children-mobile {
+        padding-right: 28px !important;
+    }
+    .tree-node-row.has-children-mobile::after {
+        content: "›" !important;
+        position: absolute !important;
+        right: 12px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        font-size: 1.4rem !important;
+        font-weight: bold !important;
+        color: var(--accent, #0ea5e9) !important;
+        pointer-events: none !important;
+    }
+
+    /* Hide empty columns to avoid layout overlap in mobile grid */
+    .col-quantity:empty,
+    .col-price:empty,
+    .col-proportion:empty {
+        display: none !important;
     }
 
     /* Row 1: Code and Unit */
@@ -522,7 +546,7 @@ body {
         display: flex !important;
         align-items: center !important;
         gap: 4px !important;
-        font-size: 0.72rem !important;
+        font-size: 0.7rem !important;
         color: var(--text-secondary) !important;
         width: 100% !important;
     }
@@ -532,7 +556,7 @@ body {
         grid-row: 1 !important;
         border-right: none !important;
         padding: 0 !important;
-        font-size: 0.72rem !important;
+        font-size: 0.7rem !important;
         color: var(--text-secondary) !important;
         text-align: right !important;
         display: block !important;
@@ -544,11 +568,11 @@ body {
         grid-row: 2 !important;
         border-right: none !important;
         padding: 2px 0 !important;
-        font-size: 0.8rem !important;
+        font-size: 0.78rem !important;
         font-weight: 500 !important;
         color: var(--text-primary) !important;
         white-space: normal !important; /* Allow wrapping! */
-        line-height: 1.35 !important;
+        line-height: 1.3 !important;
         display: block !important;
     }
 
@@ -558,7 +582,7 @@ body {
         grid-row: 3 !important;
         border-right: none !important;
         padding: 0 !important;
-        font-size: 0.72rem !important;
+        font-size: 0.7rem !important;
         color: var(--text-secondary) !important;
         text-align: left !important;
         display: block !important;
@@ -575,7 +599,7 @@ body {
         grid-row: 3 !important;
         border-right: none !important;
         padding: 0 !important;
-        font-size: 0.72rem !important;
+        font-size: 0.7rem !important;
         color: var(--text-secondary) !important;
         text-align: left !important;
         display: block !important;
@@ -595,6 +619,7 @@ body {
         display: flex !important;
         align-items: center !important;
         justify-content: flex-start !important;
+        font-size: 0.7rem !important;
     }
 
     .col-amount {
@@ -602,16 +627,11 @@ body {
         grid-row: 3 !important;
         border-right: none !important;
         padding: 0 !important;
-        font-size: 0.8rem !important;
+        font-size: 0.78rem !important;
         font-weight: 600 !important;
         color: var(--text-primary) !important;
         text-align: right !important;
         display: block !important;
-    }
-
-    /* Adjust code column padding for mobile */
-    .col-code {
-        padding-left: 8px !important;
     }
 
     /* Hide toggle icon in drill-down mode */
