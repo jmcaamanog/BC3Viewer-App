@@ -3496,9 +3496,13 @@ body.dark-theme .badge-critical-tree {
     }
     
     .upload-btn {
-        min-width: 130px !important;
-        font-size: 0.75rem !important;
-        padding: 0.4rem 0.6rem !important;
+        min-width: 100px !important;
+        max-width: 160px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        font-size: 0.72rem !important;
+        padding: 0.4rem 0.5rem !important;
     }
     
     /* Hide button text for navigation, tools and saving on mobile to leave only emojis */
@@ -3530,7 +3534,6 @@ body.dark-theme .badge-critical-tree {
 
     /* Stack them into clean toolbar groups */
     .segmented-control, .tools-group, .export-group {
-        display: inline-flex !important;
         gap: 4px !important;
         margin: 0 !important;
     }
@@ -3665,6 +3668,53 @@ body.dark-theme .badge-critical-tree {
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
+    }
+
+    /* Optimize Welcome / Empty State Card on mobile */
+    .empty-state {
+        padding: 8px !important;
+        height: auto !important;
+    }
+    .empty-state > div {
+        padding: 12px !important;
+        gap: 8px !important;
+        border-radius: 8px !important;
+    }
+    /* Hide building crane SVG animation on mobile to save vertical height */
+    .construction-animation-container {
+        display: none !important;
+    }
+    .empty-state h2 {
+        font-size: 1.05rem !important;
+    }
+    .empty-state span {
+        font-size: 0.72rem !important;
+    }
+    .empty-state p {
+        font-size: 0.75rem !important;
+        line-height: 1.35 !important;
+    }
+    /* Make features list a single vertical column on mobile */
+    .empty-state ul {
+        grid-template-columns: 1fr !important;
+        gap: 2px !important;
+        font-size: 0.72rem !important;
+    }
+    /* Make the active development banner smaller */
+    .empty-state div[style*="border-left"] {
+        padding: 6px 8px !important;
+        font-size: 0.7rem !important;
+        line-height: 1.3 !important;
+    }
+    /* Make the drag-and-drop / load file section smaller */
+    .empty-state div[style*="border: 1px dashed"] {
+        padding: 8px !important;
+        font-size: 0.72rem !important;
+        gap: 6px !important;
+    }
+    .welcome-load-btn {
+        padding: 0.5rem 1rem !important;
+        font-size: 0.75rem !important;
     }
 }
 
