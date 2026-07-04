@@ -494,34 +494,119 @@ body {
         font-size: 0.7rem;
     }
 
-    /* Hide Unit, Summary, Quantity and Proportion columns */
-    .tree-header div:nth-child(2),
-    .tree-header div:nth-child(3),
-    .tree-header div:nth-child(4),
-    .tree-header div:nth-child(6),
-    .col-unit,
-    .col-summary,
-    .col-quantity,
-    .col-proportion {
-        display: none;
+    /* Hide tree-header completely on mobile */
+    .tree-header {
+        display: none !important;
     }
 
-    /* Adjust remaining columns */
-    .tree-header div:nth-child(1),
+    /* Convert budget rows into card-like multi-line items */
+    .tree-node-row {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr 90px !important;
+        grid-template-rows: auto auto auto !important;
+        gap: 3px 6px !important;
+        padding: 6px 8px !important;
+        height: auto !important;
+        min-height: unset !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        align-items: center !important;
+    }
+
+    /* Row 1: Code and Unit */
     .col-code {
-        grid-column: 1;
+        grid-column: 1 / span 2 !important;
+        grid-row: 1 !important;
+        border-right: none !important;
+        padding: 0 !important;
+        padding-left: 8px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        font-size: 0.72rem !important;
+        color: var(--text-secondary) !important;
+        width: 100% !important;
     }
 
-    .tree-header div:nth-child(5),
+    .col-unit {
+        grid-column: 3 !important;
+        grid-row: 1 !important;
+        border-right: none !important;
+        padding: 0 !important;
+        font-size: 0.72rem !important;
+        color: var(--text-secondary) !important;
+        text-align: right !important;
+        display: block !important;
+    }
+
+    /* Row 2: Summary (Description) spanning all 3 columns */
+    .col-summary {
+        grid-column: 1 / span 3 !important;
+        grid-row: 2 !important;
+        border-right: none !important;
+        padding: 2px 0 !important;
+        font-size: 0.8rem !important;
+        font-weight: 500 !important;
+        color: var(--text-primary) !important;
+        white-space: normal !important; /* Allow wrapping! */
+        line-height: 1.35 !important;
+        display: block !important;
+    }
+
+    /* Row 3: Quantity, Price, Proportion, Amount */
+    .col-quantity {
+        grid-column: 1 !important;
+        grid-row: 3 !important;
+        border-right: none !important;
+        padding: 0 !important;
+        font-size: 0.72rem !important;
+        color: var(--text-secondary) !important;
+        text-align: left !important;
+        display: block !important;
+    }
+    .col-quantity::before {
+        content: "Cant: ";
+        font-weight: 500;
+        color: var(--text-secondary);
+        opacity: 0.8;
+    }
+
     .col-price {
-        grid-column: 2;
-        text-align: right;
+        grid-column: 2 !important;
+        grid-row: 3 !important;
+        border-right: none !important;
+        padding: 0 !important;
+        font-size: 0.72rem !important;
+        color: var(--text-secondary) !important;
+        text-align: left !important;
+        display: block !important;
+    }
+    .col-price::before {
+        content: "Pr: ";
+        font-weight: 500;
+        color: var(--text-secondary);
+        opacity: 0.8;
     }
 
-    .tree-header div:nth-child(7),
+    .col-proportion {
+        grid-column: 1 / span 2 !important;
+        grid-row: 3 !important;
+        border-right: none !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+    }
+
     .col-amount {
-        grid-column: 3;
-        text-align: right;
+        grid-column: 3 !important;
+        grid-row: 3 !important;
+        border-right: none !important;
+        padding: 0 !important;
+        font-size: 0.8rem !important;
+        font-weight: 600 !important;
+        color: var(--text-primary) !important;
+        text-align: right !important;
+        display: block !important;
     }
 
     /* Adjust code column padding for mobile */
@@ -3421,11 +3506,6 @@ body.dark-theme .badge-critical-tree {
     }
 
     /* Reducción de ancho y tamaño de la tabla/árbol del presupuesto */
-    .tree-header, .tree-row {
-        grid-template-columns: 120px 35px 1fr 65px 75px 115px 85px !important;
-        font-size: 0.72rem !important;
-    }
-    
     .tree-row-content {
         padding: 4px 2px !important;
     }
@@ -3441,8 +3521,58 @@ body.dark-theme .badge-critical-tree {
         font-size: 0.75rem !important;
     }
     
-    .code-col, .unit-col, .qty-col, .price-col, .amount-col {
-        font-size: 0.7rem !important;
+    /* Adaptar barra de búsqueda y botón de filtros en móvil */
+    .search-bar-container {
+        display: flex !important;
+        gap: 8px !important;
+        align-items: center !important;
+        padding: 0.5rem !important;
+        border-bottom: 1px solid var(--border-color) !important;
+    }
+    .search-bar-container input {
+        flex: 1 !important;
+        width: 0 !important; /* Permitir que flex-grow controle el ancho */
+    }
+    
+    .filter-toggle-btn-mobile {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--bg-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        font-size: 1.1rem;
+        width: 38px;
+        height: 38px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .filter-toggle-btn-mobile:hover {
+        background-color: var(--hover-bg);
+        border-color: var(--accent);
+    }
+    
+    /* Ocultar barra de filtros por defecto en móvil */
+    .filter-bar {
+        display: none !important;
+        padding: 0.5rem 1rem !important;
+        gap: 0.75rem !important;
+    }
+    .filter-bar.visible {
+        display: flex !important;
+    }
+    
+    /* Reposicionar expandHeaderBtn flotante a la esquina inferior derecha como un FAB */
+    .floating-expand-btn {
+        top: auto !important;
+        right: 20px !important;
+        bottom: 20px !important;
+        width: 46px !important;
+        height: 46px !important;
+        font-size: 1.3rem !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+        border-radius: 50% !important;
     }
     
     /* Planning Gantt y Certificaciones */

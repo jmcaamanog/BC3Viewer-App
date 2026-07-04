@@ -756,7 +756,18 @@ function renderApp(data) {
 
     // Mostrar barra de filtros
     const filterBar = document.getElementById('filterBar');
-    if (filterBar) filterBar.style.display = 'flex';
+    if (filterBar) {
+        if (isMobileMode()) {
+            filterBar.style.display = 'none';
+            const toggleBtn = document.getElementById('toggleFilterBarBtn');
+            if (toggleBtn) {
+                toggleBtn.textContent = '🎛️';
+            }
+            filterBar.classList.remove('visible');
+        } else {
+            filterBar.style.display = 'flex';
+        }
+    }
 
     // Recalcular todo el presupuesto de abajo hacia arriba inmediatamente al cargar
     recalculateAll();
@@ -7339,5 +7350,21 @@ if (collapseHeaderBtn && expandHeaderBtn && mainHeader) {
         expandHeaderBtn.style.display = 'none';
     });
 }
+
+// Lógica para alternar la barra de filtros en móviles
+const toggleFilterBarBtn = document.getElementById('toggleFilterBarBtn');
+if (toggleFilterBarBtn && filterBar) {
+    toggleFilterBarBtn.addEventListener('click', () => {
+        const isVisible = filterBar.classList.toggle('visible');
+        if (isVisible) {
+            filterBar.style.setProperty('display', 'flex', 'important');
+            toggleFilterBarBtn.textContent = '✕';
+        } else {
+            filterBar.style.setProperty('display', 'none', 'important');
+            toggleFilterBarBtn.textContent = '🎛️';
+        }
+    });
+}
+
 
 
