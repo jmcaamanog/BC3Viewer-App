@@ -33,3 +33,11 @@ En smartphones pequeños, algunas pantallas y listas todavía tienen un aspecto 
         *   Compartir el PDF o Excel generado directamente por WhatsApp, Gmail, etc.
 *   **Guardado Automático en el Dispositivo:**
     *   Implementar almacenamiento persistente local (`Preferences` de Capacitor) para que el último archivo cargado se mantenga abierto automáticamente al reiniciar la aplicación sin tener que seleccionarlo de nuevo.
+*   **Seguridad y Control de Acceso (Contraseñas):**
+    *   **Acceso Offline (Local):** Permitir configurar un PIN o contraseña de acceso local (guardado en el dispositivo usando almacenamiento seguro o Keychain/Keystore) para bloquear el acceso a la app cuando se abre offline.
+    *   **Acceso Online (Remoto):** Integrar un sistema de autenticación (ej. Firebase Auth, Supabase, o API propia) para validar credenciales en línea antes de dar acceso a los presupuestos.
+*   **Actualizaciones Online (Over-the-Air / OTA):**
+    *   **Actualización en caliente:** Implementar un sistema de "Live Updates" (como Capgo o Ionic Appflow) para actualizar el código web (HTML, JS, CSS) directamente desde el servidor sin requerir que el usuario reinstale un nuevo archivo APK.
+    *   **Verificación de versión APK:** Desarrollar una API de comprobación de versión que avise al usuario dentro de la app si hay una nueva versión del APK compilado disponible para descargar.
+*   **Personalización e Identidad Visual (Icono y Pantalla de Carga):**
+    *   Generar un conjunto completo de iconos de launcher nativos (Mipmaps para Android) y splash screens personalizados utilizando la utilidad `@capacitor/assets`, sustituyendo los iconos predeterminados de Capacitor.
