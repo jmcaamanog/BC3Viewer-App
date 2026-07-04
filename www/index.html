@@ -35,35 +35,35 @@
                     <!-- Grupo 1: Carga y Procesado -->
                     <div class="control-container" id="uploadGroup">
                         <label for="bc3file" class="upload-btn">
-                            <span id="fileName">SELECCIONAR ARCHIVO .BC3</span>
+                            <span id="fileName"><span class="btn-text">SELECCIONAR ARCHIVO .BC3</span></span>
                             <input type="file" id="bc3file" name="bc3file" accept=".bc3" hidden>
                         </label>
-                        <button type="submit" class="process-btn">PROCESA</button>
+                        <button type="submit" class="process-btn"><span class="btn-text">PROCESA</span></button>
                     </div>
 
                     <!-- Grupo 2: Vistas Principales (Segmented Control) -->
                     <div class="control-container segmented-control" id="viewsGroup" style="display:none;">
-                        <button type="button" id="presupuestoBtn" class="nav-tab active">🌳 PRESUPUESTO</button>
-                        <button type="button" id="pricesBtn" class="nav-tab">🏷️ PRECIOS</button>
+                        <button type="button" id="presupuestoBtn" class="nav-tab active">🌳 <span class="btn-text">PRESUPUESTO</span></button>
+                        <button type="button" id="pricesBtn" class="nav-tab">🏷️ <span class="btn-text">PRECIOS</span></button>
                     </div>
 
                     <!-- Grupo 3: Herramientas Auxiliares -->
                     <div class="control-container tools-group" id="toolsGroup" style="display:none;">
-                        <button type="button" id="dashboardBtn" class="tool-btn">📊 DASHBOARD</button>
-                        <button type="button" id="planningBtn" class="tool-btn">📅 PLANNING</button>
-                        <button type="button" id="certObrasBtn" class="tool-btn">🏗️ CERTIF.</button>
-                        <button type="button" id="compareBtn" class="tool-btn">🔍 COMPARAR</button>
+                        <button type="button" id="dashboardBtn" class="tool-btn">📊 <span class="btn-text">DASHBOARD</span></button>
+                        <button type="button" id="planningBtn" class="tool-btn">📅 <span class="btn-text">PLANNING</span></button>
+                        <button type="button" id="certObrasBtn" class="tool-btn">🏗️ <span class="btn-text">CERTIF.</span></button>
+                        <button type="button" id="compareBtn" class="tool-btn">🔍 <span class="btn-text">COMPARAR</span></button>
                     </div>
 
                     <!-- Grupo 4: Guardar y Exportar -->
                     <div class="control-container export-group" id="exportGroup" style="display:none;">
-                        <button type="button" id="saveBtn" class="save-btn" style="display:none;">💾 GUARDAR</button>
+                        <button type="button" id="saveBtn" class="save-btn" style="display:none;">💾 <span class="btn-text">GUARDAR</span></button>
                         <div class="dropdown" id="exportDropdown">
-                            <button type="button" class="export-btn dropdown-toggle">📤 EXPORTAR ▾</button>
+                            <button type="button" class="export-btn dropdown-toggle">📤 <span class="btn-text">EXPORTAR</span> ▾</button>
                             <div class="dropdown-content">
-                                <button type="button" id="exportPdfBtn">📄 EXPORTAR A PDF</button>
-                                <button type="button" id="exportExcelBtn">📊 EXPORTAR A EXCEL</button>
-                                <button type="button" id="exportBc3Btn" style="color: #059669; font-weight: 600;">⬇ GUARDAR COMO BC3</button>
+                                <button type="button" id="exportPdfBtn">📄 <span class="btn-text">EXPORTAR A PDF</span></button>
+                                <button type="button" id="exportExcelBtn">📊 <span class="btn-text">EXPORTAR A EXCEL</span></button>
+                                <button type="button" id="exportBc3Btn" style="color: #059669; font-weight: 600;">⬇ <span class="btn-text">GUARDAR COMO BC3</span></button>
                             </div>
                         </div>
                     </div>

@@ -3501,7 +3501,41 @@ body.dark-theme .badge-critical-tree {
         padding: 0.4rem 0.6rem !important;
     }
     
-    .process-btn, .nav-tab, .tool-btn, .save-btn, .export-btn, .settings-toggle-btn {
+    /* Hide button text for navigation, tools and saving on mobile to leave only emojis */
+    .nav-tab .btn-text,
+    .tool-btn .btn-text,
+    .save-btn .btn-text,
+    .export-btn .btn-text {
+        display: none !important;
+    }
+
+    /* Convert buttons into square touch-friendly emoji buttons */
+    .nav-tab, .tool-btn, .save-btn, .export-btn {
+        min-width: 38px !important;
+        width: 38px !important;
+        height: 38px !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1.1rem !important;
+        border-radius: 6px !important;
+    }
+    
+    /* Slight adjustment for export button to keep the dropdown indicator arrow */
+    .export-btn {
+        width: 48px !important;
+        gap: 2px !important;
+    }
+
+    /* Stack them into clean toolbar groups */
+    .segmented-control, .tools-group, .export-group {
+        display: inline-flex !important;
+        gap: 4px !important;
+        margin: 0 !important;
+    }
+
+    .process-btn, .settings-toggle-btn {
         font-size: 0.75rem !important;
         padding: 0.4rem 0.6rem !important;
         min-width: auto !important;
@@ -3603,6 +3637,34 @@ body.dark-theme .badge-critical-tree {
     .chapters-table th, .chapters-table td {
         padding: 4px 6px !important;
         font-size: 0.7rem !important;
+    }
+
+    /* Position edit pencil button above the next-level chevron */
+    .tree-node-row .edit-actions {
+        position: absolute !important;
+        right: 12px !important;
+        top: 6px !important;
+        opacity: 0.8 !important; /* Keep visible on mobile touch screens */
+        display: flex !important;
+        align-items: center !important;
+        z-index: 5 !important;
+    }
+    .btn-edit-pencil {
+        font-size: 0.85rem !important;
+        padding: 4px !important;
+    }
+    .col-unit {
+        padding-right: 20px !important; /* Prevent overlap with edit pencil */
+    }
+
+    /* Make footer banner smaller and in a single line */
+    .app-footer {
+        padding: 0.25rem 0.75rem !important;
+        font-size: 0.62rem !important;
+        height: 30px !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
     }
 }
 
