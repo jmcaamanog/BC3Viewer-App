@@ -1,5 +1,43 @@
-const APP_VERSION = '1.3.1'; // Versión actual de la aplicación (Actualizada)
+const APP_VERSION = '1.3.2'; // Versión actual de la aplicación (Actualizada)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
+
+// URL del Webhook de Google Sheets para registrar usuarios de la app.
+// Si deseas activar el contador, crea un script en Google Sheets y pega aquí la URL de la aplicación web.
+const USER_LOG_WEBHOOK_URL = ""; 
+
+async function registerUserAccess() {
+    if (!USER_LOG_WEBHOOK_URL) return;
+    
+    try {
+        let deviceId = localStorage.getItem('app_device_id');
+        if (!deviceId) {
+            deviceId = 'dev_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now().toString(36);
+            localStorage.setItem('app_device_id', deviceId);
+        }
+        
+        const payload = {
+            deviceId: deviceId,
+            version: APP_VERSION,
+            platform: window.Capacitor ? 'Android' : 'Web',
+            timestamp: new Date().toISOString()
+        };
+        
+        fetch(USER_LOG_WEBHOOK_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        }).catch(err => console.log("Error de red al registrar acceso:", err));
+    } catch (e) {
+        console.error("Error en registro de acceso:", e);
+    }
+}
+
+// Registrar el acceso en segundo plano al iniciar
+registerUserAccess();
+
 
 function checkPinCode() {
     // Si ya está verificado en esta sesión, no preguntar
@@ -145,6 +183,15 @@ async function readAndParseBC3File(file) {
                 // Parse the content using our local JS parser
                 const parser = new BC3Parser();
                 const result = parser.parse(finalContent);
+
+                // Guardar en localStorage de forma segura para auto-carga en el siguiente inicio
+                try {
+                    localStorage.setItem('last_bc3_content', finalContent);
+                    localStorage.setItem('last_bc3_filename', file.name);
+                } catch (storageError) {
+                    console.warn("No se pudo guardar el presupuesto para auto-carga (cuota de espacio excedida):", storageError);
+                }
+
                 resolve({ success: true, data: result });
             } catch (err) {
                 reject(err);
@@ -2011,17 +2058,60 @@ if (saveBtn) {
             return;
         }
 
-        const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-        const link = document.createElement("a");
-        
         const baseName = currentFileName.replace(/\.[^/.]+$/, "");
-        link.href = URL.createObjectURL(blob);
-        link.download = `${baseName}_modificado.bc3`;
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        if (window.Capacitor && window.Capacitor.isPluginAvailable('Filesystem')) {
+            const base64Bc3 = btoa(unescape(encodeURIComponent(content)));
+            saveAndShareNativeFile(base64Bc3, `${baseName}_modificado.bc3`);
+        } else {
+            const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `${baseName}_modificado.bc3`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     });
+}
+
+// Función para guardar y compartir archivos de forma nativa en dispositivos móviles (Capacitor)
+async function saveAndShareNativeFile(base64Data, filename) {
+    if (!window.Capacitor || !window.Capacitor.Plugins) return false;
+    
+    const { Filesystem, Share } = window.Capacitor.Plugins;
+    if (!Filesystem || !Share) {
+        console.warn("Plugins Filesystem o Share de Capacitor no disponibles.");
+        return false;
+    }
+    
+    try {
+        // 1. Escribir el archivo temporal en el directorio de CACHE de forma segura
+        await Filesystem.writeFile({
+            path: filename,
+            data: base64Data,
+            directory: 'CACHE'
+        });
+        
+        // 2. Obtener la URI interna del archivo generado
+        const { uri } = await Filesystem.getUri({
+            directory: 'CACHE',
+            path: filename
+        });
+        
+        // 3. Lanzar la hoja de compartir nativa del dispositivo
+        await Share.share({
+            title: filename,
+            text: `Aquí tienes tu documento exportado: ${filename}`,
+            url: uri
+        });
+        
+        console.log(`Archivo compartido nativamente con éxito: ${filename}`);
+        return true;
+    } catch (err) {
+        console.error("Error al guardar y compartir archivo de forma nativa:", err);
+        alert("No se pudo guardar o compartir el archivo: " + err.message);
+        return false;
+    }
 }
 
 // Función para exportar a PDF (DIN A4 esquematizado)
@@ -2234,7 +2324,13 @@ function exportToPdf() {
 
     // Guardar/Descargar el PDF
     const baseName = currentFileName.replace(/\.[^/.]+$/, "");
-    doc.save(`${baseName}_presupuesto.pdf`);
+    if (window.Capacitor && window.Capacitor.isPluginAvailable('Filesystem')) {
+        const rawPdfUri = doc.output('datauristring');
+        const base64Pdf = rawPdfUri.substring(rawPdfUri.indexOf(',') + 1);
+        saveAndShareNativeFile(base64Pdf, `${baseName}_presupuesto.pdf`);
+    } else {
+        doc.save(`${baseName}_presupuesto.pdf`);
+    }
 }
 
 // Modo Oscuro
@@ -2489,7 +2585,12 @@ function exportToExcel() {
 
     // Guardar/Descargar el Excel
     const baseName = currentFileName.replace(/\.[^/.]+$/, "");
-    XLSX.writeFile(wb, `${baseName}_presupuesto.xlsx`);
+    if (window.Capacitor && window.Capacitor.isPluginAvailable('Filesystem')) {
+        const excelBase64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+        saveAndShareNativeFile(excelBase64, `${baseName}_presupuesto.xlsx`);
+    } else {
+        XLSX.writeFile(wb, `${baseName}_presupuesto.xlsx`);
+    }
 }
 
 // 4. Lógica de Dashboard y Gráficos
@@ -4414,7 +4515,12 @@ function exportGanttToExcel() {
 
     XLSX.utils.book_append_sheet(wb, ws, 'Planning Gantt');
     const baseName = currentFileName.replace(/\.[^/.]+$/, '');
-    XLSX.writeFile(wb, baseName + '_planning.xlsx');
+    if (window.Capacitor && window.Capacitor.isPluginAvailable('Filesystem')) {
+        const excelBase64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+        saveAndShareNativeFile(excelBase64, baseName + '_planning.xlsx');
+    } else {
+        XLSX.writeFile(wb, baseName + '_planning.xlsx');
+    }
 }
 
 // ---- Exportar Gantt a PDF (A4 landscape, 26 sem/página) ----
@@ -4578,7 +4684,13 @@ function exportGanttToPdf() {
     }
 
     const baseName = currentFileName.replace(/\.[^/.]+$/, '');
-    doc.save(baseName + '_planning.pdf');
+    if (window.Capacitor && window.Capacitor.isPluginAvailable('Filesystem')) {
+        const rawPdfUri = doc.output('datauristring');
+        const base64Pdf = rawPdfUri.substring(rawPdfUri.indexOf(',') + 1);
+        saveAndShareNativeFile(base64Pdf, baseName + '_planning.pdf');
+    } else {
+        doc.save(baseName + '_planning.pdf');
+    }
 }
 
 // ---- Inicializar eventos del modal Planning ----
@@ -6730,13 +6842,18 @@ function exportGanttToXML() {
     xml += `    </Tasks>
 </Project>`;
 
-    const blob = new Blob([xml], { type: 'application/xml' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `${cleanFileName}_planning.xml`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    if (window.Capacitor && window.Capacitor.isPluginAvailable('Filesystem')) {
+        const base64Xml = btoa(unescape(encodeURIComponent(xml)));
+        saveAndShareNativeFile(base64Xml, `${cleanFileName}_planning.xml`);
+    } else {
+        const blob = new Blob([xml], { type: 'application/xml' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `${cleanFileName}_planning.xml`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 }
 
 function escapeXml(unsafe) {
@@ -7194,13 +7311,18 @@ function exportToBC3() {
     const text = out.join("\r\n");
 
     const baseName = currentFileName.replace(/\.[^/.]+$/, "") + "_modificado.bc3";
-    const blob = new Blob([text], { type: 'text/plain;charset=ansi' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = baseName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    if (window.Capacitor && window.Capacitor.isPluginAvailable('Filesystem')) {
+        const base64Bc3 = btoa(unescape(encodeURIComponent(text)));
+        saveAndShareNativeFile(base64Bc3, baseName);
+    } else {
+        const blob = new Blob([text], { type: 'text/plain;charset=ansi' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = baseName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 }
 
 // ── Lógica del Panel de Capítulos ──
@@ -7545,6 +7667,31 @@ function showToastMessage(text) {
 
 // Inicializar el sistema en segundo plano al cargar el script
 initializeUpdater();
+
+// Función para auto-cargar el último presupuesto guardado en localStorage
+function autoLoadLastBudget() {
+    try {
+        const lastContent = localStorage.getItem('last_bc3_content');
+        const lastFilename = localStorage.getItem('last_bc3_filename');
+        
+        if (lastContent && lastFilename) {
+            currentFileName = lastFilename;
+            const fileNameEl = document.getElementById('fileName');
+            if (fileNameEl) fileNameEl.textContent = currentFileName;
+            
+            const parser = new BC3Parser();
+            const result = parser.parse(lastContent);
+            
+            renderApp(result);
+            console.log("Presupuesto auto-cargado desde localStorage:", lastFilename);
+        }
+    } catch (e) {
+        console.error("Error al auto-cargar el último presupuesto:", e);
+    }
+}
+
+// Inicializar la carga automática al arrancar
+autoLoadLastBudget();
 
 
 
