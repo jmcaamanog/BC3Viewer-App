@@ -1,3 +1,5 @@
+const APP_VERSION = '1.3.0'; // Versión actual de la aplicación
+
 // 1. File Input Change
 const fileInput = document.getElementById('bc3file');
 let currentFileName = "presupuesto.bc3";
@@ -7378,6 +7380,118 @@ if (toggleFilterBarBtn && filterBar) {
         }
     });
 }
+
+// ==========================================================================
+// Lógica de Actualizaciones en Caliente (OTA / Live Updates) para Android
+// ==========================================================================
+
+async function initializeUpdater() {
+    if (!window.Capacitor || !window.Capacitor.Plugins || !window.Capacitor.Plugins.CapacitorUpdater) {
+        return; // No estamos en entorno de Android/Capacitor o el plugin no está disponible
+    }
+    
+    const { CapacitorUpdater } = window.Capacitor.Plugins;
+    
+    try {
+        // Notificar que la app se cargó correctamente (evita rollbacks automáticos)
+        await CapacitorUpdater.notifyAppReady();
+    } catch (e) {
+        console.error("Error al notificar app lista:", e);
+    }
+    
+    // Iniciar verificación silenciosa de actualización en segundo plano
+    setTimeout(checkForUpdates, 3000); // Esperar 3 segundos después del inicio
+}
+
+async function checkForUpdates() {
+    if (!window.Capacitor || !window.Capacitor.Plugins || !window.Capacitor.Plugins.CapacitorUpdater) {
+        return;
+    }
+    
+    const { CapacitorUpdater } = window.Capacitor.Plugins;
+    const updateUrl = "https://jmcaamanog.github.io/BC3Viewer-App/update.json";
+    
+    try {
+        // Petición silenciosa con timeout de 3 segundos
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        
+        const response = await fetch(updateUrl, { 
+            signal: controller.signal,
+            cache: 'no-store' 
+        });
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) return;
+        
+        const updateInfo = await response.json();
+        
+        // Comparación simple de versiones (ej: "1.3.1" !== "1.3.0")
+        if (updateInfo.version && updateInfo.version !== APP_VERSION && updateInfo.url) {
+            console.log("Nueva versión de la app detectada en el servidor:", updateInfo.version);
+            
+            // Descargar el nuevo zip de actualización en segundo plano
+            const downloadResult = await CapacitorUpdater.download({
+                url: updateInfo.url,
+                version: updateInfo.version
+            });
+            
+            // Instalar/Establecer el nuevo bundle como la versión activa
+            await CapacitorUpdater.set(downloadResult);
+            
+            // Mostrar Toast no intrusivo al usuario
+            showToastMessage(`✨ Aplicación actualizada a la versión V${updateInfo.version}. Se aplicará en el próximo reinicio.`);
+        }
+    } catch (err) {
+        // Falla silenciosa (por ejemplo, sin conexión a Internet o error de CORS)
+        console.log("Comprobación de actualización silenciosa omitida (sin red o servidor offline).", err);
+    }
+}
+
+// Función auxiliar para mostrar un Toast temporal y elegante
+function showToastMessage(text) {
+    const toast = document.createElement('div');
+    toast.className = 'ota-toast';
+    toast.textContent = text;
+    
+    // Estilos inline básicos para asegurar que sea visualmente profesional
+    Object.assign(toast.style, {
+        position: 'fixed',
+        bottom: '80px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        backgroundColor: '#1e293b',
+        color: '#ffffff',
+        padding: '10px 16px',
+        borderRadius: '8px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        fontSize: '0.75rem',
+        fontWeight: '500',
+        zIndex: '10005',
+        textAlign: 'center',
+        border: '1px solid var(--accent, #0ea5e9)',
+        width: '85%',
+        maxWidth: '300px',
+        opacity: '0',
+        transition: 'opacity 0.3s ease'
+    });
+    
+    document.body.appendChild(toast);
+    
+    // Fade in
+    setTimeout(() => {
+        toast.style.opacity = '1';
+    }, 100);
+    
+    // Fade out y remover después de 6 segundos
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 6000);
+}
+
+// Inicializar el sistema en segundo plano al cargar el script
+initializeUpdater();
 
 
 
