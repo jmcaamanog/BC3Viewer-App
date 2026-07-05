@@ -1,4 +1,57 @@
-const APP_VERSION = '1.3.0'; // Versión actual de la aplicación
+const APP_VERSION = '1.3.1'; // Versión actual de la aplicación (Actualizada)
+const ACCESS_PIN = '1234'; // PIN de acceso por defecto
+
+function checkPinCode() {
+    // Si ya está verificado en esta sesión, no preguntar
+    if (sessionStorage.getItem('pin_verified') === 'true') {
+        return;
+    }
+    
+    const runVerification = () => {
+        const overlay = document.getElementById('pinLockOverlay');
+        const input = document.getElementById('pinInput');
+        const submitBtn = document.getElementById('pinSubmitBtn');
+        const errorMsg = document.getElementById('pinErrorMsg');
+        
+        if (!overlay || !input || !submitBtn) return;
+        
+        // Mostrar el overlay de bloqueo
+        overlay.style.setProperty('display', 'flex', 'important');
+        
+        // Enfocar el input
+        setTimeout(() => input.focus(), 300);
+        
+        const verify = () => {
+            if (input.value === ACCESS_PIN) {
+                sessionStorage.setItem('pin_verified', 'true');
+                overlay.style.display = 'none';
+            } else {
+                errorMsg.style.setProperty('display', 'block', 'important');
+                input.value = '';
+                input.focus();
+                // Ocultar mensaje de error después de 3 segundos
+                setTimeout(() => {
+                    errorMsg.style.display = 'none';
+                }, 3000);
+            }
+        };
+        
+        submitBtn.onclick = verify;
+        
+        input.onkeydown = (e) => {
+            if (e.key === 'Enter') verify();
+        };
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', runVerification);
+    } else {
+        runVerification();
+    }
+}
+
+// Ejecutar verificación de PIN de inmediato
+checkPinCode();
 
 // 1. File Input Change
 const fileInput = document.getElementById('bc3file');

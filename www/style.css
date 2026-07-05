@@ -3718,5 +3718,87 @@ body.dark-theme .badge-critical-tree {
     }
 }
 
+/* Pin Lock Overlay Screen styles */
+.pin-lock-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20000;
+}
+.pin-lock-card {
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    padding: 2.5rem 2rem;
+    border-radius: 16px;
+    width: 85%;
+    max-width: 340px;
+    text-align: center;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+}
+.pin-lock-icon {
+    font-size: 3rem;
+    margin-bottom: 0.25rem;
+}
+.pin-lock-card h3 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 1.35rem;
+    font-weight: 700;
+}
+.pin-lock-card p {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #94a3b8;
+    line-height: 1.45;
+}
+.pin-lock-card input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    background-color: #0f172a;
+    color: #ffffff;
+    text-align: center;
+    font-size: 1.5rem;
+    letter-spacing: 8px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.pin-lock-card input:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+}
+.pin-lock-card button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    background-color: #0ea5e9;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.pin-lock-card button:hover {
+    background-color: #0284c7;
+}
+.pin-error-msg {
+    color: #f87171;
+    font-size: 0.8rem;
+    margin-top: -4px;
+    font-weight: 500;
+}
+
 
 

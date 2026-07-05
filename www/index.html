@@ -941,6 +941,18 @@
     <!-- Botón flotante para restaurar cabecera cuando está oculta -->
     <button type="button" id="expandHeaderBtn" class="floating-expand-btn" style="display: none;" title="Mostrar Cabecera">🔽</button>
 
+    <!-- Pin Lock Overlay -->
+    <div id="pinLockOverlay" class="pin-lock-overlay" style="display: none;">
+        <div class="pin-lock-card">
+            <div class="pin-lock-icon">🔒</div>
+            <h3>Acceso Protegido</h3>
+            <p>Introduce el código PIN de acceso para abrir el visualizador.</p>
+            <input type="password" id="pinInput" placeholder="PIN" maxlength="8" pattern="[0-9]*" inputmode="numeric">
+            <button type="button" id="pinSubmitBtn">Entrar</button>
+            <div id="pinErrorMsg" class="pin-error-msg" style="display: none;">Código PIN incorrecto</div>
+        </div>
+    </div>
+
     <script src="jspdf.umd.min.js"></script>
     <script src="jspdf.plugin.autotable.min.js"></script>
     <script src="chart.min.js"></script>
