@@ -107,7 +107,7 @@ BC3 Viewer es una aplicacion web que permite **visualizar, editar, comparar, pla
 
 ## Historial de Versiones
 
-### Version 1.3.2 — 06/07/2026 (Actual)
+### Version 1.3.3 — 08/07/2026 (Actual)
 * **Nueva versión APP:** Aplicación de `Android` con todas las funciones y offline!. Instala y despreocúpate de las nuevas actualziaciones. ---> descarga el `.apk` de la carpeta `PROGRAMAS`.
 * **Versión para Windows:** Aplicación instalable para Windows. ---> descarga el `.exe` de la carpeta `PROGRAMAS`.
 * **CERTIFICACIONES de obra:** Ya puedes certificar la obra directamente desde la **APP** !. 
