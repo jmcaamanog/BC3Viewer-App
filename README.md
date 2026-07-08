@@ -24,7 +24,7 @@ El objetivo de este proyecto es empaquetar y distribuir el visualizador web orig
 > Puedes usar la versión web más reciente directamente en tu navegador sin instalar nada en:
 > 👉 **[Visualizador BC3 Online (GitHub Pages)](https://jmcaamanog.github.io/BC3Viewer-App/www/index.html)**
 ---
-> 🔑 **Contraseña versión 1.3.2)** -> 1234
+> 🔑 **Contraseña versión 1.3.3)** -> 1234
 ---
 
 Esta version ampliada ha sido desarrollada por mí (`Jose Manuel Caamaño`---> [linkedin](https://www.linkedin.com/in/jmcaamanog/) partiendo de la versión muy básica básica y sin funciones disponible en -> [BC3php](https://github.com/jmcaamanog/BC3Viewer-App) (si lo visitais, ya contiene parte de mis mejoras XD), añadiendo todas las capacidades avanzadas y manteniendo el espiritu del proyecto original, pero muy mejorándolo (XD) desde el punto de vista de un `Arquitecto Técnico` : **abierto, libre y útil para la profesion (ser libres de egos XD)**.
@@ -105,7 +105,7 @@ BC3 Viewer es una aplicacion web que permite **visualizar, editar, comparar, pla
 ---
 ---
 
-## Historial de Versiones
+## Historial de Versiones Publicadas
 
 ### Version 1.3.3 — 08/07/2026 (Actual)
 * **Nueva versión APP:** Aplicación de `Android` con todas las funciones y offline!. Instala y despreocúpate de las nuevas actualziaciones. ---> descarga el `.apk` de la carpeta `PROGRAMAS`.
