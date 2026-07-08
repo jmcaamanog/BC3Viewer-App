@@ -14,24 +14,20 @@ El objetivo de este proyecto es empaquetar y distribuir el visualizador web orig
 > [!IMPORTANT]
 > **🚀 DESCARGA DIRECTA DE PROGRAMAS:**
 > Si no quieres compilar el código tú mismo y solo quieres utilizar la aplicación, puedes descargar directamente los ejecutables listos para usar:
-> *   **Windows Installer (.exe):** `BC3_Viewer_Windows_Installer.exe`
-> *   **Windows Package (.msi):** `BC3_Viewer_Windows_Installer.msi`
-> *   **Android App (.apk):** `BC3Viewer-App.apk`
->> * 📱 *(¡Nueva versión V1.3.2 compilada con icono, splash screen, actualizaciones online, compartición nativa de archivos por WhatsApp y auto-carga en la carpeta /PROGRAMAS!)*
+> *   **💻 Windows Installer (.exe):** `BC3_Viewer_Windows_Installer.exe`
+> *   **💻 Windows Package (.msi):** `BC3_Viewer_Windows_Installer.msi`
+> *   **📱 Android App (.apk):** `BC3Viewer-App.apk`
+
 > *   También dispones de un presupuesto de ejemplo para probarlo inmediatamente en la carpeta **/PROGRAMAS/BC3 EJEMPLO**.
 >
 > **🌐 ACCESO DIRECTO EN LA WEB (Nube):**
 > Puedes usar la versión web más reciente directamente en tu navegador sin instalar nada en:
 > 👉 **[Visualizador BC3 Online (GitHub Pages)](https://jmcaamanog.github.io/BC3Viewer-App/www/index.html)**
->
->> 🔑 **Contraseña versión 1.3.2)** -> 1234
-
-
-
-
+---
+> 🔑 **Contraseña versión 1.3.2)** -> 1234
 ---
 
-Esta version ampliada ha sido desarrollada por mí (`Jose Manuel Caamaño`---> [linkedin](https://www.linkedin.com/in/jmcaamanog/) partiendo de la versión muy básica básica y sin funciones disponible en -> [BC3php](https://github.com/jmcaamanog/BC3Viewer-App) , añadiendo todas las capacidades avanzadas y manteniendo el espiritu del proyecto original, pero muy mejorándolo (XD) desde el punto de vista de un `Arquitecto Técnico` : **abierto, libre y útil para la profesion (ser libres de egos XD)**.
+Esta version ampliada ha sido desarrollada por mí (`Jose Manuel Caamaño`---> [linkedin](https://www.linkedin.com/in/jmcaamanog/) partiendo de la versión muy básica básica y sin funciones disponible en -> [BC3php](https://github.com/jmcaamanog/BC3Viewer-App) (si lo visitais, ya contiene parte de mis mejoras XD), añadiendo todas las capacidades avanzadas y manteniendo el espiritu del proyecto original, pero muy mejorándolo (XD) desde el punto de vista de un `Arquitecto Técnico` : **abierto, libre y útil para la profesion (ser libres de egos XD)**.
 
 ---
 
@@ -114,14 +110,15 @@ BC3 Viewer es una aplicacion web que permite **visualizar, editar, comparar, pla
 ### Version 1.3.2 — 06/07/2026 (Actual)
 * **Nueva versión APP:** Aplicación de `Android` con todas las funciones y offline!. Instala y despreocúpate de las nuevas actualziaciones. ---> descarga el `.apk` de la carpeta `PROGRAMAS`.
 * **Versión para Windows:** Aplicación instalable para Windows. ---> descarga el `.exe` de la carpeta `PROGRAMAS`.
-* **CERTIFICACIONES de obra:** Ya puedes certificar la obra directamente desde la APP!. 
+* **CERTIFICACIONES de obra:** Ya puedes certificar la obra directamente desde la **APP** !. 
+> *📱 *(Ventajas de instalar la **App**-> Actualizaciones online, compartición nativa de archivos por WhatsApp y auto-carga en la carpeta /PROGRAMAS! en tu movil!)*
 
 
 
 ### Version 1.3.0 — 03/07/2026 
 * **Columna Proporción en Presupuesto:** Nueva columna en el árbol del presupuesto que agrupa e integra el `% PEM` y el desglose de recursos (barras de colores) de los capítulos, manteniendo el comportamiento y visibilidad de las columnas originales de cantidad y precio.
 * **Cabecera Compacta y Adaptativa:** Reorganización del header en 4 grupos unificados y un menú desplegable de ajustes engranaje `⚙️` en la esquina superior derecha para limpiar la interfaz.
-* **Botón Pulsante de Carga Central:** Botón "🚀 CARGAR ARCHIVO .BC3" en la pantalla de inicio con aura/brillo animado y procesamiento automático directo del archivo al seleccionarlo.
+* **Botón Pulsante de Carga Central:** Botón "`🚀 CARGAR ARCHIVO .BC3`" en la pantalla de inicio con aura/brillo animado y procesamiento automático directo del archivo al seleccionarlo.
 * **Módulo de Estadísticas Gantt:** Cuadro de KPIs avanzado de plazos y costos del Planning que calcula días restantes de obra y los promedios requeridos por día, semana y mes de forma dinámica.
 
 ### Version 1.2.0 — 03/07/2026
