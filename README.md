@@ -14,14 +14,16 @@ El objetivo de este proyecto es empaquetar y distribuir el visualizador web orig
 > [!IMPORTANT]
 > **🚀 DESCARGA DIRECTA DE PROGRAMAS:**
 > Si no quieres compilar el código tú mismo y solo quieres utilizar la aplicación, puedes descargar directamente los ejecutables listos para usar:
-> *   **Windows Installer (.exe):** [BC3_Viewer_Windows_Installer.exe](file:///c:/Users/Jose/OneDrive/1_HOBBIES/004_PROYECTOS/000_proyectos/083_PROGRAMACION%20PYTHON/000_GITHUB/000_otros/rafa/BC3Viewer-App/PROGRAMAS/BC3_Viewer_Windows_Installer.exe)
-> *   **Windows Package (.msi):** [BC3_Viewer_Windows_Installer.msi](file:///c:/Users/Jose/OneDrive/1_HOBBIES/004_PROYECTOS/000_proyectos/083_PROGRAMACION%20PYTHON/000_GITHUB/000_otros/rafa/BC3Viewer-App/PROGRAMAS/BC3_Viewer_Windows_Installer.msi)
-> *   **Android App (.apk):** [BC3Viewer-App.apk](file:///c:/Users/Jose/OneDrive/1_HOBBIES/004_PROYECTOS/000_proyectos/083_PROGRAMACION%20PYTHON/000_GITHUB/000_otros/rafa/BC3Viewer-App/PROGRAMAS/BC3Viewer-App.apk) 📱 *(¡Nueva versión V1.3.2 compilada con icono, splash screen, actualizaciones online, compartición nativa de archivos por WhatsApp y auto-carga en la carpeta /PROGRAMAS!)*
-> *   También dispones de un presupuesto de ejemplo para probarlo inmediatamente en la carpeta **[/PROGRAMAS/BC3 EJEMPLO](file:///c:/Users/Jose/OneDrive/1_HOBBIES/004_PROYECTOS/000_proyectos/083_PROGRAMACION%20PYTHON/000_GITHUB/000_otros/rafa/BC3Viewer-App/PROGRAMAS/BC3%20EJEMPLO/)**._
+> *   **Windows Installer (.exe):** `BC3_Viewer_Windows_Installer.exe`
+> *   **Windows Package (.msi):** `BC3_Viewer_Windows_Installer.msi`
+> *   **Android App (.apk):** `BC3Viewer-App.apk`
+>> * 📱 *(¡Nueva versión V1.3.2 compilada con icono, splash screen, actualizaciones online, compartición nativa de archivos por WhatsApp y auto-carga en la carpeta /PROGRAMAS!)*
+> *   También dispones de un presupuesto de ejemplo para probarlo inmediatamente en la carpeta **/PROGRAMAS/BC3 EJEMPLO**.
 >
 > **🌐 ACCESO DIRECTO EN LA WEB (Nube):**
 > Puedes usar la versión web más reciente directamente en tu navegador sin instalar nada en:
 > 👉 **[Visualizador BC3 Online (GitHub Pages)](https://jmcaamanog.github.io/BC3Viewer-App/www/index.html)**
+>
 >> 🔑 **Contraseña versión 1.3.2)** -> 1234
 
 
