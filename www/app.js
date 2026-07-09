@@ -3200,6 +3200,17 @@ if (settingsBtn && settingsDropdown) {
     });
 }
 
+const ganttExportDropdown = document.getElementById('ganttExportDropdown');
+if (ganttExportDropdown) {
+    const toggleBtn = ganttExportDropdown.querySelector('.dropdown-toggle');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            ganttExportDropdown.classList.toggle('show');
+        });
+    }
+}
+
 // Cerrar dropdowns al hacer click fuera
 window.addEventListener('click', (e) => {
     const expDrop = document.getElementById('exportDropdown');
@@ -3209,6 +3220,10 @@ window.addEventListener('click', (e) => {
     const setDrop = document.getElementById('settingsDropdown');
     if (setDrop && !setDrop.contains(e.target)) {
         setDrop.classList.remove('show');
+    }
+    const ganttExpDrop = document.getElementById('ganttExportDropdown');
+    if (ganttExpDrop && !ganttExpDrop.contains(e.target)) {
+        ganttExpDrop.classList.remove('show');
     }
 });
 

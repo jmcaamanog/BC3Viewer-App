@@ -3923,6 +3923,38 @@ body.dark-theme .badge-critical-tree {
         flex: 1 !important;
         width: 100% !important;
     }
+
+    /* Reducir espacio y tamaño de los controles de Gantt en móvil */
+    .planning-controls {
+        gap: 6px !important;
+        width: 100% !important;
+    }
+    .planning-controls .gantt-action-btn,
+    .planning-controls .gantt-mode-btn {
+        padding: 4px 8px !important;
+        font-size: 0.72rem !important;
+        height: 34px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    .planning-controls label {
+        font-size: 0.72rem !important;
+        gap: 3px !important;
+    }
+    .planning-controls .gantt-control-input {
+        font-size: 0.72rem !important;
+        padding: 3px 6px !important;
+    }
+    #ganttExportDropdown .dropdown-content {
+        left: 0 !important;
+        right: auto !important;
+        min-width: 120px !important;
+    }
+    #ganttExportDropdown .dropdown-content button {
+        padding: 8px 12px !important;
+        font-size: 0.75rem !important;
+    }
 }
 
 /* Pin Lock Overlay Screen styles */

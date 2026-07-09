@@ -846,15 +846,21 @@
                     </div>
 
                     <button type="button" id="ganttLinkBtn" class="gantt-action-btn gantt-link-btn"
-                        title="Enlazar tareas (dependencia Fin→Inicio)">🔗 Enlazar</button>
-                    <button type="button" id="ganttResetBtn" class="gantt-action-btn">↺ Reiniciar</button>
-                    <button type="button" id="exportGanttExcelBtn" class="gantt-action-btn gantt-excel-btn">⬇
-                        Excel</button>
-                    <button type="button" id="exportGanttPdfBtn" class="gantt-action-btn gantt-pdf-btn">⬇ PDF</button>
+                        style="min-width: 38px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 1rem;"
+                        title="Enlazar tareas (dependencia Fin→Inicio)">🔗</button>
+                    <button type="button" id="ganttResetBtn" class="gantt-action-btn" title="Reiniciar planificación">↺ Reiniciar</button>
+                    
+                    <div class="dropdown" id="ganttExportDropdown">
+                        <button type="button" class="gantt-action-btn dropdown-toggle" style="height: 34px; display: inline-flex; align-items: center; gap: 4px;">📤 Exportar ▾</button>
+                        <div class="dropdown-content" style="right: auto; left: 0;">
+                            <button type="button" id="exportGanttExcelBtn">📊 Excel</button>
+                            <button type="button" id="exportGanttPdfBtn">📄 PDF</button>
+                        </div>
+                    </div>
+
                     <button type="button" id="exportGanttXmlBtn" class="gantt-action-btn gantt-xml-btn"
-                        title="Exportar a Microsoft Project (XML)" style="background-color: #2563eb; color: white;">⬇ MS
-                        Project XML</button>
-                    <button type="button" id="closePlanningBtn" class="gantt-close-btn">✕ Cerrar</button>
+                        title="Exportar a Microsoft Project (XML)" style="background-color: #2563eb; color: white; height: 34px;">⬇ XML</button>
+                    <button type="button" id="closePlanningBtn" class="gantt-close-btn" title="Cerrar Planning" style="background-color: #ef4444; color: white; border: none; border-radius: 6px; width: 38px; height: 34px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; padding: 0; flex-shrink: 0;">✕</button>
                 </div>
             </div>
             <div class="gantt-summary-bar" id="ganttSummaryBar"></div>
