@@ -4314,7 +4314,6 @@ function rebuildGanttDOM() {
         const cellDays = document.createElement('div');
         cellDays.className = 'gantt-cell-days';
 
-        const progressVal = st.progress || 0;
         if (progressVal === 100) {
             cellDays.textContent = 'Listo';
             cellDays.className = 'gantt-cell-days gantt-days-ready';
