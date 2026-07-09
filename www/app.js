@@ -320,10 +320,10 @@ if (closeBudgetBtn) {
         // Ocultar comparador y coeficientes
         const compResults = document.getElementById('compareResults');
         if (compResults) compResults.style.display = 'none';
-        
+
         const totalPecDisplay = document.getElementById('budgetTotalPEC');
         if (totalPecDisplay) totalPecDisplay.style.display = 'none';
-        
+
         const coeffsPanel = document.getElementById('coeffsPanel');
         if (coeffsPanel) coeffsPanel.style.display = 'none';
 
@@ -1016,10 +1016,8 @@ function renderApp(data) {
         }
 
         if (stats) {
-            // Show debug stats
-            const conceptCount = Object.keys(data.concepts).length;
-            const rootCount = data.root_nodes.length;
-            stats.textContent = `Cargado: ${conceptCount} partidas | Raíces: ${rootCount}`;
+            // Desactivado a petición del usuario para que no aparezca el texto debajo de PEM y PEC
+            stats.textContent = "";
         }
 
         info.style.display = 'flex';
@@ -2418,7 +2416,7 @@ function exportToPdf() {
         doc.line(15, 282, 195, 282);
 
         // Textos pie de página
-        doc.text("© Licencia Open Source - Software Libre y de Derechos Abiertos | V.1 by Jose Manuel Caamaño", 15, 287);
+        doc.text("© Licencia Open Source - Software Libre by jmcaamanog", 15, 287);
 
         const pageStr = `Página ${i} de ${totalPages}`;
         doc.text(pageStr, 195 - doc.getTextWidth(pageStr), 287);
@@ -7838,6 +7836,45 @@ function autoLoadLastBudget() {
 
 // Inicializar la carga automática al arrancar
 autoLoadLastBudget();
+
+// Comprobación de versión para mostrar notificación de actualización exitosa (sólo en móviles y tablets)
+function checkUpdateNotification() {
+    try {
+        const lastShown = localStorage.getItem('last_shown_update_version');
+        const isMobileOrTablet = window.innerWidth <= 1024 || window.Capacitor;
+
+        if (isMobileOrTablet) {
+            // Si la versión actual es diferente de la última mostrada
+            if (lastShown && lastShown !== APP_VERSION) {
+                const modal = document.getElementById('updateNotifyModal');
+                const versionBadge = document.getElementById('updateNotifyVersion');
+                const okBtn = document.getElementById('updateNotifyOkBtn');
+
+                if (modal && versionBadge && okBtn) {
+                    versionBadge.textContent = `V${APP_VERSION}`;
+                    modal.style.setProperty('display', 'flex', 'important');
+
+                    okBtn.onclick = () => {
+                        modal.style.setProperty('display', 'none', 'important');
+                        localStorage.setItem('last_shown_update_version', APP_VERSION);
+                    };
+                }
+            } else if (!lastShown) {
+                // Inicializar para no molestar a usuarios nuevos con alertas retrospectivas
+                localStorage.setItem('last_shown_update_version', APP_VERSION);
+            }
+        }
+    } catch (e) {
+        console.error("Error al comprobar la notificación de actualización:", e);
+    }
+}
+
+// Ejecutar comprobación de actualización al iniciar
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkUpdateNotification);
+} else {
+    checkUpdateNotification();
+}
 
 
 

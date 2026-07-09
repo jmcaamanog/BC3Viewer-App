@@ -3716,6 +3716,167 @@ body.dark-theme .badge-critical-tree {
         padding: 0.5rem 1rem !important;
         font-size: 0.75rem !important;
     }
+
+    /* Adaptaciones para el Banco de Precios Unitarios en móvil */
+    .prices-panel {
+        padding: 10px !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-top: none !important;
+        box-shadow: none !important;
+    }
+    
+    .prices-header-box {
+        margin-bottom: 12px !important;
+        gap: 10px !important;
+    }
+    
+    .prices-header-box h2 {
+        font-size: 1.15rem !important;
+        text-align: center !important;
+    }
+    
+    .prices-actions {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 8px !important;
+    }
+    
+    .prices-search-container {
+        max-width: 100% !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    
+    .prices-search-container input {
+        padding: 8px 12px !important;
+        font-size: 0.82rem !important;
+    }
+    
+    .prices-tabs {
+        width: 100% !important;
+        display: flex !important;
+        gap: 4px !important;
+        padding: 2px !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        -webkit-overflow-scrolling: touch !important;
+        background-color: var(--hover-bg, #f1f5f9) !important;
+        border-radius: 6px !important;
+        scrollbar-width: none !important; /* Firefox */
+    }
+    
+    .prices-tabs::-webkit-scrollbar {
+        display: none !important; /* Chrome, Safari, Opera */
+    }
+    
+    .prices-tabs .tab-btn {
+        flex-shrink: 0 !important;
+        padding: 6px 12px !important;
+        font-size: 0.72rem !important;
+    }
+    
+    .prices-table-container {
+        overflow-x: auto !important;
+        border-radius: 6px !important;
+    }
+    
+    .prices-table th, .prices-table td {
+        padding: 6px 8px !important;
+        font-size: 0.72rem !important;
+    }
+
+    /* Adaptaciones para el Modal de Certificaciones de Obra en móvil */
+    #certObrasModal .modal-content {
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 100vh !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        box-sizing: border-box !important;
+    }
+    
+    #certObrasModal .modal-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 8px !important;
+        padding: 12px !important;
+    }
+    
+    #certObrasModal .modal-header h3 {
+        font-size: 0.95rem !important;
+        text-align: center !important;
+        margin: 0 !important;
+    }
+    
+    #certObrasModal .modal-header > div {
+        justify-content: center !important;
+        width: 100% !important;
+        gap: 6px !important;
+    }
+    
+    #certObrasMonthPdfSelect, #exportCertPdfBtn {
+        padding: 5px 8px !important;
+        font-size: 0.72rem !important;
+    }
+    
+    #certObrasAddPanel {
+        padding: 10px 12px !important;
+    }
+    
+    .cert-obras-add-grid {
+        grid-template-columns: 1fr 1fr auto !important;
+        gap: 8px !important;
+    }
+    
+    .cert-obras-add-grid > div:first-child {
+        grid-column: span 3 !important;
+    }
+    
+    #certObrasAddBtn {
+        width: 100% !important;
+        padding: 7px 10px !important;
+        font-size: 0.75rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    #certObrasKpiStrip {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 6px !important;
+        padding: 10px 12px !important;
+    }
+    
+    #certObrasKpiStrip > div {
+        padding: 6px 10px !important;
+    }
+    
+    #certObrasKpiStrip span[style*="font-size: 1.3rem"] {
+        font-size: 1rem !important;
+    }
+    
+    #certObrasKpiStrip span[style*="font-size: 0.7rem"] {
+        font-size: 0.58rem !important;
+    }
+    
+    #certObrasKpiStrip span[style*="font-size: 0.95rem"] {
+        font-size: 0.8rem !important;
+    }
+    
+    .modal-body {
+        padding: 10px 12px !important;
+    }
+    
+    #certObrasFilter {
+        width: 130px !important;
+        font-size: 0.72rem !important;
+        padding: 4px 8px !important;
+    }
 }
 
 /* Pin Lock Overlay Screen styles */
@@ -3889,6 +4050,118 @@ body.dark-theme .badge-critical-tree {
         border-radius: 6px !important;
     }
 }
+
+/* --- MODAL DE NOTIFICACIÓN DE ACTUALIZACIÓN CON EFECTOS --- */
+.update-notify-content {
+    max-width: 290px !important;
+    width: 85% !important;
+    background-color: var(--bg-group, #ffffff) !important;
+    border: 2.5px solid var(--accent, #0ea5e9) !important;
+    border-radius: 16px !important;
+    padding: 1.5rem !important;
+    text-align: center !important;
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.4) !important;
+    position: relative !important;
+    animation: updateGlowHeartbeat 2.8s infinite ease-in-out !important;
+    box-sizing: border-box !important;
+}
+
+body.dark-theme .update-notify-content {
+    background-color: #1e293b !important;
+    border-color: #0ea5e9 !important;
+    box-shadow: 0 0 25px rgba(14, 165, 233, 0.25) !important;
+}
+
+/* Animación de latido y resplandor de luz alrededor del aviso */
+@keyframes updateGlowHeartbeat {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 15px rgba(14, 165, 233, 0.35), 0 0 2px rgba(14, 165, 233, 0.2);
+    }
+    14% {
+        transform: scale(1.03);
+        box-shadow: 0 0 28px rgba(14, 165, 233, 0.7), 0 0 12px rgba(14, 165, 233, 0.45);
+    }
+    28% {
+        transform: scale(1);
+        box-shadow: 0 0 15px rgba(14, 165, 233, 0.35), 0 0 2px rgba(14, 165, 233, 0.2);
+    }
+    42% {
+        transform: scale(1.03);
+        box-shadow: 0 0 28px rgba(14, 165, 233, 0.7), 0 0 12px rgba(14, 165, 233, 0.45);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 15px rgba(14, 165, 233, 0.35), 0 0 2px rgba(14, 165, 233, 0.2);
+    }
+}
+
+.update-notify-header h3 {
+    margin: 0 !important;
+    color: var(--accent, #0ea5e9) !important;
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.05em !important;
+}
+
+.update-notify-icon {
+    font-size: 2.2rem !important;
+    margin: 0.6rem 0 !important;
+}
+
+.update-notify-title {
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    color: var(--text-primary) !important;
+    margin: 4px 0 !important;
+}
+
+.update-notify-text {
+    font-size: 0.85rem !important;
+    color: var(--text-secondary) !important;
+    margin: 2px 0 !important;
+}
+
+.update-notify-author {
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    color: var(--accent, #0ea5e9) !important;
+    margin: 4px 0 12px 0 !important;
+}
+
+.update-notify-version-badge {
+    display: inline-block !important;
+    background-color: rgba(14, 165, 233, 0.1) !important;
+    color: var(--accent, #0ea5e9) !important;
+    padding: 4px 12px !important;
+    border-radius: 20px !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    border: 1px solid rgba(14, 165, 233, 0.2) !important;
+    margin-bottom: 12px !important;
+}
+
+.update-notify-btn {
+    background-color: var(--accent, #0ea5e9) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 8px 24px !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s, transform 0.1s !important;
+    width: 100% !important;
+}
+
+.update-notify-btn:hover {
+    background-color: var(--accent-hover, #0284c7) !important;
+}
+
+.update-notify-btn:active {
+    transform: scale(0.97) !important;
+}
+
 
 
 

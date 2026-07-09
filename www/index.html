@@ -12,26 +12,54 @@
 <body>
     <div class="app-container">
         <header class="main-header">
-            <div class="left-header-section" style="display:flex; align-items:center; gap:16px;">
-                <div class="logo">BC3 VIEWER</div>
-                <!-- Contenedor PEM & PEC Widget (ahora segundo, a la derecha del nombre) -->
-                <div class="project-info" id="projectInfo"
-                    style="display:none; flex-direction:column; align-items:flex-start;">
-                    <div class="budget-widget" style="margin:0;">
-                        <div class="budget-card pem-card" id="budgetTotal">
-                            <span class="lbl">PEM</span>
-                            <span class="val">0,00 €</span>
+            <div class="header-top-row"
+                style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 16px;">
+                <div class="left-header-section" style="display:flex; align-items:center; gap:16px;">
+                    <div class="logo">BC3 VIEWER</div>
+                    <!-- Contenedor PEM & PEC Widget (ahora segundo, a la derecha del nombre) -->
+                    <div class="project-info" id="projectInfo"
+                        style="display:none; flex-direction:column; align-items:flex-start;">
+                        <div class="budget-widget" style="margin:0;">
+                            <div class="budget-card pem-card" id="budgetTotal">
+                                <span class="lbl">PEM</span>
+                                <span class="val">0,00 €</span>
+                            </div>
+                            <div class="budget-card pec-card" id="budgetTotalPEC" style="display:none;">
+                                <span class="lbl">PEC</span>
+                                <span class="val">0,00 €</span>
+                            </div>
                         </div>
-                        <div class="budget-card pec-card" id="budgetTotalPEC" style="display:none;">
-                            <span class="lbl">PEC</span>
-                            <span class="val">0,00 €</span>
+                        <div id="stats" style="font-size: 0.68rem; color: #888; margin-top: 2px;"></div>
+                    </div>
+                </div>
+
+                <!-- Botones del extremo derecho: Menú Ajustes (Engranaje) y Ocultar Cabecera -->
+                <div class="right-controls" style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" id="collapseHeaderBtn" class="header-toggle-btn" title="Ocultar Cabecera"
+                        style="background:none; border:none; font-size:1.1rem; cursor:pointer; padding:4px; color: var(--text-secondary);">🔼</button>
+                    <div class="dropdown" id="settingsDropdown">
+                        <button type="button" class="settings-toggle-btn" id="settingsBtn" aria-label="Ajustes"
+                            title="Ajustes">⚙️</button>
+                        <div class="dropdown-content dropdown-content-right"
+                            style="right: 0; left: auto; min-width: 160px;">
+                            <button type="button" id="toggleCoeffsBtn"
+                                style="display:none; justify-content:flex-start; gap:8px; width:100%; border:none; background:none; text-align:left; padding:8px 12px; cursor:pointer;"><span
+                                    style="font-size:1rem;">⚙️</span> Coeficientes</button>
+                            <button type="button" id="auditLogBtn"
+                                style="display:none; justify-content:flex-start; gap:8px; width:100%; border:none; background:none; text-align:left; padding:8px 12px; cursor:pointer;"><span
+                                    style="font-size:1rem;">📜</span> Auditoría</button>
+                            <button type="button" id="themeToggle"
+                                style="display:flex; justify-content:flex-start; gap:8px; width:100%; border:none; background:none; text-align:left; padding:8px 12px; cursor:pointer;"><span
+                                    id="themeToggleIcon" style="font-size:1rem;">🌙</span> Tema Visual</button>
+                            <button type="button" id="infoBtn"
+                                style="display:flex; justify-content:flex-start; gap:8px; width:100%; border:none; background:none; text-align:left; padding:8px 12px; cursor:pointer;"><span
+                                    style="font-size:1rem;">ℹ️</span> Información</button>
                         </div>
                     </div>
-                    <div id="stats" style="font-size: 0.68rem; color: #888; margin-top: 2px;"></div>
                 </div>
             </div>
 
-            <div class="upload-area">
+            <div class="upload-area" style="width: 100%;">
                 <form id="uploadForm">
                     <!-- Grupo 1: Carga y Procesado -->
                     <div class="control-container" id="uploadGroup">
@@ -40,7 +68,8 @@
                             <input type="file" id="bc3file" name="bc3file" accept=".bc3" hidden>
                         </label>
                         <button type="submit" class="process-btn"><span class="btn-text">PROCESA</span></button>
-                        <button type="button" id="closeBudgetBtn" class="close-budget-btn" title="Cerrar Presupuesto">✕</button>
+                        <button type="button" id="closeBudgetBtn" class="close-budget-btn"
+                            title="Cerrar Presupuesto">✕</button>
                     </div>
 
                     <div class="actions-wrapper" id="actionsWrapper" style="display:none;">
@@ -83,31 +112,6 @@
                         </div>
                     </div>
                 </form>
-            </div>
-
-            <!-- Botones del extremo derecho: Menú Ajustes (Engranaje) y Ocultar Cabecera -->
-            <div class="right-controls" style="display: flex; align-items: center; gap: 8px;">
-                <button type="button" id="collapseHeaderBtn" class="header-toggle-btn" title="Ocultar Cabecera"
-                    style="background:none; border:none; font-size:1.1rem; cursor:pointer; padding:4px; color: var(--text-secondary);">🔼</button>
-                <div class="dropdown" id="settingsDropdown">
-                    <button type="button" class="settings-toggle-btn" id="settingsBtn" aria-label="Ajustes"
-                        title="Ajustes">⚙️</button>
-                    <div class="dropdown-content dropdown-content-right"
-                        style="right: 0; left: auto; min-width: 160px;">
-                        <button type="button" id="toggleCoeffsBtn"
-                            style="display:none; justify-content:flex-start; gap:8px; width:100%; border:none; background:none; text-align:left; padding:8px 12px; cursor:pointer;"><span
-                                style="font-size:1rem;">⚙️</span> Coeficientes</button>
-                        <button type="button" id="auditLogBtn"
-                            style="display:none; justify-content:flex-start; gap:8px; width:100%; border:none; background:none; text-align:left; padding:8px 12px; cursor:pointer;"><span
-                                style="font-size:1rem;">📜</span> Auditoría</button>
-                        <button type="button" id="themeToggle"
-                            style="display:flex; justify-content:flex-start; gap:8px; width:100%; border:none; background:none; text-align:left; padding:8px 12px; cursor:pointer;"><span
-                                id="themeToggleIcon" style="font-size:1rem;">🌙</span> Tema Visual</button>
-                        <button type="button" id="infoBtn"
-                            style="display:flex; justify-content:flex-start; gap:8px; width:100%; border:none; background:none; text-align:left; padding:8px 12px; cursor:pointer;"><span
-                                style="font-size:1rem;">ℹ️</span> Información</button>
-                    </div>
-                </div>
             </div>
         </header>
 
@@ -563,7 +567,7 @@
 
         </main>
         <footer class="app-footer">
-            <span>&#169; Licencia Open Source - Software Libre y de Derechos Abiertos. Desing by jmcaamanog </span>
+            <span>&#169; © Licencia Open Source - Software Libre by jmcaamanog </span>
             <span>V1.3.4</span>
         </footer>
     </div>
@@ -571,7 +575,7 @@
     <div id="dashboardModal" class="modal" style="display:none;">
         <div class="modal-content dashboard-modal-content">
             <div class="modal-header">
-                <h3>📊 Dashboard Técnico del Presupuesto</h3>
+                <h3>📊 Dashboard</h3>
                 <button type="button" id="closeDashboardBtn" class="close-btn">✕</button>
             </div>
             <!-- KPI Strip -->
@@ -665,7 +669,8 @@
                     <span style="font-size: 0.75rem; color: var(--text-secondary); margin-left: 4px;">Busca una partida,
                         indica el mes y la cantidad</span>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 110px 130px auto; gap: 8px; align-items: end;">
+                <div class="cert-obras-add-grid"
+                    style="display: grid; grid-template-columns: 1fr 110px 130px auto; gap: 8px; align-items: end;">
                     <!-- Buscador de partida -->
                     <div>
                         <label
@@ -751,7 +756,8 @@
                     <input type="text" id="certObrasFilter" placeholder="Filtrar partidas..." autocomplete="off"
                         style="padding: 5px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.78rem; background: var(--bg-color); color: var(--text-primary); outline: none; width: 200px;">
                 </div>
-                <div style="border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+                <div class="cert-table-container"
+                    style="border: 1px solid var(--border-color); border-radius: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch;">
                     <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
                         <thead>
                             <tr
@@ -903,12 +909,15 @@
                                 Jose Manuel Caamaño</div>
                             <ul
                                 style="margin: 0; padding-left: 1rem; color: var(--text-secondary); font-size: 0.75rem;">
-                                <li>Rediseño de barra de herramientas en móvil alineando los 8 iconos en una sola fila.</li>
-                                <li>Añadido botón de salida (X roja) al lado de PROCESA para resetear presupuesto y volver a la bienvenida.</li>
+                                <li>Rediseño de barra de herramientas en móvil alineando los 8 iconos en una sola fila.
+                                </li>
+                                <li>Añadido botón de salida (X roja) al lado de PROCESA para resetear presupuesto y
+                                    volver a la bienvenida.</li>
                             </ul>
                         </div>
                         <!-- Versión 1.3.3 -->
-                        <div style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
+                        <div
+                            style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
                             <div
                                 style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary);">
                                 <span>V1.3.3</span>
@@ -1056,7 +1065,7 @@
 
                 <p
                     style="font-size: 0.75rem; color: var(--text-secondary); text-align: center; margin-top: 1.2rem; margin-bottom: 0; border-top: 1px solid var(--border-color); padding-top: 8px;">
-                    © Licencia Open Source - Software Libre y de Derechos Abiertos. Desing by jmcaamanog
+                    © Licencia Open Source - Software Libre by jmcaamanog
                 </p>
             </div>
         </div>
@@ -1209,6 +1218,26 @@
     <!-- Botón flotante para restaurar cabecera cuando está oculta -->
     <button type="button" id="expandHeaderBtn" class="floating-expand-btn" style="display: none;"
         title="Mostrar Cabecera">🔽</button>
+
+    <!-- Modal de Notificación de Actualización -->
+    <div id="updateNotifyModal" class="modal"
+        style="display:none; justify-content:center; align-items:center; z-index:10005;">
+        <div class="modal-content update-notify-content">
+            <div class="update-notify-header">
+                <h3>🚀 ¡ACTUALIZACIÓN!</h3>
+            </div>
+            <div class="update-notify-body">
+                <div class="update-notify-icon">✨📱✨</div>
+                <p class="update-notify-title">¡Ya tienes nuevas funciones!</p>
+                <p class="update-notify-text">Que las disfrutes</p>
+                <p class="update-notify-author">(by jmcaamanog)</p>
+                <div class="update-notify-version-badge" id="updateNotifyVersion">V1.3.4</div>
+            </div>
+            <div class="update-notify-footer">
+                <button type="button" id="updateNotifyOkBtn" class="update-notify-btn">¡Entendido! 👍</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Pin Lock Overlay -->
     <div id="pinLockOverlay" class="pin-lock-overlay" style="display: none;">
