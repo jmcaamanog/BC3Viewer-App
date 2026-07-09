@@ -3800,5 +3800,95 @@ body.dark-theme .badge-critical-tree {
     font-weight: 500;
 }
 
+/* =============================================================================
+   ESTILOS DE CIERRE DE PRESUPUESTO Y COMPARTICIÓN UNIFICADA EN MÓVIL
+   ============================================================================= */
+
+/* Botón cerrar presupuesto (X roja al lado de PROCESA) */
+.close-budget-btn {
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 6px !important;
+    width: 28px !important;
+    height: 28px !important;
+    display: none; /* Se activa mediante JS cuando hay un presupuesto cargado */
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.8rem !important;
+    font-weight: bold !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s ease, transform 0.1s ease !important;
+    padding: 0 !important;
+    margin-left: 6px !important;
+}
+.close-budget-btn:hover {
+    background-color: #dc2626 !important;
+    transform: scale(1.05);
+}
+.close-budget-btn:active {
+    transform: scale(0.95);
+}
+
+/* Contenedor wrapper de botones de acción */
+.actions-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Modificaciones adaptativas para pantallas de menos de 768px */
+@media screen and (max-width: 768px) {
+    .close-budget-btn {
+        width: 38px !important;
+        height: 38px !important;
+        font-size: 1.15rem !important;
+        border-radius: 8px !important;
+        margin-left: 4px !important;
+    }
+    
+    .actions-wrapper {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+        background-color: var(--bg-group, #f8fafc);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 4px 6px !important;
+        gap: 4px !important;
+        box-sizing: border-box !important;
+    }
+    
+    body.dark-theme .actions-wrapper {
+        background-color: #1e293b;
+        border-color: #334155;
+    }
+    
+    /* Hacemos que los grupos pierdan su fondo y bordes individuales para unirse en una única fila */
+    .actions-wrapper .control-container {
+        display: contents !important;
+    }
+    
+    /* Homogeneizar botones dentro del wrapper de acciones en móvil */
+    .actions-wrapper .nav-tab,
+    .actions-wrapper .tool-btn,
+    .actions-wrapper .save-btn,
+    .actions-wrapper .dropdown {
+        margin: 0 !important;
+    }
+    
+    /* El botón del dropdown Exportar y los normales deben ocupar el mismo tamaño */
+    .actions-wrapper .export-btn {
+        width: 38px !important;
+        height: 38px !important;
+        padding: 0 !important;
+        font-size: 1.1rem !important;
+        border-radius: 6px !important;
+    }
+}
+
 
 

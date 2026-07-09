@@ -1,4 +1,4 @@
-const APP_VERSION = '1.3.3.3'; // Versión actual de la aplicación (Actualizada)
+const APP_VERSION = '1.3.4'; // Versión actual de la aplicación (Actualizada)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // URL del Webhook de Google Sheets para registrar usuarios de la app.
@@ -238,6 +238,100 @@ if (uploadForm) {
             btn.textContent = originalText;
             btn.disabled = false;
         }
+    });
+}
+
+// Botón para cerrar/salir del presupuesto (X roja al lado de PROCESA)
+const closeBudgetBtn = document.getElementById('closeBudgetBtn');
+if (closeBudgetBtn) {
+    closeBudgetBtn.addEventListener('click', () => {
+        if (!confirm("¿Estás seguro de que deseas salir del presupuesto actual?")) {
+            return;
+        }
+
+        // 1. Limpiar datos y variables globales
+        parsedData = null;
+        originalFileText = "";
+        expandedNodes.clear();
+        stateHistory = [];
+        historyIndex = -1;
+        compareData = null;
+        compareActive = false;
+        currentFileName = "presupuesto.bc3";
+
+        // 2. Limpiar elementos de entrada y estadísticas
+        const fileInput = document.getElementById('bc3file');
+        if (fileInput) fileInput.value = '';
+
+        const fileNameEl = document.getElementById('fileName');
+        if (fileNameEl) {
+            fileNameEl.innerHTML = '<span class="btn-text">SELECCIONAR ARCHIVO .BC3</span>';
+        }
+
+        const stats = document.getElementById('stats');
+        if (stats) stats.textContent = '';
+
+        const info = document.getElementById('projectInfo');
+        if (info) info.style.display = 'none';
+
+        // 3. Ocultar los contenedores de controles de acciones
+        const actionsWrapper = document.getElementById('actionsWrapper');
+        if (actionsWrapper) actionsWrapper.style.display = 'none';
+
+        const viewsGroup = document.getElementById('viewsGroup');
+        const toolsGroup = document.getElementById('toolsGroup');
+        const exportGroup = document.getElementById('exportGroup');
+        if (viewsGroup) viewsGroup.style.display = 'none';
+        if (toolsGroup) toolsGroup.style.display = 'none';
+        if (exportGroup) exportGroup.style.display = 'none';
+
+        const sBtn = document.getElementById('saveBtn');
+        if (sBtn) sBtn.style.display = 'none';
+
+        // Ocultar el propio botón X roja
+        closeBudgetBtn.style.setProperty('display', 'none', 'important');
+
+        // 4. Restaurar vista de bienvenida y vaciar contenido de partidas
+        const treeContent = document.getElementById('treeContent');
+        if (treeContent) treeContent.innerHTML = '';
+
+        const emptyState = document.querySelector('#treePanel .empty-state');
+        if (emptyState) emptyState.style.display = 'flex';
+
+        // Asegurar que se vuelve a ver el treePanel y detailsPanel
+        const treePanel = document.getElementById('treePanel');
+        if (treePanel) treePanel.style.display = 'flex';
+
+        const detailsPanel = document.getElementById('detailsPanel');
+        if (detailsPanel) detailsPanel.style.display = 'flex';
+
+        const detailsContent = document.getElementById('detailsContent');
+        if (detailsContent) detailsContent.style.display = 'none';
+
+        const detailsPanelEmpty = document.querySelector('#detailsPanel .empty-state');
+        if (detailsPanelEmpty) detailsPanelEmpty.style.display = 'block';
+
+        const pricesPanel = document.getElementById('pricesPanel');
+        if (pricesPanel) pricesPanel.style.display = 'none';
+
+        const breadcrumbContainer = document.getElementById('breadcrumbContainer');
+        if (breadcrumbContainer) breadcrumbContainer.style.display = 'none';
+
+        // Ocultar comparador y coeficientes
+        const compResults = document.getElementById('compareResults');
+        if (compResults) compResults.style.display = 'none';
+        
+        const totalPecDisplay = document.getElementById('budgetTotalPEC');
+        if (totalPecDisplay) totalPecDisplay.style.display = 'none';
+        
+        const coeffsPanel = document.getElementById('coeffsPanel');
+        if (coeffsPanel) coeffsPanel.style.display = 'none';
+
+        // 5. Eliminar auto-carga de localStorage para evitar que se cargue de nuevo al refrescar
+        localStorage.removeItem('last_bc3_content');
+        localStorage.removeItem('last_bc3_filename');
+
+        console.log("Presupuesto cerrado por el usuario. Pantalla de bienvenida restaurada.");
     });
 }
 
@@ -803,6 +897,9 @@ function renderApp(data) {
     currentLevel = null;
 
     // Show control containers and buttons
+    const actionsWrapper = document.getElementById('actionsWrapper');
+    if (actionsWrapper) actionsWrapper.style.display = 'flex';
+
     const viewsGroup = document.getElementById('viewsGroup');
     const toolsGroup = document.getElementById('toolsGroup');
     const exportGroup = document.getElementById('exportGroup');
@@ -812,6 +909,11 @@ function renderApp(data) {
 
     const sBtn = document.getElementById('saveBtn');
     if (sBtn) sBtn.style.display = 'inline-block';
+
+    const closeBudgetBtn = document.getElementById('closeBudgetBtn');
+    if (closeBudgetBtn) {
+        closeBudgetBtn.style.setProperty('display', 'inline-flex', 'important');
+    }
 
     // Resetear comparador y coeficientes al cargar un nuevo presupuesto
     compareData = null;
