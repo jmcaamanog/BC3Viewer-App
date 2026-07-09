@@ -4237,13 +4237,14 @@ function rebuildGanttDOM() {
 
         renderedRowIndex++;
 
+        const rowHeight = window.innerWidth <= 768 ? 48 : 34;
         // Registrar coordenadas de capítulos críticos visibles para trazar la línea de conexión
         if (task.depth === 1 && criticalPathSet.has(task.id)) {
             renderedCriticalChapters.push({
                 id: task.id,
                 startWeek: st.startWeek,
                 durationWeeks: st.durationWeeks,
-                y: (renderedRowIndex * 34) + 17 // Centro vertical de esta fila
+                y: (renderedRowIndex * rowHeight) + (rowHeight / 2) // Centro vertical de esta fila
             });
         }
 
@@ -4288,6 +4289,25 @@ function rebuildGanttDOM() {
         }
 
         cellName.appendChild(nameSpan);
+
+        // Subtexto con Restante y % Ejecutado para móvil
+        const subtextSpan = document.createElement('span');
+        subtextSpan.className = 'gantt-task-subtext';
+        
+        let daysStr = '';
+        const progressVal = st.progress || 0;
+        if (progressVal === 100) {
+            daysStr = 'Listo';
+        } else {
+            const endD = weekToDate(st.startWeek + st.durationWeeks);
+            endD.setHours(0, 0, 0, 0);
+            const diffMs = endD - today;
+            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+            daysStr = diffDays < 0 ? `-${Math.abs(diffDays)} d` : `${diffDays} d`;
+        }
+        subtextSpan.textContent = `Rest: ${daysStr} | ${progressVal}%`;
+        cellName.appendChild(subtextSpan);
+
         nameRow.appendChild(cellName);
 
         // 2. Celda Días Restantes (desde Hoy hasta fin de tarea)
@@ -4421,12 +4441,14 @@ function rebuildGanttDOM() {
             resizeL.style.position = 'relative';
             resizeL.style.zIndex = '2';
             resizeL.addEventListener('mousedown', e => startGanttDrag(e, task.id, 'left'));
+            resizeL.addEventListener('touchstart', e => startGanttDrag(e, task.id, 'left'), { passive: false });
 
             const resizeR = document.createElement('div');
             resizeR.className = 'gantt-resize gantt-resize-r';
             resizeR.style.position = 'relative';
             resizeR.style.zIndex = '2';
             resizeR.addEventListener('mousedown', e => startGanttDrag(e, task.id, 'right'));
+            resizeR.addEventListener('touchstart', e => startGanttDrag(e, task.id, 'right'), { passive: false });
 
             bar.appendChild(resizeL);
             bar.appendChild(barLabel);
@@ -4436,6 +4458,11 @@ function rebuildGanttDOM() {
                 if (e.target === resizeL || e.target === resizeR) return;
                 startGanttDrag(e, task.id, 'move');
             });
+            bar.addEventListener('touchstart', e => {
+                if (ganttLinkMode) return; // link mode: no drag, let click handle it
+                if (e.target === resizeL || e.target === resizeR) return;
+                startGanttDrag(e, task.id, 'move');
+            }, { passive: false });
             // Click listener específico para modo enlace en barras hoja
             bar.addEventListener('click', e => {
                 if (!ganttLinkMode) return;
@@ -4550,8 +4577,15 @@ function startGanttDrag(e, taskId, mode) {
     // En modo enlace: no iniciar drag, dejar que el click se propague
     if (ganttLinkMode) return;
 
-    e.preventDefault();
+    const isTouch = e.type.startsWith('touch');
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+
+    // Prevent default scrolling on mobile when dragging bars
+    if (isTouch) {
+        e.preventDefault();
+    }
     e.stopPropagation();
+    
     const st = ganttState[taskId];
     if (!st) return;
 
@@ -4564,13 +4598,36 @@ function startGanttDrag(e, taskId, mode) {
         taskId,
         parentId: taskObj ? taskObj.parentId : null,
         mode,
-        startX: e.clientX,
+        startX: clientX,
         origStart: st.startWeek,
         origDur: st.durationWeeks
     };
 
-    document.addEventListener('mousemove', doGanttDrag);
-    document.addEventListener('mouseup', stopGanttDrag);
+    if (isTouch) {
+        document.addEventListener('touchmove', doGanttTouchDrag, { passive: false });
+        document.addEventListener('touchend', stopGanttTouchDrag);
+    } else {
+        document.addEventListener('mousemove', doGanttDrag);
+        document.addEventListener('mouseup', stopGanttDrag);
+    }
+}
+
+function doGanttTouchDrag(e) {
+    if (!ganttDrag) return;
+    const touch = e.touches[0] || e.changedTouches[0];
+    if (!touch) return;
+    
+    // Simular el evento mousemove con las coordenadas del touch
+    const mockEvent = {
+        clientX: touch.clientX
+    };
+    doGanttDrag(mockEvent);
+}
+
+function stopGanttTouchDrag() {
+    stopGanttDrag();
+    document.removeEventListener('touchmove', doGanttTouchDrag);
+    document.removeEventListener('touchend', stopGanttTouchDrag);
 }
 
 function doGanttDrag(e) {
@@ -5533,7 +5590,7 @@ function drawDependencyArrows(bodyWrap, colsCount) {
         const toIdx = getRenderedRowIndex(dep.to);
         if (fromIdx < 0 || toIdx < 0) return;
 
-        const ROW_H = 34;
+        const ROW_H = window.innerWidth <= 768 ? 48 : 34;
         const fromCoords = getGanttBarCoords(fromSt);
         const toCoords = getGanttBarCoords(toSt);
 
