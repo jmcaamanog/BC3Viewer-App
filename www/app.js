@@ -588,7 +588,7 @@ function getConceptDecomposition(concept) {
 
 // Check if we're in mobile mode
 function isMobileMode() {
-    return window.innerWidth <= 768;
+    return window.innerWidth <= 1024;
 }
 
 // Update breadcrumb display
@@ -3597,7 +3597,7 @@ let ganttStartDate = new Date();
 let ganttTotalWeeks = 26;
 let GANTT_COL_PX = 44; // ancho de cada columna en px (redimensionable por zoom slider)
 let ganttViewMode = 'weeks'; // escala de tiempo: 'days', 'weeks', 'months'
-let ganttLeftColWidth = window.innerWidth <= 768 ? 160 : 460;  // ancho columna tareas en px (redimensionable)
+let ganttLeftColWidth = window.innerWidth <= 1024 ? 160 : 460;  // ancho columna tareas en px (redimensionable)
 let ganttColDrag = null;       // estado drag de la columna
 
 // Clave localStorage basada en el nombre del fichero cargado
@@ -4094,7 +4094,7 @@ function rebuildGanttDOM() {
             mediaMonth = mediaDay * 30.417;
         }
 
-        const isMobile = window.innerWidth <= 768;
+        const isMobile = window.innerWidth <= 1024;
         summaryBar.innerHTML = `
             <details class="gantt-summary-details" ${isMobile ? '' : 'open'} style="width: 100%;">
                 <summary class="gantt-summary-summary" style="cursor: pointer; padding: 4px; font-weight: 600; font-size: 0.8rem; color: var(--accent); text-align: center; list-style: none; outline: none; user-select: none;">
@@ -4237,7 +4237,7 @@ function rebuildGanttDOM() {
 
         renderedRowIndex++;
 
-        const rowHeight = window.innerWidth <= 768 ? 48 : 34;
+        const rowHeight = window.innerWidth <= 1024 ? 48 : 34;
         // Registrar coordenadas de capítulos críticos visibles para trazar la línea de conexión
         if (task.depth === 1 && criticalPathSet.has(task.id)) {
             renderedCriticalChapters.push({
@@ -4251,6 +4251,9 @@ function rebuildGanttDOM() {
         // Fila nombre estructurada
         const nameRow = document.createElement('div');
         nameRow.className = 'gantt-name-row gantt-depth-' + task.depth;
+        if (task.hasKids) {
+            nameRow.classList.add('gantt-name-row-parent');
+        }
         nameRow.dataset.taskId = task.id;
 
         // 1. Celda Nombre (con sangría y toggle)
@@ -4305,7 +4308,48 @@ function rebuildGanttDOM() {
             const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
             daysStr = diffDays < 0 ? `-${Math.abs(diffDays)} d` : `${diffDays} d`;
         }
-        subtextSpan.textContent = `Rest: ${daysStr} | ${progressVal}%`;
+        subtextSpan.innerHTML = `Rest: ${daysStr} | <span class="subtext-prog-val">${progressVal}%</span>`;
+
+        if (!task.hasKids) {
+            // Añadir mini-botones + y - en el subtexto móvil
+            const miniDec = document.createElement('button');
+            miniDec.type = 'button';
+            miniDec.className = 'gantt-mini-prog-btn';
+            miniDec.textContent = '-';
+            miniDec.title = 'Restar 10% de avance';
+            miniDec.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const curr = st.progress || 0;
+                const targetProg = Math.max(0, curr - 10);
+                st.progress = targetProg;
+                recalculateParentProgress();
+                ganttSave();
+                rebuildGanttDOM();
+            });
+
+            const miniInc = document.createElement('button');
+            miniInc.type = 'button';
+            miniInc.className = 'gantt-mini-prog-btn';
+            miniInc.textContent = '+';
+            miniInc.title = 'Sumar 10% de avance';
+            miniInc.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const curr = st.progress || 0;
+                const targetProg = Math.min(100, curr + 10);
+                st.progress = targetProg;
+                recalculateParentProgress();
+                ganttSave();
+                rebuildGanttDOM();
+            });
+
+            const btnsWrapper = document.createElement('span');
+            btnsWrapper.className = 'gantt-mini-btns-wrapper';
+            btnsWrapper.appendChild(miniDec);
+            btnsWrapper.appendChild(miniInc);
+            
+            subtextSpan.appendChild(btnsWrapper);
+        }
+
         cellName.appendChild(subtextSpan);
 
         nameRow.appendChild(cellName);
@@ -4390,6 +4434,9 @@ function rebuildGanttDOM() {
         // Fila barra en timeline
         const barRow = document.createElement('div');
         barRow.className = 'gantt-bar-row';
+        if (task.hasKids) {
+            barRow.classList.add('gantt-bar-row-parent');
+        }
 
         let colsCount = totalWeeks;
         if (ganttViewMode === 'days') colsCount = totalWeeks * 7;
@@ -5589,7 +5636,7 @@ function drawDependencyArrows(bodyWrap, colsCount) {
         const toIdx = getRenderedRowIndex(dep.to);
         if (fromIdx < 0 || toIdx < 0) return;
 
-        const ROW_H = window.innerWidth <= 768 ? 48 : 34;
+        const ROW_H = window.innerWidth <= 1024 ? 48 : 34;
         const fromCoords = getGanttBarCoords(fromSt);
         const toCoords = getGanttBarCoords(toSt);
 
