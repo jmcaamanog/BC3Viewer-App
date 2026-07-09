@@ -7844,8 +7844,8 @@ function checkUpdateNotification() {
         const isMobileOrTablet = window.innerWidth <= 1024 || window.Capacitor;
 
         if (isMobileOrTablet) {
-            // Si la versión actual es diferente de la última mostrada
-            if (lastShown && lastShown !== APP_VERSION) {
+            // Si la versión actual es diferente de la última mostrada (o si no se ha registrado aún)
+            if (lastShown !== APP_VERSION) {
                 const modal = document.getElementById('updateNotifyModal');
                 const versionBadge = document.getElementById('updateNotifyVersion');
                 const okBtn = document.getElementById('updateNotifyOkBtn');
@@ -7859,9 +7859,6 @@ function checkUpdateNotification() {
                         localStorage.setItem('last_shown_update_version', APP_VERSION);
                     };
                 }
-            } else if (!lastShown) {
-                // Inicializar para no molestar a usuarios nuevos con alertas retrospectivas
-                localStorage.setItem('last_shown_update_version', APP_VERSION);
             }
         }
     } catch (e) {
