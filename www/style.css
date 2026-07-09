@@ -3877,6 +3877,52 @@ body.dark-theme .badge-critical-tree {
         font-size: 0.72rem !important;
         padding: 4px 8px !important;
     }
+
+    /* Adaptaciones para el Diagrama de Gantt (Planning) en móvil */
+    .gantt-summary-bar {
+        padding: 6px 12px !important;
+        margin-bottom: 8px !important;
+    }
+    
+    .gantt-summary-summary::-webkit-details-marker {
+        display: none !important;
+    }
+    
+    .gantt-summary-summary {
+        list-style: none !important;
+        display: block !important;
+    }
+    
+    .gantt-summary-content {
+        margin-top: 6px !important;
+        gap: 8px !important;
+    }
+    
+    .gantt-kpi-group {
+        min-width: 100% !important;
+        gap: 2px !important;
+    }
+    
+    .gantt-kpi-group h4 {
+        font-size: 0.68rem !important;
+        padding-bottom: 2px !important;
+    }
+    
+    .gantt-sub-kpi {
+        font-size: 0.72rem !important;
+    }
+
+    /* Ocultar subcolumnas de la parte izquierda para dejar espacio al nombre de tarea */
+    .gh-col-days, .gantt-cell-days,
+    .gh-col-progress, .gantt-cell-progress {
+        display: none !important;
+    }
+    
+    /* El nombre de tarea ahora tiene todo el ancho de la columna izquierda */
+    .gh-col-name, .gantt-cell-name {
+        flex: 1 !important;
+        width: 100% !important;
+    }
 }
 
 /* Pin Lock Overlay Screen styles */

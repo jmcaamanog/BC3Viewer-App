@@ -3582,7 +3582,7 @@ let ganttStartDate = new Date();
 let ganttTotalWeeks = 26;
 let GANTT_COL_PX = 44; // ancho de cada columna en px (redimensionable por zoom slider)
 let ganttViewMode = 'weeks'; // escala de tiempo: 'days', 'weeks', 'months'
-let ganttLeftColWidth = 460;  // ancho columna tareas en px (redimensionable)
+let ganttLeftColWidth = window.innerWidth <= 768 ? 160 : 460;  // ancho columna tareas en px (redimensionable)
 let ganttColDrag = null;       // estado drag de la columna
 
 // Clave localStorage basada en el nombre del fichero cargado
@@ -4079,31 +4079,39 @@ function rebuildGanttDOM() {
             mediaMonth = mediaDay * 30.417;
         }
 
+        const isMobile = window.innerWidth <= 768;
         summaryBar.innerHTML = `
-            <div class="gantt-kpi-group">
-                <h4>⏱️ Cronograma y Plazos</h4>
-                <div class="gantt-kpi-row">
-                    <div class="gantt-sub-kpi"><span>Plazo Total:</span> <strong>${totalWeeks} semanas (${totalDays} días)</strong></div>
-                    <div class="gantt-sub-kpi"><span>Días Restantes:</span> <strong style="color: ${daysLeft > 0 ? '#eab308' : '#10b981'};">${daysLeft} días</strong></div>
-                    <div class="gantt-sub-kpi"><span>Avance Real:</span> <strong style="color: #10b981;">${globalProg}%</strong></div>
+            <details class="gantt-summary-details" ${isMobile ? '' : 'open'} style="width: 100%;">
+                <summary class="gantt-summary-summary" style="cursor: pointer; padding: 4px; font-weight: 600; font-size: 0.8rem; color: var(--accent); text-align: center; list-style: none; outline: none; user-select: none;">
+                    📊 Resumen de Plazos y Costes (Presione para abrir/cerrar) ▾
+                </summary>
+                <div class="gantt-summary-content" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 10px; justify-content: space-between; width: 100%;">
+                    <div class="gantt-kpi-group">
+                        <h4>⏱️ Cronograma y Plazos</h4>
+                        <div class="gantt-kpi-row">
+                            <div class="gantt-sub-kpi"><span>Plazo Total:</span> <strong>${totalWeeks} sem. (${totalDays} d.)</strong></div>
+                            <div class="gantt-sub-kpi"><span>Días Restantes:</span> <strong style="color: ${daysLeft > 0 ? '#eab308' : '#10b981'};">${daysLeft} d.</strong></div>
+                            <div class="gantt-sub-kpi"><span>Avance Real:</span> <strong style="color: #10b981;">${globalProg}%</strong></div>
+                        </div>
+                    </div>
+                    <div class="gantt-kpi-group">
+                        <h4>💰 Estado Económico (PEM)</h4>
+                        <div class="gantt-kpi-row">
+                            <div class="gantt-sub-kpi"><span>Presupuesto Total:</span> <strong>${totalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong></div>
+                            <div class="gantt-sub-kpi"><span>Certificado:</span> <strong style="color: #10b981;">${executedCertified.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong></div>
+                            <div class="gantt-sub-kpi"><span>Restante:</span> <strong style="color: #3b82f6;">${remainingAmount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong></div>
+                        </div>
+                    </div>
+                    <div class="gantt-kpi-group">
+                        <h4>📊 Media de Ejecución Requerida</h4>
+                        <div class="gantt-kpi-row">
+                            <div class="gantt-sub-kpi"><span>Por Día:</span> <strong>${mediaDay.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong></div>
+                            <div class="gantt-sub-kpi"><span>Por Semana:</span> <strong>${mediaWeek.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong></div>
+                            <div class="gantt-sub-kpi"><span>Por Mes:</span> <strong>${mediaMonth.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong></div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="gantt-kpi-group">
-                <h4>💰 Estado Económico (PEM)</h4>
-                <div class="gantt-kpi-row">
-                    <div class="gantt-sub-kpi"><span>Presupuesto Total:</span> <strong>${totalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong></div>
-                    <div class="gantt-sub-kpi"><span>Certificado:</span> <strong style="color: #10b981;">${executedCertified.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong></div>
-                    <div class="gantt-sub-kpi"><span>Restante:</span> <strong style="color: #3b82f6;">${remainingAmount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong></div>
-                </div>
-            </div>
-            <div class="gantt-kpi-group">
-                <h4>📊 Media de Ejecución Requerida</h4>
-                <div class="gantt-kpi-row">
-                    <div class="gantt-sub-kpi"><span>Por Día:</span> <strong>${mediaDay.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong></div>
-                    <div class="gantt-sub-kpi"><span>Por Semana:</span> <strong>${mediaWeek.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong></div>
-                    <div class="gantt-sub-kpi"><span>Por Mes:</span> <strong>${mediaMonth.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong></div>
-                </div>
-            </div>
+            </details>
         `;
     }
 
