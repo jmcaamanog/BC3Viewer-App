@@ -3207,9 +3207,11 @@ if (ganttExportDropdown) {
         toggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             ganttExportDropdown.classList.toggle('show');
-            // Cerrar el de configuración si está abierto
+            // Cerrar otros dropdowns del Gantt
             const ganttConfig = document.getElementById('ganttConfigDropdown');
             if (ganttConfig) ganttConfig.classList.remove('show');
+            const ganttScale = document.getElementById('ganttScaleDropdown');
+            if (ganttScale) ganttScale.classList.remove('show');
         });
     }
 }
@@ -3221,9 +3223,27 @@ if (ganttConfigDropdown) {
         toggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             ganttConfigDropdown.classList.toggle('show');
-            // Cerrar el de exportación si está abierto
+            // Cerrar otros dropdowns del Gantt
             const ganttExport = document.getElementById('ganttExportDropdown');
             if (ganttExport) ganttExport.classList.remove('show');
+            const ganttScale = document.getElementById('ganttScaleDropdown');
+            if (ganttScale) ganttScale.classList.remove('show');
+        });
+    }
+}
+
+const ganttScaleDropdown = document.getElementById('ganttScaleDropdown');
+if (ganttScaleDropdown) {
+    const toggleBtn = ganttScaleDropdown.querySelector('.dropdown-toggle');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            ganttScaleDropdown.classList.toggle('show');
+            // Cerrar otros dropdowns del Gantt
+            const ganttExport = document.getElementById('ganttExportDropdown');
+            if (ganttExport) ganttExport.classList.remove('show');
+            const ganttConfig = document.getElementById('ganttConfigDropdown');
+            if (ganttConfig) ganttConfig.classList.remove('show');
         });
     }
 }
@@ -3245,6 +3265,10 @@ window.addEventListener('click', (e) => {
     const ganttConfigDrop = document.getElementById('ganttConfigDropdown');
     if (ganttConfigDrop && !ganttConfigDrop.contains(e.target)) {
         ganttConfigDrop.classList.remove('show');
+    }
+    const ganttScaleDrop = document.getElementById('ganttScaleDropdown');
+    if (ganttScaleDrop && !ganttScaleDrop.contains(e.target)) {
+        ganttScaleDrop.classList.remove('show');
     }
 });
 
@@ -5012,9 +5036,12 @@ const modeMonthsBtn = document.getElementById('ganttModeMonthsBtn');
 
 function setGanttMode(mode, activeBtn) {
     ganttViewMode = mode;
-    document.querySelectorAll('.gantt-mode-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.gantt-dropdown-item-btn').forEach(btn => btn.classList.remove('active'));
     if (activeBtn) activeBtn.classList.add('active');
     if (planningModal && planningModal.style.display !== 'none') rebuildGanttDOM();
+    
+    const scaleDrop = document.getElementById('ganttScaleDropdown');
+    if (scaleDrop) scaleDrop.classList.remove('show');
 }
 
 if (modeDaysBtn) {

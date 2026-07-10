@@ -4504,6 +4504,26 @@ body.dark-theme .popup-card-input {
     to { transform: scale(1); }
 }
 
+.gantt-dropdown-item-btn {
+    width: 100% !important;
+    text-align: left !important;
+    padding: 8px 12px !important;
+    background: none !important;
+    border: none !important;
+    color: var(--text-primary, #0f172a) !important;
+    font-size: 0.85rem !important;
+    cursor: pointer !important;
+    box-sizing: border-box !important;
+    display: block !important;
+}
+.gantt-dropdown-item-btn:hover {
+    background-color: var(--hover-bg, #f1f5f9) !important;
+}
+.gantt-dropdown-item-btn.active {
+    font-weight: bold !important;
+    color: var(--accent, #0ea5e9) !important;
+}
+
 
 
 
