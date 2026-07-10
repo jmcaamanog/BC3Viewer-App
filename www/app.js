@@ -3207,6 +3207,23 @@ if (ganttExportDropdown) {
         toggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             ganttExportDropdown.classList.toggle('show');
+            // Cerrar el de configuración si está abierto
+            const ganttConfig = document.getElementById('ganttConfigDropdown');
+            if (ganttConfig) ganttConfig.classList.remove('show');
+        });
+    }
+}
+
+const ganttConfigDropdown = document.getElementById('ganttConfigDropdown');
+if (ganttConfigDropdown) {
+    const toggleBtn = ganttConfigDropdown.querySelector('.dropdown-toggle');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            ganttConfigDropdown.classList.toggle('show');
+            // Cerrar el de exportación si está abierto
+            const ganttExport = document.getElementById('ganttExportDropdown');
+            if (ganttExport) ganttExport.classList.remove('show');
         });
     }
 }
@@ -3224,6 +3241,10 @@ window.addEventListener('click', (e) => {
     const ganttExpDrop = document.getElementById('ganttExportDropdown');
     if (ganttExpDrop && !ganttExpDrop.contains(e.target)) {
         ganttExpDrop.classList.remove('show');
+    }
+    const ganttConfigDrop = document.getElementById('ganttConfigDropdown');
+    if (ganttConfigDrop && !ganttConfigDrop.contains(e.target)) {
+        ganttConfigDrop.classList.remove('show');
     }
 });
 

@@ -4261,6 +4261,11 @@ body.dark-theme .update-notify-content {
 }
 
 @media screen and (max-width: 768px) {
+    /* Ocultar texto del título en móvil para ganar espacio */
+    .gantt-title-text {
+        display: none !important;
+    }
+
     /* Ocultar las columnas de Restante y % Ejecutado individuales en móvil */
     .gh-col-days,
     .gh-col-progress,

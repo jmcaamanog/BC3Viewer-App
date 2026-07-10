@@ -821,15 +821,22 @@
     <div id="planningModal" class="planning-modal-overlay" style="display:none;">
         <div class="planning-modal-content">
             <div class="planning-modal-header">
-                <div class="planning-modal-title">🗓 Planning — Diagrama de Gantt</div>
+                <div class="planning-modal-title">🗓 <span class="gantt-title-text">Planning — Diagrama de Gantt</span></div>
                 <div class="planning-controls">
-                    <label>Inicio:
-                        <input type="date" id="ganttStartDate" class="gantt-control-input">
-                    </label>
-                    <label>Semanas:
-                        <input type="number" id="ganttWeeks" class="gantt-control-input" value="26" min="4" max="156"
-                            style="width:60px;">
-                    </label>
+                    <!-- Dropdown Ajustes Plazos -->
+                    <div class="dropdown" id="ganttConfigDropdown">
+                        <button type="button" class="gantt-action-btn dropdown-toggle" style="height: 34px; display: inline-flex; align-items: center; gap: 4px;" title="Configurar inicio y semanas">⚙️ Ajustes ▾</button>
+                        <div class="dropdown-content gantt-config-dropdown-content" style="right: auto; left: 0; padding: 12px; min-width: 200px; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
+                            <div style="margin-bottom: 8px;">
+                                <label style="display: block; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px; color: var(--text-primary, #0f172a);">Fecha de Inicio:</label>
+                                <input type="date" id="ganttStartDate" class="gantt-control-input" style="width: 100%; box-sizing: border-box; font-size: 0.8rem; padding: 6px; border-radius: 6px; border: 1px solid var(--border-color, #e2e8f0); background-color: var(--card-bg, #ffffff); color: var(--text-primary, #0f172a);">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px; color: var(--text-primary, #0f172a);">Duración (Semanas):</label>
+                                <input type="number" id="ganttWeeks" class="gantt-control-input" value="26" min="4" max="156" style="width: 100%; box-sizing: border-box; font-size: 0.8rem; padding: 6px; border-radius: 6px; border: 1px solid var(--border-color, #e2e8f0); background-color: var(--card-bg, #ffffff); color: var(--text-primary, #0f172a);">
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Botones de Escala (Días, Semanas, Meses) -->
                     <div class="gantt-mode-group">
