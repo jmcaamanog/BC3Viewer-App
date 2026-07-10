@@ -45,7 +45,7 @@
                     </div>
                     <!-- Botón de salir (X roja), movido aquí al lado de PEM y PEC -->
                     <button type="button" id="closeBudgetBtn" class="close-budget-btn"
-                        title="Cerrar Presupuesto">✕</button>
+                        title="Cerrar Presupuesto" style="display:none;">✕</button>
                 </div>
 
                 <!-- Botones del extremo derecho: Menú Ajustes (Engranaje) -->
@@ -262,14 +262,14 @@
                                     BC3 Viewer Premium</h2>
                                 <span
                                     style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Visualizador
-                                    & Editor FIEBDC-3 de Código Abierto</span>
+                                    & Editor <strong>FIEBDC-3 (.bc3)</strong> de Código Abierto diseñado por y para profesionales de la edificación.</span>
                             </div>
                         </div>
 
-                        <p style="margin: 0; font-size: 0.85rem; line-height: 1.5; color: var(--text-primary);">
+                        <p style="margin: 0; font-size: 0.85rem; line-height: 1.5; color: var(--text-primary); text-align: justify;">
                             ¡Bienvenido al visualizador y editor interactivo de presupuestos <strong>FIEBDC-3
                                 (.bc3)</strong> de referencia para profesionales y Arquitectos Técnicos! Una aplicación
-                            ligera, y rápida para optimizar tu trabajo diario.
+                            ligera y rápida para optimizar tu trabajo diario.
                         </p>
 
                         <div style="margin: 2px 0;">
@@ -290,32 +290,31 @@
                         </div>
 
                         <div
-                            style="background-color: rgba(59, 130, 246, 0.04); border-left: 4px solid var(--accent, #3b82f6); padding: 12px; border-radius: 0 8px 8px 0; font-size: 0.78rem; line-height: 1.4; color: var(--text-secondary);">
+                            style="background-color: rgba(59, 130, 246, 0.04); border-left: 4px solid var(--accent, #3b82f6); padding: 12px; border-radius: 0 8px 8px 0; font-size: 0.78rem; line-height: 1.4; color: var(--text-secondary); text-align: justify;">
                             <strong>🛠️ Herramienta en Desarrollo Activo:</strong> Este proyecto es de código abierto.
-                            Si tienes sugerencias O ideas de mejoras, ponte en contacto
-                            via github con el creador del repositorio original de la App <strong>Jose Manuel
-                                Caamaño</strong> (<a href="https://www.linkedin.com/in/jmcaamanog/" target="_blank"
-                                style="color:var(--accent); text-decoration:none; font-weight:600;">LinkedIn</a>), del
+                            Si tienes sugerencias o ideas de mejoras, ponte en contacto
+                            con el creador del repositorio de la App original <strong>Jose Manuel
+                                Caamaño</strong> via <a href="https://www.linkedin.com/in/jmcaamanog/" target="_blank"
+                                style="color:var(--accent); text-decoration:none; font-weight:600;">LinkedIn</a>, el
                             repositorio completo y libre (<a href="https://github.com/jmcaamanog/BC3Viewer-App"
                                 target="_blank"
                                 style="color:var(--accent); text-decoration:none; font-weight:600;">BC3Viewer-App</a>) o
-                            de su Colegio Profesional de la Arquitectura Técnica al que orgullosamente pertenece <a
+                            mediante su Colegio Profesional de la Arquitectura Técnica al que orgullosamente pertenece <a
                                 href="https://www.coatac.es/" target="_blank"
                                 style="color:var(--accent); text-decoration:none; font-weight:600;">COATAC</a>).
                         </div>
                         <div
-                            style="background-color: rgba(59, 130, 246, 0.04); border-left: 4px solid var(--accent, #3b82f6); padding: 12px; border-radius: 0 8px 8px 0; font-size: 0.78rem; line-height: 1.4; color: var(--text-secondary);">
+                            style="background-color: rgba(59, 130, 246, 0.04); border-left: 4px solid var(--accent, #3b82f6); padding: 12px; border-radius: 0 8px 8px 0; font-size: 0.78rem; line-height: 1.4; color: var(--text-secondary); text-align: justify;">
                             📱 Y no olvides decargar la versión <strong>App para Android</strong> y/o el programa para
                             <strong>Windows</strong>. Es gratis! -> <a
                                 href="https://github.com/jmcaamanog/BC3Viewer-App/tree/main/PROGRAMAS" target="_blank"
                                 style="color:var(--accent); text-decoration:none; font-weight:600;">ENLACE</a>
                         </div>
-
+ 
                         <div
                             style="display: flex; flex-direction: column; align-items: center; gap: 12px; font-size: 0.8rem; color: var(--text-primary); font-weight: 500; margin-top: 4px; justify-content: center; background: var(--bg-hover); padding: 16px; border-radius: 8px; border: 1px dashed var(--border-color);">
-                            <span>👉 Arrastra un archivo <strong>.bc3</strong> aquí, o haz clic en el botón de abajo
-                                para buscar:</span>
-
+                            <span>👉 Arrastra un archivo <strong>.bc3</strong> aquí, o haz clic en el botón:</span>
+ 
                             <label for="bc3file" class="welcome-load-btn">
                                 🚀 CARGAR ARCHIVO .BC3
                             </label>
@@ -578,7 +577,7 @@
         </main>
         <footer class="app-footer">
             <span>&#169; © Licencia Open Source - Software Libre by jmcaamanog </span>
-            <span>V1.4.4</span>
+            <span>V1.4.5</span>
         </footer>
     </div>
     <!-- Dashboard Modal -->
@@ -900,7 +899,7 @@
                 <div style="text-align: center; margin-bottom: 1.2rem;">
                     <div style="font-size: 2.5rem; margin-bottom: 0.25rem;">ℹ️</div>
                     <h4 style="font-size: 1.2rem; margin: 0; color: var(--accent);">Visualizador BC3 Premium</h4>
-                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Versión 1.4.4</span>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Versión 1.4.5</span>
                 </div>
 
                 <p style="font-size: 0.85rem; margin-bottom: 1rem;">Esta herramienta permite la importación,
@@ -925,11 +924,26 @@
                 <details class="version-history-details" style="margin-top: 1.2rem;">
                     <summary>Historial de Versiones</summary>
                     <div class="version-history-body">
-                        <!-- Versión 1.4.4 -->
+                        <!-- Versión 1.4.5 -->
                         <div style="margin-bottom: 1rem; border-left: 3px solid var(--accent); padding-left: 8px;">
                             <div
                                 style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary);">
-                                <span>V1.4.4 (Actual)</span>
+                                <span>V1.4.5 (Actual)</span>
+                                <span>10/07/2026</span>
+                            </div>
+                            <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 4px;">Autor:
+                                Jose Manuel Caamaño</div>
+                            <ul
+                                style="margin: 0; padding-left: 1rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                <li><strong>Ocultación inicial de botón Cerrar:</strong> Se fuerza la ocultación inicial del botón rojo de cierre (✕) en la carga inicial de la página para garantizar una interfaz totalmente limpia y sin elementos residuales antes de subir un archivo.</li>
+                                <li><strong>Estilo de texto Justificado en bienvenida:</strong> Se ha modificado el diseño del mensaje de bienvenida y los bloques de avisos informativos para forzar una alineación justificada del texto, logrando una presentación estética superior y profesional.</li>
+                            </ul>
+                        </div>
+                        <!-- Versión 1.4.4 -->
+                        <div style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
+                            <div
+                                style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary);">
+                                <span>V1.4.4</span>
                                 <span>10/07/2026</span>
                             </div>
                             <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 4px;">Autor:
@@ -1347,7 +1361,7 @@
                 <p class="update-notify-title">¡Ya tienes nuevas funciones!</p>
                 <p class="update-notify-text">Que las disfrutes</p>
                 <p class="update-notify-author">(by jmcaamanog)</p>
-                <div class="update-notify-version-badge" id="updateNotifyVersion">V1.4.4</div>
+                <div class="update-notify-version-badge" id="updateNotifyVersion">V1.4.5</div>
             </div>
             <div class="update-notify-footer">
                 <button type="button" id="updateNotifyOkBtn" class="update-notify-btn">¡Entendido! 👍</button>
