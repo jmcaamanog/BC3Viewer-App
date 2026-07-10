@@ -1,4 +1,4 @@
-const APP_VERSION = '1.4.0'; // Versión actual de la aplicación (Actualizada)
+const APP_VERSION = '1.4.1'; // Versión actual de la aplicación (Actualizada)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // URL del Webhook de Google Sheets para registrar usuarios de la app.
@@ -3960,6 +3960,7 @@ function renderPlanningModal() {
     modal.style.display = 'flex';
 
     rebuildGanttDOM();
+    syncHeaderToggleBtn();
 }
 
 // Recalcular dinámicamente las fechas de los capítulos (padres) basándose en sus hijos
@@ -4169,7 +4170,7 @@ function rebuildGanttDOM() {
         summaryBar.innerHTML = `
             <details class="gantt-summary-details" ${isMobile ? '' : 'open'} style="width: 100%;">
                 <summary class="gantt-summary-summary" style="cursor: pointer; padding: 4px; font-weight: 600; font-size: 0.8rem; color: var(--accent); text-align: center; list-style: none; outline: none; user-select: none;">
-                    📊 Resumen de Plazos y Costes (Presione para abrir/cerrar) ▾
+                    Resumen de Plazos y Costes
                 </summary>
                 <div class="gantt-summary-content" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 10px; justify-content: space-between; width: 100%;">
                     <div class="gantt-kpi-group">
@@ -5029,12 +5030,16 @@ if (planningBtn) {
 if (closePlanningBtn && planningModal) {
     closePlanningBtn.addEventListener('click', () => {
         planningModal.style.display = 'none';
+        syncHeaderToggleBtn();
     });
 }
 
 if (planningModal) {
     planningModal.addEventListener('click', e => {
-        if (e.target === planningModal) planningModal.style.display = 'none';
+        if (e.target === planningModal) {
+            planningModal.style.display = 'none';
+            syncHeaderToggleBtn();
+        }
     });
 }
 
@@ -7845,19 +7850,52 @@ if (exportCertPdfBtn) {
     });
 }
 
+function syncHeaderToggleBtn() {
+    const expandHeaderBtn = document.getElementById('expandHeaderBtn');
+    if (!expandHeaderBtn) return;
+    const planningModal = document.getElementById('planningModal');
+    if (planningModal && planningModal.style.display !== 'none') {
+        const details = document.querySelector('#ganttSummaryBar .gantt-summary-details');
+        const isOpen = details ? details.hasAttribute('open') : false;
+        expandHeaderBtn.textContent = isOpen ? '🔼' : '🔽';
+        expandHeaderBtn.title = isOpen ? 'Ocultar Resumen' : 'Mostrar Resumen';
+    } else {
+        const mainHeader = document.querySelector('.main-header');
+        if (mainHeader) {
+            const isCollapsed = mainHeader.classList.contains('collapsed');
+            expandHeaderBtn.textContent = isCollapsed ? '🔽' : '🔼';
+            expandHeaderBtn.title = isCollapsed ? 'Mostrar Cabecera' : 'Ocultar Cabecera';
+        }
+    }
+}
+
+// Escuchar cambios de apertura/cierre de la sección de plazos del Gantt para sincronizar el FAB
+document.addEventListener('toggle', (e) => {
+    if (e.target && e.target.classList.contains('gantt-summary-details')) {
+        syncHeaderToggleBtn();
+    }
+}, true); // Fase de captura porque 'toggle' no burbujea
+
 // Lógica de colapsar y expandir cabecera (Optimización móvil)
 const expandHeaderBtn = document.getElementById('expandHeaderBtn');
 const mainHeader = document.querySelector('.main-header');
 
 if (expandHeaderBtn && mainHeader) {
     expandHeaderBtn.addEventListener('click', () => {
-        const isCollapsed = mainHeader.classList.toggle('collapsed');
-        if (isCollapsed) {
-            expandHeaderBtn.textContent = '🔽';
-            expandHeaderBtn.title = 'Mostrar Cabecera';
+        const planningModal = document.getElementById('planningModal');
+        if (planningModal && planningModal.style.display !== 'none') {
+            const details = document.querySelector('#ganttSummaryBar .gantt-summary-details');
+            if (details) {
+                const isOpen = details.hasAttribute('open');
+                if (isOpen) {
+                    details.removeAttribute('open');
+                } else {
+                    details.setAttribute('open', '');
+                }
+            }
         } else {
-            expandHeaderBtn.textContent = '🔼';
-            expandHeaderBtn.title = 'Ocultar Cabecera';
+            mainHeader.classList.toggle('collapsed');
+            syncHeaderToggleBtn();
         }
     });
 }

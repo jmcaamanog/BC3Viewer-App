@@ -24,7 +24,7 @@ El objetivo de este proyecto es empaquetar y distribuir el visualizador web orig
 > Puedes usar la versión web más reciente directamente en tu navegador sin instalar nada en:
 > 👉 **[Visualizador BC3 Online (GitHub Pages)](https://jmcaamanog.github.io/BC3Viewer-App/www/index.html)**
 ---
-> 🔑 **Contraseña versión 1.4.0)** -> 1234
+> 🔑 **Contraseña versión 1.4.1)** -> 1234
 ---
 
 Esta version ampliada ha sido desarrollada por mí (`Jose Manuel Caamaño`---> [linkedin](https://www.linkedin.com/in/jmcaamanog/) partiendo de la versión muy básica básica y sin funciones disponible en -> [BC3php](https://github.com/jmcaamanog/BC3Viewer-App) (si lo visitais, ya contiene parte de mis mejoras XD), añadiendo todas las capacidades avanzadas y manteniendo el espiritu del proyecto original, pero muy mejorándolo (XD) desde el punto de vista de un `Arquitecto Técnico` : **abierto, libre y útil para la profesion (ser libres de egos XD)**.
@@ -107,7 +107,11 @@ BC3 Viewer es una aplicacion web que permite **visualizar, editar, comparar, pla
 
 ## Historial de Versiones Publicadas
 
-### Version 1.4.0 — 10/07/2026 (Actual)
+### Version 1.4.1 — 10/07/2026 (Actual)
+* **Control del Resumen Temporal via FAB:** El botón flotante (FAB) de la esquina inferior derecha colapsa y expande de forma inteligente y contextual el panel de "Resumen de Plazos y Costes" cuando el Planning está activo.
+* **Limpieza de la Barra de Resumen:** Se eliminan emojis e indicaciones adicionales del título de la barra de resumen temporal, simplificándolo a "Resumen de Plazos y Costes" para ofrecer un aspecto visual más profesional y despejado.
+
+### Version 1.4.0 — 10/07/2026
 * **Acceso Protegido y Firma Premium:** Se integra la imagen del logotipo corporativo, el título azul resplandeciente "BC3 Viewer" y los créditos "by jmcaamanog" en la pantalla de entrada por PIN.
 * **FAB Flotante Unificado:** Un único botón circular (FAB) situado en la esquina inferior derecha cambia dinámicamente de icono (`🔼`/`🔽`) para replegar y expandir la cabecera sin alterar su posición en pantalla.
 * **Optimización y Limpieza de Cabecera:** Integración de la exportación a XML dentro de las opciones de exportación del desplegable, eliminando iconos superfluos del calendario.
