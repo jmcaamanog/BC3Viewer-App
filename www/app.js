@@ -5074,10 +5074,18 @@ if (ganttResetBtn) {
 }
 
 if (exportGanttPdfBtn) {
-    exportGanttPdfBtn.addEventListener('click', exportGanttToPdf);
+    exportGanttPdfBtn.addEventListener('click', () => {
+        const expDrop = document.getElementById('ganttExportDropdown');
+        if (expDrop) expDrop.classList.remove('show');
+        exportGanttToPdf();
+    });
 }
 if (exportGanttExcelBtn) {
-    exportGanttExcelBtn.addEventListener('click', exportGanttToExcel);
+    exportGanttExcelBtn.addEventListener('click', () => {
+        const expDrop = document.getElementById('ganttExportDropdown');
+        if (expDrop) expDrop.classList.remove('show');
+        exportGanttToExcel();
+    });
 }
 
 // Setup explicit editing for details description
@@ -7156,7 +7164,11 @@ function escapeXml(unsafe) {
 // Wire Project XML Export Button
 const exportGanttXmlBtn = document.getElementById('exportGanttXmlBtn');
 if (exportGanttXmlBtn) {
-    exportGanttXmlBtn.addEventListener('click', exportGanttToXML);
+    exportGanttXmlBtn.addEventListener('click', () => {
+        const expDrop = document.getElementById('ganttExportDropdown');
+        if (expDrop) expDrop.classList.remove('show');
+        exportGanttToXML();
+    });
 }
 
 
