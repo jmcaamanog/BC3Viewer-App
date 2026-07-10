@@ -4,7 +4,7 @@
 Visualizador web avanzado de archivos BC3 (FIEBDC-3) para presupuestos de construccion.
 **Mejora libre y gratuita para cualquier Arquitecto Tecnico, Arquitecto o profesional de la construccion by JMC.**
 
-> 📸 **¡Evolución Visual de la App!** Echa un vistazo y comprueba cómo ha progresado el visualizador en la carpeta [📁 CAPTURAS](./CAPTURAS). No te pierdas las imágenes de la última interfaz premium en la subcarpeta [🚀 CAPTURAS/V1.4.2](./CAPTURAS/V1.4.2).
+> 📸 **¡Evolución Visual de la App!** Echa un vistazo y comprueba cómo ha progresado el visualizador en la carpeta [📁 CAPTURAS](./CAPTURAS). No te pierdas las imágenes de la última interfaz premium en la subcarpeta [🚀 CAPTURAS/V1.4.7](./CAPTURAS/V1.4.7).
 
 Este repositorio contiene la versión autónoma, multiplataforma y 100% offline del **BC3 Viewer (Visualizador Premium de Presupuestos FIEBDC-3)**.
 
@@ -22,18 +22,18 @@ El objetivo de este proyecto es empaquetar y distribuir el visualizador web orig
 >
 > **🌐 ACCESO DIRECTO EN LA WEB (Nube):**
 > Puedes usar la versión web más reciente directamente en tu navegador sin instalar nada en:
-> 👉 **[Visualizador BC3 Online (GitHub Pages)](https://jmcaamanog.github.io/BC3Viewer-App/www/index.html)**
+> 👉 **[Visualizador BC3 Online](https://jmcaamanog.github.io/BC3Viewer-App/www/index.html)**
 ---
 > 🔑 **Contraseña versión 1.4.7)** -> 1234
 ---
 
-Esta version ampliada ha sido desarrollada por mí (`Jose Manuel Caamaño`---> [linkedin](https://www.linkedin.com/in/jmcaamanog/) partiendo de la versión muy básica básica y sin funciones disponible en -> [BC3php](https://github.com/jmcaamanog/BC3Viewer-App) (si lo visitais, ya contiene parte de mis mejoras XD), añadiendo todas las capacidades avanzadas y manteniendo el espiritu del proyecto original, pero muy mejorándolo (XD) desde el punto de vista de un `Arquitecto Técnico` : **abierto, libre y útil para la profesion (ser libres de egos XD)**.
+Esta version ampliada ha sido desarrollada por mí (`Jose Manuel Caamaño`---> [LINKEDIN](https://www.linkedin.com/in/jmcaamanog/)), partiendo de la versión muy básica básica y sin funciones disponible en [BC3php](https://github.com/jmcaamanog/BC3Viewer-App) (si lo visitais, ya contiene parte de mis mejoras XD). Añadiendo todas las capacidades avanzadas y manteniendo el espiritu del proyecto original, pero mejorándolo... SIEMPRE desde el punto de vista de un `Arquitecto Técnico` : **abierto, libre y útil para la profesion (ser libres de egos XD)**.
 
 ---
 
 ## Descripcion
 
-BC3 Viewer es una aplicacion web que permite **visualizar, editar, comparar, planificar y exportar** archivos en formato BC3 (estandar FIEBDC-3 utilizado en Espana para el intercambio de presupuestos de construccion). La aplicacion muestra una vista jerarquica del presupuesto con capitulos
+`BC3 Viewer` es una aplicacion web que permite **visualizar, editar, comparar, planificar y exportar** archivos en formato BC3 (estandar FIEBDC-3 utilizado en España para el intercambio de presupuestos de construccion). La aplicacion muestra una vista jerarquica del presupuesto con capitulos.
 
 ## 🌟 Características Principales (FIEBDC-3 Premium)
 
@@ -64,6 +64,7 @@ BC3 Viewer es una aplicacion web que permite **visualizar, editar, comparar, pla
 * **Actualizaciones OTA:** Añadido botón de búsqueda manual y diagnóstico OTA en el menú de información.
 * **Optimización y Estabilidad:** Solución de error temporal (TDZ) en la carga y corrección javascript del cargador inicial.
 * **Rediseño Visual:** Logo de cabecera reescalado a la altura de PEM/PEC, menú de acceso por PIN rediseñado y botón flotante (FAB) adaptativo para contraer la cabecera.
+ * **Capturas:** [🚀 CAPTURAS/V1.4.7](./CAPTURAS/V1.4.7)
 
 ### 📅 09/07/2026 — Versión 1.3.4
 * **Optimizaciones Móviles:** Barra de herramientas en móviles unificada en una sola fila compacta y botón de salida rápida (✕) para vaciar el presupuesto.
