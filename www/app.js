@@ -4251,21 +4251,42 @@ function rebuildGanttDOM() {
             return today >= taskStart && today <= taskEnd && (st.progress || 0) < 100;
         });
 
-        const todayTasksHTML = activeTodayTasks.length > 0
-            ? activeTodayTasks.map(t => {
+        const activeTodayCount = activeTodayTasks.length;
+
+        const todayTasksRowsHTML = activeTodayCount > 0
+            ? activeTodayTasks.map((t, idx) => {
                 const st = ganttState[t.id];
                 const prog = st ? (st.progress || 0) : 0;
                 const price = (t.price || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 const taskEndD = weekToDate(st.startWeek + st.durationWeeks);
                 taskEndD.setHours(0,0,0,0);
                 const dLeft = Math.ceil((taskEndD - today) / (1000*60*60*24));
-                const color = dLeft < 0 ? '#ef4444' : dLeft <= 7 ? '#f97316' : '#10b981';
-                return `<div class="gantt-sub-kpi" style="flex-direction:column;align-items:flex-start;gap:1px;">
-                    <strong style="color:var(--text-primary);font-size:0.75rem;">${t.summary}</strong>
-                    <span style="color:var(--text-secondary);font-size:0.68rem;">Progreso: ${prog}% · Vence: <strong style="color:${color};">${dLeft >= 0 ? dLeft + ' d.' : Math.abs(dLeft) + ' d. de atraso'}</strong> · ${price} €</span>
+                const urgColor = dLeft < 0 ? '#ef4444' : dLeft <= 7 ? '#f97316' : '#10b981';
+                const urgBg   = dLeft < 0 ? 'rgba(239,68,68,0.08)' : dLeft <= 7 ? 'rgba(249,115,22,0.08)' : 'rgba(16,185,129,0.06)';
+                const rowBg = idx % 2 === 0 ? 'var(--card-bg,#fff)' : 'rgba(0,0,0,0.03)';
+                const daysLabel = dLeft >= 0 ? dLeft + ' d.' : Math.abs(dLeft) + ' d. atraso';
+                const progBar = `<div style="height:4px;border-radius:2px;background:var(--border-color,#e2e8f0);margin-top:3px;overflow:hidden;">
+                    <div style="height:100%;width:${prog}%;background:${urgColor};border-radius:2px;transition:width 0.3s;"></div>
+                </div>`;
+                return `<div style="display:grid;grid-template-columns:1fr 70px 90px;align-items:center;gap:8px;padding:6px 10px;background:${rowBg};border-left:3px solid ${urgColor};border-radius:4px;">
+                    <div style="min-width:0;">
+                        <div style="font-size:0.72rem;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${t.summary}">${t.summary}</div>
+                        ${progBar}
+                    </div>
+                    <div style="text-align:center;font-size:0.68rem;padding:2px 4px;border-radius:3px;background:${urgBg};">
+                        <div style="color:var(--text-secondary);font-size:0.6rem;">Vence</div>
+                        <strong style="color:${urgColor};">${daysLabel}</strong>
+                    </div>
+                    <div style="text-align:right;font-size:0.68rem;">
+                        <div style="color:var(--text-secondary);font-size:0.6rem;">Progreso / Importe</div>
+                        <strong style="color:var(--text-primary);">${prog}%</strong>
+                        <span style="color:var(--text-secondary);margin-left:2px;">${price} €</span>
+                    </div>
                 </div>`;
             }).join('')
-            : `<div class="gantt-sub-kpi" style="color:var(--text-secondary);font-style:italic;">Ninguna tarea activa para hoy.</div>`;
+            : `<div style="padding:8px;color:var(--text-secondary);font-style:italic;font-size:0.75rem;text-align:center;">Ninguna tarea activa para hoy ✅</div>`;
+
+        const todayBadgeColor = activeTodayCount === 0 ? '#10b981' : activeTodayCount <= 3 ? '#f97316' : '#ef4444';
 
         const isMobile = window.innerWidth <= 1024;
         summaryBar.innerHTML = `
@@ -4298,11 +4319,18 @@ function rebuildGanttDOM() {
                             <div class="gantt-sub-kpi"><span>Por Mes:</span> <strong>${mediaMonth.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong></div>
                         </div>
                     </div>
-                    <div class="gantt-kpi-group" style="min-width: 200px; flex: 1 1 200px;">
-                        <h4>📅 Tareas Activas Hoy</h4>
-                        <div class="gantt-kpi-row" style="flex-direction:column;gap:6px;">
-                            ${todayTasksHTML}
-                        </div>
+                    <div class="gantt-kpi-group" style="min-width: 260px; flex: 2 1 260px;">
+                        <details style="width:100%;">
+                            <summary style="list-style:none;outline:none;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none;padding:2px 0;">
+                                <h4 style="margin:0;display:inline-flex;align-items:center;gap:6px;">
+                                    📅 Tareas Activas Hoy
+                                    <span style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:${todayBadgeColor};color:white;font-size:0.65rem;font-weight:700;">${activeTodayCount}</span>
+                                </h4>
+                            </summary>
+                            <div style="margin-top:6px;display:flex;flex-direction:column;gap:4px;max-height:min(40vh,320px);overflow-y:auto;overflow-x:hidden;padding-right:2px;">
+                                ${todayTasksRowsHTML}
+                            </div>
+                        </details>
                     </div>
                 </div>
             </details>
