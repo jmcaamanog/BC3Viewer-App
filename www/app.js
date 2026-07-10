@@ -7820,19 +7820,19 @@ if (exportCertPdfBtn) {
 }
 
 // Lógica de colapsar y expandir cabecera (Optimización móvil)
-const collapseHeaderBtn = document.getElementById('collapseHeaderBtn');
 const expandHeaderBtn = document.getElementById('expandHeaderBtn');
 const mainHeader = document.querySelector('.main-header');
 
-if (collapseHeaderBtn && expandHeaderBtn && mainHeader) {
-    collapseHeaderBtn.addEventListener('click', () => {
-        mainHeader.classList.add('collapsed');
-        expandHeaderBtn.style.display = 'flex';
-    });
-
+if (expandHeaderBtn && mainHeader) {
     expandHeaderBtn.addEventListener('click', () => {
-        mainHeader.classList.remove('collapsed');
-        expandHeaderBtn.style.display = 'none';
+        const isCollapsed = mainHeader.classList.toggle('collapsed');
+        if (isCollapsed) {
+            expandHeaderBtn.textContent = '🔽';
+            expandHeaderBtn.title = 'Mostrar Cabecera';
+        } else {
+            expandHeaderBtn.textContent = '🔼';
+            expandHeaderBtn.title = 'Ocultar Cabecera';
+        }
     });
 }
 

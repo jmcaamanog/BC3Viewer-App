@@ -15,7 +15,9 @@
             <div class="header-top-row"
                 style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 16px;">
                 <div class="left-header-section" style="display:flex; align-items:center; gap:16px;">
-                    <div class="logo">BC3 VIEWER</div>
+                    <div class="logo">
+                        <img src="logo.png" alt="BC3 Viewer" style="height: 1.3rem; vertical-align: middle; display: block; object-fit: contain;">
+                    </div>
                     <!-- Contenedor PEM & PEC Widget (ahora segundo, a la derecha del nombre) -->
                     <div class="project-info" id="projectInfo"
                         style="display:none; flex-direction:column; align-items:flex-start;">
@@ -33,10 +35,8 @@
                     </div>
                 </div>
 
-                <!-- Botones del extremo derecho: Menú Ajustes (Engranaje) y Ocultar Cabecera -->
+                <!-- Botones del extremo derecho: Menú Ajustes (Engranaje) -->
                 <div class="right-controls" style="display: flex; align-items: center; gap: 8px;">
-                    <button type="button" id="collapseHeaderBtn" class="header-toggle-btn" title="Ocultar Cabecera"
-                        style="background:none; border:none; font-size:1.1rem; cursor:pointer; padding:4px; color: var(--text-secondary);">🔼</button>
                     <div class="dropdown" id="settingsDropdown">
                         <button type="button" class="settings-toggle-btn" id="settingsBtn" aria-label="Ajustes"
                             title="Ajustes">⚙️</button>
@@ -1232,9 +1232,9 @@
     <!-- Área de impresión oculta para Certificación en PDF -->
     <div id="certPrintArea"></div>
 
-    <!-- Botón flotante para restaurar cabecera cuando está oculta -->
-    <button type="button" id="expandHeaderBtn" class="floating-expand-btn" style="display: none;"
-        title="Mostrar Cabecera">🔽</button>
+    <!-- Botón flotante para colapsar/expandir cabecera -->
+    <button type="button" id="expandHeaderBtn" class="floating-expand-btn"
+        title="Ocultar Cabecera">🔼</button>
 
     <!-- Modal de Notificación de Actualización -->
     <div id="updateNotifyModal" class="modal"
