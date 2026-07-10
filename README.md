@@ -24,7 +24,7 @@ El objetivo de este proyecto es empaquetar y distribuir el visualizador web orig
 > Puedes usar la versión web más reciente directamente en tu navegador sin instalar nada en:
 > 👉 **[Visualizador BC3 Online (GitHub Pages)](https://jmcaamanog.github.io/BC3Viewer-App/www/index.html)**
 ---
-> 🔑 **Contraseña versión 1.3.4)** -> 1234
+> 🔑 **Contraseña versión 1.4.0)** -> 1234
 ---
 
 Esta version ampliada ha sido desarrollada por mí (`Jose Manuel Caamaño`---> [linkedin](https://www.linkedin.com/in/jmcaamanog/) partiendo de la versión muy básica básica y sin funciones disponible en -> [BC3php](https://github.com/jmcaamanog/BC3Viewer-App) (si lo visitais, ya contiene parte de mis mejoras XD), añadiendo todas las capacidades avanzadas y manteniendo el espiritu del proyecto original, pero muy mejorándolo (XD) desde el punto de vista de un `Arquitecto Técnico` : **abierto, libre y útil para la profesion (ser libres de egos XD)**.
@@ -107,7 +107,13 @@ BC3 Viewer es una aplicacion web que permite **visualizar, editar, comparar, pla
 
 ## Historial de Versiones Publicadas
 
-### Version 1.3.4 — 09/07/2026 (Actual)
+### Version 1.4.0 — 10/07/2026 (Actual)
+* **Acceso Protegido y Firma Premium:** Se integra la imagen del logotipo corporativo, el título azul resplandeciente "BC3 Viewer" y los créditos "by jmcaamanog" en la pantalla de entrada por PIN.
+* **FAB Flotante Unificado:** Un único botón circular (FAB) situado en la esquina inferior derecha cambia dinámicamente de icono (`🔼`/`🔽`) para replegar y expandir la cabecera sin alterar su posición en pantalla.
+* **Optimización y Limpieza de Cabecera:** Integración de la exportación a XML dentro de las opciones de exportación del desplegable, eliminando iconos superfluos del calendario.
+* **Gantt y Visualización Adaptativa:** Aumento de las dimensiones y el ancho máximo del modal detallado de las partidas para prevenir el desbordamiento de los selectores de fecha en pantallas móviles.
+
+### Version 1.3.4 — 09/07/2026
 * **Rediseño Barra de Herramientas Móvil:** Los 8 iconos principales se agrupan en una única fila horizontal en móvil, eliminando el apilado y aprovechando el espacio de pantalla de forma óptima.
 * **Cierre y Reset de Presupuesto:** Añadido un botón en color rojo con una "✕" al lado de PROCESA para vaciar los datos cargados, borrar la auto-carga y volver al estado de bienvenida de manera directa.
 
