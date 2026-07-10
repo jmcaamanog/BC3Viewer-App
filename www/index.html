@@ -24,7 +24,9 @@
                 style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 16px;">
                 <div class="left-header-section" style="display:flex; align-items:center; gap:16px;">
                     <div class="logo">
-                        <img src="assets/icon.png" alt="BC3 Viewer">
+                        <a href="https://github.com/jmcaamanog/BC3Viewer-App" target="_blank" rel="noopener noreferrer" style="display: block;">
+                            <img src="assets/icon.png" alt="BC3 Viewer">
+                        </a>
                     </div>
                     <!-- Contenedor PEM & PEC Widget (ahora segundo, a la derecha del nombre) -->
                     <div class="project-info" id="projectInfo"
@@ -41,6 +43,9 @@
                         </div>
                         <div id="stats" style="font-size: 0.68rem; color: #888; margin-top: 2px;"></div>
                     </div>
+                    <!-- Botón de salir (X roja), movido aquí al lado de PEM y PEC -->
+                    <button type="button" id="closeBudgetBtn" class="close-budget-btn"
+                        title="Cerrar Presupuesto">✕</button>
                 </div>
 
                 <!-- Botones del extremo derecho: Menú Ajustes (Engranaje) -->
@@ -69,15 +74,12 @@
 
             <div class="upload-area" style="width: 100%;">
                 <form id="uploadForm">
-                    <!-- Grupo 1: Carga y Procesado -->
-                    <div class="control-container" id="uploadGroup">
+                    <!-- Grupo 1: Carga y Procesado (Oculto al inicio, se muestra al cargar un presupuesto) -->
+                    <div class="control-container" id="uploadGroup" style="display:none;">
                         <label for="bc3file" class="upload-btn">
                             <span id="fileName"><span class="btn-text">SELECCIONAR ARCHIVO .BC3</span></span>
                             <input type="file" id="bc3file" name="bc3file" accept=".bc3" hidden>
                         </label>
-                        <button type="submit" class="process-btn"><span class="btn-text">PROCESA</span></button>
-                        <button type="button" id="closeBudgetBtn" class="close-budget-btn"
-                            title="Cerrar Presupuesto">✕</button>
                     </div>
 
                     <div class="actions-wrapper" id="actionsWrapper" style="display:none;">
@@ -320,7 +322,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="search-bar-container">
+                <div class="search-bar-container" id="searchBarContainer" style="display:none;">
                     <input type="text" id="searchTerm" placeholder="Buscar partidas (título, código, medición...)"
                         autocomplete="off">
                     <button type="button" id="toggleFilterBarBtn" class="filter-toggle-btn-mobile"
@@ -576,7 +578,7 @@
         </main>
         <footer class="app-footer">
             <span>&#169; © Licencia Open Source - Software Libre by jmcaamanog </span>
-            <span>V1.4.2</span>
+            <span>V1.4.3</span>
         </footer>
     </div>
     <!-- Dashboard Modal -->
@@ -898,7 +900,7 @@
                 <div style="text-align: center; margin-bottom: 1.2rem;">
                     <div style="font-size: 2.5rem; margin-bottom: 0.25rem;">ℹ️</div>
                     <h4 style="font-size: 1.2rem; margin: 0; color: var(--accent);">Visualizador BC3 Premium</h4>
-                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Versión 1.4.2</span>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Versión 1.4.3</span>
                 </div>
 
                 <p style="font-size: 0.85rem; margin-bottom: 1rem;">Esta herramienta permite la importación,
@@ -923,11 +925,27 @@
                 <details class="version-history-details" style="margin-top: 1.2rem;">
                     <summary>Historial de Versiones</summary>
                     <div class="version-history-body">
-                        <!-- Versión 1.4.2 -->
+                        <!-- Versión 1.4.3 -->
                         <div style="margin-bottom: 1rem; border-left: 3px solid var(--accent); padding-left: 8px;">
                             <div
                                 style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary);">
-                                <span>V1.4.2 (Actual)</span>
+                                <span>V1.4.3 (Actual)</span>
+                                <span>10/07/2026</span>
+                            </div>
+                            <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 4px;">Autor:
+                                Jose Manuel Caamaño</div>
+                            <ul
+                                style="margin: 0; padding-left: 1rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                <li><strong>Simplificación de Carga y Enlace GitHub:</strong> Eliminación del botón redundante "PROCESA" de la cabecera (la app procesa automáticamente al seleccionar el archivo). Al pulsar sobre el logotipo superior izquierdo, ahora te redirige a tu repositorio oficial de GitHub de forma directa.</li>
+                                <li><strong>Ocultación inteligente de elementos:</strong> La barra superior de seleccionar archivo y la barra lateral de búsqueda de partidas se ocultan por completo en la pantalla de bienvenida, mostrándose únicamente cuando hay un presupuesto cargado en la aplicación para optimizar el espacio de pantalla.</li>
+                                <li><strong>Reubicación de Botón Cerrar (✕):</strong> Se traslada el botón rojo de cerrar presupuesto de la barra de carga directamente al lado del widget de PEM y PEC, manteniéndolo contextualizado a la información presupuestaria activa.</li>
+                            </ul>
+                        </div>
+                        <!-- Versión 1.4.2 -->
+                        <div style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
+                            <div
+                                style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary);">
+                                <span>V1.4.2</span>
                                 <span>10/07/2026</span>
                             </div>
                             <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 4px;">Autor:
@@ -1315,7 +1333,7 @@
                 <p class="update-notify-title">¡Ya tienes nuevas funciones!</p>
                 <p class="update-notify-text">Que las disfrutes</p>
                 <p class="update-notify-author">(by jmcaamanog)</p>
-                <div class="update-notify-version-badge" id="updateNotifyVersion">V1.4.2</div>
+                <div class="update-notify-version-badge" id="updateNotifyVersion">V1.4.3</div>
             </div>
             <div class="update-notify-footer">
                 <button type="button" id="updateNotifyOkBtn" class="update-notify-btn">¡Entendido! 👍</button>

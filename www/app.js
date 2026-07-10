@@ -1,4 +1,4 @@
-const APP_VERSION = '1.4.2'; // Versión actual de la aplicación (Actualizada)
+const APP_VERSION = '1.4.3'; // Versión actual de la aplicación (Actualizada)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // URL del Webhook de Google Sheets para registrar usuarios de la app.
@@ -273,6 +273,12 @@ if (closeBudgetBtn) {
 
         const info = document.getElementById('projectInfo');
         if (info) info.style.display = 'none';
+
+        const uploadGroup = document.getElementById('uploadGroup');
+        if (uploadGroup) uploadGroup.style.display = 'none';
+
+        const searchBarContainer = document.getElementById('searchBarContainer');
+        if (searchBarContainer) searchBarContainer.style.display = 'none';
 
         // 3. Ocultar los contenedores de controles de acciones
         const actionsWrapper = document.getElementById('actionsWrapper');
@@ -906,6 +912,12 @@ function renderApp(data) {
     if (viewsGroup) viewsGroup.style.display = 'flex';
     if (toolsGroup) toolsGroup.style.display = 'flex';
     if (exportGroup) exportGroup.style.display = 'flex';
+
+    const uploadGroup = document.getElementById('uploadGroup');
+    if (uploadGroup) uploadGroup.style.display = 'flex';
+
+    const searchBarContainer = document.getElementById('searchBarContainer');
+    if (searchBarContainer) searchBarContainer.style.display = 'block';
 
     const sBtn = document.getElementById('saveBtn');
     if (sBtn) sBtn.style.display = 'inline-block';
