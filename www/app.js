@@ -1,4 +1,4 @@
-const APP_VERSION = '1.4.6'; // Versión actual de la aplicación (Actualizada)
+const APP_VERSION = '1.4.7'; // Versión actual de la aplicación (Actualizada)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // URL del Webhook de Google Sheets para registrar usuarios de la app.
@@ -968,8 +968,8 @@ function renderApp(data) {
     if (auditBtn) auditBtn.style.display = 'flex';
 
     // Cargar certificaciones de localStorage
-    const currentFileName = data.properties.description || 'default';
-    const certKey = `budget_certifications_${currentFileName.replace(/\s+/g, '_')}`;
+    const descriptionName = data.properties.description || 'default';
+    const certKey = `budget_certifications_${descriptionName.replace(/\s+/g, '_')}`;
     try {
         const storedCerts = localStorage.getItem(certKey);
         window.certifications = storedCerts ? JSON.parse(storedCerts) : {};
@@ -7094,8 +7094,8 @@ function openCertEditModal(conceptCode, totalBudgetedQty, currentAccumulated) {
         window.certifications[conceptCode] = window.certifications[conceptCode] || {};
         window.certifications[conceptCode][month] = qty;
 
-        const currentFileName = parsedData.properties.description || 'default';
-        const certKey = `budget_certifications_${currentFileName.replace(/\s+/g, '_')}`;
+        const descriptionName = parsedData.properties.description || 'default';
+        const certKey = `budget_certifications_${descriptionName.replace(/\s+/g, '_')}`;
         localStorage.setItem(certKey, JSON.stringify(window.certifications));
 
         modal.style.display = 'none';
@@ -7115,8 +7115,8 @@ function deleteCertification(conceptCode, month) {
                 delete window.certifications[conceptCode];
             }
 
-            const currentFileName = parsedData.properties.description || 'default';
-            const certKey = `budget_certifications_${currentFileName.replace(/\s+/g, '_')}`;
+            const descriptionName = parsedData.properties.description || 'default';
+            const certKey = `budget_certifications_${descriptionName.replace(/\s+/g, '_')}`;
             localStorage.setItem(certKey, JSON.stringify(window.certifications));
 
             const concept = parsedData.concepts[conceptCode];
@@ -7594,8 +7594,8 @@ function submitCertObras() {
     window.certifications[_certObrasSelectedCode][month] = prev + qty;
 
     // Persistir en localStorage
-    const currentFileName = (parsedData.properties && parsedData.properties.description) || 'default';
-    const certKey = `budget_certifications_${currentFileName.replace(/\s+/g, '_')}`;
+    const descriptionName = (parsedData.properties && parsedData.properties.description) || 'default';
+    const certKey = `budget_certifications_${descriptionName.replace(/\s+/g, '_')}`;
     localStorage.setItem(certKey, JSON.stringify(window.certifications));
 
     // Actualizar modal
@@ -7631,8 +7631,8 @@ function deleteCertObrasRow(code) {
     const label = concept ? concept.summary : code;
     if (confirm(`¿Eliminar TODAS las certificaciones de la partida "${label}"?`)) {
         delete window.certifications[code];
-        const currentFileName = (parsedData.properties && parsedData.properties.description) || 'default';
-        const certKey = `budget_certifications_${currentFileName.replace(/\s+/g, '_')}`;
+        const descriptionName = (parsedData.properties && parsedData.properties.description) || 'default';
+        const certKey = `budget_certifications_${descriptionName.replace(/\s+/g, '_')}`;
         localStorage.setItem(certKey, JSON.stringify(window.certifications));
         renderCertObrasModal();
     }

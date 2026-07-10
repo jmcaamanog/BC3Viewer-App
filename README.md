@@ -24,7 +24,7 @@ El objetivo de este proyecto es empaquetar y distribuir el visualizador web orig
 > Puedes usar la versión web más reciente directamente en tu navegador sin instalar nada en:
 > 👉 **[Visualizador BC3 Online (GitHub Pages)](https://jmcaamanog.github.io/BC3Viewer-App/www/index.html)**
 ---
-> 🔑 **Contraseña versión 1.4.6)** -> 1234
+> 🔑 **Contraseña versión 1.4.7)** -> 1234
 ---
 
 Esta version ampliada ha sido desarrollada por mí (`Jose Manuel Caamaño`---> [linkedin](https://www.linkedin.com/in/jmcaamanog/) partiendo de la versión muy básica básica y sin funciones disponible en -> [BC3php](https://github.com/jmcaamanog/BC3Viewer-App) (si lo visitais, ya contiene parte de mis mejoras XD), añadiendo todas las capacidades avanzadas y manteniendo el espiritu del proyecto original, pero muy mejorándolo (XD) desde el punto de vista de un `Arquitecto Técnico` : **abierto, libre y útil para la profesion (ser libres de egos XD)**.
@@ -107,7 +107,11 @@ BC3 Viewer es una aplicacion web que permite **visualizar, editar, comparar, pla
 
 ## Historial de Versiones Publicadas
 
-### Version 1.4.6 — 10/07/2026 (Actual)
+### Version 1.4.7 — 10/07/2026 (Actual)
+* **Corrección de Error de Referencia Temporal (TDZ):** Eliminado el bloqueo al intentar leer variables de nombre de archivo no inicializadas durante el proceso de renderizado del presupuesto.
+* **Ocultación Estricta de la Cruz de Cierre:** Asegurada la invisibilidad absoluta del botón de cerrar presupuesto (✕) hasta que un archivo haya sido completamente cargado e interpretado.
+
+### Version 1.4.6 — 10/07/2026
 * **Nombre de Archivo en Menú Ajustes:** Se desplaza el nombre del archivo activo cargado directamente al desplegable de Ajustes (⚙️) como primer elemento, permitiendo limpiar el encabezado general. Al hacer clic sobre él, se abre la ventana de carga para seleccionar otro archivo.
 * **Alineación Derecha y Posicionamiento de Iconos:** Las opciones del menú desplegable de Ajustes se alinean hacia la derecha, reubicando los iconos a la derecha del texto para una lectura más ordenada.
 
