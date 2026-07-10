@@ -55,6 +55,16 @@ body {
     font-weight: 700;
     font-size: 1.15rem;
     color: var(--accent);
+    display: flex;
+    align-items: center;
+}
+
+.logo img {
+    height: 42px;
+    vertical-align: middle;
+    display: block;
+    object-fit: contain;
+    transition: height 0.2s ease;
 }
 
 .upload-area form {
@@ -3505,6 +3515,9 @@ body.dark-theme .badge-critical-tree {
     
     .logo {
         font-size: 0.95rem !important;
+    }
+    .logo img {
+        height: 32px !important;
     }
     
     /* Adaptar barra de controles en móviles */
