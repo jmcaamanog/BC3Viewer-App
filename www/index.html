@@ -10,6 +10,14 @@
 </head>
 
 <body>
+    <script>
+        // Notificar al actualizador lo antes posible para evitar rollbacks automáticos
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorUpdater) {
+            window.Capacitor.Plugins.CapacitorUpdater.notifyAppReady().catch(function(e) {
+                console.error("Error precoz notifyAppReady:", e);
+            });
+        }
+    </script>
     <div class="app-container">
         <header class="main-header">
             <div class="header-top-row"
@@ -1093,6 +1101,15 @@
                             </ul>
                         </div>
                     </div>
+                </details>
+
+                <!-- Diagnóstico de Actualizaciones (Desplegable) -->
+                <details class="version-history-details" style="margin-top: 1rem;">
+                    <summary>Registro de Actualizaciones (OTA)</summary>
+                    <div id="otaLogsContainer" style="font-family: monospace; font-size: 0.7rem; background-color: var(--hover-bg); padding: 8px; border-radius: 6px; max-height: 150px; overflow-y: auto; white-space: pre-wrap; margin-top: 6px; color: var(--text-secondary);">
+                        Cargando registros...
+                    </div>
+                    <button type="button" id="clearOtaLogsBtn" style="font-size: 0.7rem; padding: 4px 8px; margin-top: 6px; cursor: pointer; background: var(--hover-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-primary);">Limpiar registros</button>
                 </details>
 
                 <p

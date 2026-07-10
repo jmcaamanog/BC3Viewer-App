@@ -3356,6 +3356,22 @@ if (infoBtn && infoModal && closeInfoBtn) {
         infoModal.style.display = 'flex';
         const setDrop = document.getElementById('settingsDropdown');
         if (setDrop) setDrop.classList.remove('show');
+
+        // Cargar registros de OTA
+        const otaContainer = document.getElementById('otaLogsContainer');
+        if (otaContainer) {
+            try {
+                const logs = JSON.parse(localStorage.getItem('ota_logs') || '[]');
+                if (logs.length === 0) {
+                    otaContainer.textContent = "No hay registros disponibles.";
+                } else {
+                    otaContainer.textContent = logs.join('\n');
+                    otaContainer.scrollTop = otaContainer.scrollHeight;
+                }
+            } catch (e) {
+                otaContainer.textContent = "Error al leer los registros: " + e.message;
+            }
+        }
     });
 
     closeInfoBtn.addEventListener('click', () => {
@@ -3367,6 +3383,16 @@ if (infoBtn && infoModal && closeInfoBtn) {
             infoModal.style.display = 'none';
         }
     });
+
+    // Botón de limpiar registros de OTA
+    const clearOtaLogsBtn = document.getElementById('clearOtaLogsBtn');
+    if (clearOtaLogsBtn) {
+        clearOtaLogsBtn.addEventListener('click', () => {
+            localStorage.removeItem('ota_logs');
+            const otaContainer = document.getElementById('otaLogsContainer');
+            if (otaContainer) otaContainer.textContent = "Registros limpiados.";
+        });
+    }
 }
 
 if (runCompareBtn && compareFileInput) {
@@ -7855,18 +7881,45 @@ if (toggleFilterBarBtn && filterBar) {
 // Lógica de Actualizaciones en Caliente (OTA / Live Updates) para Android
 // ==========================================================================
 
+function logOta(message, error = null) {
+    const timestamp = new Date().toLocaleTimeString();
+    let logMsg = `[${timestamp}] ${message}`;
+    if (error) {
+        logMsg += ` | Error: ${error.message || error}`;
+    }
+    console.log(logMsg);
+    let logs = [];
+    try {
+        logs = JSON.parse(localStorage.getItem('ota_logs') || '[]');
+    } catch (e) {}
+    logs.push(logMsg);
+    if (logs.length > 50) logs.shift();
+    localStorage.setItem('ota_logs', JSON.stringify(logs));
+}
+
 async function initializeUpdater() {
-    if (!window.Capacitor || !window.Capacitor.Plugins || !window.Capacitor.Plugins.CapacitorUpdater) {
-        return; // No estamos en entorno de Android/Capacitor o el plugin no está disponible
+    logOta("Iniciando actualizador OTA...");
+    if (!window.Capacitor) {
+        logOta("Capacitor no disponible (entorno web estándar)");
+        return;
+    }
+    if (!window.Capacitor.Plugins) {
+        logOta("Capacitor.Plugins no disponible");
+        return;
+    }
+    if (!window.Capacitor.Plugins.CapacitorUpdater) {
+        logOta("Plugin CapacitorUpdater NO disponible en el build nativo");
+        return;
     }
 
     const { CapacitorUpdater } = window.Capacitor.Plugins;
 
     try {
-        // Notificar que la app se cargó correctamente (evita rollbacks automáticos)
+        logOta("Llamando a notifyAppReady()...");
         await CapacitorUpdater.notifyAppReady();
+        logOta("notifyAppReady() completado con éxito");
     } catch (e) {
-        console.error("Error al notificar app lista:", e);
+        logOta("Error en notifyAppReady()", e);
     }
 
     // Iniciar verificación silenciosa de actualización en segundo plano
@@ -7880,11 +7933,12 @@ async function checkForUpdates() {
 
     const { CapacitorUpdater } = window.Capacitor.Plugins;
     const updateUrl = "https://jmcaamanog.github.io/BC3Viewer-App/update.json";
+    logOta(`Buscando actualizaciones en: ${updateUrl}`);
 
     try {
-        // Petición silenciosa con timeout de 3 segundos
+        // Petición silenciosa con timeout de 10 segundos
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         const response = await fetch(updateUrl, {
             signal: controller.signal,
@@ -7892,29 +7946,37 @@ async function checkForUpdates() {
         });
         clearTimeout(timeoutId);
 
-        if (!response.ok) return;
+        logOta(`Respuesta del servidor: HTTP ${response.status}`);
+        if (!response.ok) {
+            logOta(`Fallo en respuesta HTTP: ${response.statusText}`);
+            return;
+        }
 
         const updateInfo = await response.json();
+        logOta(`Parsed update.json: servidor=${updateInfo.version}, local=${APP_VERSION}`);
 
-        // Comparación simple de versiones (ej: "1.3.1" !== "1.3.0")
+        // Comparación simple de versiones (ej: "1.4.0" !== "1.3.4")
         if (updateInfo.version && updateInfo.version !== APP_VERSION && updateInfo.url) {
-            console.log("Nueva versión de la app detectada en el servidor:", updateInfo.version);
+            logOta(`Nueva versión detectada: V${updateInfo.version}. Iniciando descarga de: ${updateInfo.url}`);
 
             // Descargar el nuevo zip de actualización en segundo plano
             const downloadResult = await CapacitorUpdater.download({
                 url: updateInfo.url,
                 version: updateInfo.version
             });
+            logOta(`Descarga finalizada. Guardando bundle versión ${updateInfo.version}...`);
 
             // Instalar/Establecer el nuevo bundle como la versión activa
             await CapacitorUpdater.set(downloadResult);
+            logOta(`Nueva versión establecida correctamente. Aplicando al reiniciar.`);
 
             // Mostrar Toast no intrusivo al usuario
             showToastMessage(`✨ Aplicación actualizada a la versión V${updateInfo.version}. Se aplicará en el próximo reinicio.`);
+        } else {
+            logOta(`No se requiere actualizar (las versiones coinciden o son incompatibles)`);
         }
     } catch (err) {
-        // Falla silenciosa (por ejemplo, sin conexión a Internet o error de CORS)
-        console.log("Comprobación de actualización silenciosa omitida (sin red o servidor offline).", err);
+        logOta("Error durante el chequeo/descarga de la actualización", err);
     }
 }
 
