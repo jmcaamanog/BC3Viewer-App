@@ -3597,7 +3597,7 @@ let ganttStartDate = new Date();
 let ganttTotalWeeks = 26;
 let GANTT_COL_PX = 44; // ancho de cada columna en px (redimensionable por zoom slider)
 let ganttViewMode = 'weeks'; // escala de tiempo: 'days', 'weeks', 'months'
-let ganttLeftColWidth = window.innerWidth <= 1024 ? 160 : 460;  // ancho columna tareas en px (redimensionable)
+let ganttLeftColWidth = window.innerWidth <= 600 ? 200 : (window.innerWidth <= 1024 ? 360 : 460);  // ancho columna tareas en px (redimensionable)
 let ganttColDrag = null;       // estado drag de la columna
 
 // Clave localStorage basada en el nombre del fichero cargado
@@ -4237,7 +4237,7 @@ function rebuildGanttDOM() {
 
         renderedRowIndex++;
 
-        const rowHeight = window.innerWidth <= 1024 ? 48 : 34;
+        const rowHeight = window.innerWidth <= 600 ? 48 : 34;
         // Registrar coordenadas de capítulos críticos visibles para trazar la línea de conexión
         if (task.depth === 1 && criticalPathSet.has(task.id)) {
             renderedCriticalChapters.push({
@@ -5636,7 +5636,7 @@ function drawDependencyArrows(bodyWrap, colsCount) {
         const toIdx = getRenderedRowIndex(dep.to);
         if (fromIdx < 0 || toIdx < 0) return;
 
-        const ROW_H = window.innerWidth <= 1024 ? 48 : 34;
+        const ROW_H = window.innerWidth <= 600 ? 48 : 34;
         const fromCoords = getGanttBarCoords(fromSt);
         const toCoords = getGanttBarCoords(toSt);
 

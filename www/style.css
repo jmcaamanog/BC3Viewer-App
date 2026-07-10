@@ -3971,34 +3971,6 @@ body.dark-theme .badge-critical-tree {
         font-size: 0.75rem !important;
     }
 
-    /* Ajuste de filas de Gantt y scroll horizontal de columna de nombres */
-    .gantt-left-col {
-        overflow-x: auto !important;
-    }
-    
-    .gantt-name-row, .gantt-bar-row {
-        height: 48px !important;
-    }
-    
-    .gantt-cell-name {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        justify-content: center !important;
-        flex: 1 !important;
-        overflow: hidden !important;
-        min-width: 0 !important;
-        padding-left: 4px !important;
-    }
-    
-    .gantt-task-subtext {
-        display: block !important;
-        font-size: 0.62rem !important;
-        color: var(--text-secondary) !important;
-        margin-top: 2px !important;
-        font-weight: 500 !important;
-        white-space: nowrap !important;
-    }
 }
 
 /* Pin Lock Overlay Screen styles */
@@ -4284,13 +4256,57 @@ body.dark-theme .update-notify-content {
     transform: scale(0.97) !important;
 }
 
-    /* Estilos adaptativos de mini botones de avance en subtexto móvil */
-    .gantt-mini-btns-wrapper {
-        margin-left: 8px !important;
-        display: inline-flex !important;
-        gap: 4px !important;
-        vertical-align: middle !important;
+}
+
+@media screen and (max-width: 600px) {
+    /* Ocultar las columnas de Restante y % Ejecutado individuales en móvil */
+    .gh-col-days,
+    .gh-col-progress,
+    .gantt-cell-days,
+    .gantt-cell-progress {
+        display: none !important;
     }
+
+    /* Alturas de fila adaptadas para mostrar subtexto */
+    .gantt-name-row, .gantt-bar-row {
+        height: 48px !important;
+    }
+    
+    .gantt-cell-name {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        justify-content: center !important;
+        flex: 1 !important;
+        overflow: hidden !important;
+        min-width: 0 !important;
+        padding-left: 4px !important;
+    }
+    
+    /* Mostrar y maquetar subtexto como flex row ocupando todo el ancho */
+    .gantt-task-subtext {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+        margin-top: 2px !important;
+        font-size: 0.62rem !important;
+        color: var(--text-secondary) !important;
+        font-weight: 500 !important;
+        white-space: nowrap !important;
+        box-sizing: border-box !important;
+        padding-right: 4px !important;
+    }
+    
+    /* Mostrar wrapper de botones del subtexto */
+    .gantt-mini-btns-wrapper {
+        margin-left: 4px !important;
+        display: inline-flex !important;
+        gap: 2px !important;
+        vertical-align: middle !important;
+        flex-shrink: 0 !important;
+    }
+    
     .gantt-mini-prog-btn {
         width: 18px !important;
         height: 18px !important;
@@ -4308,11 +4324,17 @@ body.dark-theme .update-notify-content {
         line-height: 1 !important;
         transition: transform 0.1s, background-color 0.2s !important;
     }
+    
     .gantt-mini-prog-btn:active {
         transform: scale(0.85) !important;
     }
+    
     .gantt-mini-prog-btn:hover {
         background-color: var(--hover-bg, #f1f5f9) !important;
+    }
+    
+    .gantt-left-col {
+        overflow-x: auto !important;
     }
 }
 
