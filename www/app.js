@@ -3597,7 +3597,7 @@ let ganttStartDate = new Date();
 let ganttTotalWeeks = 26;
 let GANTT_COL_PX = 44; // ancho de cada columna en px (redimensionable por zoom slider)
 let ganttViewMode = 'weeks'; // escala de tiempo: 'days', 'weeks', 'months'
-let ganttLeftColWidth = window.innerWidth <= 600 ? 200 : (window.innerWidth <= 1024 ? 360 : 460);  // ancho columna tareas en px (redimensionable)
+let ganttLeftColWidth = window.innerWidth <= 768 ? 250 : (window.innerWidth <= 1024 ? 360 : 460);  // ancho columna tareas en px (redimensionable)
 let ganttColDrag = null;       // estado drag de la columna
 
 // Clave localStorage basada en el nombre del fichero cargado
@@ -4237,7 +4237,7 @@ function rebuildGanttDOM() {
 
         renderedRowIndex++;
 
-        const rowHeight = window.innerWidth <= 600 ? 48 : 34;
+        const rowHeight = window.innerWidth <= 768 ? 48 : 34;
         // Registrar coordenadas de capítulos críticos visibles para trazar la línea de conexión
         if (task.depth === 1 && criticalPathSet.has(task.id)) {
             renderedCriticalChapters.push({
@@ -5645,7 +5645,7 @@ function drawDependencyArrows(bodyWrap, colsCount) {
         const toIdx = getRenderedRowIndex(dep.to);
         if (fromIdx < 0 || toIdx < 0) return;
 
-        const ROW_H = window.innerWidth <= 600 ? 48 : 34;
+        const ROW_H = window.innerWidth <= 768 ? 48 : 34;
         const fromCoords = getGanttBarCoords(fromSt);
         const toCoords = getGanttBarCoords(toSt);
 
@@ -8023,16 +8023,11 @@ function showGanttTaskPopup(task, st) {
     content.className = 'gantt-popup-content';
     
     const title = document.createElement('h3');
-    title.textContent = task.hasKids ? 'Detalle del Capítulo' : 'Detalle de la Partida';
+    title.className = 'gantt-popup-title';
+    title.textContent = task.summary;
     
     const body = document.createElement('div');
     body.className = 'gantt-popup-body';
-    
-    const summaryP = document.createElement('p');
-    summaryP.innerHTML = `<strong>Concepto:</strong><br>${task.summary}`;
-    
-    const priceP = document.createElement('p');
-    priceP.innerHTML = `<strong>Importe:</strong> ${task.price.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €`;
     
     let daysStr = '';
     const progressVal = st.progress || 0;
@@ -8045,15 +8040,26 @@ function showGanttTaskPopup(task, st) {
         today.setHours(0, 0, 0, 0);
         const diffMs = endD - today;
         const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-        daysStr = diffDays < 0 ? `-${Math.abs(diffDays)} días (retraso)` : `${diffDays} días restantes`;
+        daysStr = diffDays < 0 ? `-${Math.abs(diffDays)} d (retraso)` : `${diffDays} d`;
     }
 
-    const statsP = document.createElement('p');
-    statsP.innerHTML = `<strong>Progreso:</strong> ${progressVal}%<br><strong>Plazo:</strong> ${daysStr}`;
-
-    body.appendChild(summaryP);
-    body.appendChild(priceP);
-    body.appendChild(statsP);
+    const table = document.createElement('table');
+    table.className = 'gantt-popup-table';
+    table.innerHTML = `
+        <tr>
+            <th>Importe</th>
+            <td>${task.price.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €</td>
+        </tr>
+        <tr>
+            <th>Progreso</th>
+            <td>${progressVal}%</td>
+        </tr>
+        <tr>
+            <th>Plazo</th>
+            <td>${daysStr}</td>
+        </tr>
+    `;
+    body.appendChild(table);
 
     const closeBtn = document.createElement('button');
     closeBtn.type = 'button';
