@@ -4,7 +4,7 @@
 Visualizador web avanzado de archivos BC3 (FIEBDC-3) para presupuestos de construccion.
 **Mejora libre y gratuita para cualquier Arquitecto Tecnico, Arquitecto o profesional de la construccion by JMC.**
 
-Hecha un vistazo a las capturas en la carpeta ---> **`CAPTURAS`** para ver la evolución de la App!.
+> 📸 **¡Evolución Visual de la App!** Echa un vistazo y comprueba cómo ha progresado el visualizador en la carpeta [📁 CAPTURAS](./CAPTURAS). No te pierdas las imágenes de la última interfaz premium en la subcarpeta [🚀 CAPTURAS/V1.4.2](./CAPTURAS/V1.4.2).
 
 Este repositorio contiene la versión autónoma, multiplataforma y 100% offline del **BC3 Viewer (Visualizador Premium de Presupuestos FIEBDC-3)**.
 
@@ -109,6 +109,7 @@ BC3 Viewer es una aplicacion web que permite **visualizar, editar, comparar, pla
 
 ### Version 1.4.2 — 10/07/2026 (Actual)
 * **Rediseño y Mayor Escala del Logotipo del Cabezal:** Aumento del tamaño del logotipo en la cabecera para que coincida exactamente con la altura de las cajas de PEM/PEC, logrando un aspecto mucho más nítido, definido y premium.
+* **Nuevas Capturas del Rediseño V1.4.2:** Ya puedes ver las capturas de la última versión en la carpeta [📁 CAPTURAS/V1.4.2](./CAPTURAS/V1.4.2) con muestras de la nueva pantalla de acceso PIN, el logotipo reescalado y el nuevo menú de diagnóstico de red OTA en móviles.
 
 ### Version 1.4.1 — 10/07/2026
 * **Control del Resumen Temporal via FAB:** El botón flotante (FAB) de la esquina inferior derecha colapsa y expande de forma inteligente y contextual el panel de "Resumen de Plazos y Costes" cuando el Planning está activo.
