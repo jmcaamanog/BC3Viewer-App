@@ -4296,22 +4296,9 @@ function rebuildGanttDOM() {
         // Subtexto con Restante y % Ejecutado para móvil
         const subtextSpan = document.createElement('span');
         subtextSpan.className = 'gantt-task-subtext';
-        
-        let daysStr = '';
-        const progressVal = st.progress || 0;
-        if (progressVal === 100) {
-            daysStr = 'Listo';
-        } else {
-            const endD = weekToDate(st.startWeek + st.durationWeeks);
-            endD.setHours(0, 0, 0, 0);
-            const diffMs = endD - today;
-            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-            daysStr = diffDays < 0 ? `-${Math.abs(diffDays)} d` : `${diffDays} d`;
-        }
-        subtextSpan.innerHTML = `Rest: ${daysStr} | <span class="subtext-prog-val">${progressVal}%</span>`;
 
         if (!task.hasKids) {
-            // Añadir mini-botones + y - en el subtexto móvil
+            // Añadir mini-botones + y - en el subtexto móvil (a la izquierda)
             const miniDec = document.createElement('button');
             miniDec.type = 'button';
             miniDec.className = 'gantt-mini-prog-btn';
@@ -4350,7 +4337,29 @@ function rebuildGanttDOM() {
             subtextSpan.appendChild(btnsWrapper);
         }
 
+        let daysStr = '';
+        const progressVal = st.progress || 0;
+        if (progressVal === 100) {
+            daysStr = 'Listo';
+        } else {
+            const endD = weekToDate(st.startWeek + st.durationWeeks);
+            endD.setHours(0, 0, 0, 0);
+            const diffMs = endD - today;
+            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+            daysStr = diffDays < 0 ? `-${Math.abs(diffDays)} d` : `${diffDays} d`;
+        }
+
+        const labelSpan = document.createElement('span');
+        labelSpan.className = 'gantt-subtext-label';
+        labelSpan.innerHTML = `Rest: ${daysStr} | <span class="subtext-prog-val">${progressVal}%</span>`;
+        subtextSpan.appendChild(labelSpan);
+
         cellName.appendChild(subtextSpan);
+
+        // Registrar gesto de presión prolongada (long-press) en el celda de nombre para ver el texto completo
+        setupGanttLongPress(cellName, () => {
+            showGanttTaskPopup(task, st);
+        });
 
         nameRow.appendChild(cellName);
 
@@ -7997,6 +8006,116 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', checkUpdateNotification);
 } else {
     checkUpdateNotification();
+}
+
+/**
+ * Muestra un recuadro flotante en el centro con la información completa de la partida (long-press).
+ */
+function showGanttTaskPopup(task, st) {
+    // Eliminar modales previos si los hubiera
+    const oldModals = document.querySelectorAll('.gantt-popup-modal');
+    oldModals.forEach(m => m.remove());
+
+    const modal = document.createElement('div');
+    modal.className = 'gantt-popup-modal';
+    
+    const content = document.createElement('div');
+    content.className = 'gantt-popup-content';
+    
+    const title = document.createElement('h3');
+    title.textContent = task.hasKids ? 'Detalle del Capítulo' : 'Detalle de la Partida';
+    
+    const body = document.createElement('div');
+    body.className = 'gantt-popup-body';
+    
+    const summaryP = document.createElement('p');
+    summaryP.innerHTML = `<strong>Concepto:</strong><br>${task.summary}`;
+    
+    const priceP = document.createElement('p');
+    priceP.innerHTML = `<strong>Importe:</strong> ${task.price.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €`;
+    
+    let daysStr = '';
+    const progressVal = st.progress || 0;
+    if (progressVal === 100) {
+        daysStr = 'Listo';
+    } else {
+        const endD = weekToDate(st.startWeek + st.durationWeeks);
+        const today = new Date();
+        endD.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+        const diffMs = endD - today;
+        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        daysStr = diffDays < 0 ? `-${Math.abs(diffDays)} días (retraso)` : `${diffDays} días restantes`;
+    }
+
+    const statsP = document.createElement('p');
+    statsP.innerHTML = `<strong>Progreso:</strong> ${progressVal}%<br><strong>Plazo:</strong> ${daysStr}`;
+
+    body.appendChild(summaryP);
+    body.appendChild(priceP);
+    body.appendChild(statsP);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'gantt-popup-close';
+    closeBtn.textContent = 'Entendido';
+    closeBtn.addEventListener('click', () => {
+        modal.classList.add('fade-out');
+        setTimeout(() => modal.remove(), 200);
+    });
+
+    content.appendChild(title);
+    content.appendChild(body);
+    content.appendChild(closeBtn);
+    modal.appendChild(content);
+
+    // Cerrar al hacer click fuera del modal
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.add('fade-out');
+            setTimeout(() => modal.remove(), 200);
+        }
+    });
+
+    document.body.appendChild(modal);
+}
+
+/**
+ * Registra un gesto de presión prolongada (long press) con soporte para ratón y eventos táctiles.
+ */
+function setupGanttLongPress(element, callback) {
+    let pressTimer;
+    let didMove = false;
+    
+    const start = (e) => {
+        if (e.type === 'mousedown' && e.button !== 0) return;
+        didMove = false;
+        clearTimeout(pressTimer);
+        pressTimer = setTimeout(() => {
+            if (didMove) return;
+            if (navigator.vibrate) {
+                try { navigator.vibrate(40); } catch(err) {}
+            }
+            callback();
+        }, 600);
+    };
+
+    const cancel = () => {
+        clearTimeout(pressTimer);
+    };
+
+    const move = () => {
+        didMove = true;
+        clearTimeout(pressTimer);
+    };
+
+    element.addEventListener('touchstart', start, { passive: true });
+    element.addEventListener('touchend', cancel, { passive: true });
+    element.addEventListener('touchmove', move, { passive: true });
+    
+    element.addEventListener('mousedown', start);
+    element.addEventListener('mouseup', cancel);
+    element.addEventListener('mouseleave', cancel);
 }
 
 

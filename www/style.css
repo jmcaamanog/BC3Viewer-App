@@ -4286,7 +4286,8 @@ body.dark-theme .update-notify-content {
     /* Mostrar y maquetar subtexto como flex row ocupando todo el ancho */
     .gantt-task-subtext {
         display: flex !important;
-        justify-content: space-between !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
         align-items: center !important;
         width: 100% !important;
         margin-top: 2px !important;
@@ -4336,6 +4337,77 @@ body.dark-theme .update-notify-content {
     .gantt-left-col {
         overflow-x: auto !important;
     }
+}
+
+/* Modal flotante de información detallada (Long Press) */
+.gantt-popup-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: ganttFadeIn 0.2s ease-out;
+}
+.gantt-popup-content {
+    background-color: var(--card-bg, #ffffff);
+    color: var(--text-primary, #0f172a);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 12px;
+    width: 85%;
+    max-width: 320px;
+    padding: 20px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    text-align: left;
+    animation: ganttScaleUp 0.2s ease-out;
+    box-sizing: border-box;
+}
+.gantt-popup-modal.fade-out {
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+}
+.gantt-popup-content h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 1.05rem;
+    color: var(--accent, #0ea5e9);
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    padding-bottom: 8px;
+    font-weight: 700;
+}
+.gantt-popup-body p {
+    margin: 8px 0;
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+.gantt-popup-close {
+    background-color: var(--accent, #0ea5e9);
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 16px;
+    transition: background-color 0.2s;
+}
+.gantt-popup-close:hover {
+    background-color: var(--accent-hover, #0284c7);
+}
+
+@keyframes ganttFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes ganttScaleUp {
+    from { transform: scale(0.9); }
+    to { transform: scale(1); }
 }
 
 
