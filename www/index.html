@@ -1135,7 +1135,13 @@
                 <!-- Diagnóstico de Actualizaciones (Desplegable) -->
                 <details class="version-history-details" style="margin-top: 1rem;">
                     <summary>Registro de Actualizaciones (OTA)</summary>
-                    <div id="otaLogsContainer" style="font-family: monospace; font-size: 0.7rem; background-color: var(--hover-bg); padding: 8px; border-radius: 6px; max-height: 150px; overflow-y: auto; white-space: pre-wrap; margin-top: 6px; color: var(--text-secondary);">
+                    <div style="margin-top: 8px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 6px;">
+                        <button type="button" id="manualCheckUpdateBtn" style="font-size: 0.75rem; padding: 6px 12px; cursor: pointer; background: var(--accent); border: none; border-radius: 4px; color: white; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%;">
+                            🔄 Buscar actualización ahora
+                        </button>
+                        <div id="manualUpdateStatus" style="font-size: 0.72rem; color: var(--text-primary); font-weight: 500; text-align: center; min-height: 16px;"></div>
+                    </div>
+                    <div id="otaLogsContainer" style="font-family: monospace; font-size: 0.7rem; background-color: var(--hover-bg); padding: 8px; border-radius: 6px; max-height: 120px; overflow-y: auto; white-space: pre-wrap; margin-top: 4px; color: var(--text-secondary);">
                         Cargando registros...
                     </div>
                     <button type="button" id="clearOtaLogsBtn" style="font-size: 0.7rem; padding: 4px 8px; margin-top: 6px; cursor: pointer; background: var(--hover-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-primary);">Limpiar registros</button>

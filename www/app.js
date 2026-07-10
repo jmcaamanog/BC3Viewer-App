@@ -3393,6 +3393,32 @@ if (infoBtn && infoModal && closeInfoBtn) {
             if (otaContainer) otaContainer.textContent = "Registros limpiados.";
         });
     }
+
+    // Botón de buscar actualización manualmente
+    const manualCheckUpdateBtn = document.getElementById('manualCheckUpdateBtn');
+    if (manualCheckUpdateBtn) {
+        manualCheckUpdateBtn.addEventListener('click', async () => {
+            manualCheckUpdateBtn.disabled = true;
+            manualCheckUpdateBtn.style.opacity = '0.7';
+            try {
+                await checkForUpdates(true);
+            } catch (e) {
+                console.error(e);
+            } finally {
+                manualCheckUpdateBtn.disabled = false;
+                manualCheckUpdateBtn.style.opacity = '1';
+                // Recargar logs en contenedor
+                const otaContainer = document.getElementById('otaLogsContainer');
+                if (otaContainer) {
+                    try {
+                        const logs = JSON.parse(localStorage.getItem('ota_logs') || '[]');
+                        otaContainer.textContent = logs.join('\n');
+                        otaContainer.scrollTop = otaContainer.scrollHeight;
+                    } catch (e) {}
+                }
+            }
+        });
+    }
 }
 
 if (runCompareBtn && compareFileInput) {
@@ -7964,8 +7990,20 @@ async function initializeUpdater() {
     setTimeout(checkForUpdates, 3000); // Esperar 3 segundos después del inicio
 }
 
-async function checkForUpdates() {
+async function checkForUpdates(isManual = false) {
+    const statusDiv = document.getElementById('manualUpdateStatus');
+    const updateStatus = (text, isError = false) => {
+        if (isManual && statusDiv) {
+            statusDiv.textContent = text;
+            statusDiv.style.color = isError ? 'var(--danger, #ef4444)' : 'var(--accent, #0284c7)';
+        }
+    };
+
+    updateStatus("Buscando actualizaciones...");
+
     if (!window.Capacitor || !window.Capacitor.Plugins || !window.Capacitor.Plugins.CapacitorUpdater) {
+        logOta("No disponible para entorno web estándar");
+        updateStatus("No disponible en navegador web.", true);
         return;
     }
 
@@ -7987,15 +8025,17 @@ async function checkForUpdates() {
         logOta(`Respuesta del servidor: HTTP ${response.status}`);
         if (!response.ok) {
             logOta(`Fallo en respuesta HTTP: ${response.statusText}`);
+            updateStatus(`Error de servidor: ${response.statusText}`, true);
             return;
         }
 
         const updateInfo = await response.json();
         logOta(`Parsed update.json: servidor=${updateInfo.version}, local=${APP_VERSION}`);
 
-        // Comparación simple de versiones (ej: "1.4.0" !== "1.3.4")
+        // Comparación simple de versiones (ej: "1.4.2" !== "1.3.4")
         if (updateInfo.version && updateInfo.version !== APP_VERSION && updateInfo.url) {
             logOta(`Nueva versión detectada: V${updateInfo.version}. Iniciando descarga de: ${updateInfo.url}`);
+            updateStatus(`Nueva versión V${updateInfo.version} encontrada. Descargando...`);
 
             // Descargar el nuevo zip de actualización en segundo plano
             const downloadResult = await CapacitorUpdater.download({
@@ -8003,18 +8043,22 @@ async function checkForUpdates() {
                 version: updateInfo.version
             });
             logOta(`Descarga finalizada. Guardando bundle versión ${updateInfo.version}...`);
+            updateStatus(`Instalando versión V${updateInfo.version}...`);
 
             // Instalar/Establecer el nuevo bundle como la versión activa
             await CapacitorUpdater.set(downloadResult);
             logOta(`Nueva versión establecida correctamente. Aplicando al reiniciar.`);
+            updateStatus(`¡Actualizado! Se aplicará al reiniciar.`, false);
 
             // Mostrar Toast no intrusivo al usuario
             showToastMessage(`✨ Aplicación actualizada a la versión V${updateInfo.version}. Se aplicará en el próximo reinicio.`);
         } else {
             logOta(`No se requiere actualizar (las versiones coinciden o son incompatibles)`);
+            updateStatus(`Ya tienes la versión más reciente (V${APP_VERSION}).`);
         }
     } catch (err) {
         logOta("Error durante el chequeo/descarga de la actualización", err);
+        updateStatus(`Fallo en la descarga. Revisa el registro.`, true);
     }
 }
 
