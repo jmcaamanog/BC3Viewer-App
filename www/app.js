@@ -1,4 +1,4 @@
-const APP_VERSION = '1.4.5'; // Versión actual de la aplicación (Actualizada)
+const APP_VERSION = '1.4.6'; // Versión actual de la aplicación (Actualizada)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // URL del Webhook de Google Sheets para registrar usuarios de la app.
@@ -109,6 +109,8 @@ if (fileInput) {
         if (this.files && this.files.length > 0) {
             currentFileName = this.files[0].name;
             document.getElementById('fileName').textContent = currentFileName;
+            const dropdownFileName = document.getElementById('dropdownFileName');
+            if (dropdownFileName) dropdownFileName.textContent = currentFileName;
 
             // Procesar el archivo automáticamente al seleccionarlo
             const uploadForm = document.getElementById('uploadForm');
@@ -283,6 +285,9 @@ if (closeBudgetBtn) {
 
         const searchBarContainer = document.getElementById('searchBarContainer');
         if (searchBarContainer) searchBarContainer.style.display = 'none';
+
+        const dropdownFileLabel = document.getElementById('dropdownFileLabel');
+        if (dropdownFileLabel) dropdownFileLabel.style.display = 'none';
 
         // 3. Ocultar los contenedores de controles de acciones
         const actionsWrapper = document.getElementById('actionsWrapper');
@@ -918,7 +923,13 @@ function renderApp(data) {
     if (exportGroup) exportGroup.style.display = 'flex';
 
     const uploadGroup = document.getElementById('uploadGroup');
-    if (uploadGroup) uploadGroup.style.display = 'flex';
+    if (uploadGroup) uploadGroup.style.display = 'none';
+
+    const dropdownFileLabel = document.getElementById('dropdownFileLabel');
+    if (dropdownFileLabel) dropdownFileLabel.style.display = 'flex';
+
+    const dropdownFileName = document.getElementById('dropdownFileName');
+    if (dropdownFileName) dropdownFileName.textContent = currentFileName;
 
     const searchBarContainer = document.getElementById('searchBarContainer');
     if (searchBarContainer) searchBarContainer.style.display = 'block';
@@ -2508,6 +2519,8 @@ if (dragOverlay) {
             currentFileName = file.name;
             const fileNameEl = document.getElementById('fileName');
             if (fileNameEl) fileNameEl.textContent = currentFileName;
+            const dropdownFileName = document.getElementById('dropdownFileName');
+            if (dropdownFileName) dropdownFileName.textContent = currentFileName;
 
             const processBtn = document.querySelector('.process-btn');
             const originalText = processBtn ? processBtn.textContent : 'Procesar';
@@ -8133,6 +8146,8 @@ function autoLoadLastBudget() {
             currentFileName = lastFilename;
             const fileNameEl = document.getElementById('fileName');
             if (fileNameEl) fileNameEl.textContent = currentFileName;
+            const dropdownFileName = document.getElementById('dropdownFileName');
+            if (dropdownFileName) dropdownFileName.textContent = currentFileName;
 
             const parser = new BC3Parser();
             const result = parser.parse(lastContent);

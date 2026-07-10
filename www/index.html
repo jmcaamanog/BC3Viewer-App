@@ -54,19 +54,25 @@
                         <button type="button" class="settings-toggle-btn" id="settingsBtn" aria-label="Ajustes"
                             title="Ajustes">⚙️</button>
                         <div class="dropdown-content dropdown-content-right"
-                            style="right: 0; left: auto; min-width: 160px;">
+                            style="right: 0; left: auto; min-width: 180px;">
+                            <!-- Archivo Cargado (Se muestra/oculta por JS y permite cargar otro archivo) -->
+                            <label for="bc3file" id="dropdownFileLabel"
+                                style="display:none; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer; font-size:0.8rem; font-weight:600; color:var(--accent); border-bottom:1px solid var(--border-color); margin-bottom:4px; box-sizing:border-box;">
+                                <span id="dropdownFileName" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px;">Archivo</span> <span style="font-size:1rem;">📄</span>
+                            </label>
+                            
                             <button type="button" id="toggleCoeffsBtn"
-                                style="display:none; justify-content:flex-start; gap:8px; width:100%; border:none; background:none; text-align:left; padding:8px 12px; cursor:pointer;"><span
-                                    style="font-size:1rem;">⚙️</span> Coeficientes</button>
+                                style="display:none; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Coeficientes <span
+                                    style="font-size:1rem;">⚙️</span></button>
                             <button type="button" id="auditLogBtn"
-                                style="display:none; justify-content:flex-start; gap:8px; width:100%; border:none; background:none; text-align:left; padding:8px 12px; cursor:pointer;"><span
-                                    style="font-size:1rem;">📜</span> Auditoría</button>
+                                style="display:none; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Auditoría <span
+                                    style="font-size:1rem;">📜</span></button>
                             <button type="button" id="themeToggle"
-                                style="display:flex; justify-content:flex-start; gap:8px; width:100%; border:none; background:none; text-align:left; padding:8px 12px; cursor:pointer;"><span
-                                    id="themeToggleIcon" style="font-size:1rem;">🌙</span> Tema Visual</button>
+                                style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Tema Visual <span
+                                    id="themeToggleIcon" style="font-size:1rem;">🌙</span></button>
                             <button type="button" id="infoBtn"
-                                style="display:flex; justify-content:flex-start; gap:8px; width:100%; border:none; background:none; text-align:left; padding:8px 12px; cursor:pointer;"><span
-                                    style="font-size:1rem;">ℹ️</span> Información</button>
+                                style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Información <span
+                                    style="font-size:1rem;">ℹ️</span></button>
                         </div>
                     </div>
                 </div>
@@ -577,7 +583,7 @@
         </main>
         <footer class="app-footer">
             <span>&#169; © Licencia Open Source - Software Libre by jmcaamanog </span>
-            <span>V1.4.5</span>
+            <span>V1.4.6</span>
         </footer>
     </div>
     <!-- Dashboard Modal -->
@@ -899,7 +905,7 @@
                 <div style="text-align: center; margin-bottom: 1.2rem;">
                     <div style="font-size: 2.5rem; margin-bottom: 0.25rem;">ℹ️</div>
                     <h4 style="font-size: 1.2rem; margin: 0; color: var(--accent);">Visualizador BC3 Premium</h4>
-                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Versión 1.4.5</span>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Versión 1.4.6</span>
                 </div>
 
                 <p style="font-size: 0.85rem; margin-bottom: 1rem;">Esta herramienta permite la importación,
@@ -924,11 +930,26 @@
                 <details class="version-history-details" style="margin-top: 1.2rem;">
                     <summary>Historial de Versiones</summary>
                     <div class="version-history-body">
-                        <!-- Versión 1.4.5 -->
+                        <!-- Versión 1.4.6 -->
                         <div style="margin-bottom: 1rem; border-left: 3px solid var(--accent); padding-left: 8px;">
                             <div
                                 style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary);">
-                                <span>V1.4.5 (Actual)</span>
+                                <span>V1.4.6 (Actual)</span>
+                                <span>10/07/2026</span>
+                            </div>
+                            <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 4px;">Autor:
+                                Jose Manuel Caamaño</div>
+                            <ul
+                                style="margin: 0; padding-left: 1rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                <li><strong>Nombre de archivo en Ajustes:</strong> Se traslada el nombre de archivo cargado desde el encabezado general directamente al menú desplegable de Ajustes (⚙️), colocándolo en primer lugar con un icono de documento. Al hacer clic sobre él, se abre la ventana de carga para seleccionar otro archivo de forma rápida.</li>
+                                <li><strong>Alineación derecha en desplegable:</strong> Las opciones del menú de ajustes se alinean elegantemente hacia la derecha, con sus correspondientes iconos ordenados a la derecha del texto.</li>
+                            </ul>
+                        </div>
+                        <!-- Versión 1.4.5 -->
+                        <div style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
+                            <div
+                                style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary);">
+                                <span>V1.4.5</span>
                                 <span>10/07/2026</span>
                             </div>
                             <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 4px;">Autor:
@@ -1361,7 +1382,7 @@
                 <p class="update-notify-title">¡Ya tienes nuevas funciones!</p>
                 <p class="update-notify-text">Que las disfrutes</p>
                 <p class="update-notify-author">(by jmcaamanog)</p>
-                <div class="update-notify-version-badge" id="updateNotifyVersion">V1.4.5</div>
+                <div class="update-notify-version-badge" id="updateNotifyVersion">V1.4.6</div>
             </div>
             <div class="update-notify-footer">
                 <button type="button" id="updateNotifyOkBtn" class="update-notify-btn">¡Entendido! 👍</button>
