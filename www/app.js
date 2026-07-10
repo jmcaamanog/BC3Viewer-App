@@ -4014,6 +4014,11 @@ function renderPlanningModal() {
     if (!modal) return;
     modal.style.display = 'flex';
 
+    const helpCard = document.getElementById('ganttHelpCard');
+    if (helpCard) {
+        helpCard.style.display = 'flex';
+    }
+
     rebuildGanttDOM();
     syncHeaderToggleBtn();
 }
@@ -5095,6 +5100,28 @@ if (planningModal) {
             planningModal.style.display = 'none';
             syncHeaderToggleBtn();
         }
+    });
+}
+
+const ganttHelpBtn = document.getElementById('ganttHelpBtn');
+const ganttHelpCard = document.getElementById('ganttHelpCard');
+const ganttHelpCloseBtn = document.getElementById('ganttHelpCloseBtn');
+
+if (ganttHelpBtn && ganttHelpCard) {
+    ganttHelpBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (ganttHelpCard.style.display === 'none' || ganttHelpCard.style.display === '') {
+            ganttHelpCard.style.display = 'flex';
+        } else {
+            ganttHelpCard.style.display = 'none';
+        }
+    });
+}
+
+if (ganttHelpCloseBtn && ganttHelpCard) {
+    ganttHelpCloseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        ganttHelpCard.style.display = 'none';
     });
 }
 
@@ -8365,8 +8392,103 @@ function showGanttTaskPopup(task, st) {
     cardPlazo.innerHTML = `<div class="popup-card-title">Plazo Restante</div>`;
     const plazoVal = document.createElement('div');
     plazoVal.className = 'popup-card-value';
-    cardPlazo.appendChild(plazoVal);
     grid.appendChild(cardPlazo);
+
+    // Tarjeta Enlace Anterior (Predecesora)
+    const cardPred = document.createElement('div');
+    cardPred.className = 'gantt-popup-card';
+    cardPred.innerHTML = `<div class="popup-card-title">Enlace Anterior (Predecesora)</div>`;
+    
+    const selectPred = document.createElement('select');
+    selectPred.className = 'popup-card-input';
+    
+    // Opción vacía
+    const optNonePred = document.createElement('option');
+    optNonePred.value = '';
+    optNonePred.textContent = '(Ninguna)';
+    selectPred.appendChild(optNonePred);
+    
+    // Rellenar con otras tareas
+    const otherTasksPred = ganttTasks.filter(t => t.id !== task.id);
+    otherTasksPred.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.summary;
+        selectPred.appendChild(opt);
+    });
+    
+    // Valor inicial
+    const currentPred = ganttDeps.find(d => d.to === task.id);
+    selectPred.value = currentPred ? currentPred.from : '';
+    
+    selectPred.addEventListener('change', (e) => {
+        const val = e.target.value;
+        ganttDeps = ganttDeps.filter(d => d.to !== task.id);
+        
+        if (val) {
+            if (ganttDeps.some(d => d.from === task.id && d.to === val)) {
+                alert("No se puede crear un bucle circular de dependencias.");
+                selectPred.value = '';
+                return;
+            }
+            ganttDeps.push({ from: val, to: task.id });
+        }
+        
+        ganttSave();
+        rebuildGanttDOM();
+        updatePlazoVal();
+    });
+    
+    cardPred.appendChild(selectPred);
+    grid.appendChild(cardPred);
+
+    // Tarjeta Enlace Posterior (Sucesora)
+    const cardSucc = document.createElement('div');
+    cardSucc.className = 'gantt-popup-card';
+    cardSucc.innerHTML = `<div class="popup-card-title">Enlace Posterior (Sucesora)</div>`;
+    
+    const selectSucc = document.createElement('select');
+    selectSucc.className = 'popup-card-input';
+    
+    // Opción vacía
+    const optNoneSucc = document.createElement('option');
+    optNoneSucc.value = '';
+    optNoneSucc.textContent = '(Ninguna)';
+    selectSucc.appendChild(optNoneSucc);
+    
+    // Rellenar con otras tareas
+    const otherTasksSucc = ganttTasks.filter(t => t.id !== task.id);
+    otherTasksSucc.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.summary;
+        selectSucc.appendChild(opt);
+    });
+    
+    // Valor inicial
+    const currentSucc = ganttDeps.find(d => d.from === task.id);
+    selectSucc.value = currentSucc ? currentSucc.to : '';
+    
+    selectSucc.addEventListener('change', (e) => {
+        const val = e.target.value;
+        ganttDeps = ganttDeps.filter(d => d.from !== task.id);
+        
+        if (val) {
+            if (ganttDeps.some(d => d.to === task.id && d.from === val)) {
+                alert("No se puede crear un bucle circular de dependencias.");
+                selectSucc.value = '';
+                return;
+            }
+            ganttDeps.push({ from: task.id, to: val });
+        }
+        
+        ganttSave();
+        rebuildGanttDOM();
+        updatePlazoVal();
+    });
+    
+    cardSucc.appendChild(selectSucc);
+    grid.appendChild(cardSucc);
 
     // Función interna para actualizar el plazo restante
     function updatePlazoVal() {
@@ -8403,7 +8525,7 @@ function showGanttTaskPopup(task, st) {
     const closeBtn = document.createElement('button');
     closeBtn.type = 'button';
     closeBtn.className = 'gantt-popup-close';
-    closeBtn.textContent = 'Entendido';
+    closeBtn.textContent = 'OK';
     closeBtn.addEventListener('click', () => {
         modal.classList.add('fade-out');
         setTimeout(() => modal.remove(), 200);
