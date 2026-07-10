@@ -4297,46 +4297,6 @@ function rebuildGanttDOM() {
         const subtextSpan = document.createElement('span');
         subtextSpan.className = 'gantt-task-subtext';
 
-        if (!task.hasKids) {
-            // Añadir mini-botones + y - en el subtexto móvil (a la izquierda)
-            const miniDec = document.createElement('button');
-            miniDec.type = 'button';
-            miniDec.className = 'gantt-mini-prog-btn';
-            miniDec.textContent = '-';
-            miniDec.title = 'Restar 10% de avance';
-            miniDec.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const curr = st.progress || 0;
-                const targetProg = Math.max(0, curr - 10);
-                st.progress = targetProg;
-                recalculateParentProgress();
-                ganttSave();
-                rebuildGanttDOM();
-            });
-
-            const miniInc = document.createElement('button');
-            miniInc.type = 'button';
-            miniInc.className = 'gantt-mini-prog-btn';
-            miniInc.textContent = '+';
-            miniInc.title = 'Sumar 10% de avance';
-            miniInc.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const curr = st.progress || 0;
-                const targetProg = Math.min(100, curr + 10);
-                st.progress = targetProg;
-                recalculateParentProgress();
-                ganttSave();
-                rebuildGanttDOM();
-            });
-
-            const btnsWrapper = document.createElement('span');
-            btnsWrapper.className = 'gantt-mini-btns-wrapper';
-            btnsWrapper.appendChild(miniDec);
-            btnsWrapper.appendChild(miniInc);
-            
-            subtextSpan.appendChild(btnsWrapper);
-        }
-
         let daysStr = '';
         const progressVal = st.progress || 0;
         if (progressVal === 100) {
@@ -4349,11 +4309,7 @@ function rebuildGanttDOM() {
             daysStr = diffDays < 0 ? `-${Math.abs(diffDays)} d` : `${diffDays} d`;
         }
 
-        const labelSpan = document.createElement('span');
-        labelSpan.className = 'gantt-subtext-label';
-        labelSpan.innerHTML = `Rest: ${daysStr} | <span class="subtext-prog-val">${progressVal}%</span>`;
-        subtextSpan.appendChild(labelSpan);
-
+        subtextSpan.innerHTML = `Rest: ${daysStr} | <span class="subtext-prog-val">${progressVal}%</span>`;
         cellName.appendChild(subtextSpan);
 
         // Registrar gesto de presión prolongada (long-press) en el celda de nombre para ver el texto completo
@@ -8029,37 +7985,185 @@ function showGanttTaskPopup(task, st) {
     const body = document.createElement('div');
     body.className = 'gantt-popup-body';
     
-    let daysStr = '';
-    const progressVal = st.progress || 0;
-    if (progressVal === 100) {
-        daysStr = 'Listo';
-    } else {
-        const endD = weekToDate(st.startWeek + st.durationWeeks);
-        const today = new Date();
-        endD.setHours(0, 0, 0, 0);
-        today.setHours(0, 0, 0, 0);
-        const diffMs = endD - today;
-        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-        daysStr = diffDays < 0 ? `-${Math.abs(diffDays)} d (retraso)` : `${diffDays} d`;
+    const isParent = task.hasKids;
+
+    // Convertir semanas relativas a objetos de fecha locales
+    const startD = weekToDate(st.startWeek);
+    const endD = weekToDate(st.startWeek + st.durationWeeks);
+    
+    // Formato local YYYY-MM-DD para el input de tipo date
+    const toISODate = (d) => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const startDStr = toISODate(startD);
+    const endDStr = toISODate(endD);
+
+    // Crear el grid de tarjetas
+    const grid = document.createElement('div');
+    grid.className = 'gantt-popup-grid';
+
+    // Tarjeta Importe (Ancho completo)
+    const cardPrice = document.createElement('div');
+    cardPrice.className = 'gantt-popup-card full-width';
+    cardPrice.innerHTML = `
+        <div class="popup-card-title">Importe de la Partida</div>
+        <div class="popup-card-value">${task.price.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €</div>
+    `;
+    grid.appendChild(cardPrice);
+
+    // Tarjeta Inicio
+    const cardStart = document.createElement('div');
+    cardStart.className = 'gantt-popup-card';
+    cardStart.innerHTML = `<div class="popup-card-title">Inicio</div>`;
+    
+    const inputStart = document.createElement('input');
+    inputStart.type = 'date';
+    inputStart.className = 'popup-card-input';
+    inputStart.value = startDStr;
+    if (isParent) {
+        inputStart.disabled = true;
+        inputStart.title = 'Los capítulos se calculan automáticamente';
+    }
+    inputStart.addEventListener('change', (e) => {
+        const newD = new Date(e.target.value);
+        if (isNaN(newD.getTime())) return;
+        const newStartWeek = dateToWeek(newD);
+        st.startWeek = Math.max(1, newStartWeek);
+        
+        recalculateParentProgress();
+        ganttSave();
+        rebuildGanttDOM();
+        updatePlazoVal();
+    });
+    cardStart.appendChild(inputStart);
+    grid.appendChild(cardStart);
+
+    // Tarjeta Fin
+    const cardEnd = document.createElement('div');
+    cardEnd.className = 'gantt-popup-card';
+    cardEnd.innerHTML = `<div class="popup-card-title">Fin</div>`;
+    
+    const inputEnd = document.createElement('input');
+    inputEnd.type = 'date';
+    inputEnd.className = 'popup-card-input';
+    inputEnd.value = endDStr;
+    if (isParent) {
+        inputEnd.disabled = true;
+        inputEnd.title = 'Los capítulos se calculan automáticamente';
+    }
+    inputEnd.addEventListener('change', (e) => {
+        const newD = new Date(e.target.value);
+        if (isNaN(newD.getTime())) return;
+        const newEndWeek = dateToWeek(newD);
+        const newDur = newEndWeek - st.startWeek;
+        st.durationWeeks = Math.max(0.5, newDur);
+        
+        recalculateParentProgress();
+        ganttSave();
+        rebuildGanttDOM();
+        updatePlazoVal();
+    });
+    cardEnd.appendChild(inputEnd);
+    grid.appendChild(cardEnd);
+
+    // Tarjeta Progreso (con botones + y -)
+    const cardProgress = document.createElement('div');
+    cardProgress.className = 'gantt-popup-card';
+    cardProgress.innerHTML = `<div class="popup-card-title">Progreso</div>`;
+    
+    const progRow = document.createElement('div');
+    progRow.className = 'popup-card-value-row';
+    
+    const btnDec = document.createElement('button');
+    btnDec.type = 'button';
+    btnDec.className = 'popup-card-btn';
+    btnDec.textContent = '-';
+    if (isParent) btnDec.disabled = true;
+    
+    const progValSpan = document.createElement('span');
+    progValSpan.className = 'popup-card-value';
+    progValSpan.textContent = (st.progress || 0) + '%';
+    
+    const btnInc = document.createElement('button');
+    btnInc.type = 'button';
+    btnInc.className = 'popup-card-btn';
+    btnInc.textContent = '+';
+    if (isParent) btnInc.disabled = true;
+    
+    btnDec.addEventListener('click', () => {
+        const curr = st.progress || 0;
+        const targetProg = Math.max(0, curr - 10);
+        st.progress = targetProg;
+        progValSpan.textContent = targetProg + '%';
+        
+        recalculateParentProgress();
+        ganttSave();
+        rebuildGanttDOM();
+        updatePlazoVal();
+    });
+    
+    btnInc.addEventListener('click', () => {
+        const curr = st.progress || 0;
+        const targetProg = Math.min(100, curr + 10);
+        st.progress = targetProg;
+        progValSpan.textContent = targetProg + '%';
+        
+        recalculateParentProgress();
+        ganttSave();
+        rebuildGanttDOM();
+        updatePlazoVal();
+    });
+    
+    progRow.appendChild(btnDec);
+    progRow.appendChild(progValSpan);
+    progRow.appendChild(btnInc);
+    cardProgress.appendChild(progRow);
+    grid.appendChild(cardProgress);
+
+    // Tarjeta Plazo Restante
+    const cardPlazo = document.createElement('div');
+    cardPlazo.className = 'gantt-popup-card';
+    cardPlazo.innerHTML = `<div class="popup-card-title">Plazo Restante</div>`;
+    const plazoVal = document.createElement('div');
+    plazoVal.className = 'popup-card-value';
+    cardPlazo.appendChild(plazoVal);
+    grid.appendChild(cardPlazo);
+
+    // Función interna para actualizar el plazo restante
+    function updatePlazoVal() {
+        const progressVal = st.progress || 0;
+        let daysStr = '';
+        let classColor = 'gantt-days-normal';
+        if (progressVal === 100) {
+            daysStr = 'Listo';
+            classColor = 'gantt-days-ready';
+        } else {
+            const currentEndD = weekToDate(st.startWeek + st.durationWeeks);
+            const today = new Date();
+            currentEndD.setHours(0, 0, 0, 0);
+            today.setHours(0, 0, 0, 0);
+            const diffMs = currentEndD - today;
+            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+            if (diffDays < 0) {
+                daysStr = `-${Math.abs(diffDays)} d (atraso)`;
+                classColor = 'gantt-days-delayed';
+            } else {
+                daysStr = `${diffDays} d`;
+                classColor = 'gantt-days-normal';
+            }
+        }
+        plazoVal.textContent = daysStr;
+        plazoVal.className = 'popup-card-value ' + classColor;
     }
 
-    const table = document.createElement('table');
-    table.className = 'gantt-popup-table';
-    table.innerHTML = `
-        <tr>
-            <th>Importe</th>
-            <td>${task.price.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €</td>
-        </tr>
-        <tr>
-            <th>Progreso</th>
-            <td>${progressVal}%</td>
-        </tr>
-        <tr>
-            <th>Plazo</th>
-            <td>${daysStr}</td>
-        </tr>
-    `;
-    body.appendChild(table);
+    // Inicializar Plazo
+    updatePlazoVal();
+
+    body.appendChild(grid);
 
     const closeBtn = document.createElement('button');
     closeBtn.type = 'button';

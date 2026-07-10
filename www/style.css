@@ -4382,30 +4382,96 @@ body.dark-theme .update-notify-content {
     font-weight: 700;
     line-height: 1.35 !important;
 }
-.gantt-popup-table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    margin-top: 16px !important;
-    font-size: 0.95rem !important;
+.gantt-popup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px;
+    box-sizing: border-box;
 }
-.gantt-popup-table th {
-    text-align: left !important;
-    padding: 10px 4px !important;
-    color: var(--text-secondary, #64748b) !important;
+.gantt-popup-card {
+    background-color: var(--sidebar-bg, #f8fafc);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    padding: 10px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 70px;
+}
+body.dark-theme .gantt-popup-card {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+.gantt-popup-card.full-width {
+    grid-column: span 2;
+    min-height: 60px;
+}
+.popup-card-title {
+    font-size: 0.65rem !important;
+    text-transform: uppercase;
+    color: var(--text-secondary, #64748b);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+.popup-card-value {
+    font-size: 1.15rem !important;
+    font-weight: 700;
+    color: var(--accent, #0ea5e9);
+}
+.popup-card-value-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+.popup-card-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    background-color: var(--card-bg, #ffffff);
+    color: var(--text-primary, #0f172a);
+    font-size: 0.95rem;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    transition: background-color 0.2s, transform 0.1s;
+}
+body.dark-theme .popup-card-btn {
+    background-color: #334155;
+    border-color: #475569;
+    color: #ffffff;
+}
+.popup-card-btn:active {
+    transform: scale(0.9);
+}
+.popup-card-btn:hover {
+    background-color: var(--hover-bg, #f1f5f9);
+}
+.popup-card-input {
+    width: 100%;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 6px;
+    padding: 4px;
     font-size: 0.8rem !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.5px !important;
-    border-bottom: 1px solid var(--border-color, #e2e8f0) !important;
-    width: 40% !important;
-    font-weight: 600 !important;
+    font-weight: 600;
+    background-color: var(--card-bg, #ffffff);
+    color: var(--text-primary, #0f172a);
+    box-sizing: border-box;
+    outline: none;
+    font-family: inherit;
 }
-.gantt-popup-table td {
-    text-align: right !important;
-    padding: 10px 4px !important;
-    color: var(--accent, #0ea5e9) !important;
-    font-weight: 700 !important;
-    font-size: 1.08rem !important;
-    border-bottom: 1px solid var(--border-color, #e2e8f0) !important;
+body.dark-theme .popup-card-input {
+    background-color: #334155;
+    border-color: #475569;
+    color: #ffffff;
 }
 .gantt-popup-close {
     background-color: var(--accent, #0ea5e9);
