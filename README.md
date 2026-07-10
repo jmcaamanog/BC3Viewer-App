@@ -24,7 +24,7 @@ El objetivo de este proyecto es empaquetar y distribuir el visualizador web orig
 > Puedes usar la versión web más reciente directamente en tu navegador sin instalar nada en:
 > 👉 **[Visualizador BC3 Online (GitHub Pages)](https://jmcaamanog.github.io/BC3Viewer-App/www/index.html)**
 ---
-> 🔑 **Contraseña versión 1.4.3)** -> 1234
+> 🔑 **Contraseña versión 1.4.4)** -> 1234
 ---
 
 Esta version ampliada ha sido desarrollada por mí (`Jose Manuel Caamaño`---> [linkedin](https://www.linkedin.com/in/jmcaamanog/) partiendo de la versión muy básica básica y sin funciones disponible en -> [BC3php](https://github.com/jmcaamanog/BC3Viewer-App) (si lo visitais, ya contiene parte de mis mejoras XD), añadiendo todas las capacidades avanzadas y manteniendo el espiritu del proyecto original, pero muy mejorándolo (XD) desde el punto de vista de un `Arquitecto Técnico` : **abierto, libre y útil para la profesion (ser libres de egos XD)**.
@@ -107,7 +107,10 @@ BC3 Viewer es una aplicacion web que permite **visualizar, editar, comparar, pla
 
 ## Historial de Versiones Publicadas
 
-### Version 1.4.3 — 10/07/2026 (Actual)
+### Version 1.4.4 — 10/07/2026 (Actual)
+* **Corrección de Carga en Bienvenida:** Se corrige el error javascript provocado al intentar modificar las propiedades del inexistente botón "PROCESA", lo cual impedía que el botón azul "🚀 CARGAR ARCHIVO .BC3" de la pantalla de bienvenida realizara la carga.
+
+### Version 1.4.3 — 10/07/2026
 * **Carga Automatizada y Enlace a GitHub:** Se retira el botón redundante "PROCESA" de la cabecera, logrando una carga automática instantánea al seleccionar el archivo. El logotipo superior izquierdo se enlaza directamente con el repositorio oficial de GitHub del proyecto.
 * **Ocultación Dinámica en Bienvenida:** La barra superior de carga y la barra lateral de búsqueda se ocultan por completo cuando no hay ningún presupuesto cargado (pantalla de bienvenida), optimizando el espacio disponible.
 * **Reubicación de Botón Cerrar (✕):** El botón rojo de cierre se mueve de la barra de carga directamente al lado del widget de PEM y PEC, dotándolo de un contexto puramente presupuestario.

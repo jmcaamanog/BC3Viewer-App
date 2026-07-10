@@ -1,4 +1,4 @@
-const APP_VERSION = '1.4.3'; // Versión actual de la aplicación (Actualizada)
+const APP_VERSION = '1.4.4'; // Versión actual de la aplicación (Actualizada)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // URL del Webhook de Google Sheets para registrar usuarios de la app.
@@ -213,9 +213,11 @@ if (uploadForm) {
         }
 
         const btn = this.querySelector('.process-btn');
-        const originalText = btn.textContent;
-        btn.textContent = 'Procesando...';
-        btn.disabled = true;
+        const originalText = btn ? btn.textContent : '';
+        if (btn) {
+            btn.textContent = 'Procesando...';
+            btn.disabled = true;
+        }
 
         try {
             const file = fileInput.files[0];
@@ -235,8 +237,10 @@ if (uploadForm) {
             console.error(err);
             alert('Error procesando el archivo: ' + err.message);
         } finally {
-            btn.textContent = originalText;
-            btn.disabled = false;
+            if (btn) {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
         }
     });
 }
