@@ -13,7 +13,7 @@
     <script>
         // Notificar al actualizador lo antes posible para evitar rollbacks automáticos
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorUpdater) {
-            window.Capacitor.Plugins.CapacitorUpdater.notifyAppReady().catch(function(e) {
+            window.Capacitor.Plugins.CapacitorUpdater.notifyAppReady().catch(function (e) {
                 console.error("Error precoz notifyAppReady:", e);
             });
         }
@@ -24,7 +24,8 @@
                 style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 16px;">
                 <div class="left-header-section" style="display:flex; align-items:center; gap:16px;">
                     <div class="logo">
-                        <a href="https://github.com/jmcaamanog/BC3Viewer-App" target="_blank" rel="noopener noreferrer" style="display: block;">
+                        <a href="https://github.com/jmcaamanog/BC3Viewer-App" target="_blank" rel="noopener noreferrer"
+                            style="display: block;">
                             <img src="assets/icon.png" alt="BC3 Viewer">
                         </a>
                     </div>
@@ -44,8 +45,8 @@
                         <div id="stats" style="font-size: 0.68rem; color: #888; margin-top: 2px;"></div>
                     </div>
                     <!-- Botón de salir (X roja), movido aquí al lado de PEM y PEC -->
-                    <button type="button" id="closeBudgetBtn" class="close-budget-btn"
-                        title="Cerrar Presupuesto" style="display:none;">✕</button>
+                    <button type="button" id="closeBudgetBtn" class="close-budget-btn" title="Cerrar Presupuesto"
+                        style="display:none;">✕</button>
                 </div>
 
                 <!-- Botones del extremo derecho: Menú Ajustes (Engranaje) -->
@@ -58,21 +59,23 @@
                             <!-- Archivo Cargado (Se muestra/oculta por JS y permite cargar otro archivo) -->
                             <label for="bc3file" id="dropdownFileLabel"
                                 style="display:none; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer; font-size:0.8rem; font-weight:600; color:var(--accent); border-bottom:1px solid var(--border-color); margin-bottom:4px; box-sizing:border-box;">
-                                <span id="dropdownFileName" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px;">Archivo</span> <span style="font-size:1rem;">📄</span>
+                                <span id="dropdownFileName"
+                                    style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px;">Archivo</span>
+                                <span style="font-size:1rem;">📄</span>
                             </label>
-                            
+
                             <button type="button" id="toggleCoeffsBtn"
-                                style="display:none; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Coeficientes <span
-                                    style="font-size:1rem;">⚙️</span></button>
+                                style="display:none; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Coeficientes
+                                <span style="font-size:1rem;">⚙️</span></button>
                             <button type="button" id="auditLogBtn"
-                                style="display:none; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Auditoría <span
-                                    style="font-size:1rem;">📜</span></button>
+                                style="display:none; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Auditoría
+                                <span style="font-size:1rem;">📜</span></button>
                             <button type="button" id="themeToggle"
-                                style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Tema Visual <span
-                                    id="themeToggleIcon" style="font-size:1rem;">🌙</span></button>
+                                style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Tema
+                                Visual <span id="themeToggleIcon" style="font-size:1rem;">🌙</span></button>
                             <button type="button" id="infoBtn"
-                                style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Información <span
-                                    style="font-size:1rem;">ℹ️</span></button>
+                                style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Información
+                                <span style="font-size:1rem;">ℹ️</span></button>
                         </div>
                     </div>
                 </div>
@@ -268,14 +271,15 @@
                                     BC3 Viewer Premium</h2>
                                 <span
                                     style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Visualizador
-                                    & Editor <strong>FIEBDC-3 (.bc3)</strong> de Código Abierto diseñado por y para profesionales de la edificación.</span>
+                                    & Editor <strong>FIEBDC-3 (.bc3)</strong> de Código Abierto diseñado por y para
+                                    profesionales de la edificación.</span>
                             </div>
                         </div>
 
-                        <p style="margin: 0; font-size: 0.85rem; line-height: 1.5; color: var(--text-primary); text-align: justify;">
+                        <p
+                            style="margin: 0; font-size: 0.85rem; line-height: 1.5; color: var(--text-primary); text-align: justify;">
                             ¡Bienvenido al visualizador y editor interactivo de presupuestos <strong>FIEBDC-3
-                                (.bc3)</strong> de referencia para profesionales y Arquitectos Técnicos! Una aplicación
-                            ligera y rápida para optimizar tu trabajo diario.
+                                (.bc3)</strong> de referencia para profesionales y Arquitectos Técnicos!
                         </p>
 
                         <div style="margin: 2px 0;">
@@ -305,8 +309,8 @@
                             repositorio completo y libre (<a href="https://github.com/jmcaamanog/BC3Viewer-App"
                                 target="_blank"
                                 style="color:var(--accent); text-decoration:none; font-weight:600;">BC3Viewer-App</a>) o
-                            mediante su Colegio Profesional de la Arquitectura Técnica al que orgullosamente pertenece <a
-                                href="https://www.coatac.es/" target="_blank"
+                            mediante su Colegio Profesional de la Arquitectura Técnica al que orgullosamente pertenece
+                            (<a href="https://www.coatac.es/" target="_blank"
                                 style="color:var(--accent); text-decoration:none; font-weight:600;">COATAC</a>).
                         </div>
                         <div
@@ -316,11 +320,11 @@
                                 href="https://github.com/jmcaamanog/BC3Viewer-App/tree/main/PROGRAMAS" target="_blank"
                                 style="color:var(--accent); text-decoration:none; font-weight:600;">ENLACE</a>
                         </div>
- 
+
                         <div
                             style="display: flex; flex-direction: column; align-items: center; gap: 12px; font-size: 0.8rem; color: var(--text-primary); font-weight: 500; margin-top: 4px; justify-content: center; background: var(--bg-hover); padding: 16px; border-radius: 8px; border: 1px dashed var(--border-color);">
                             <span>👉 Arrastra un archivo <strong>.bc3</strong> aquí, o haz clic en el botón:</span>
- 
+
                             <label for="bc3file" class="welcome-load-btn">
                                 🚀 CARGAR ARCHIVO .BC3
                             </label>
@@ -839,25 +843,38 @@
                 <div class="planning-controls">
                     <!-- Dropdown Ajustes Plazos -->
                     <div class="dropdown" id="ganttConfigDropdown">
-                        <button type="button" class="gantt-action-btn dropdown-toggle" style="height: 34px; display: inline-flex; align-items: center; gap: 4px;" title="Configurar inicio y semanas">⚙️ ▾</button>
-                        <div class="dropdown-content gantt-config-dropdown-content" style="right: auto; left: 0; padding: 12px; min-width: 200px; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
+                        <button type="button" class="gantt-action-btn dropdown-toggle"
+                            style="height: 34px; display: inline-flex; align-items: center; gap: 4px;"
+                            title="Configurar inicio y semanas">⚙️ ▾</button>
+                        <div class="dropdown-content gantt-config-dropdown-content"
+                            style="right: auto; left: 0; padding: 12px; min-width: 200px; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
                             <div style="margin-bottom: 8px;">
-                                <label style="display: block; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px; color: var(--text-primary, #0f172a);">Fecha de Inicio:</label>
-                                <input type="date" id="ganttStartDate" class="gantt-control-input" style="width: 100%; box-sizing: border-box; font-size: 0.8rem; padding: 6px; border-radius: 6px; border: 1px solid var(--border-color, #e2e8f0); background-color: var(--card-bg, #ffffff); color: var(--text-primary, #0f172a);">
+                                <label
+                                    style="display: block; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px; color: var(--text-primary, #0f172a);">Fecha
+                                    de Inicio:</label>
+                                <input type="date" id="ganttStartDate" class="gantt-control-input"
+                                    style="width: 100%; box-sizing: border-box; font-size: 0.8rem; padding: 6px; border-radius: 6px; border: 1px solid var(--border-color, #e2e8f0); background-color: var(--card-bg, #ffffff); color: var(--text-primary, #0f172a);">
                             </div>
                             <div>
-                                <label style="display: block; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px; color: var(--text-primary, #0f172a);">Duración (Semanas):</label>
-                                <input type="number" id="ganttWeeks" class="gantt-control-input" value="26" min="4" max="156" style="width: 100%; box-sizing: border-box; font-size: 0.8rem; padding: 6px; border-radius: 6px; border: 1px solid var(--border-color, #e2e8f0); background-color: var(--card-bg, #ffffff); color: var(--text-primary, #0f172a);">
+                                <label
+                                    style="display: block; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px; color: var(--text-primary, #0f172a);">Duración
+                                    (Semanas):</label>
+                                <input type="number" id="ganttWeeks" class="gantt-control-input" value="26" min="4"
+                                    max="156"
+                                    style="width: 100%; box-sizing: border-box; font-size: 0.8rem; padding: 6px; border-radius: 6px; border: 1px solid var(--border-color, #e2e8f0); background-color: var(--card-bg, #ffffff); color: var(--text-primary, #0f172a);">
                             </div>
                         </div>
                     </div>
 
                     <!-- Dropdown de Escala (Días, Semanas, Meses) -->
                     <div class="dropdown" id="ganttScaleDropdown">
-                        <button type="button" class="gantt-action-btn dropdown-toggle" style="height: 34px; width: 38px; display: inline-flex; align-items: center; justify-content: center;" title="Escala de tiempo">📆 ▾</button>
+                        <button type="button" class="gantt-action-btn dropdown-toggle"
+                            style="height: 34px; width: 38px; display: inline-flex; align-items: center; justify-content: center;"
+                            title="Escala de tiempo">📆 ▾</button>
                         <div class="dropdown-content" style="right: auto; left: 0;">
                             <button type="button" id="ganttModeDaysBtn" class="gantt-dropdown-item-btn">Días</button>
-                            <button type="button" id="ganttModeWeeksBtn" class="gantt-dropdown-item-btn active">Semanas</button>
+                            <button type="button" id="ganttModeWeeksBtn"
+                                class="gantt-dropdown-item-btn active">Semanas</button>
                             <button type="button" id="ganttModeMonthsBtn" class="gantt-dropdown-item-btn">Meses</button>
                         </div>
                     </div>
@@ -872,13 +889,15 @@
                     <button type="button" id="ganttLinkBtn" class="gantt-action-btn gantt-link-btn"
                         style="min-width: 38px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 1rem;"
                         title="Enlazar tareas (dependencia Fin→Inicio)">🔗</button>
-                    
-                    <button type="button" id="ganttResetBtn" class="gantt-action-btn" 
+
+                    <button type="button" id="ganttResetBtn" class="gantt-action-btn"
                         style="min-width: 38px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center;"
                         title="Reiniciar planificación">↺</button>
-                    
+
                     <div class="dropdown" id="ganttExportDropdown">
-                        <button type="button" class="gantt-action-btn dropdown-toggle" style="height: 34px; width: 38px; display: inline-flex; align-items: center; justify-content: center;" title="Exportar">📤 ▾</button>
+                        <button type="button" class="gantt-action-btn dropdown-toggle"
+                            style="height: 34px; width: 38px; display: inline-flex; align-items: center; justify-content: center;"
+                            title="Exportar">📤 ▾</button>
                         <div class="dropdown-content" style="right: auto; left: 0;">
                             <button type="button" id="exportGanttExcelBtn">📊 Excel</button>
                             <button type="button" id="exportGanttPdfBtn">📄 PDF</button>
@@ -886,7 +905,8 @@
                         </div>
                     </div>
 
-                    <button type="button" id="closePlanningBtn" class="gantt-close-btn" title="Cerrar Planning" style="background-color: #ef4444; color: white; border: none; border-radius: 6px; width: 38px; height: 34px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; padding: 0; flex-shrink: 0;">✕</button>
+                    <button type="button" id="closePlanningBtn" class="gantt-close-btn" title="Cerrar Planning"
+                        style="background-color: #ef4444; color: white; border: none; border-radius: 6px; width: 38px; height: 34px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; padding: 0; flex-shrink: 0;">✕</button>
                 </div>
             </div>
             <div class="gantt-summary-bar" id="ganttSummaryBar"></div>
@@ -941,12 +961,17 @@
                                 Jose Manuel Caamaño</div>
                             <ul
                                 style="margin: 0; padding-left: 1rem; color: var(--text-secondary); font-size: 0.75rem;">
-                                <li><strong>Corrección de error de inicialización:</strong> Se resuelve el error de referencia en JavaScript al evitar el sombreado (shadowing) de la variable de nombre de archivo, eliminando la excepción de ejecución al cargar.</li>
-                                <li><strong>Ocultación estricta de botón Cerrar:</strong> Se garantiza que el botón rojo para cerrar el presupuesto se mantenga estrictamente invisible al inicio o cuando no hay ningún presupuesto cargado.</li>
+                                <li><strong>Corrección de error de inicialización:</strong> Se resuelve el error de
+                                    referencia en JavaScript al evitar el sombreado (shadowing) de la variable de nombre
+                                    de archivo, eliminando la excepción de ejecución al cargar.</li>
+                                <li><strong>Ocultación estricta de botón Cerrar:</strong> Se garantiza que el botón rojo
+                                    para cerrar el presupuesto se mantenga estrictamente invisible al inicio o cuando no
+                                    hay ningún presupuesto cargado.</li>
                             </ul>
                         </div>
                         <!-- Versión 1.4.6 -->
-                        <div style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
+                        <div
+                            style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
                             <div
                                 style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary);">
                                 <span>V1.4.6</span>
@@ -956,12 +981,18 @@
                                 Jose Manuel Caamaño</div>
                             <ul
                                 style="margin: 0; padding-left: 1rem; color: var(--text-secondary); font-size: 0.75rem;">
-                                <li><strong>Nombre de archivo en Ajustes:</strong> Se traslada el nombre de archivo cargado desde el encabezado general directamente al menú desplegable de Ajustes (⚙️), colocándolo en primer lugar con un icono de documento. Al hacer clic sobre él, se abre la ventana de carga para seleccionar otro archivo de forma rápida.</li>
-                                <li><strong>Alineación derecha en desplegable:</strong> Las opciones del menú de ajustes se alinean elegantemente hacia la derecha, con sus correspondientes iconos ordenados a la derecha del texto.</li>
+                                <li><strong>Nombre de archivo en Ajustes:</strong> Se traslada el nombre de archivo
+                                    cargado desde el encabezado general directamente al menú desplegable de Ajustes
+                                    (⚙️), colocándolo en primer lugar con un icono de documento. Al hacer clic sobre él,
+                                    se abre la ventana de carga para seleccionar otro archivo de forma rápida.</li>
+                                <li><strong>Alineación derecha en desplegable:</strong> Las opciones del menú de ajustes
+                                    se alinean elegantemente hacia la derecha, con sus correspondientes iconos ordenados
+                                    a la derecha del texto.</li>
                             </ul>
                         </div>
                         <!-- Versión 1.4.5 -->
-                        <div style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
+                        <div
+                            style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
                             <div
                                 style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary);">
                                 <span>V1.4.5</span>
@@ -971,12 +1002,19 @@
                                 Jose Manuel Caamaño</div>
                             <ul
                                 style="margin: 0; padding-left: 1rem; color: var(--text-secondary); font-size: 0.75rem;">
-                                <li><strong>Ocultación inicial de botón Cerrar:</strong> Se fuerza la ocultación inicial del botón rojo de cierre (✕) en la carga inicial de la página para garantizar una interfaz totalmente limpia y sin elementos residuales antes de subir un archivo.</li>
-                                <li><strong>Estilo de texto Justificado en bienvenida:</strong> Se ha modificado el diseño del mensaje de bienvenida y los bloques de avisos informativos para forzar una alineación justificada del texto, logrando una presentación estética superior y profesional.</li>
+                                <li><strong>Ocultación inicial de botón Cerrar:</strong> Se fuerza la ocultación inicial
+                                    del botón rojo de cierre (✕) en la carga inicial de la página para garantizar una
+                                    interfaz totalmente limpia y sin elementos residuales antes de subir un archivo.
+                                </li>
+                                <li><strong>Estilo de texto Justificado en bienvenida:</strong> Se ha modificado el
+                                    diseño del mensaje de bienvenida y los bloques de avisos informativos para forzar
+                                    una alineación justificada del texto, logrando una presentación estética superior y
+                                    profesional.</li>
                             </ul>
                         </div>
                         <!-- Versión 1.4.4 -->
-                        <div style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
+                        <div
+                            style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
                             <div
                                 style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary);">
                                 <span>V1.4.4</span>
@@ -986,11 +1024,15 @@
                                 Jose Manuel Caamaño</div>
                             <ul
                                 style="margin: 0; padding-left: 1rem; color: var(--text-secondary); font-size: 0.75rem;">
-                                <li><strong>Corrección en Carga desde la Bienvenida:</strong> Solucionado el error javascript que impedía que el botón azul "🚀 CARGAR ARCHIVO .BC3" de la pantalla de bienvenida procesara el archivo debido a la eliminación del botón físico "PROCESA".</li>
+                                <li><strong>Corrección en Carga desde la Bienvenida:</strong> Solucionado el error
+                                    javascript que impedía que el botón azul "🚀 CARGAR ARCHIVO .BC3" de la pantalla de
+                                    bienvenida procesara el archivo debido a la eliminación del botón físico "PROCESA".
+                                </li>
                             </ul>
                         </div>
                         <!-- Versión 1.4.3 -->
-                        <div style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
+                        <div
+                            style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
                             <div
                                 style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary);">
                                 <span>V1.4.3</span>
@@ -1000,13 +1042,22 @@
                                 Jose Manuel Caamaño</div>
                             <ul
                                 style="margin: 0; padding-left: 1rem; color: var(--text-secondary); font-size: 0.75rem;">
-                                <li><strong>Simplificación de Carga y Enlace GitHub:</strong> Eliminación del botón redundante "PROCESA" de la cabecera (la app procesa automáticamente al seleccionar el archivo). Al pulsar sobre el logotipo superior izquierdo, ahora te redirige a tu repositorio oficial de GitHub de forma directa.</li>
-                                <li><strong>Ocultación inteligente de elementos:</strong> La barra superior de seleccionar archivo y la barra lateral de búsqueda de partidas se ocultan por completo en la pantalla de bienvenida, mostrándose únicamente cuando hay un presupuesto cargado en la aplicación para optimizar el espacio de pantalla.</li>
-                                <li><strong>Reubicación de Botón Cerrar (✕):</strong> Se traslada el botón rojo de cerrar presupuesto de la barra de carga directamente al lado del widget de PEM y PEC, manteniéndolo contextualizado a la información presupuestaria activa.</li>
+                                <li><strong>Simplificación de Carga y Enlace GitHub:</strong> Eliminación del botón
+                                    redundante "PROCESA" de la cabecera (la app procesa automáticamente al seleccionar
+                                    el archivo). Al pulsar sobre el logotipo superior izquierdo, ahora te redirige a tu
+                                    repositorio oficial de GitHub de forma directa.</li>
+                                <li><strong>Ocultación inteligente de elementos:</strong> La barra superior de
+                                    seleccionar archivo y la barra lateral de búsqueda de partidas se ocultan por
+                                    completo en la pantalla de bienvenida, mostrándose únicamente cuando hay un
+                                    presupuesto cargado en la aplicación para optimizar el espacio de pantalla.</li>
+                                <li><strong>Reubicación de Botón Cerrar (✕):</strong> Se traslada el botón rojo de
+                                    cerrar presupuesto de la barra de carga directamente al lado del widget de PEM y
+                                    PEC, manteniéndolo contextualizado a la información presupuestaria activa.</li>
                             </ul>
                         </div>
                         <!-- Versión 1.4.2 -->
-                        <div style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
+                        <div
+                            style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
                             <div
                                 style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary);">
                                 <span>V1.4.2</span>
@@ -1016,11 +1067,14 @@
                                 Jose Manuel Caamaño</div>
                             <ul
                                 style="margin: 0; padding-left: 1rem; color: var(--text-secondary); font-size: 0.75rem;">
-                                <li><strong>Rediseño y mayor escala del logotipo del cabezal:</strong> Aumento del tamaño del logotipo en la cabecera para que coincida exactamente con la altura de las cajas de PEM/PEC, logrando un aspecto mucho más nítido, definido y premium.</li>
+                                <li><strong>Rediseño y mayor escala del logotipo del cabezal:</strong> Aumento del
+                                    tamaño del logotipo en la cabecera para que coincida exactamente con la altura de
+                                    las cajas de PEM/PEC, logrando un aspecto mucho más nítido, definido y premium.</li>
                             </ul>
                         </div>
                         <!-- Versión 1.4.1 -->
-                        <div style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
+                        <div
+                            style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
                             <div
                                 style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary);">
                                 <span>V1.4.1</span>
@@ -1030,12 +1084,17 @@
                                 Jose Manuel Caamaño</div>
                             <ul
                                 style="margin: 0; padding-left: 1rem; color: var(--text-secondary); font-size: 0.75rem;">
-                                <li><strong>Control de pestañas con el FAB:</strong> El botón circular flotante (FAB) de la esquina inferior derecha ahora colapsa y expande contextualmente la sección de "Resumen de Plazos y Costes" cuando el Planning está abierto.</li>
-                                <li><strong>Limpieza de textos:</strong> Se simplifica el texto del encabezado del resumen temporal a "Resumen de Plazos y Costes" para evitar distracciones visuales.</li>
+                                <li><strong>Control de pestañas con el FAB:</strong> El botón circular flotante (FAB) de
+                                    la esquina inferior derecha ahora colapsa y expande contextualmente la sección de
+                                    "Resumen de Plazos y Costes" cuando el Planning está abierto.</li>
+                                <li><strong>Limpieza de textos:</strong> Se simplifica el texto del encabezado del
+                                    resumen temporal a "Resumen de Plazos y Costes" para evitar distracciones visuales.
+                                </li>
                             </ul>
                         </div>
                         <!-- Versión 1.4.0 -->
-                        <div style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
+                        <div
+                            style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
                             <div
                                 style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary);">
                                 <span>V1.4.0</span>
@@ -1045,14 +1104,23 @@
                                 Jose Manuel Caamaño</div>
                             <ul
                                 style="margin: 0; padding-left: 1rem; color: var(--text-secondary); font-size: 0.75rem;">
-                                <li><strong>Pantalla de bienvenida y PIN premium:</strong> Logotipo de la app en la pantalla de bienvenida y el acceso con código PIN, con un elegante título "BC3 Viewer" en color azul resplandeciente y créditos del autor.</li>
-                                <li><strong>Botón de cabecera flotante unificado:</strong> Botón único en formato FAB situado en la esquina inferior derecha para alternar la visibilidad de la cabecera sin que se mueva de sitio.</li>
-                                <li><strong>Optimización de espacio en el Planning:</strong> Integración de la exportación a XML dentro del menú desplegable y eliminación del icono repetitivo del calendario en la cabecera.</li>
-                                <li><strong>Diseño responsivo del modal del Gantt:</strong> Mayor ancho del modal detallado de partidas para evitar el desbordamiento de los selectores de fecha en pantallas móviles.</li>
+                                <li><strong>Pantalla de bienvenida y PIN premium:</strong> Logotipo de la app en la
+                                    pantalla de bienvenida y el acceso con código PIN, con un elegante título "BC3
+                                    Viewer" en color azul resplandeciente y créditos del autor.</li>
+                                <li><strong>Botón de cabecera flotante unificado:</strong> Botón único en formato FAB
+                                    situado en la esquina inferior derecha para alternar la visibilidad de la cabecera
+                                    sin que se mueva de sitio.</li>
+                                <li><strong>Optimización de espacio en el Planning:</strong> Integración de la
+                                    exportación a XML dentro del menú desplegable y eliminación del icono repetitivo del
+                                    calendario en la cabecera.</li>
+                                <li><strong>Diseño responsivo del modal del Gantt:</strong> Mayor ancho del modal
+                                    detallado de partidas para evitar el desbordamiento de los selectores de fecha en
+                                    pantallas móviles.</li>
                             </ul>
                         </div>
                         <!-- Versión 1.3.4 -->
-                        <div style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
+                        <div
+                            style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
                             <div
                                 style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary);">
                                 <span>V1.3.4</span>
@@ -1062,8 +1130,10 @@
                                 Jose Manuel Caamaño</div>
                             <ul
                                 style="margin: 0; padding-left: 1rem; color: var(--text-secondary); font-size: 0.75rem;">
-                                <li>Rediseño de barra de herramientas en móvil alineando los 8 iconos en una sola fila.</li>
-                                <li>Añadido botón de salida (X roja) al lado de PROCESA para resetear presupuesto y volver a la bienvenida.</li>
+                                <li>Rediseño de barra de herramientas en móvil alineando los 8 iconos en una sola fila.
+                                </li>
+                                <li>Añadido botón de salida (X roja) al lado de PROCESA para resetear presupuesto y
+                                    volver a la bienvenida.</li>
                             </ul>
                         </div>
                         <!-- Versión 1.3.3 -->
@@ -1218,15 +1288,21 @@
                 <details class="version-history-details" style="margin-top: 1rem;">
                     <summary>Registro de Actualizaciones (OTA)</summary>
                     <div style="margin-top: 8px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 6px;">
-                        <button type="button" id="manualCheckUpdateBtn" style="font-size: 0.75rem; padding: 6px 12px; cursor: pointer; background: var(--accent); border: none; border-radius: 4px; color: white; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%;">
+                        <button type="button" id="manualCheckUpdateBtn"
+                            style="font-size: 0.75rem; padding: 6px 12px; cursor: pointer; background: var(--accent); border: none; border-radius: 4px; color: white; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%;">
                             🔄 Buscar actualización ahora
                         </button>
-                        <div id="manualUpdateStatus" style="font-size: 0.72rem; color: var(--text-primary); font-weight: 500; text-align: center; min-height: 16px;"></div>
+                        <div id="manualUpdateStatus"
+                            style="font-size: 0.72rem; color: var(--text-primary); font-weight: 500; text-align: center; min-height: 16px;">
+                        </div>
                     </div>
-                    <div id="otaLogsContainer" style="font-family: monospace; font-size: 0.7rem; background-color: var(--hover-bg); padding: 8px; border-radius: 6px; max-height: 120px; overflow-y: auto; white-space: pre-wrap; margin-top: 4px; color: var(--text-secondary);">
+                    <div id="otaLogsContainer"
+                        style="font-family: monospace; font-size: 0.7rem; background-color: var(--hover-bg); padding: 8px; border-radius: 6px; max-height: 120px; overflow-y: auto; white-space: pre-wrap; margin-top: 4px; color: var(--text-secondary);">
                         Cargando registros...
                     </div>
-                    <button type="button" id="clearOtaLogsBtn" style="font-size: 0.7rem; padding: 4px 8px; margin-top: 6px; cursor: pointer; background: var(--hover-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-primary);">Limpiar registros</button>
+                    <button type="button" id="clearOtaLogsBtn"
+                        style="font-size: 0.7rem; padding: 4px 8px; margin-top: 6px; cursor: pointer; background: var(--hover-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-primary);">Limpiar
+                        registros</button>
                 </details>
 
                 <p
@@ -1382,8 +1458,7 @@
     <div id="certPrintArea"></div>
 
     <!-- Botón flotante para colapsar/expandir cabecera -->
-    <button type="button" id="expandHeaderBtn" class="floating-expand-btn"
-        title="Ocultar Cabecera">🔼</button>
+    <button type="button" id="expandHeaderBtn" class="floating-expand-btn" title="Ocultar Cabecera">🔼</button>
 
     <!-- Modal de Notificación de Actualización -->
     <div id="updateNotifyModal" class="modal"

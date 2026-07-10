@@ -14,11 +14,11 @@ El objetivo de este proyecto es empaquetar y distribuir el visualizador web orig
 > [!IMPORTANT]
 > **🚀 DESCARGA DIRECTA DE PROGRAMAS:**
 > Si no quieres compilar el código tú mismo y solo quieres utilizar la aplicación, puedes descargar directamente los ejecutables listos para usar:
-> *   **💻 Windows Installer (.exe):** `BC3_Viewer_Windows_Installer.exe`
-> *   **💻 Windows Package (.msi):** `BC3_Viewer_Windows_Installer.msi`
-> *   **📱 Android App (.apk):** `BC3Viewer-App.apk`
+> *   **💻 Windows Installer (.exe):** [BC3_Viewer_Windows_Installer.exe](./PROGRAMAS/BC3_Viewer_Windows_Installer.exe)
+> *   **💻 Windows Package (.msi):** [BC3_Viewer_Windows_Installer.msi](./PROGRAMAS/BC3_Viewer_Windows_Installer.msi)
+> *   **📱 Android App (.apk):** [BC3Viewer-App.apk](./PROGRAMAS/BC3Viewer-App.apk)
 
-> *   También dispones de un presupuesto de ejemplo para probarlo inmediatamente en la carpeta **/PROGRAMAS/BC3 EJEMPLO**.
+> *   También dispones de un presupuesto de ejemplo para probarlo inmediatamente en la carpeta [📁 PROGRAMAS/BC3 EJEMPLO](./PROGRAMAS/BC3%20EJEMPLO).
 >
 > **🌐 ACCESO DIRECTO EN LA WEB (Nube):**
 > Puedes usar la versión web más reciente directamente en tu navegador sin instalar nada en:
@@ -146,10 +146,10 @@ BC3 Viewer es una aplicacion web que permite **visualizar, editar, comparar, pla
 * **Cierre y Reset de Presupuesto:** Añadido un botón en color rojo con una "✕" al lado de PROCESA para vaciar los datos cargados, borrar la auto-carga y volver al estado de bienvenida de manera directa.
 
 ### Version 1.3.3 — 08/07/2026
-* **Nueva versión APP:** Aplicación de `Android` con todas las funciones y offline!. Instala y despreocúpate de las nuevas actualziaciones. ---> descarga el `.apk` de la carpeta `PROGRAMAS`.
-* **Versión para Windows:** Aplicación instalable para Windows. ---> descarga el `.exe` de la carpeta `PROGRAMAS`.
+* **Nueva versión APP:** Aplicación de `Android` con todas las funciones y offline!. Instala y despreocúpate de las nuevas actualizaciones. ---> descarga el [BC3Viewer-App.apk](./PROGRAMAS/BC3Viewer-App.apk) de la carpeta [📁 PROGRAMAS](./PROGRAMAS).
+* **Versión para Windows:** Aplicación instalable para Windows. ---> descarga el [BC3_Viewer_Windows_Installer.exe](./PROGRAMAS/BC3_Viewer_Windows_Installer.exe) de la carpeta [📁 PROGRAMAS](./PROGRAMAS).
 * **CERTIFICACIONES de obra:** Ya puedes certificar la obra directamente desde la **APP** !. 
-> *📱 *(Ventajas de instalar la **App**-> Actualizaciones online, compartición nativa de archivos por WhatsApp y auto-carga en la carpeta /PROGRAMAS! en tu movil!)*
+> *📱 *(Ventajas de instalar la **App**-> Actualizaciones online, compartición nativa de archivos por WhatsApp y auto-carga en la carpeta [📁 PROGRAMAS](./PROGRAMAS)! en tu movil!)*
 
 
 
@@ -217,15 +217,15 @@ BC3 Viewer es una aplicacion web que permite **visualizar, editar, comparar, pla
 
 ## 📁 Estructura del Directorio
 
-*   **`/www`**: Código fuente compartido de la aplicación web estática.
-    *   `index.html`: La interfaz unificada.
-    *   `style.css`: Estilos visuales adaptativos (incluye el Gantt, Curva S, y Modo Oscuro).
-    *   `BC3Parser.js`: Analizador de FIEBDC-3 portado a JavaScript.
-    *   `app.js`: Lógica interactiva completa, certificaciones, Gantt, exportadores locales y carga local de ficheros.
-    *   *Librerías locales:* `chart.min.js`, `xlsx.full.min.js`, `jspdf.umd.min.js` y `jspdf.plugin.autotable.min.js` (cargadas en local para garantizar el funcionamiento offline).
-*   **`/src-tauri`**: Lógica de envoltura nativa en Rust para compilar la aplicación de Windows.
-*   **`/android`**: Código de la aplicación nativa de Android autogenerado y sincronizado por Capacitor.
-*   `package.json`: Configuración de dependencias de Node.js y scripts de compilación.
+*   **[`/www`](./www)**: Código fuente compartido de la aplicación web estática.
+    *   [index.html](./www/index.html): La interfaz unificada.
+    *   [style.css](./www/style.css): Estilos visuales adaptativos (incluye el Gantt, Curva S, y Modo Oscuro).
+    *   [BC3Parser.js](./www/BC3Parser.js): Analizador de FIEBDC-3 portado a JavaScript.
+    *   [app.js](./www/app.js): Lógica interactiva completa, certificaciones, Gantt, exportadores locales y carga local de ficheros.
+    *   *Librerías locales:* [chart.min.js](./www/chart.min.js), [xlsx.full.min.js](./www/xlsx.full.min.js), [jspdf.umd.min.js](./www/jspdf.umd.min.js) y [jspdf.plugin.autotable.min.js](./www/jspdf.plugin.autotable.min.js) (cargadas en local para garantizar el funcionamiento offline).
+*   **[`/src-tauri`](./src-tauri)**: Lógica de envoltura nativa en Rust para compilar la aplicación de Windows.
+*   **[`/android`](./android)**: Código de la aplicación nativa de Android autogenerado y sincronizado por Capacitor.
+*   [package.json](./package.json): Configuración de dependencias de Node.js y scripts de compilación.
 
 ---
 ---
