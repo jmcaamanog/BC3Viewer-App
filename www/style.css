@@ -3992,21 +3992,32 @@ body.dark-theme .badge-critical-tree {
     align-items: center;
     gap: 1.25rem;
 }
-.pin-lock-icon {
-    font-size: 3rem;
+.pin-lock-logo {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
     margin-bottom: 0.25rem;
 }
-.pin-lock-card h3 {
-    margin: 0;
-    color: #ffffff;
-    font-size: 1.35rem;
+.pin-lock-title {
+    margin: 0 !important;
+    color: #0ea5e9 !important;
+    font-size: 1.6rem !important;
     font-weight: 700;
+    text-shadow: 0 0 12px rgba(14, 165, 233, 0.5);
 }
-.pin-lock-card p {
-    margin: 0;
-    font-size: 0.82rem;
-    color: #94a3b8;
-    line-height: 1.45;
+.pin-lock-subtitle {
+    margin: 0 !important;
+    font-size: 0.85rem !important;
+    color: #94a3b8 !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.pin-lock-credits {
+    font-size: 0.72rem;
+    color: #64748b;
+    margin-top: 4px;
+    opacity: 0.8;
 }
 .pin-lock-card input {
     width: 100%;

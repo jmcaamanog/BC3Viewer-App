@@ -1259,11 +1259,12 @@
     <!-- Pin Lock Overlay -->
     <div id="pinLockOverlay" class="pin-lock-overlay" style="display: none;">
         <div class="pin-lock-card">
-            <div class="pin-lock-icon">🔒</div>
-            <h3>Acceso Protegido</h3>
-            <p>Introduce el código PIN de acceso para abrir el visualizador.</p>
+            <img src="assets/icon.png" alt="Logo" class="pin-lock-logo">
+            <h2 class="pin-lock-title">BC3 Viewer</h2>
+            <p class="pin-lock-subtitle">Acceso Protegido</p>
             <input type="password" id="pinInput" placeholder="PIN" maxlength="8" pattern="[0-9]*" inputmode="numeric">
             <button type="button" id="pinSubmitBtn">Entrar</button>
+            <div class="pin-lock-credits">by jmcaamanog</div>
             <div id="pinErrorMsg" class="pin-error-msg" style="display: none;">Código PIN incorrecto</div>
         </div>
     </div>
