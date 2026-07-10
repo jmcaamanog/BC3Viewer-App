@@ -4355,9 +4355,9 @@ body.dark-theme .update-notify-content {
     color: var(--text-primary, #0f172a);
     border: 1px solid var(--border-color, #e2e8f0);
     border-radius: 12px;
-    width: 85%;
-    max-width: 320px;
-    padding: 20px;
+    width: 90%;
+    max-width: 380px;
+    padding: 16px;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     text-align: left;
     animation: ganttScaleUp 0.2s ease-out;
