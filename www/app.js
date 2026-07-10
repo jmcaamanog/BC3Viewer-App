@@ -3724,6 +3724,7 @@ let ganttTotalWeeks = 26;
 let GANTT_COL_PX = 44; // ancho de cada columna en px (redimensionable por zoom slider)
 let ganttViewMode = 'weeks'; // escala de tiempo: 'days', 'weeks', 'months'
 let ganttLeftColWidth = window.innerWidth <= 768 ? 250 : (window.innerWidth <= 1024 ? 360 : 460);  // ancho columna tareas en px (redimensionable)
+const GANTT_PRE_WEEKS = 4; // Margen de semanas a la izquierda para poder deslizar antes del inicio/hoy
 let ganttColDrag = null;       // estado drag de la columna
 
 // Clave localStorage basada en el nombre del fichero cargado
@@ -3845,6 +3846,16 @@ function formatDate(d) {
     return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
+function focusGanttToday() {
+    const rightCol = document.querySelector('#ganttContainer .gantt-right-col');
+    const todayLine = document.getElementById('ganttTodayLine');
+    if (rightCol && todayLine) {
+        const offsetLeft = todayLine.offsetLeft;
+        const width = rightCol.clientWidth;
+        rightCol.scrollLeft = offsetLeft - (width / 2);
+    }
+}
+
 // Generar cabecera del timeline (meses + semanas)
 function buildGanttHeader(totalWeeks) {
     const monthRow = document.createElement('div');
@@ -3857,12 +3868,13 @@ function buildGanttHeader(totalWeeks) {
         let lastWeekNum = null;
         let weekSpan = 0;
         let weekCells = [];
+        const GANTT_PRE_DAYS = GANTT_PRE_WEEKS * 7;
         const totalDays = totalWeeks * 7;
 
-        for (let d = 1; d <= totalDays; d++) {
+        for (let d = -GANTT_PRE_DAYS + 1; d <= totalDays; d++) {
             const date = new Date(ganttStartDate);
             date.setDate(date.getDate() + (d - 1));
-            const wNum = Math.ceil(d / 7);
+            const wNum = Math.ceil((d + GANTT_PRE_DAYS) / 7);
 
             const dCell = document.createElement('div');
             dCell.className = 'gantt-week-cell';
@@ -3896,12 +3908,13 @@ function buildGanttHeader(totalWeeks) {
 
     } else if (ganttViewMode === 'months') {
         // Modo MESES: Fila 1 = Años, Fila 2 = Nombres de mes
+        const GANTT_PRE_MONTHS = Math.ceil(GANTT_PRE_WEEKS / 4);
         const totalMonths = Math.ceil(totalWeeks / 4);
         let lastYear = null;
         let yearSpan = 0;
         let yearCells = [];
 
-        for (let m = 1; m <= totalMonths; m++) {
+        for (let m = -GANTT_PRE_MONTHS + 1; m <= totalMonths; m++) {
             const date = new Date(ganttStartDate);
             date.setMonth(date.getMonth() + (m - 1));
             const year = date.getFullYear();
@@ -3942,7 +3955,7 @@ function buildGanttHeader(totalWeeks) {
         let monthSpan = 0;
         let monthCells = [];
 
-        for (let w = 1; w <= totalWeeks; w++) {
+        for (let w = -GANTT_PRE_WEEKS + 1; w <= totalWeeks; w++) {
             const date = weekToDate(w);
             const month = date.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' });
 
@@ -4021,6 +4034,7 @@ function renderPlanningModal() {
 
     rebuildGanttDOM();
     syncHeaderToggleBtn();
+    setTimeout(focusGanttToday, 100);
 }
 
 // Recalcular dinámicamente las fechas de los capítulos (padres) basándose en sus hijos
@@ -4226,6 +4240,33 @@ function rebuildGanttDOM() {
             mediaMonth = mediaDay * 30.417;
         }
 
+        const activeTodayTasks = ganttTasks.filter(t => {
+            if (t.hasKids) return false; // solo hojas
+            const st = ganttState[t.id];
+            if (!st) return false;
+            const taskStart = weekToDate(st.startWeek);
+            const taskEnd = weekToDate(st.startWeek + st.durationWeeks);
+            taskStart.setHours(0,0,0,0);
+            taskEnd.setHours(0,0,0,0);
+            return today >= taskStart && today <= taskEnd && (st.progress || 0) < 100;
+        });
+
+        const todayTasksHTML = activeTodayTasks.length > 0
+            ? activeTodayTasks.map(t => {
+                const st = ganttState[t.id];
+                const prog = st ? (st.progress || 0) : 0;
+                const price = (t.price || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const taskEndD = weekToDate(st.startWeek + st.durationWeeks);
+                taskEndD.setHours(0,0,0,0);
+                const dLeft = Math.ceil((taskEndD - today) / (1000*60*60*24));
+                const color = dLeft < 0 ? '#ef4444' : dLeft <= 7 ? '#f97316' : '#10b981';
+                return `<div class="gantt-sub-kpi" style="flex-direction:column;align-items:flex-start;gap:1px;">
+                    <strong style="color:var(--text-primary);font-size:0.75rem;">${t.summary}</strong>
+                    <span style="color:var(--text-secondary);font-size:0.68rem;">Progreso: ${prog}% · Vence: <strong style="color:${color};">${dLeft >= 0 ? dLeft + ' d.' : Math.abs(dLeft) + ' d. de atraso'}</strong> · ${price} €</span>
+                </div>`;
+            }).join('')
+            : `<div class="gantt-sub-kpi" style="color:var(--text-secondary);font-style:italic;">Ninguna tarea activa para hoy.</div>`;
+
         const isMobile = window.innerWidth <= 1024;
         summaryBar.innerHTML = `
             <details class="gantt-summary-details" ${isMobile ? '' : 'open'} style="width: 100%;">
@@ -4255,6 +4296,12 @@ function rebuildGanttDOM() {
                             <div class="gantt-sub-kpi"><span>Por Día:</span> <strong>${mediaDay.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong></div>
                             <div class="gantt-sub-kpi"><span>Por Semana:</span> <strong>${mediaWeek.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong></div>
                             <div class="gantt-sub-kpi"><span>Por Mes:</span> <strong>${mediaMonth.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong></div>
+                        </div>
+                    </div>
+                    <div class="gantt-kpi-group" style="min-width: 200px; flex: 1 1 200px;">
+                        <h4>📅 Tareas Activas Hoy</h4>
+                        <div class="gantt-kpi-row" style="flex-direction:column;gap:6px;">
+                            ${todayTasksHTML}
                         </div>
                     </div>
                 </div>
@@ -4331,18 +4378,18 @@ function rebuildGanttDOM() {
     const diffDays = diffMs / (1000 * 60 * 60 * 24);
     const diffWeeks = diffDays / 7;
 
-    if (diffWeeks >= 0 && diffWeeks <= totalWeeks + 0.5) {
+    if (diffWeeks >= -GANTT_PRE_WEEKS && diffWeeks <= totalWeeks + 0.5) {
         const todayLine = document.createElement('div');
         todayLine.className = 'gantt-today-line';
         todayLine.id = 'ganttTodayLine';
 
         let todayLeft = 0;
         if (ganttViewMode === 'days') {
-            todayLeft = diffDays * GANTT_COL_PX;
+            todayLeft = (diffDays + GANTT_PRE_WEEKS * 7) * GANTT_COL_PX;
         } else if (ganttViewMode === 'months') {
-            todayLeft = (diffWeeks / 4) * GANTT_COL_PX;
+            todayLeft = ((diffWeeks + GANTT_PRE_WEEKS) / 4) * GANTT_COL_PX;
         } else { // weeks (default)
-            todayLeft = diffWeeks * GANTT_COL_PX;
+            todayLeft = (diffWeeks + GANTT_PRE_WEEKS) * GANTT_COL_PX;
         }
         todayLine.style.left = todayLeft + 'px';
 
@@ -4535,9 +4582,9 @@ function rebuildGanttDOM() {
             barRow.classList.add('gantt-bar-row-parent');
         }
 
-        let colsCount = totalWeeks;
-        if (ganttViewMode === 'days') colsCount = totalWeeks * 7;
-        else if (ganttViewMode === 'months') colsCount = Math.ceil(totalWeeks / 4);
+        let colsCount = totalWeeks + GANTT_PRE_WEEKS;
+        if (ganttViewMode === 'days') colsCount = (totalWeeks + GANTT_PRE_WEEKS) * 7;
+        else if (ganttViewMode === 'months') colsCount = Math.ceil((totalWeeks + GANTT_PRE_WEEKS) / 4);
 
         barRow.style.width = (colsCount * GANTT_COL_PX) + 'px';
         barRow.dataset.taskId = task.id;
@@ -4627,9 +4674,9 @@ function rebuildGanttDOM() {
         const svg = document.createElementNS(svgNS, "svg");
         svg.setAttribute("class", "gantt-svg-overlay");
 
-        let colsCount = totalWeeks;
-        if (ganttViewMode === 'days') colsCount = totalWeeks * 7;
-        else if (ganttViewMode === 'months') colsCount = Math.ceil(totalWeeks / 4);
+        let colsCount = totalWeeks + GANTT_PRE_WEEKS;
+        if (ganttViewMode === 'days') colsCount = (totalWeeks + GANTT_PRE_WEEKS) * 7;
+        else if (ganttViewMode === 'months') colsCount = Math.ceil((totalWeeks + GANTT_PRE_WEEKS) / 4);
         svg.style.width = (colsCount * GANTT_COL_PX) + 'px';
 
         for (let i = 0; i < renderedCriticalChapters.length - 1; i++) {
@@ -4675,14 +4722,14 @@ function getGanttBarCoords(st) {
     let width = 0;
 
     if (ganttViewMode === 'days') {
-        left = (st.startWeek - 1) * 7 * GANTT_COL_PX;
+        left = (st.startWeek - 1 + GANTT_PRE_WEEKS) * 7 * GANTT_COL_PX;
         width = Math.max(GANTT_COL_PX * 0.5, (st.durationWeeks * 7) * GANTT_COL_PX - 2);
     } else if (ganttViewMode === 'months') {
-        left = ((st.startWeek - 1) / 4) * GANTT_COL_PX;
+        left = ((st.startWeek - 1 + GANTT_PRE_WEEKS) / 4) * GANTT_COL_PX;
         width = Math.max(GANTT_COL_PX * 0.5, (st.durationWeeks / 4) * GANTT_COL_PX - 2);
     } else {
         // semanas
-        left = (st.startWeek - 1) * GANTT_COL_PX;
+        left = (st.startWeek - 1 + GANTT_PRE_WEEKS) * GANTT_COL_PX;
         width = Math.max(GANTT_COL_PX * 0.5, st.durationWeeks * GANTT_COL_PX - 2);
     }
 
@@ -5122,6 +5169,14 @@ if (ganttHelpCloseBtn && ganttHelpCard) {
     ganttHelpCloseBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         ganttHelpCard.style.display = 'none';
+    });
+}
+
+const ganttTodayBtn = document.getElementById('ganttTodayBtn');
+if (ganttTodayBtn) {
+    ganttTodayBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        focusGanttToday();
     });
 }
 
@@ -5968,9 +6023,9 @@ rebuildGanttDOM = function () {
     // Dibujar flechas tras el rebuild
     const bw = document.querySelector('#ganttContainer .gantt-body');
     if (bw) {
-        let colsCount = ganttTotalWeeks;
-        if (ganttViewMode === 'days') colsCount = ganttTotalWeeks * 7;
-        else if (ganttViewMode === 'months') colsCount = Math.ceil(ganttTotalWeeks / 4);
+        let colsCount = ganttTotalWeeks + GANTT_PRE_WEEKS;
+        if (ganttViewMode === 'days') colsCount = (ganttTotalWeeks + GANTT_PRE_WEEKS) * 7;
+        else if (ganttViewMode === 'months') colsCount = Math.ceil((ganttTotalWeeks + GANTT_PRE_WEEKS) / 4);
         drawDependencyArrows(bw, colsCount);
     }
 };
@@ -8394,10 +8449,10 @@ function showGanttTaskPopup(task, st) {
     plazoVal.className = 'popup-card-value';
     grid.appendChild(cardPlazo);
 
-    // Tarjeta Enlace Anterior (Predecesora)
+    // Tarjeta Enlace Anterior
     const cardPred = document.createElement('div');
     cardPred.className = 'gantt-popup-card';
-    cardPred.innerHTML = `<div class="popup-card-title">Enlace Anterior (Predecesora)</div>`;
+    cardPred.innerHTML = `<div class="popup-card-title">Enlace Anterior</div>`;
     
     const selectPred = document.createElement('select');
     selectPred.className = 'popup-card-input';
@@ -8442,10 +8497,10 @@ function showGanttTaskPopup(task, st) {
     cardPred.appendChild(selectPred);
     grid.appendChild(cardPred);
 
-    // Tarjeta Enlace Posterior (Sucesora)
+    // Tarjeta Enlace Posterior
     const cardSucc = document.createElement('div');
     cardSucc.className = 'gantt-popup-card';
-    cardSucc.innerHTML = `<div class="popup-card-title">Enlace Posterior (Sucesora)</div>`;
+    cardSucc.innerHTML = `<div class="popup-card-title">Enlace Posterior</div>`;
     
     const selectSucc = document.createElement('select');
     selectSucc.className = 'popup-card-input';
