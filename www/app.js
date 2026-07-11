@@ -4189,11 +4189,17 @@ function rebuildGanttDOM() {
     if (!container) return;
 
     // Guardar la semana en el centro del scroll horizontal antes de vaciar el contenedor
+    const oldLeftCol = container.querySelector('.gantt-left-col');
     const oldRightCol = container.querySelector('.gantt-right-col');
     let keepWeek = null;
+    let keepScrollTop = 0;
+
     if (oldRightCol) {
         const scrollCenter = oldRightCol.scrollLeft + oldRightCol.clientWidth / 2;
         keepWeek = scrollCenter / ganttPrevColPx;
+    }
+    if (oldLeftCol) {
+        keepScrollTop = oldLeftCol.scrollTop;
     }
 
     container.innerHTML = '';
@@ -4452,7 +4458,6 @@ function rebuildGanttDOM() {
         bodyWrap.appendChild(todayLine);
     }
 
-    let renderedRowIndex = -1;
     const renderedCriticalChapters = [];
 
     ganttTasks.forEach(task => {
@@ -4464,16 +4469,10 @@ function rebuildGanttDOM() {
             return;
         }
 
-        renderedRowIndex++;
-
-        const rowHeight = window.innerWidth <= 768 ? 48 : 34;
-        // Registrar coordenadas de capítulos críticos visibles para trazar la línea de conexión
         if (task.depth === 1 && criticalPathSet.has(task.id)) {
             renderedCriticalChapters.push({
                 id: task.id,
-                startWeek: st.startWeek,
-                durationWeeks: st.durationWeeks,
-                y: (renderedRowIndex * rowHeight) + (rowHeight / 2) // Centro vertical de esta fila
+                startWeek: st.startWeek
             });
         }
 
@@ -4744,13 +4743,17 @@ function rebuildGanttDOM() {
             const A = renderedCriticalChapters[i];
             const B = renderedCriticalChapters[i + 1];
 
-            const coordsA = getGanttBarCoords(A);
-            const xA = coordsA.left + coordsA.width;
-            const yA = A.y;
+            const rowA = bodyWrap.querySelector(`.gantt-bar-row[data-task-id="${A.id}"]`);
+            const barA = rowA ? rowA.querySelector('.gantt-bar') : null;
+            const rowB = bodyWrap.querySelector(`.gantt-bar-row[data-task-id="${B.id}"]`);
+            const barB = rowB ? rowB.querySelector('.gantt-bar') : null;
+            
+            if (!rowA || !barA || !rowB || !barB) continue;
 
-            const coordsB = getGanttBarCoords(B);
-            const xB = coordsB.left;
-            const yB = B.y;
+            const xA = barA.offsetLeft + barA.offsetWidth;
+            const yA = rowA.offsetTop + rowA.offsetHeight / 2;
+            const xB = barB.offsetLeft;
+            const yB = rowB.offsetTop + rowB.offsetHeight / 2;
 
             const xMid = xA + (xB - xA) / 2;
 
@@ -4793,12 +4796,16 @@ function rebuildGanttDOM() {
 
     container.appendChild(tableWrap);
 
-    // Restaurar el scroll horizontal centrado de la semana guardada antes de reconstruir
-    if (keepWeek !== null) {
-        setTimeout(() => {
+    // Restaurar los scrolls guardados antes de reconstruir
+    setTimeout(() => {
+        if (keepWeek !== null) {
             rightCol.scrollLeft = (keepWeek * GANTT_COL_PX) - (rightCol.clientWidth / 2);
-        }, 0);
-    }
+        }
+        if (keepScrollTop > 0) {
+            leftCol.scrollTop = keepScrollTop;
+            rightCol.scrollTop = keepScrollTop;
+        }
+    }, 0);
 
     // Sincronizar scroll vertical entre columnas
     leftCol.addEventListener('scroll', () => { rightCol.scrollTop = leftCol.scrollTop; });
@@ -5961,22 +5968,18 @@ function drawDependencyArrows(bodyWrap, colsCount) {
     depSvg.appendChild(defs);
 
     ganttDeps.forEach(dep => {
-        const fromSt = ganttState[dep.from];
-        const toSt = ganttState[dep.to];
-        if (!fromSt || !toSt) return;
+        const fromRow = bodyWrap.querySelector(`.gantt-bar-row[data-task-id="${dep.from}"]`);
+        const toRow = bodyWrap.querySelector(`.gantt-bar-row[data-task-id="${dep.to}"]`);
+        if (!fromRow || !toRow) return;
 
-        const fromIdx = getRenderedRowIndex(dep.from);
-        const toIdx = getRenderedRowIndex(dep.to);
-        if (fromIdx < 0 || toIdx < 0) return;
+        const fromBar = fromRow.querySelector('.gantt-bar');
+        const toBar = toRow.querySelector('.gantt-bar');
+        if (!fromBar || !toBar) return;
 
-        const ROW_H = window.innerWidth <= 768 ? 48 : 34;
-        const fromCoords = getGanttBarCoords(fromSt);
-        const toCoords = getGanttBarCoords(toSt);
-
-        const xA = fromCoords.left + fromCoords.width;
-        const yA = fromIdx * ROW_H + ROW_H / 2;
-        const xB = toCoords.left;
-        const yB = toIdx * ROW_H + ROW_H / 2;
+        const xA = fromBar.offsetLeft + fromBar.offsetWidth;
+        const yA = fromRow.offsetTop + fromRow.offsetHeight / 2;
+        const xB = toBar.offsetLeft;
+        const yB = toRow.offsetTop + toRow.offsetHeight / 2;
 
         const xMid = xA + Math.max(10, (xB - xA) / 2);
         const d = `M ${xA} ${yA} C ${xMid} ${yA}, ${xMid} ${yB}, ${xB} ${yB}`;
@@ -6045,24 +6048,7 @@ function drawDependencyArrows(bodyWrap, colsCount) {
     });
 }
 
-// Helper: índice de fila renderizada de una tarea
-function getRenderedRowIndex(taskId) {
-    let idx = 0;
-    for (const task of ganttTasks) {
-        if (isTaskHidden(task)) continue;
-        if (task.id === taskId) return idx;
-        idx++;
-    }
-    return -1;
-}
 
-function isTaskHidden(task) {
-    if (!task.parentId) return false;
-    const pSt = ganttState[task.parentId];
-    if (pSt && pSt.collapsed) return true;
-    const parent = ganttTasks.find(t => t.id === task.parentId);
-    return parent ? isTaskHidden(parent) : false;
-}
 
 // ── Mostrar/ocultar banner de enlace ──
 function showGanttLinkBanner(htmlText) {
