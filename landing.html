@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=device-width, initial-scale=1.0">
+    <meta name="description" content="BC3 Viewer Premium - Visualizador y Editor Avanzado offline de presupuestos FIEBDC-3 (.bc3) para profesionales de la construcción y Arquitectos Técnicos.">
+    <title>BC3 Viewer Premium - Visualizador y Editor de Presupuestos FIEBDC-3</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* CSS RESET & VARIABLES */
+        :root {
+            --bg-dark: #090d16;
+            --bg-card: rgba(17, 24, 39, 0.7);
+            --bg-card-hover: rgba(26, 36, 57, 0.85);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(59, 130, 246, 0.3);
+            
+            --accent-primary: #3b82f6;      /* Blue */
+            --accent-primary-rgb: 59, 130, 246;
+            --accent-secondary: #06b6d4;    /* Cyan */
+            --accent-success: #10b981;      /* Emerald */
+            --accent-purple: #8b5cf6;       /* Violet */
+            
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --text-white: #ffffff;
+            
+            --font-display: 'Outfit', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
+            --shadow-glow: 0 0 25px rgba(59, 130, 246, 0.25);
+            
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Ambient Glow Background Blobs */
+        body::before, body::after {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(var(--accent-primary-rgb), 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+            z-index: -1;
+            filter: blur(60px);
+            pointer-events: none;
+        }
+        body::before {
+            top: 10%;
+            left: -100px;
+        }
+        body::after {
+            top: 60%;
+            right: -100px;
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, rgba(0, 0, 0, 0) 70%);
+        }
+
+        /* TYPOGRAPHY UTILITIES */
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--font-display);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-white);
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        /* NAVIGATION BAR */
+        .navbar {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 1200px;
+            height: 70px;
+            background: rgba(9, 13, 22, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 1000;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+        }
+
+        .navbar:hover {
+            border-color: rgba(59, 130, 246, 0.2);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.25rem;
+            font-family: var(--font-display);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--text-white) 30%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-logo span {
+            font-size: 1.5rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 25px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            position: relative;
+            padding: 5px 0;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--text-white);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            transition: var(--transition);
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-cta {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: var(--text-white);
+            padding: 10px 22px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+        }
+
+        /* HERO SECTION */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 140px 0 80px 0;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 90%;
+            gap: 50px;
+        }
+
+        .hero-content {
+            flex: 1.2;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .hero-badge {
+            align-self: flex-start;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            line-height: 1.1;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--text-white) 40%, #93c5fd 70%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-description {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            max-width: 580px;
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            color: var(--text-white);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6), 0 0 15px rgba(6, 182, 212, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--text-muted);
+            transform: translateY(-3px);
+            color: var(--text-white);
+        }
+
+        .btn-github {
+            padding: 14px 20px;
+        }
+
+        /* Hero Mockup Frame */
+        .hero-visual {
+            flex: 1;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .mockup-window {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding-top: 36px;
+            position: relative;
+            width: 100%;
+            max-width: 520px;
+            aspect-ratio: 16/10;
+            box-shadow: var(--shadow-lg), var(--shadow-glow);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .mockup-window:hover {
+            transform: translateY(-5px) scale(1.02);
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: var(--shadow-lg), 0 0 40px rgba(59, 130, 246, 0.4);
+        }
+
+        .mockup-window::before {
+            content: '';
+            position: absolute;
+            top: 14px;
+            left: 16px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ef4444;
+            box-shadow: 16px 0 0 #f59e0b, 32px 0 0 #10b981;
+        }
+
+        .mockup-content {
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: top center;
+            background-image: url('CAPTURAS/V1.4.7/005_DASHBOARD.jpg');
+            border-radius: 0 0 15px 15px;
+            transition: background-image 0.5s ease-in-out;
+        }
+
+        /* QUICK STATS PANELS */
+        .stats-section {
+            background: rgba(17, 24, 39, 0.4);
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            padding: 40px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .stats-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 90%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 30px;
+        }
+
+        .stat-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            color: var(--accent-primary);
+            flex-shrink: 0;
+        }
+
+        .stat-info h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .stat-info p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* SECTION COMMON LAYOUT */
+        .section {
+            padding: 100px 0;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 90%;
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 60px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .section-subtitle {
+            color: var(--accent-primary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+        }
+
+        .section-desc {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        /* FEATURES SECTION (GRID) */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+            transition: var(--transition);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.1);
+        }
+
+        .feature-icon-wrapper {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: 1px solid rgba(59, 130, 246, 0.15);
+        }
+
+        .feature-card:hover .feature-icon-wrapper {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: var(--text-white);
+            transform: rotate(5deg) scale(1.1);
+            transition: var(--transition);
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .feature-card p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* INTERACTIVE GALLERY */
+        .gallery-container {
+            display: grid;
+            grid-template-columns: 1.8fr 1fr;
+            gap: 30px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(12px);
+        }
+
+        .gallery-viewer {
+            position: relative;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .gallery-image-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/10;
+            background-color: #0b0f19;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .gallery-image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .gallery-image-wrapper:hover img {
+            transform: scale(1.03);
+        }
+
+        .gallery-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: rgba(9, 13, 22, 0.7);
+            border: 1px solid var(--border-color);
+            color: var(--text-white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            cursor: pointer;
+            z-index: 5;
+            transition: var(--transition);
+        }
+
+        .gallery-nav-btn:hover {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+        }
+
+        .gallery-nav-prev { left: 15px; }
+        .gallery-nav-next { right: 15px; }
+
+        .gallery-caption {
+            background: rgba(9, 13, 22, 0.95);
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .gallery-caption h4 {
+            font-size: 1.2rem;
+            color: var(--text-white);
+        }
+
+        .gallery-caption p {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+        }
+
+        .gallery-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.6);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-main);
+            z-index: 5;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .gallery-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 520px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        /* Custom scrollbar for sidebar */
+        .gallery-sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .gallery-sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 3px;
+        }
+        .gallery-sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        .gallery-sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.4);
+        }
+
+        .thumb-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .thumb-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateX(4px);
+        }
+
+        .thumb-card.active {
+            background: rgba(59, 130, 246, 0.12);
+            border-color: var(--accent-primary);
+            box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.1);
+        }
+
+        .thumb-img {
+            width: 70px;
+            height: 44px;
+            border-radius: 6px;
+            object-fit: cover;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .thumb-card.active .thumb-img {
+            border-color: var(--accent-primary);
+        }
+
+        .thumb-info {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .thumb-num {
+            font-size: 0.7rem;
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .thumb-title {
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .thumb-card.active .thumb-title {
+            color: var(--text-white);
+            font-weight: 600;
+        }
+
+        /* DOWNLOAD CENTER */
+        .download-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 25px;
+        }
+
+        .download-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 35px 30px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            transition: var(--transition);
+            backdrop-filter: blur(12px);
+        }
+
+        .download-card:hover {
+            transform: translateY(-5px);
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+            box-shadow: 0 12px 30px rgba(59, 130, 246, 0.15);
+        }
+
+        .download-icon {
+            font-size: 3rem;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .download-card.windows .download-icon { color: #60a5fa; }
+        .download-card.android .download-icon { color: #34d399; }
+        .download-card.example .download-icon { color: #facc15; }
+
+        .download-card h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .download-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            min-height: 45px;
+        }
+
+        .download-meta {
+            font-size: 0.75rem;
+            color: var(--accent-primary);
+            font-weight: 600;
+            background: rgba(59, 130, 246, 0.08);
+            padding: 4px 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(59, 130, 246, 0.12);
+        }
+
+        .btn-download {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .download-card.windows .btn-download {
+            background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+            color: var(--text-white);
+        }
+        .download-card.windows .btn-download:hover {
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .download-card.android .btn-download {
+            background: linear-gradient(135deg, #047857, #10b981);
+            color: var(--text-white);
+        }
+        .download-card.android .btn-download:hover {
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* ABOUT THE AUTHOR & CREDITS */
+        .author-card {
+            background: linear-gradient(135deg, rgba(17, 24, 39, 0.85) 0%, rgba(10, 15, 30, 0.95) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 50px;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 40px;
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(12px);
+        }
+
+        .author-visual {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .author-avatar-frame {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary), var(--accent-purple));
+            padding: 4px;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .author-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: var(--bg-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: var(--text-white);
+        }
+
+        .author-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .author-badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .author-details {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 18px;
+        }
+
+        .author-name {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--text-white) 50%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .author-title {
+            color: var(--accent-primary);
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .author-bio {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            text-align: justify;
+        }
+
+        .author-philosophy {
+            border-left: 3px solid var(--accent-secondary);
+            padding-left: 15px;
+            margin-top: 5px;
+            font-style: italic;
+            font-size: 0.9rem;
+            color: #a5f3fc;
+        }
+
+        .btn-linkedin {
+            background: #0077b5;
+            color: var(--text-white);
+            align-self: flex-start;
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .btn-linkedin:hover {
+            background: #005a87;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 119, 181, 0.4);
+        }
+
+        /* LIGHTBOX MODAL */
+        .lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 7, 12, 0.95);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .lightbox.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .lightbox-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 85%;
+            box-shadow: var(--shadow-lg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-dark);
+        }
+
+        .lightbox-content img {
+            max-width: 100%;
+            max-height: 75vh;
+            object-fit: contain;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: -50px;
+            right: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+        }
+
+        .lightbox-close:hover {
+            background: #ef4444;
+            transform: rotate(90deg);
+        }
+
+        .lightbox-caption {
+            background: #090d16;
+            padding: 15px 20px;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .lightbox-caption h5 {
+            font-size: 1.1rem;
+            color: var(--text-white);
+            margin-bottom: 4px;
+        }
+
+        .lightbox-caption p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* FOOTER */
+        .footer {
+            background: #05070c;
+            border-top: 1px solid var(--border-color);
+            padding: 50px 0;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 90%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .footer-logo {
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 1.5rem;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 20px;
+            list-style: none;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .footer-links a:hover {
+            color: var(--text-white);
+        }
+
+        .footer-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .footer-text a {
+            color: var(--accent-primary);
+            font-weight: 500;
+        }
+
+        .footer-text a:hover {
+            text-decoration: underline;
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 1024px) {
+            .hero {
+                flex-direction: column;
+                text-align: center;
+                padding-top: 120px;
+                gap: 40px;
+            }
+
+            .hero-content {
+                align-items: center;
+            }
+
+            .hero-badge {
+                align-self: center;
+            }
+
+            .hero-description {
+                margin: 0 auto;
+            }
+
+            .hero-actions {
+                justify-content: center;
+            }
+
+            .author-card {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .btn-linkedin {
+                align-self: center;
+            }
+        }
+
+        @media (max-width: 850px) {
+            .gallery-container {
+                grid-template-columns: 1fr;
+            }
+
+            .gallery-sidebar {
+                max-height: 250px;
+            }
+
+            .navbar {
+                padding: 0 20px;
+            }
+
+            .nav-links {
+                display: none; /* Mobile menu shortcut */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-title {
+                font-size: 2.2rem;
+            }
+
+            .navbar {
+                height: 60px;
+            }
+
+            .nav-cta {
+                padding: 8px 14px;
+                font-size: 0.75rem;
+            }
+
+            .section-title {
+                font-size: 1.8rem;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <a href="#" class="nav-logo">
+            <span>🌳</span> BC3 Viewer
+        </a>
+        <ul class="nav-links">
+            <li><a href="#caracteristicas">Características</a></li>
+            <li><a href="#galeria">Capturas V1.4.7</a></li>
+            <li><a href="#descargas">Descargar</a></li>
+            <li><a href="#autor">Autor</a></li>
+        </ul>
+        <a href="www/index.html" class="nav-cta" target="_blank" id="nav-cta">Abrir App Online</a>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <header class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">Versión 1.4.7 • Premium</div>
+            <h1 class="hero-title">Visualizador y Editor de Presupuestos FIEBDC-3</h1>
+            <p class="hero-description">
+                La herramienta web definitiva, libre, gratuita y 100% offline para profesionales de la edificación. Importa, edita, compara, planifica y exporta tus archivos <strong>.bc3</strong> desde cualquier dispositivo sin enviar tus datos a la nube.
+            </p>
+            <div class="hero-actions">
+                <a href="www/index.html" class="btn btn-primary" target="_blank" id="hero-btn-online">
+                    <span>⚡</span> Iniciar App Online
+                </a>
+                <a href="#descargas" class="btn btn-secondary">
+                    <span>📥</span> Descargar Escritorio / APK
+                </a>
+                <a href="https://github.com/jmcaamanog/BC3Viewer-App" class="btn btn-secondary btn-github" target="_blank" rel="noopener">
+                    <svg height="20" width="20" viewBox="0 0 16 16" fill="currentColor" style="display:block;">
+                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                    </svg>
+                    <span>GitHub</span>
+                </a>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="mockup-window">
+                <div class="mockup-content" id="hero-mockup"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- QUICK STATS -->
+    <section class="stats-section">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-icon">🔌</span>
+                <div class="stat-info">
+                    <h3>100% Offline</h3>
+                    <p>Funciona directo en el navegador de forma autónoma sin necesidad de servidores PHP o bases de datos.</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">🔒</span>
+                <div class="stat-info">
+                    <h3>Privacidad Total</h3>
+                    <p>Tus presupuestos se procesan en tu propio dispositivo. La privacidad de tus datos de obra está garantizada.</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">📁</span>
+                <div class="stat-info">
+                    <h3>Estándar FIEBDC-3</h3>
+                    <p>Total compatibilidad con archivos .bc3 de programas comerciales de mediciones (Presto, Arquímedes, etc.).</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">📱</span>
+                <div class="stat-info">
+                    <h3>Multiplataforma</h3>
+                    <p>Optimizado para pantallas táctiles de móviles (Android con APK) y escritorio tradicional (Windows nativo).</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES SECTION -->
+    <section class="section" id="caracteristicas">
+        <div class="section-header">
+            <span class="section-subtitle">Potencial Ilimitado</span>
+            <h2 class="section-title">Herramientas Avanzadas para Obra</h2>
+            <p class="section-desc">Todo el ecosistema de un presupuesto reunido en una interfaz interactiva de alto rendimiento.</p>
+        </div>
+        
+        <div class="features-grid">
+            <!-- 1 -->
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">🌳</div>
+                <h3>Exploración Estructurada</h3>
+                <p>Navega a través de un árbol interactivo y jerárquico de capítulos, subcapítulos y partidas con desglose detallado e importes calculados al instante.</p>
+            </div>
+            <!-- 2 -->
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">📊</div>
+                <h3>Mediciones e Información ~T</h3>
+                <p>Visualiza todas las líneas de medición (~M) detalladas (unidades, dimensiones y parciales) y accede a las descripciones técnicas extendidas (~T).</p>
+            </div>
+            <!-- 3 -->
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">📝</div>
+                <h3>Edición y Creación Inline</h3>
+                <p>Modifica textos, precios y añade partidas en caliente sobre el visualizador. Cuenta con historial completo de cambios (Deshacer/Rehacer Ctrl+Z/Y).</p>
+            </div>
+            <!-- 4 -->
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">📅</div>
+                <h3>Planning Gantt y Ruta Crítica</h3>
+                <p>Generación automática de cronogramas a partir del presupuesto. Configura plazos, predecesores y haz seguimiento visual de la ruta crítica y las tareas de hoy.</p>
+            </div>
+            <!-- 5 -->
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">📈</div>
+                <h3>Dashboard y Curva S</h3>
+                <p>Analiza el presupuesto con KPIs visuales locales, gráficas de distribución de costes por capítulos e indicadores acumulados (PEM/PEC).</p>
+            </div>
+            <!-- 6 -->
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">⚖️</div>
+                <h3>Comparador de Presupuestos</h3>
+                <p>Carga y contrasta de manera paralela dos archivos .bc3 para identificar variaciones en precios, desviaciones de alcance y cambios de partida.</p>
+            </div>
+            <!-- 7 -->
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">🏗️</div>
+                <h3>Certificación de Obra</h3>
+                <p>Registra y calcula el avance de obra de forma parcial o acumulada directamente sobre las líneas de medición del presupuesto original.</p>
+            </div>
+            <!-- 8 -->
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">📥</div>
+                <h3>Exportación Profesional</h3>
+                <p>Genera listados y descárgalos directamente en formato Excel (.xlsx) estructurado o PDF (A4) formateados listos para imprimir.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- INTERACTIVE GALLERY SECTION -->
+    <section class="section" id="galeria">
+        <div class="section-header">
+            <span class="section-subtitle">Interfaz Gráfica</span>
+            <h2 class="section-title">Explora la Versión 1.4.7</h2>
+            <p class="section-desc">Interactúa con el carrusel de capturas de la última versión y descubre cómo se visualiza cada módulo de la aplicación.</p>
+        </div>
+
+        <div class="gallery-container">
+            <!-- Left Side: Main Preview -->
+            <div class="gallery-viewer">
+                <div class="gallery-indicator" id="gallery-index">1 / 17</div>
+                <div class="gallery-image-wrapper" id="gallery-zoom-trigger" title="Haz doble clic para ampliar la imagen">
+                    <img src="CAPTURAS/V1.4.7/001_PORTADA.jpg" alt="Portada de la App" id="gallery-main-img">
+                </div>
+                <button class="gallery-nav-btn gallery-nav-prev" id="gallery-prev" aria-label="Anterior image">❮</button>
+                <button class="gallery-nav-btn gallery-nav-next" id="gallery-next" aria-label="Siguiente image">❯</button>
+                <div class="gallery-caption">
+                    <h4 id="gallery-title">Acceso de Seguridad y Portada</h4>
+                    <p id="gallery-desc">Pantalla de bienvenida y control de acceso con seguridad PIN para protección de datos locales.</p>
+                </div>
+            </div>
+            
+            <!-- Right Side: Thumbnails Sidebar -->
+            <div class="gallery-sidebar" id="gallery-sidebar">
+                <!-- Thumbnails will be injected by JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- DOWNLOADS SECTION -->
+    <section class="section" id="descargas">
+        <div class="section-header">
+            <span class="section-subtitle">Instaladores Listos</span>
+            <h2 class="section-title">Centro de Descargas</h2>
+            <p class="section-desc">Instala la aplicación de forma nativa en tu ordenador o dispositivo móvil Android para mayor comodidad.</p>
+        </div>
+
+        <div class="download-grid">
+            <!-- Windows EXE -->
+            <div class="download-card windows">
+                <div class="download-icon">💻</div>
+                <h3>Windows Installer</h3>
+                <p>Instalador clásico NSIS estructurado. La forma más rápida de tener la app nativa en tu ordenador de escritorio.</p>
+                <span class="download-meta">Fichero .exe • Ultra ligero (~3 MB)</span>
+                <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.exe" class="btn btn-download">Descargar EXE</a>
+            </div>
+
+            <!-- Windows MSI -->
+            <div class="download-card windows">
+                <div class="download-icon">⚙️</div>
+                <h3>Windows MSI</h3>
+                <p>Paquete estándar de instalación MSI de WiX Toolset. Recomendado para entornos corporativos o distribución simplificada.</p>
+                <span class="download-meta">Fichero .msi • Estable (~3.6 MB)</span>
+                <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.msi" class="btn btn-download">Descargar MSI</a>
+            </div>
+
+            <!-- Android APK -->
+            <div class="download-card android">
+                <div class="download-icon">📱</div>
+                <h3>Android APK</h3>
+                <p>Llévate el visualizador a pie de obra. Instala el APK nativo para teléfonos y tabletas con sincronización offline completa.</p>
+                <span class="download-meta">Fichero .apk • Compatible (~20 MB)</span>
+                <a href="PROGRAMAS/BC3Viewer-App.apk" class="btn btn-download">Descargar APK</a>
+            </div>
+
+            <!-- Ejemplo BC3 -->
+            <div class="download-card example">
+                <div class="download-icon">📁</div>
+                <h3>Presupuesto de Ejemplo</h3>
+                <p>Descarga un archivo en formato FIEBDC-3 (.bc3) real y cargalo en el visualizador para ver todas sus capacidades inmediatamente.</p>
+                <span class="download-meta">Archivo .bc3 • Listo para importar</span>
+                <a href="PROGRAMAS/BC3 EJEMPLO/ARCHIVO EJEMPLO.bc3" class="btn btn-secondary btn-download" download>Descargar BC3 de Ejemplo</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- AUTHOR SECTION -->
+    <section class="section" id="autor">
+        <div class="author-card">
+            <div class="author-visual">
+                <div class="author-avatar-frame">
+                    <div class="author-avatar">👨‍💻</div>
+                </div>
+                <div class="author-badges">
+                    <span class="author-badge">Arquitecto Técnico</span>
+                    <span class="author-badge">BIM Manager</span>
+                    <span class="author-badge">Digital Product Lead</span>
+                </div>
+            </div>
+            
+            <div class="author-details">
+                <h2 class="author-name">José Manuel Caamaño González</h2>
+                <div class="author-title">Creador y Desarrollador de la Versión Premium</div>
+                <p class="author-bio">
+                    Desarrollado desde la perspectiva y necesidades reales de un <strong>Arquitecto Técnico</strong> y profesional de la construcción. Esta versión optimizada amplía una estructura básica original para dotar al sector de una herramienta de visualización e interacción de presupuestos de código abierto, accesible, segura y privada.
+                </p>
+                <p class="author-philosophy">
+                    "Abierto, libre y útil para la profesión... Seamos libres de egos."
+                </p>
+                <a href="https://www.linkedin.com/in/jmcaamanog/" class="btn btn-linkedin" target="_blank" rel="noopener">
+                    Conectar en LinkedIn
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- LIGHTBOX MODAL -->
+    <div class="lightbox" id="lightbox">
+        <div class="lightbox-content">
+            <button class="lightbox-close" id="lightbox-close">✕</button>
+            <img src="" alt="Ampliación" id="lightbox-img">
+            <div class="lightbox-caption">
+                <h5 id="lightbox-title">Título</h5>
+                <p id="lightbox-desc">Descripción</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-logo">🌳 BC3 Viewer Premium</div>
+            <ul class="footer-links">
+                <li><a href="#caracteristicas">Características</a></li>
+                <li><a href="#galeria">Capturas</a></li>
+                <li><a href="#descargas">Descargas</a></li>
+                <li><a href="https://github.com/jmcaamanog/BC3Viewer-App/blob/main/LICENSE" target="_blank">Licencia MIT</a></li>
+            </ul>
+            <p class="footer-text">
+                © 2026 BC3 Viewer App. Desarrollado con ☕ por <a href="https://www.linkedin.com/in/jmcaamanog/" target="_blank">José Manuel Caamaño</a>.
+            </p>
+        </div>
+    </footer>
+
+    <!-- INTERACTIVE SCRIPTS -->
+    <script>
+        // Array mapping the screenshots to readable titles and technical descriptions
+        const screenshots = [
+            { src: 'CAPTURAS/V1.4.7/001_PORTADA.jpg', title: 'Acceso de Seguridad y Portada', desc: 'Pantalla de bienvenida y control de acceso con seguridad PIN para protección de datos locales.' },
+            { src: 'CAPTURAS/V1.4.7/002_PRESUPUESTO.jpg', title: 'Vista General de Presupuesto', desc: 'Visualización clara en forma de árbol jerárquico expandible con capítulos, subcapítulos e importes calculados en tiempo real.' },
+            { src: 'CAPTURAS/V1.4.7/003_BANCO DE PRECIOS.jpg', title: 'Banco de Precios Integrado', desc: 'Explorador y gestor interactivo de la base de precios del presupuesto.' },
+            { src: 'CAPTURAS/V1.4.7/004_PRESUPUESTO PARTIDAS Y DESGLOSE.jpg', title: 'Desglose Detallado de Partidas', desc: 'Visualización profunda de descompuestos, mediciones detalladas e importes unitarios.' },
+            { src: 'CAPTURAS/V1.4.7/005_DASHBOARD.jpg', title: 'Dashboard de Análisis PEM/PEC', desc: 'Métricas clave de costes, gráficas interactivas del peso de capítulos y tipos de recursos.' },
+            { src: 'CAPTURAS/V1.4.7/006_PLANNING DE OBRA.jpg', title: 'Planning de Obra Automático', desc: 'Diagrama de Gantt generado dinámicamente con desglose de capítulos y visualización de plazos.' },
+            { src: 'CAPTURAS/V1.4.7/007_PLANNING DE OBRA AJUSTABLE.jpg', title: 'Gantt Interactivo y Ajustable', desc: 'Modificación de fechas, duración y plazos arrastrando directamente las barras del Gantt en local.' },
+            { src: 'CAPTURAS/V1.4.7/008_PLANNING DE OBRA Y TAREAS DE HOY.jpg', title: 'Gantt con Tareas de Hoy', desc: 'Seguimiento visual de la planificación con resúmenes diarios de tareas en curso.' },
+            { src: 'CAPTURAS/V1.4.7/009_PLANNING DE OBRA EXPORTABLE.jpg', title: 'Planning de Obra Exportable', desc: 'Generación y exportación directa de diagramas y listados de plazos.' },
+            { src: 'CAPTURAS/V1.4.7/010_AJUSTE COEFICIENTES GLOBALES.jpg', title: 'Ajuste de Coeficientes de Contrata', desc: 'Simulación inmediata de Gastos Generales, Beneficio Industrial e IVA para obtener el presupuesto final (PEC).' },
+            { src: 'CAPTURAS/V1.4.7/011_COMPARAR PRESUPUESTOS.jpg', title: 'Comparador de Presupuestos', desc: 'Carga paralela de dos archivos .bc3 para comparar importes y alcances de un vistazo.' },
+            { src: 'CAPTURAS/V1.4.7/012_COMPARAR PRESUPUESTOS POR PARTIDAS.jpg', title: 'Comparativa Detallada por Partidas', desc: 'Detección exacta de desviaciones de precios y unidades por cada concepto o partida.' },
+            { src: 'CAPTURAS/V1.4.7/013_AUDITORIA EN TIEMPO REAL DE CAMBIOS.jpg', title: 'Auditoría y Log de Cambios', desc: 'Historial completo de modificaciones en caliente con capacidad de deshacer/rehacer ilimitado.' },
+            { src: 'CAPTURAS/V1.4.7/014_CERTIFICACION DE OBRA.jpg', title: 'Certificación de Obra Integrada', desc: 'Generación, edición y control de certificaciones parciales directamente sobre las mediciones.' },
+            { src: 'CAPTURAS/V1.4.7/015_EXPORTAR EN VARIOS FORMATOS.jpg', title: 'Exportación Directa Offline', desc: 'Exportación local inmediata a formato Excel estructurado y PDF listos para impresión.' },
+            { src: 'CAPTURAS/V1.4.7/016_AJUSTES GLOBALES.jpg', title: 'Panel de Ajustes Generales', desc: 'Personalización de la interfaz, temas (Claro / Oscuro) y comportamiento del visualizador.' },
+            { src: 'CAPTURAS/V1.4.7/017_INFORMACION APP.jpg', title: 'Información y Diagnóstico OTA', desc: 'Panel de soporte, créditos, diagnóstico del sistema y comprobación de actualizaciones (OTA).' }
+        ];
+
+        let currentIndex = 0;
+
+        // Elements
+        const mainImg = document.getElementById('gallery-main-img');
+        const galleryTitle = document.getElementById('gallery-title');
+        const galleryDesc = document.getElementById('gallery-desc');
+        const galleryIndexText = document.getElementById('gallery-index');
+        const sidebar = document.getElementById('gallery-sidebar');
+        const prevBtn = document.getElementById('gallery-prev');
+        const nextBtn = document.getElementById('gallery-next');
+        const heroMockup = document.getElementById('hero-mockup');
+
+        // Lightbox Elements
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+        const lightboxTitle = document.getElementById('lightbox-title');
+        const lightboxDesc = document.getElementById('lightbox-desc');
+        const lightboxClose = document.getElementById('lightbox-close');
+        const zoomTrigger = document.getElementById('gallery-zoom-trigger');
+
+        // Initialize Sidebar
+        function initSidebar() {
+            screenshots.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = `thumb-card ${index === 0 ? 'active' : ''}`;
+                card.dataset.index = index;
+                
+                const imgNum = String(index + 1).padStart(3, '0');
+                
+                card.innerHTML = `
+                    <img src="${item.src}" alt="${item.title}" class="thumb-img" loading="lazy">
+                    <div class="thumb-info">
+                        <span class="thumb-num">CAPTURA ${imgNum}</span>
+                        <span class="thumb-title" title="${item.title}">${item.title}</span>
+                    </div>
+                `;
+                
+                card.addEventListener('click', () => {
+                    setGalleryImage(index);
+                });
+                
+                sidebar.appendChild(card);
+            });
+        }
+
+        // Set active image
+        function setGalleryImage(index) {
+            if (index < 0 || index >= screenshots.length) return;
+            
+            currentIndex = index;
+            const item = screenshots[currentIndex];
+            
+            // Apply fade effect
+            mainImg.style.opacity = 0;
+            setTimeout(() => {
+                mainImg.src = item.src;
+                galleryTitle.textContent = item.title;
+                galleryDesc.textContent = item.desc;
+                galleryIndexText.textContent = `${currentIndex + 1} / ${screenshots.length}`;
+                mainImg.style.opacity = 1;
+            }, 150);
+
+            // Update active state in sidebar
+            const cards = sidebar.querySelectorAll('.thumb-card');
+            cards.forEach(card => card.classList.remove('active'));
+            
+            const activeCard = cards[currentIndex];
+            if (activeCard) {
+                activeCard.classList.add('active');
+                
+                // Scroll thumbnail into view smoothly
+                sidebar.scrollTo({
+                    top: activeCard.offsetTop - sidebar.offsetTop - 100,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        // Event Listeners for Nav Buttons
+        prevBtn.addEventListener('click', () => {
+            let nextIdx = currentIndex - 1;
+            if (nextIdx < 0) nextIdx = screenshots.length - 1;
+            setGalleryImage(nextIdx);
+        });
+
+        nextBtn.addEventListener('click', () => {
+            let nextIdx = currentIndex + 1;
+            if (nextIdx >= screenshots.length) nextIdx = 0;
+            setGalleryImage(nextIdx);
+        });
+
+        // Lightbox functions
+        function openLightbox() {
+            const item = screenshots[currentIndex];
+            lightboxImg.src = item.src;
+            lightboxTitle.textContent = item.title;
+            lightboxDesc.textContent = item.desc;
+            lightbox.classList.add('active');
+        }
+
+        function closeLightbox() {
+            lightbox.classList.remove('active');
+        }
+
+        zoomTrigger.addEventListener('dblclick', openLightbox);
+        zoomTrigger.addEventListener('click', (e) => {
+            // Only trigger on simple click if not clicking arrows
+            if (e.target.classList.contains('gallery-nav-btn')) return;
+            // Let a helper overlay or single-click option open it
+            openLightbox();
+        });
+        
+        lightboxClose.addEventListener('click', closeLightbox);
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox) closeLightbox();
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (lightbox.classList.contains('active')) {
+                if (e.key === 'Escape') closeLightbox();
+                if (e.key === 'ArrowLeft') prevBtn.click();
+                if (e.key === 'ArrowRight') nextBtn.click();
+            } else {
+                // If scroll position is near the gallery, enable arrow controls
+                const rect = document.getElementById('galeria').getBoundingClientRect();
+                const inView = rect.top < window.innerHeight && rect.bottom > 0;
+                if (inView) {
+                    if (e.key === 'ArrowLeft') prevBtn.click();
+                    if (e.key === 'ArrowRight') nextBtn.click();
+                }
+            }
+        });
+
+        // Sticky Navbar scroll behavior
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.style.top = '10px';
+                navbar.style.width = '95%';
+                navbar.style.background = 'rgba(9, 13, 22, 0.85)';
+            } else {
+                navbar.style.top = '20px';
+                navbar.style.width = '90%';
+                navbar.style.background = 'rgba(9, 13, 22, 0.7)';
+            }
+
+            // Update active menu link based on scroll position
+            const sections = document.querySelectorAll('section, header');
+            const navLinks = document.querySelectorAll('.nav-links a');
+            
+            let currentSec = '';
+            sections.forEach(sec => {
+                const top = sec.offsetTop - 150;
+                const height = sec.offsetHeight;
+                if (window.scrollY >= top && window.scrollY < top + height) {
+                    currentSec = sec.getAttribute('id') || '';
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${currentSec}`) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // Simple mockup animation (rotate through images in background in the hero sidebar)
+        const mockupImages = [
+            'CAPTURAS/V1.4.7/005_DASHBOARD.jpg',
+            'CAPTURAS/V1.4.7/002_PRESUPUESTO.jpg',
+            'CAPTURAS/V1.4.7/006_PLANNING DE OBRA.jpg',
+            'CAPTURAS/V1.4.7/011_COMPARAR PRESUPUESTOS.jpg',
+            'CAPTURAS/V1.4.7/015_EXPORTAR EN VARIOS FORMATOS.jpg'
+        ];
+        let mockupIdx = 0;
+        
+        function rotateHeroMockup() {
+            mockupIdx = (mockupIdx + 1) % mockupImages.length;
+            heroMockup.style.opacity = 0;
+            setTimeout(() => {
+                heroMockup.style.backgroundImage = `url('${mockupImages[mockupIdx]}')`;
+                heroMockup.style.opacity = 1;
+            }, 500);
+        }
+        
+        // Rotate every 6 seconds
+        setInterval(rotateHeroMockup, 6000);
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            initSidebar();
+            // Preload mockup image transitions opacity helper
+            heroMockup.style.transition = 'opacity 0.5s ease-in-out';
+            
+            // Add custom animation styles for transitions
+            mainImg.style.transition = 'opacity 0.15s ease-in-out';
+        });
+    </script>
+</body>
+</html>

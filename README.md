@@ -6,6 +6,18 @@ Visualizador web avanzado de archivos BC3 (FIEBDC-3) para presupuestos de constr
 
 > 📸 **¡Evolución Visual de la App!** Echa un vistazo y comprueba cómo ha progresado el visualizador en la carpeta [📁 CAPTURAS](./CAPTURAS). No te pierdas las imágenes de la última interfaz premium en la subcarpeta [🚀 CAPTURAS/V1.4.7](./CAPTURAS/V1.4.7).
 
+---
+
+### 🚀 **[¡Visita la Nueva Landing Page Interactiva del Proyecto (V1.4.7)!](https://jmcaamanog.github.io/BC3Viewer-App/landing.html)**
+Hemos creado una presentación interactiva para explorar todas las capacidades de la app:
+*   🌳 **Visor Interactivo de Capturas V1.4.7:** Explora la interfaz premium módulo a módulo con explicaciones técnicas.
+*   💻 **Descargas Directas:** Acceso directo a instaladores de escritorio (.exe, .msi) y APK móvil.
+*   👨‍💻 **Créditos y Autoría:** Conoce más sobre el desarrollo y enfoque profesional del proyecto.
+
+👉 **[Ver Presentación Web Interactiva](https://jmcaamanog.github.io/BC3Viewer-App/landing.html)**
+
+---
+
 Este repositorio contiene la versión autónoma, multiplataforma y 100% offline del **BC3 Viewer (Visualizador Premium de Presupuestos FIEBDC-3)**.
 
 El objetivo de este proyecto es empaquetar y distribuir el visualizador web original como aplicaciones nativas de escritorio (**Windows**) y dispositivos móviles (**Android**), mejorando la privacidad, eliminando la tediosa necesidad de servidores locales (PHP) y habilitando el uso offline en cualquier lugar.
