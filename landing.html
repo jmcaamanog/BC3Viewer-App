@@ -1470,9 +1470,171 @@
             }
         }
 
+        /* === CURSOR PERSONALIZADO === */
+        .cursor-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            position: fixed;
+            top: 0; left: 0;
+            pointer-events: none;
+            z-index: 99999;
+            transition: transform 0.1s ease;
+            mix-blend-mode: difference;
+        }
+        .cursor-ring {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            border: 2px solid rgba(59, 130, 246, 0.5);
+            position: fixed;
+            top: 0; left: 0;
+            pointer-events: none;
+            z-index: 99998;
+            transition: width 0.2s, height 0.2s, border-color 0.2s;
+        }
+        .cursor-trail {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: rgba(6, 182, 212, 0.4);
+            position: fixed;
+            top: 0; left: 0;
+            pointer-events: none;
+            z-index: 99997;
+        }
+        body:has(.cursor-dot) { cursor: none; }
+        a:hover ~ .cursor-ring, button:hover ~ .cursor-ring { border-color: var(--accent-secondary); }
+
+        /* === SCROLL ANIMATIONS (B) === */
+        .reveal {
+            opacity: 0;
+            transform: translateY(32px);
+            transition: opacity 0.65s ease, transform 0.65s ease;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.3s; }
+        .reveal-delay-4 { transition-delay: 0.4s; }
+
+        /* === STAR TOAST (E) === */
+        .star-toast {
+            position: fixed;
+            bottom: 28px;
+            left: 28px;
+            z-index: 9999;
+            background: rgba(9, 13, 22, 0.92);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            border-radius: 16px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(245,158,11,0.15);
+            backdrop-filter: blur(16px);
+            transform: translateX(-120%);
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-width: 300px;
+        }
+        .star-toast.show { transform: translateX(0); }
+        .star-toast-icon { font-size: 1.8rem; flex-shrink: 0; animation: spin-star 3s linear infinite; }
+        @keyframes spin-star { 0%,100%{transform:rotate(-10deg);}50%{transform:rotate(10deg);} }
+        .star-toast-body { display: flex; flex-direction: column; gap: 4px; }
+        .star-toast-title { font-family: var(--font-display); font-weight: 700; font-size: 0.95rem; }
+        .star-toast-sub { font-size: 0.78rem; color: var(--text-muted); }
+        .star-toast-btn {
+            background: linear-gradient(135deg, #f59e0b, #f97316);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: box-shadow 0.2s;
+        }
+        .star-toast-btn:hover { box-shadow: 0 4px 12px rgba(245,158,11,0.4); }
+        .star-toast-close {
+            position: absolute; top: 8px; right: 10px;
+            background: none; border: none;
+            color: var(--text-muted); cursor: pointer;
+            font-size: 0.9rem; line-height: 1;
+        }
+
+        /* === CONTRIBUTORS (F) === */
+        .contributors-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .contributor-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 18px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            width: 120px;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+        .contributor-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--border-hover);
+            background: var(--bg-card-hover);
+            box-shadow: 0 12px 30px rgba(59,130,246,0.15);
+        }
+        .contributor-avatar {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            border: 2px solid rgba(59,130,246,0.3);
+            object-fit: cover;
+        }
+        .contributor-name {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-main);
+            text-align: center;
+            word-break: break-word;
+        }
+        .contributor-commits {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .contributors-loading {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 20px;
+        }
+
     </style>
 </head>
 <body>
+
+    <!-- CUSTOM CURSOR (C) -->
+    <div class="cursor-dot" id="cursor-dot"></div>
+    <div class="cursor-ring" id="cursor-ring"></div>
+
+    <!-- STAR TOAST (E) -->
+    <div class="star-toast" id="star-toast">
+        <button class="star-toast-close" onclick="closeStarToast()" aria-label="Cerrar">✕</button>
+        <div class="star-toast-icon">⭐</div>
+        <div class="star-toast-body">
+            <div class="star-toast-title">¿Te gusta la app?</div>
+            <div class="star-toast-sub">Dale una estrella en GitHub y ayuda a que llegue a más profesionales</div>
+            <a href="https://github.com/jmcaamanog/BC3Viewer-App" class="star-toast-btn" target="_blank" rel="noopener">⭐ Star en GitHub</a>
+        </div>
+    </div>
 
     <!-- NAVBAR -->
     <nav class="navbar" id="navbar">
@@ -1491,8 +1653,10 @@
     </nav>
 
     <!-- HERO SECTION -->
-    <header class="hero">
-        <div class="hero-content">
+    <header class="hero" style="position:relative; overflow:hidden;">
+        <!-- CANVAS PARTICLES (D) -->
+        <canvas id="hero-particles" style="position:absolute;inset:0;z-index:0;pointer-events:none;"></canvas>
+        <div class="hero-content" style="position:relative;z-index:1;">
             <div class="hero-badge">Versión 1.4.7 • Premium</div>
             <h1 class="hero-title">Visualizador y Editor de Presupuestos FIEBDC-3</h1>
             <p class="hero-description">
@@ -1535,7 +1699,7 @@
             </div>
 
         </div>
-        <div class="hero-visual">
+        <div class="hero-visual" style="position:relative;z-index:1;">
             <div class="mockup-window">
                 <div class="mockup-content" id="hero-mockup"></div>
             </div>
@@ -1857,6 +2021,18 @@
             <a href="https://github.com/jmcaamanog/BC3Viewer-App/blob/main/CHANGELOG.md" class="btn btn-secondary" target="_blank" rel="noopener">
                 <span>📋</span> Ver Changelog Completo en GitHub
             </a>
+        </div>
+    </section>
+
+    <!-- CONTRIBUTORS SECTION (F) -->
+    <section class="section" id="contribuidores" style="padding-top: 60px; padding-bottom: 60px;">
+        <div class="section-header reveal">
+            <span class="section-subtitle">Comunidad Open Source</span>
+            <h2 class="section-title">Contribuidores del Proyecto</h2>
+            <p class="section-desc">Personas que han ayudado a mejorar BC3 Viewer con sus contribuciones en GitHub.</p>
+        </div>
+        <div class="contributors-grid" id="contributors-grid">
+            <div class="contributors-loading">Cargando contribuidores...</div>
         </div>
     </section>
 
@@ -2222,6 +2398,13 @@
 
             // Newsletter form handler
             initNewsletter();
+
+            // Visual effects
+            initScroll();       // B: scroll reveal
+            initCursor();       // C: custom cursor
+            initHeroParticles(); // D: hero particles
+            initStarToast();    // E: star toast
+            fetchContributors(); // F: contributors
         });
 
         // === GITHUB API: Stars, Forks & Downloads ===
@@ -2250,7 +2433,7 @@
                             totalDownloads += asset.download_count || 0;
                         });
                     });
-                    animateCount('stat-downloads', totalDownloads);
+                    animateCount('stat-downloads', totalDownloads + 392); // Offset: 392 raw downloads before Releases
                 }
             } catch (e) {
                 // Si falla la API (ej. sin conexión), no mostramos nada raro
@@ -2319,6 +2502,205 @@
                     msg.style.color = '#f59e0b';
                 }
             });
+        }
+
+        // === B: SCROLL REVEAL ANIMATIONS ===
+        function initScroll() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.12 });
+
+            // Auto-apply reveal to section headers and cards
+            document.querySelectorAll(
+                '.section-header, .feature-card, .stat-card, .download-card, .community-card, .timeline-item, .author-card, .contributor-card'
+            ).forEach((el, i) => {
+                if (!el.classList.contains('reveal')) {
+                    el.classList.add('reveal');
+                    // Stagger within grid parents
+                    const delay = (i % 4) * 0.1;
+                    el.style.transitionDelay = delay + 's';
+                }
+                observer.observe(el);
+            });
+
+            // Also observe already-tagged reveal elements
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+        }
+
+        // === C: CUSTOM CURSOR + TRAIL ===
+        function initCursor() {
+            const dot = document.getElementById('cursor-dot');
+            const ring = document.getElementById('cursor-ring');
+            if (!dot || !ring) return;
+
+            // Create trail dots
+            const trailCount = 6;
+            const trails = [];
+            for (let i = 0; i < trailCount; i++) {
+                const t = document.createElement('div');
+                t.className = 'cursor-trail';
+                t.style.opacity = (1 - i / trailCount) * 0.35;
+                t.style.width = (6 - i * 0.7) + 'px';
+                t.style.height = (6 - i * 0.7) + 'px';
+                t.style.zIndex = 99997 - i;
+                document.body.appendChild(t);
+                trails.push({ el: t, x: 0, y: 0 });
+            }
+
+            let mouseX = 0, mouseY = 0;
+            let ringX = 0, ringY = 0;
+
+            document.addEventListener('mousemove', e => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                dot.style.transform = `translate(${mouseX - 4}px, ${mouseY - 4}px)`;
+            });
+
+            // Hover effect on interactive elements
+            document.querySelectorAll('a, button, .feature-card, .download-card, .thumb-card').forEach(el => {
+                el.addEventListener('mouseenter', () => {
+                    ring.style.width = '52px';
+                    ring.style.height = '52px';
+                    ring.style.borderColor = 'rgba(6, 182, 212, 0.7)';
+                });
+                el.addEventListener('mouseleave', () => {
+                    ring.style.width = '36px';
+                    ring.style.height = '36px';
+                    ring.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                });
+            });
+
+            function animateCursor() {
+                // Smooth ring follow
+                ringX += (mouseX - ringX) * 0.12;
+                ringY += (mouseY - ringY) * 0.12;
+                ring.style.transform = `translate(${ringX - 18}px, ${ringY - 18}px)`;
+
+                // Trail follow chain
+                let px = mouseX, py = mouseY;
+                trails.forEach((t, i) => {
+                    t.x += (px - t.x) * (0.3 - i * 0.03);
+                    t.y += (py - t.y) * (0.3 - i * 0.03);
+                    const s = parseFloat(t.el.style.width);
+                    t.el.style.transform = `translate(${t.x - s/2}px, ${t.y - s/2}px)`;
+                    px = t.x; py = t.y;
+                });
+                requestAnimationFrame(animateCursor);
+            }
+            animateCursor();
+        }
+
+        // === D: HERO PARTICLES ===
+        function initHeroParticles() {
+            const canvas = document.getElementById('hero-particles');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const hero = canvas.parentElement;
+
+            function resize() {
+                canvas.width = hero.offsetWidth;
+                canvas.height = hero.offsetHeight;
+            }
+            resize();
+            new ResizeObserver(resize).observe(hero);
+
+            const colors = ['rgba(59,130,246,', 'rgba(6,182,212,', 'rgba(139,92,246,', 'rgba(16,185,129,'];
+            const particles = Array.from({ length: 55 }, () => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                r: Math.random() * 1.6 + 0.3,
+                vx: (Math.random() - 0.5) * 0.4,
+                vy: (Math.random() - 0.5) * 0.4,
+                alpha: Math.random() * 0.45 + 0.1,
+                c: colors[Math.floor(Math.random() * colors.length)]
+            }));
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = p.c + p.alpha + ')';
+                    ctx.fill();
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                    if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+                });
+
+                // Draw connecting lines for nearby particles
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        if (dist < 80) {
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.strokeStyle = `rgba(59,130,246,${0.06 * (1 - dist/80)})`;
+                            ctx.lineWidth = 0.6;
+                            ctx.stroke();
+                        }
+                    }
+                }
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
+
+        // === E: STAR TOAST ===
+        function initStarToast() {
+            const toast = document.getElementById('star-toast');
+            if (!toast) return;
+            if (localStorage.getItem('starToastDismissed')) return;
+
+            // Show after 35 seconds
+            setTimeout(() => {
+                toast.classList.add('show');
+                // Auto-hide after 20s if not closed
+                setTimeout(() => toast.classList.remove('show'), 20000);
+            }, 35000);
+        }
+
+        function closeStarToast() {
+            const toast = document.getElementById('star-toast');
+            if (toast) toast.classList.remove('show');
+            localStorage.setItem('starToastDismissed', '1');
+        }
+
+        // === F: CONTRIBUTORS ===
+        async function fetchContributors() {
+            const grid = document.getElementById('contributors-grid');
+            if (!grid) return;
+            try {
+                const res = await fetch('https://api.github.com/repos/jmcaamanog/BC3Viewer-App/contributors?per_page=12', {
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+                });
+                if (!res.ok) throw new Error('API error');
+                const contributors = await res.json();
+
+                if (!contributors.length) {
+                    grid.innerHTML = '<div class="contributors-loading">Sé el primero en contribuir 🚀</div>';
+                    return;
+                }
+
+                grid.innerHTML = contributors.map(c => `
+                    <a href="${c.html_url}" class="contributor-card reveal" target="_blank" rel="noopener">
+                        <img src="${c.avatar_url}" alt="${c.login}" class="contributor-avatar" loading="lazy">
+                        <span class="contributor-name">${c.login}</span>
+                        <span class="contributor-commits">${c.contributions} commit${c.contributions !== 1 ? 's' : ''}</span>
+                    </a>
+                `).join('');
+
+                // Re-run scroll observer on new cards
+                initScroll();
+            } catch (e) {
+                grid.innerHTML = '<div class="contributors-loading"><a href="https://github.com/jmcaamanog/BC3Viewer-App" target="_blank" style="color:var(--accent-primary);">Ver contribuidores en GitHub →</a></div>';
+            }
         }
 
     </script>

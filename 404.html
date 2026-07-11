@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 — Aquí no hay ningún BC3 | BC3 Viewer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #090d16;
+            --blue: #3b82f6;
+            --cyan: #06b6d4;
+            --purple: #8b5cf6;
+            --green: #10b981;
+            --orange: #f59e0b;
+            --text: #f3f4f6;
+            --muted: #6b7280;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Fondo de partículas */
+        canvas#bg-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .page {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            text-align: center;
+            padding: 30px 20px;
+            max-width: 700px;
+            width: 100%;
+        }
+
+        /* El gran 404 */
+        .big-404 {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(6rem, 20vw, 12rem);
+            font-weight: 900;
+            line-height: 1;
+            background: linear-gradient(135deg, var(--blue) 0%, var(--cyan) 50%, var(--purple) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 40px rgba(59, 130, 246, 0.4));
+            animation: glow-404 3s ease-in-out infinite;
+            margin-bottom: -10px;
+        }
+
+        @keyframes glow-404 {
+            0%, 100% { filter: drop-shadow(0 0 30px rgba(59, 130, 246, 0.35)); }
+            50% { filter: drop-shadow(0 0 60px rgba(6, 182, 212, 0.6)) drop-shadow(0 0 80px rgba(139, 92, 246, 0.3)); }
+        }
+
+        /* Foto del autor con marco animado */
+        .author-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            position: relative;
+            margin: 20px auto;
+        }
+
+        .author-circle::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background: conic-gradient(var(--blue), var(--cyan), var(--purple), var(--blue));
+            animation: spin-border 3s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes spin-border {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .author-circle img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            object-position: center top;
+            border: 3px solid var(--bg);
+        }
+
+        /* Emojis flotantes */
+        .emoji-float {
+            position: fixed;
+            font-size: 2rem;
+            animation: float-emoji linear infinite;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.6;
+        }
+
+        @keyframes float-emoji {
+            0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* Título */
+        .title-404 {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(1.4rem, 4vw, 2.2rem);
+            font-weight: 800;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+
+        /* Chistes / frases */
+        .joke-box {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 20px 28px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--muted);
+            font-size: 1rem;
+            line-height: 1.6;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .joke-box:hover {
+            background: rgba(59, 130, 246, 0.06);
+            border-color: rgba(59, 130, 246, 0.25);
+            color: var(--text);
+        }
+
+        .joke-box::after {
+            content: '👆 Clic para otra';
+            position: absolute;
+            bottom: -22px;
+            right: 10px;
+            font-size: 0.72rem;
+            color: var(--muted);
+            font-style: normal;
+        }
+
+        .joke-attribution {
+            font-size: 0.78rem;
+            color: var(--blue);
+            font-style: normal;
+            margin-top: 8px;
+            display: block;
+        }
+
+        /* Info del autor */
+        .author-info {
+            margin: 10px 0 0 0;
+        }
+
+        .author-name-404 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .author-role-404 {
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        /* Badge de estado */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--green);
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: blink 1.4s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+
+        /* Botones */
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn-404 {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.25s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary-404 {
+            background: linear-gradient(135deg, var(--blue), var(--cyan));
+            color: white;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35);
+        }
+
+        .btn-primary-404:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.5);
+        }
+
+        .btn-secondary-404 {
+            background: rgba(255,255,255,0.05);
+            color: var(--text);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .btn-secondary-404:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-3px);
+            border-color: rgba(59, 130, 246, 0.35);
+        }
+
+        .btn-linkedin-404 {
+            background: rgba(10, 102, 194, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(10, 102, 194, 0.3);
+        }
+
+        .btn-linkedin-404:hover {
+            background: rgba(10, 102, 194, 0.25);
+            transform: translateY(-3px);
+        }
+
+        /* Contador regresivo divertido */
+        .redirect-notice {
+            margin-top: 30px;
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+
+        .redirect-notice span {
+            color: var(--orange);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        /* BC3 code snippet decorativo */
+        .bc3-snippet {
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            color: rgba(59, 130, 246, 0.4);
+            margin-top: 25px;
+            line-height: 1.8;
+            text-align: left;
+            background: rgba(59, 130, 246, 0.03);
+            border: 1px solid rgba(59, 130, 246, 0.08);
+            border-radius: 10px;
+            padding: 14px 18px;
+            width: 100%;
+        }
+
+        .bc3-snippet .comment { color: rgba(100, 180, 100, 0.5); }
+        .bc3-snippet .key { color: rgba(139, 92, 246, 0.6); }
+        .bc3-snippet .val { color: rgba(249, 115, 22, 0.6); }
+        .bc3-snippet .error { color: rgba(239, 68, 68, 0.7); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <!-- Canvas partículas -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Emojis flotantes (se generan por JS) -->
+
+    <div class="page">
+
+        <!-- Gran 404 -->
+        <div class="big-404">404</div>
+
+        <!-- Foto del autor -->
+        <div class="author-circle">
+            <img src="assets/jmc.jpg" alt="José Manuel Caamaño" onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:3rem;\'>👨‍💻</div>'">
+        </div>
+
+        <div class="author-info">
+            <div class="author-name-404">José Manuel Caamaño González</div>
+            <div class="author-role-404">Arquitecto Técnico · BIM Manager · Developer</div>
+            <div class="status-badge">
+                <span class="status-dot"></span>
+                Disponible para proyectos
+            </div>
+        </div>
+
+        <!-- Título -->
+        <div class="title-404" style="margin-top: 28px;">
+            Ups... ¡Este presupuesto no existe! 🏗️
+        </div>
+        <p style="color: var(--muted); font-size: 0.95rem; margin-top: 8px;">
+            La página que buscas se ha extraviado como una medición sin partida madre.
+        </p>
+
+        <!-- Chiste rotatorio -->
+        <div class="joke-box" id="joke-box" onclick="nextJoke()">
+            <div id="joke-text">"Un arquitecto técnico entra a una obra y pregunta: ¿Cuánto cuesta levantar esta pared? El albañil dice: depende. El AT dice: ¿de qué? El albañil: de si hay BC3 o no."</div>
+            <span class="joke-attribution">— jmcaamanog, a.k.a. el que hizo esta app gratis 😎</span>
+        </div>
+
+        <!-- BC3 snippet decorativo de error -->
+        <div class="bc3-snippet">
+            <span class="comment">; BC3 Viewer — Error al parsear ruta</span><br>
+            <span class="key">~V</span>|FIEBDC-3/2019|<br>
+            <span class="key">~C</span>|<span class="val">404_NOT_FOUND</span>|<span class="val">Página no encontrada</span>|<br>
+            <span class="error">&gt; ERROR: La URL solicitada no existe en el presupuesto de contenidos.</span><br>
+            <span class="comment">; Sugerencia: vuelve al inicio o comprueba el enlace</span>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="btn-group">
+            <a href="landing.html" class="btn-404 btn-primary-404">
+                🏠 Volver al Inicio
+            </a>
+            <a href="www/index.html" class="btn-404 btn-secondary-404">
+                ⚡ Abrir la App
+            </a>
+            <a href="https://github.com/jmcaamanog/BC3Viewer-App" class="btn-404 btn-secondary-404" target="_blank" rel="noopener">
+                <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                GitHub
+            </a>
+            <a href="https://www.linkedin.com/in/jmcaamanog/" class="btn-404 btn-linkedin-404" target="_blank" rel="noopener">
+                <svg height="16" width="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                LinkedIn
+            </a>
+        </div>
+
+        <!-- Redirect notice -->
+        <div class="redirect-notice">
+            Serás redirigido automáticamente en <span id="countdown">10</span> segundos...
+        </div>
+
+    </div>
+
+    <script>
+        // === PARTÍCULAS DE FONDO ===
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        function createParticle() {
+            return {
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                r: Math.random() * 1.8 + 0.3,
+                vx: (Math.random() - 0.5) * 0.3,
+                vy: (Math.random() - 0.5) * 0.3,
+                alpha: Math.random() * 0.5 + 0.1,
+                color: ['#3b82f6','#06b6d4','#8b5cf6','#10b981'][Math.floor(Math.random()*4)]
+            };
+        }
+
+        for (let i = 0; i < 100; i++) particles.push(createParticle());
+
+        function drawParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = p.color + Math.floor(p.alpha * 255).toString(16).padStart(2,'0');
+                ctx.fill();
+                p.x += p.vx; p.y += p.vy;
+                if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+            });
+            requestAnimationFrame(drawParticles);
+        }
+        drawParticles();
+
+        // === EMOJIS FLOTANTES ===
+        const emojis = ['🏗️','📐','📏','🔨','🏢','📋','💼','⚙️','🔩','🪚','📊','🧱'];
+        function spawnEmoji() {
+            const el = document.createElement('div');
+            el.className = 'emoji-float';
+            el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            el.style.left = Math.random() * 100 + 'vw';
+            const duration = 8 + Math.random() * 10;
+            el.style.animationDuration = duration + 's';
+            el.style.fontSize = (1.2 + Math.random() * 1.5) + 'rem';
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), duration * 1000);
+        }
+        setInterval(spawnEmoji, 1800);
+        for (let i = 0; i < 5; i++) setTimeout(spawnEmoji, i * 400);
+
+        // === CHISTES ROTATIVOS ===
+        const jokes = [
+            '"Un arquitecto técnico entra a una obra y pregunta: ¿Cuánto cuesta levantar esta pared? El albañil dice: depende. El AT dice: ¿de qué? El albañil: de si hay BC3 o no."',
+            '"¿Cuál es el presupuesto más preciso del mundo? El que no ha visto la obra todavía."',
+            '"Mi jefe me preguntó: ¿Puedes hacer el presupuesto en Excel? Le dije: Sí, y también puedo pasarme la semana arreglándolo después. Por eso existe BC3 Viewer."',
+            '"Un BC3 sin abrir es como un plano sin escala: teóricamente está todo, prácticamente no sabes nada."',
+            '"En la construcción hay dos certezas: la muerte y que el presupuesto inicial es mentira."',
+            '"Definición de Arquitecto Técnico: persona que sabe exactamente lo que va a costar la obra... hasta que empieza."',
+            '"¿Qué tiene en común un presupuesto BC3 con un iceberg? El 90% de los problemas no se ven hasta que ya es tarde."'
+        ];
+        let jokeIdx = 0;
+        const jokeEl = document.getElementById('joke-text');
+
+        function nextJoke() {
+            jokeIdx = (jokeIdx + 1) % jokes.length;
+            jokeEl.style.opacity = 0;
+            setTimeout(() => {
+                jokeEl.textContent = jokes[jokeIdx];
+                jokeEl.style.opacity = 1;
+            }, 200);
+        }
+        jokeEl.style.transition = 'opacity 0.2s ease';
+
+        // Cambia chiste automáticamente cada 8s
+        setInterval(nextJoke, 8000);
+
+        // === CONTADOR REGRESIVO Y REDIRECCIÓN ===
+        let count = 10;
+        const countEl = document.getElementById('countdown');
+        const timer = setInterval(() => {
+            count--;
+            countEl.textContent = count;
+            if (count <= 0) {
+                clearInterval(timer);
+                window.location.href = 'landing.html';
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
