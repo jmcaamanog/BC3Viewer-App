@@ -108,6 +108,10 @@
             border: 3px solid var(--bg);
         }
 
+        .author-circle:hover img {
+            transform: scale(1.1);
+        }
+
         /* Emojis flotantes */
         .emoji-float {
             position: fixed;
@@ -326,7 +330,9 @@
 
         <!-- Foto del autor -->
         <div class="author-circle">
-            <img src="assets/jmc.jpg" alt="José Manuel Caamaño" onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:3rem;\'>👨‍💻</div>'">
+            <a href="https://github.com/jmcaamanog/BC3Viewer-App" target="_blank" rel="noopener" style="display:block; width:100%; height:100%;">
+                <img src="assets/jmc.jpg" alt="José Manuel Caamaño" style="transition: transform 0.3s ease;" onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:3rem;\'>👨‍💻</div>'">
+            </a>
         </div>
 
         <div class="author-info">
