@@ -1581,8 +1581,9 @@ body.dark-theme .dev-down {
 .gantt-expand-col-btn {
     display: none;
     position: absolute;
-    left: 8px;
-    top: 12px;
+    left: 12px;
+    bottom: 20px;
+    top: auto;
     width: 32px;
     height: 32px;
     border-radius: 50%;
