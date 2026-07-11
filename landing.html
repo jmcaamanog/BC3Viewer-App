@@ -1731,11 +1731,11 @@
                 <a href="www/index.html" class="btn btn-primary" target="_blank" id="hero-btn-online" style="padding: 12px 20px; font-size: 0.9rem;">
                     <span>⚡</span> Iniciar App Online
                 </a>
-                <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.exe" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 12px 20px; font-size: 0.9rem;">
+                <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.exe" class="btn btn-secondary" id="hero-download-win" style="display: inline-flex; align-items: center; gap: 6px; padding: 12px 20px; font-size: 0.9rem;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#0078d4; display:block;"><path d="M0 3.449L9.75 2.1v9.45H0V3.449zM0 12.45h9.75v9.45L0 20.551v-8.1zM10.95 1.95L24 0v11.55H10.95V1.95zM10.95 12.45H24v11.55l-13.05-1.95v-9.6z"/></svg>
                     <span>Windows</span>
                 </a>
-                <a href="PROGRAMAS/BC3Viewer-App.apk" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 12px 20px; font-size: 0.9rem;">
+                <a href="PROGRAMAS/BC3Viewer-App.apk" class="btn btn-secondary" id="hero-download-android" style="display: inline-flex; align-items: center; gap: 6px; padding: 12px 20px; font-size: 0.9rem;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#3ddc84; display:block;"><path d="M17.523 15.3l1.816 3.146a.75.75 0 1 1-1.298.75l-1.84-3.187A9.957 9.957 0 0 1 12 17a9.957 9.957 0 0 1-4.202-1.008l-1.84 3.187a.75.75 0 1 1-1.298-.75l1.816-3.146A9.972 9.972 0 0 1 2.25 10c0-.85.106-1.674.306-2.464l-.056-.032a.75.75 0 1 1 .75-1.3l.115.066A9.939 9.939 0 0 1 6.84 3.84L5.023.693a.75.75 0 1 1 .75-1.3l-.056.032A9.97 9.97 0 0 1 12 2.25c1.4 0 2.73.288 3.939.81l1.84-3.187a.75.75 0 1 1 .75 1.3l.115-.066a9.972 9.972 0 0 1 4.488 3.738z"/></svg>
                     <span>Android</span>
                 </a>
@@ -1916,7 +1916,7 @@
                 <h3>Windows Installer</h3>
                 <p>Instalador clásico NSIS estructurado. La forma más rápida de tener la app nativa en tu ordenador de escritorio.</p>
                 <span class="download-meta">Fichero .exe • Ultra ligero (~3 MB)</span>
-                <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.exe" class="btn btn-download">Descargar EXE</a>
+                <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.exe" class="btn btn-download" id="download-win-exe">Descargar EXE</a>
             </div>
 
             <!-- Windows MSI -->
@@ -1925,7 +1925,7 @@
                 <h3>Windows MSI</h3>
                 <p>Paquete estándar de instalación MSI de WiX Toolset. Recomendado para entornos corporativos o distribución simplificada.</p>
                 <span class="download-meta">Fichero .msi • Estable (~3.6 MB)</span>
-                <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.msi" class="btn btn-download">Descargar MSI</a>
+                <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.msi" class="btn btn-download" id="download-win-msi">Descargar MSI</a>
             </div>
 
             <!-- Android APK -->
@@ -1934,7 +1934,7 @@
                 <h3>Android APK</h3>
                 <p>Llévate el visualizador a pie de obra. Instala el APK nativo para teléfonos y tabletas con sincronización offline completa.</p>
                 <span class="download-meta">Fichero .apk • Compatible (~20 MB)</span>
-                <a href="PROGRAMAS/BC3Viewer-App.apk" class="btn btn-download">Descargar APK</a>
+                <a href="PROGRAMAS/BC3Viewer-App.apk" class="btn btn-download" id="download-android-apk">Descargar APK</a>
             </div>
 
             <!-- Ejemplo BC3 -->
@@ -2209,7 +2209,7 @@
                 <div class="community-icon">💬</div>
                 <h3>GitHub Discussions</h3>
                 <p>Abre un hilo para sugerir funciones, reportar problemas o compartir cómo usas BC3 Viewer en tu día a día.</p>
-                <a href="https://github.com/jmcaamanog/BC3Viewer-App/discussions" class="btn btn-secondary" target="_blank" rel="noopener">
+                <a href="404.html" class="btn btn-secondary">
                     <span>🚀</span> Ir a Discussions
                 </a>
             </div>
@@ -2600,7 +2600,7 @@
                     animateCount('stat-forks', repoData.forks_count || 0);
                 }
 
-                // Fetch releases info (download count)
+                // Fetch releases info (download count and links)
                 const relRes = await fetch(`https://api.github.com/repos/${repo}/releases`, {
                     headers: { 'Accept': 'application/vnd.github.v3+json' }
                 });
@@ -2613,6 +2613,30 @@
                         });
                     });
                     animateCount('stat-downloads', totalDownloads + 392); // Offset: 392 raw downloads before Releases
+
+                    // Dinamizar enlaces de descarga para apuntar al último release de GitHub
+                    if (releases.length > 0) {
+                        const latestRelease = releases[0];
+                        (latestRelease.assets || []).forEach(asset => {
+                            const name = asset.name.toLowerCase();
+                            const url = asset.browser_download_url;
+                            
+                            if (name.endsWith('.exe')) {
+                                const btnWin = document.getElementById('hero-download-win');
+                                const btnExe = document.getElementById('download-win-exe');
+                                if (btnWin) btnWin.href = url;
+                                if (btnExe) btnExe.href = url;
+                            } else if (name.endsWith('.msi')) {
+                                const btnMsi = document.getElementById('download-win-msi');
+                                if (btnMsi) btnMsi.href = url;
+                            } else if (name.endsWith('.apk')) {
+                                const btnAndroid = document.getElementById('hero-download-android');
+                                const btnApk = document.getElementById('download-android-apk');
+                                if (btnAndroid) btnAndroid.href = url;
+                                if (btnApk) btnApk.href = url;
+                            }
+                        });
+                    }
                 }
             } catch (e) {
                 // Si falla la API (ej. sin conexión), no mostramos nada raro
