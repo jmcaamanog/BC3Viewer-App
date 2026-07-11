@@ -1558,32 +1558,11 @@ body.dark-theme .dev-down {
     -webkit-user-select: none !important;
 }
 
-/* Botones de colapsar y expandir columna izquierda en el Gantt */
-.gantt-toggle-col-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary, #64748b);
-    font-size: 0.95rem;
-    cursor: pointer;
-    padding: 4px 6px;
-    margin-right: 6px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    transition: background-color 0.2s, color 0.2s;
-}
-.gantt-toggle-col-btn:hover {
-    background-color: var(--hover-bg, #f1f5f9);
-    color: var(--accent, #0ea5e9);
-}
 
-.gantt-expand-col-btn {
-    display: none;
+.gantt-toggle-cols-floating-btn {
     position: absolute;
-    left: 12px;
+    left: calc(var(--left-col-width, 250px) + 12px);
     bottom: 20px;
-    top: auto;
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -1592,13 +1571,14 @@ body.dark-theme .dev-down {
     border: none;
     font-size: 1rem;
     cursor: pointer;
+    display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
     z-index: 100;
-    transition: transform 0.2s, background-color 0.2s;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s, background-color 0.2s;
 }
-.gantt-expand-col-btn:hover {
+.gantt-toggle-cols-floating-btn:hover {
     transform: scale(1.1);
     background-color: #0284c7;
 }
@@ -1616,8 +1596,8 @@ body.dark-theme .dev-down {
 .gantt-table-wrap.gantt-left-collapsed .gantt-col-resize-handle {
     display: none !important;
 }
-.gantt-table-wrap.gantt-left-collapsed .gantt-expand-col-btn {
-    display: flex !important;
+.gantt-table-wrap.gantt-left-collapsed .gantt-toggle-cols-floating-btn {
+    left: 12px;
 }
 
 /* Handle de resize de la columna de tareas */

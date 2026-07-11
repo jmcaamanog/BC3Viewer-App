@@ -3722,6 +3722,7 @@ let ganttTasks = [];
 let ganttStartDate = new Date();
 let ganttTotalWeeks = 26;
 let GANTT_COL_PX = 44; // ancho de cada columna en px (redimensionable por zoom slider)
+let ganttPrevColPx = 44; // ancho previo de la columna (para mantener scroll center)
 let ganttViewMode = 'weeks'; // escala de tiempo: 'days', 'weeks', 'months'
 let ganttLeftColWidth = window.innerWidth <= 768 ? 250 : (window.innerWidth <= 1024 ? 360 : 460);  // ancho columna tareas en px (redimensionable)
 const GANTT_PRE_WEEKS = 4; // Margen de semanas a la izquierda para poder deslizar antes del inicio/hoy
@@ -4179,6 +4180,15 @@ function applyProgressToDescendants(pId, prog) {
 function rebuildGanttDOM() {
     const container = document.getElementById('ganttContainer');
     if (!container) return;
+
+    // Guardar la semana en el centro del scroll horizontal antes de vaciar el contenedor
+    const oldRightCol = container.querySelector('.gantt-right-col');
+    let keepWeek = null;
+    if (oldRightCol) {
+        const scrollCenter = oldRightCol.scrollLeft + oldRightCol.clientWidth / 2;
+        keepWeek = scrollCenter / ganttPrevColPx;
+    }
+
     container.innerHTML = '';
 
     const totalWeeks = ganttTotalWeeks;
@@ -4340,6 +4350,7 @@ function rebuildGanttDOM() {
     // ---- Cabecera grid ----
     const tableWrap = document.createElement('div');
     tableWrap.className = 'gantt-table-wrap';
+    tableWrap.style.setProperty('--left-col-width', ganttLeftColWidth + 'px');
     if (localStorage.getItem('gantt_left_collapsed') === 'true') {
         tableWrap.classList.add('gantt-left-collapsed');
     }
@@ -4354,18 +4365,6 @@ function rebuildGanttDOM() {
     const leftHeader = document.createElement('div');
     leftHeader.className = 'gantt-left-header';
 
-    // Botón para colapsar columna izquierda
-    const toggleBtn = document.createElement('button');
-    toggleBtn.type = 'button';
-    toggleBtn.className = 'gantt-toggle-col-btn';
-    toggleBtn.innerHTML = '◀';
-    toggleBtn.title = 'Ocultar nombres de tareas';
-    toggleBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        tableWrap.classList.add('gantt-left-collapsed');
-        localStorage.setItem('gantt_left_collapsed', 'true');
-    });
-
     const hName = document.createElement('span');
     hName.className = 'gh-col-name';
     hName.textContent = 'Tarea / Capítulo';
@@ -4378,7 +4377,6 @@ function rebuildGanttDOM() {
     hProgress.className = 'gh-col-progress';
     hProgress.textContent = '% Ejec.';
 
-    leftHeader.appendChild(toggleBtn);
     leftHeader.appendChild(hName);
     leftHeader.appendChild(hDays);
     leftHeader.appendChild(hProgress);
@@ -4767,23 +4765,39 @@ function rebuildGanttDOM() {
     tableWrap.appendChild(leftCol);
     tableWrap.appendChild(rightCol);
 
-    // Botón para expandir columna izquierda
-    const expandBtn = document.createElement('button');
-    expandBtn.type = 'button';
-    expandBtn.className = 'gantt-expand-col-btn';
-    expandBtn.innerHTML = '▶';
-    expandBtn.title = 'Mostrar nombres de tareas';
-    expandBtn.addEventListener('click', (e) => {
+    // Botón flotante único para colapsar/expandir columna izquierda
+    const toggleColBtn = document.createElement('button');
+    toggleColBtn.type = 'button';
+    toggleColBtn.className = 'gantt-toggle-cols-floating-btn';
+    
+    // Configurar estado inicial
+    const isCollapsed = tableWrap.classList.contains('gantt-left-collapsed');
+    toggleColBtn.innerHTML = isCollapsed ? '▶' : '◀';
+    toggleColBtn.title = isCollapsed ? 'Mostrar nombres de tareas' : 'Ocultar nombres de tareas';
+    
+    toggleColBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        tableWrap.classList.remove('gantt-left-collapsed');
-        localStorage.setItem('gantt_left_collapsed', 'false');
+        const nowCollapsed = tableWrap.classList.toggle('gantt-left-collapsed');
+        localStorage.setItem('gantt_left_collapsed', nowCollapsed ? 'true' : 'false');
+        toggleColBtn.innerHTML = nowCollapsed ? '▶' : '◀';
+        toggleColBtn.title = nowCollapsed ? 'Mostrar nombres de tareas' : 'Ocultar nombres de tareas';
     });
-    tableWrap.appendChild(expandBtn);
+    tableWrap.appendChild(toggleColBtn);
 
     container.appendChild(tableWrap);
 
+    // Restaurar el scroll horizontal centrado de la semana guardada antes de reconstruir
+    if (keepWeek !== null) {
+        setTimeout(() => {
+            rightCol.scrollLeft = (keepWeek * GANTT_COL_PX) - (rightCol.clientWidth / 2);
+        }, 0);
+    }
+
     // Sincronizar scroll vertical entre columnas
     leftCol.addEventListener('scroll', () => { rightCol.scrollTop = leftCol.scrollTop; });
+
+    // Actualizar el zoom previo para la siguiente reconstrucción
+    ganttPrevColPx = GANTT_COL_PX;
 }
 
 // Calcular coordenadas izquierda y ancho de barra según el zoom y la escala activa
@@ -4822,6 +4836,10 @@ function doGanttColResize(e) {
     if (leftColEl) {
         leftColEl.style.width = newWidth + 'px';
         leftColEl.style.minWidth = newWidth + 'px';
+    }
+    const tableWrap = document.querySelector('#ganttContainer .gantt-table-wrap');
+    if (tableWrap) {
+        tableWrap.style.setProperty('--left-col-width', newWidth + 'px');
     }
 }
 function stopGanttColResize() {
