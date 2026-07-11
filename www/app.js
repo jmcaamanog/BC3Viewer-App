@@ -4439,8 +4439,9 @@ function rebuildGanttDOM() {
 
         const todayLabel = document.createElement('div');
         todayLabel.className = 'gantt-today-line-label';
-        const todayStr = today.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
-        todayLabel.textContent = `HOY · ${todayStr}`;
+        const dd = String(today.getDate()).padStart(2, '0');
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        todayLabel.textContent = `${dd}/${mm}`;
         todayLine.appendChild(todayLabel);
 
         bodyWrap.appendChild(todayLine);
@@ -5219,20 +5220,8 @@ if (planningModal) {
     });
 }
 
-const ganttHelpBtn = document.getElementById('ganttHelpBtn');
 const ganttHelpCard = document.getElementById('ganttHelpCard');
 const ganttHelpCloseBtn = document.getElementById('ganttHelpCloseBtn');
-
-if (ganttHelpBtn && ganttHelpCard) {
-    ganttHelpBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (ganttHelpCard.style.display === 'none' || ganttHelpCard.style.display === '') {
-            ganttHelpCard.style.display = 'flex';
-        } else {
-            ganttHelpCard.style.display = 'none';
-        }
-    });
-}
 
 if (ganttHelpCloseBtn && ganttHelpCard) {
     ganttHelpCloseBtn.addEventListener('click', (e) => {
@@ -5240,6 +5229,67 @@ if (ganttHelpCloseBtn && ganttHelpCard) {
         ganttHelpCard.style.display = 'none';
     });
 }
+
+// ---- Implementación de Zoom con dos dedos (Pinch to Zoom) ----
+function initGanttPinchZoom() {
+    const container = document.getElementById('ganttContainer');
+    if (!container) return;
+
+    let initialDist = 0;
+    let initialZoom = 44;
+    let isPinching = false;
+
+    container.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+            isPinching = true;
+            initialDist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            initialZoom = GANTT_COL_PX;
+        }
+    }, { passive: true });
+
+    container.addEventListener('touchmove', (e) => {
+        if (isPinching && e.touches.length === 2) {
+            if (e.cancelable) e.preventDefault();
+
+            const dist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            
+            if (initialDist > 0) {
+                const ratio = dist / initialDist;
+                const targetZoom = Math.min(150, Math.max(20, Math.round(initialZoom * ratio)));
+                
+                // Limitar actualizaciones para evitar lentitud
+                if (Math.abs(targetZoom - GANTT_COL_PX) >= 4) {
+                    GANTT_COL_PX = targetZoom;
+                    const ganttZoomInput = document.getElementById('ganttZoom');
+                    if (ganttZoomInput) {
+                        ganttZoomInput.value = targetZoom;
+                    }
+                    rebuildGanttDOM();
+                }
+            }
+        }
+    }, { passive: false });
+
+    container.addEventListener('touchend', (e) => {
+        if (e.touches.length < 2) {
+            isPinching = false;
+            initialDist = 0;
+        }
+    }, { passive: true });
+
+    container.addEventListener('touchcancel', () => {
+        isPinching = false;
+        initialDist = 0;
+    }, { passive: true });
+}
+
+initGanttPinchZoom();
 
 const ganttTodayBtn = document.getElementById('ganttTodayBtn');
 if (ganttTodayBtn) {
