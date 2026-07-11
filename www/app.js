@@ -4340,6 +4340,9 @@ function rebuildGanttDOM() {
     // ---- Cabecera grid ----
     const tableWrap = document.createElement('div');
     tableWrap.className = 'gantt-table-wrap';
+    if (localStorage.getItem('gantt_left_collapsed') === 'true') {
+        tableWrap.classList.add('gantt-left-collapsed');
+    }
 
     // Columna izquierda: nombres de tarea (ancho redimensionable)
     const leftCol = document.createElement('div');
@@ -4350,6 +4353,18 @@ function rebuildGanttDOM() {
     // Cabecera estructurada de la columna izquierda (Tarea, Plazo Restante, % Ejecutado)
     const leftHeader = document.createElement('div');
     leftHeader.className = 'gantt-left-header';
+
+    // Botón para colapsar columna izquierda
+    const toggleBtn = document.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.className = 'gantt-toggle-col-btn';
+    toggleBtn.innerHTML = '◀';
+    toggleBtn.title = 'Ocultar nombres de tareas';
+    toggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        tableWrap.classList.add('gantt-left-collapsed');
+        localStorage.setItem('gantt_left_collapsed', 'true');
+    });
 
     const hName = document.createElement('span');
     hName.className = 'gh-col-name';
@@ -4363,6 +4378,7 @@ function rebuildGanttDOM() {
     hProgress.className = 'gh-col-progress';
     hProgress.textContent = '% Ejec.';
 
+    leftHeader.appendChild(toggleBtn);
     leftHeader.appendChild(hName);
     leftHeader.appendChild(hDays);
     leftHeader.appendChild(hProgress);
@@ -4519,7 +4535,12 @@ function rebuildGanttDOM() {
         subtextSpan.innerHTML = `Rest: ${daysStr} | <span class="subtext-prog-val">${progressVal}%</span>`;
         cellName.appendChild(subtextSpan);
 
-        // Registrar gesto de presión prolongada (long-press) en el celda de nombre para ver el texto completo
+        // Abrir detalles de la tarea al hacer clic o al pulsar de forma prolongada
+        cellName.addEventListener('click', (e) => {
+            // Ignorar el click si es sobre el icono de colapsar/expandir capítulo (+/-)
+            if (e.target.classList.contains('gantt-toggle-icon')) return;
+            showGanttTaskPopup(task, st);
+        });
         setupGanttLongPress(cellName, () => {
             showGanttTaskPopup(task, st);
         });
@@ -4689,6 +4710,12 @@ function rebuildGanttDOM() {
             });
         }
 
+        // Abrir detalles de la tarea mediante presión prolongada en la barra del Gantt
+        setupGanttLongPress(bar, () => {
+            if (ganttLinkMode) return;
+            showGanttTaskPopup(task, st);
+        });
+
         barRow.appendChild(bar);
         bodyWrap.appendChild(barRow);
     });
@@ -4738,6 +4765,20 @@ function rebuildGanttDOM() {
     rightCol.appendChild(bodyWrap);
     tableWrap.appendChild(leftCol);
     tableWrap.appendChild(rightCol);
+
+    // Botón para expandir columna izquierda
+    const expandBtn = document.createElement('button');
+    expandBtn.type = 'button';
+    expandBtn.className = 'gantt-expand-col-btn';
+    expandBtn.innerHTML = '▶';
+    expandBtn.title = 'Mostrar nombres de tareas';
+    expandBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        tableWrap.classList.remove('gantt-left-collapsed');
+        localStorage.setItem('gantt_left_collapsed', 'false');
+    });
+    tableWrap.appendChild(expandBtn);
+
     container.appendChild(tableWrap);
 
     // Sincronizar scroll vertical entre columnas
