@@ -15,10 +15,17 @@ async function registerUserAccess() {
             localStorage.setItem('app_device_id', deviceId);
         }
 
+        let platform = 'Web';
+        if (window.Capacitor) {
+            platform = 'Android';
+        } else if (window.__TAURI__ || window.__TAURI_METADATA__ || window.__TAURI_IPC__) {
+            platform = 'Windows';
+        }
+
         const payload = {
             deviceId: deviceId,
             version: APP_VERSION,
-            platform: window.Capacitor ? 'Android' : 'Web',
+            platform: platform,
             timestamp: new Date().toISOString()
         };
 
