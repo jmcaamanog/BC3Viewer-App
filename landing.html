@@ -1,16 +1,20 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=device-width, initial-scale=1.0">
-    <meta name="description" content="BC3 Viewer Premium - Visualizador y Editor Avanzado offline de presupuestos FIEBDC-3 (.bc3) para profesionales de la construcción y Arquitectos Técnicos.">
+    <meta name="description"
+        content="BC3 Viewer Premium - Visualizador y Editor Avanzado offline de presupuestos FIEBDC-3 (.bc3) para profesionales de la construcción y Arquitectos Técnicos.">
     <title>BC3 Viewer Premium - Visualizador y Editor de Presupuestos FIEBDC-3</title>
-    
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
     <style>
         /* CSS RESET & VARIABLES */
         :root {
@@ -19,25 +23,29 @@
             --bg-card-hover: rgba(26, 36, 57, 0.85);
             --border-color: rgba(255, 255, 255, 0.08);
             --border-hover: rgba(59, 130, 246, 0.3);
-            
-            --accent-primary: #3b82f6;      /* Blue */
+
+            --accent-primary: #3b82f6;
+            /* Blue */
             --accent-primary-rgb: 59, 130, 246;
-            --accent-secondary: #06b6d4;    /* Cyan */
-            --accent-success: #10b981;      /* Emerald */
-            --accent-purple: #8b5cf6;       /* Violet */
-            
+            --accent-secondary: #06b6d4;
+            /* Cyan */
+            --accent-success: #10b981;
+            /* Emerald */
+            --accent-purple: #8b5cf6;
+            /* Violet */
+
             --text-main: #f3f4f6;
             --text-muted: #9ca3af;
             --text-white: #ffffff;
-            
+
             --font-display: 'Outfit', sans-serif;
             --font-body: 'Inter', sans-serif;
-            
+
             --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
             --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
             --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
             --shadow-glow: 0 0 25px rgba(59, 130, 246, 0.25);
-            
+
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -58,13 +66,21 @@
         }
 
         /* TEXT JUSTIFICATION UTILITY */
-        p, .section-desc, .feature-card p, .stat-card p, .author-bio, .community-card p, .timeline-content p, .hero-description {
+        p,
+        .section-desc,
+        .feature-card p,
+        .stat-card p,
+        .author-bio,
+        .community-card p,
+        .timeline-content p,
+        .hero-description {
             text-align: justify;
             text-justify: inter-word;
         }
 
         /* Ambient Glow Background Blobs */
-        body::before, body::after {
+        body::before,
+        body::after {
             content: '';
             position: absolute;
             width: 400px;
@@ -75,10 +91,12 @@
             filter: blur(60px);
             pointer-events: none;
         }
+
         body::before {
             top: 10%;
             left: -100px;
         }
+
         body::after {
             top: 60%;
             right: -100px;
@@ -86,7 +104,12 @@
         }
 
         /* TYPOGRAPHY UTILITIES */
-        h1, h2, h3, h4, h5, h6 {
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
             font-family: var(--font-display);
             font-weight: 700;
             letter-spacing: -0.02em;
@@ -151,7 +174,8 @@
             padding: 5px 0;
         }
 
-        .nav-links a:hover, .nav-links a.active {
+        .nav-links a:hover,
+        .nav-links a.active {
             color: var(--text-white);
         }
 
@@ -557,8 +581,13 @@
             box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
         }
 
-        .gallery-nav-prev { left: 15px; }
-        .gallery-nav-next { right: 15px; }
+        .gallery-nav-prev {
+            left: 15px;
+        }
+
+        .gallery-nav-next {
+            right: 15px;
+        }
 
         .gallery-caption {
             background: rgba(9, 13, 22, 0.95);
@@ -583,14 +612,14 @@
             position: absolute;
             top: 15px;
             right: 15px;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0, 0, 0, 0.6);
             padding: 4px 10px;
             border-radius: 12px;
             font-size: 0.75rem;
             font-weight: 600;
             color: var(--text-main);
             z-index: 5;
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .gallery-sidebar {
@@ -606,14 +635,17 @@
         .gallery-sidebar::-webkit-scrollbar {
             width: 6px;
         }
+
         .gallery-sidebar::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.02);
             border-radius: 3px;
         }
+
         .gallery-sidebar::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 3px;
         }
+
         .gallery-sidebar::-webkit-scrollbar-thumb:hover {
             background: rgba(59, 130, 246, 0.4);
         }
@@ -716,9 +748,17 @@
             justify-content: center;
         }
 
-        .download-card.windows .download-icon { color: #60a5fa; }
-        .download-card.android .download-icon { color: #34d399; }
-        .download-card.example .download-icon { color: #facc15; }
+        .download-card.windows .download-icon {
+            color: #60a5fa;
+        }
+
+        .download-card.android .download-icon {
+            color: #34d399;
+        }
+
+        .download-card.example .download-icon {
+            color: #facc15;
+        }
 
         .download-card h3 {
             font-size: 1.4rem;
@@ -751,6 +791,7 @@
             background: linear-gradient(135deg, #1d4ed8, #3b82f6);
             color: var(--text-white);
         }
+
         .download-card.windows .btn-download:hover {
             box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
             transform: translateY(-2px);
@@ -760,6 +801,7 @@
             background: linear-gradient(135deg, #047857, #10b981);
             color: var(--text-white);
         }
+
         .download-card.android .btn-download:hover {
             box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
             transform: translateY(-2px);
@@ -1091,7 +1133,8 @@
             }
 
             .nav-links {
-                display: none; /* Mobile menu shortcut */
+                display: none;
+                /* Mobile menu shortcut */
             }
         }
 
@@ -1361,8 +1404,15 @@
         }
 
         @keyframes pulse-play {
-            0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
-            50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.7), 0 0 60px rgba(6, 182, 212, 0.3); }
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 40px rgba(59, 130, 246, 0.7), 0 0 60px rgba(6, 182, 212, 0.3);
+            }
         }
 
         .video-coming-text {
@@ -1512,9 +1562,11 @@
                 text-align: center;
                 padding: 35px 20px;
             }
+
             .video-preview-strip {
                 grid-template-columns: repeat(2, 1fr);
             }
+
             .hero-stats {
                 flex-wrap: wrap;
                 justify-content: center;
@@ -1523,37 +1575,52 @@
 
         /* === CURSOR PERSONALIZADO === */
         .cursor-dot {
-            width: 8px; height: 8px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             background: var(--accent-primary);
             position: fixed;
-            top: 0; left: 0;
+            top: 0;
+            left: 0;
             pointer-events: none;
             z-index: 99999;
             transition: transform 0.1s ease;
             mix-blend-mode: difference;
         }
+
         .cursor-ring {
-            width: 36px; height: 36px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             border: 2px solid rgba(59, 130, 246, 0.5);
             position: fixed;
-            top: 0; left: 0;
+            top: 0;
+            left: 0;
             pointer-events: none;
             z-index: 99998;
             transition: width 0.2s, height 0.2s, border-color 0.2s;
         }
+
         .cursor-trail {
-            width: 6px; height: 6px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
             background: rgba(6, 182, 212, 0.4);
             position: fixed;
-            top: 0; left: 0;
+            top: 0;
+            left: 0;
             pointer-events: none;
             z-index: 99997;
         }
-        body:has(.cursor-dot) { cursor: none; }
-        a:hover ~ .cursor-ring, button:hover ~ .cursor-ring { border-color: var(--accent-secondary); }
+
+        body:has(.cursor-dot) {
+            cursor: none;
+        }
+
+        a:hover~.cursor-ring,
+        button:hover~.cursor-ring {
+            border-color: var(--accent-secondary);
+        }
 
         /* === SCROLL ANIMATIONS (B) === */
         .reveal {
@@ -1561,14 +1628,27 @@
             transform: translateY(32px);
             transition: opacity 0.65s ease, transform 0.65s ease;
         }
+
         .reveal.visible {
             opacity: 1;
             transform: translateY(0);
         }
-        .reveal-delay-1 { transition-delay: 0.1s; }
-        .reveal-delay-2 { transition-delay: 0.2s; }
-        .reveal-delay-3 { transition-delay: 0.3s; }
-        .reveal-delay-4 { transition-delay: 0.4s; }
+
+        .reveal-delay-1 {
+            transition-delay: 0.1s;
+        }
+
+        .reveal-delay-2 {
+            transition-delay: 0.2s;
+        }
+
+        .reveal-delay-3 {
+            transition-delay: 0.3s;
+        }
+
+        .reveal-delay-4 {
+            transition-delay: 0.4s;
+        }
 
         /* === STAR TOAST (E) === */
         .star-toast {
@@ -1583,18 +1663,52 @@
             display: flex;
             align-items: center;
             gap: 14px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(245,158,11,0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(245, 158, 11, 0.15);
             backdrop-filter: blur(16px);
             transform: translateX(-120%);
             transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
             max-width: 300px;
         }
-        .star-toast.show { transform: translateX(0); }
-        .star-toast-icon { font-size: 1.8rem; flex-shrink: 0; animation: spin-star 3s linear infinite; }
-        @keyframes spin-star { 0%,100%{transform:rotate(-10deg);}50%{transform:rotate(10deg);} }
-        .star-toast-body { display: flex; flex-direction: column; gap: 4px; }
-        .star-toast-title { font-family: var(--font-display); font-weight: 700; font-size: 0.95rem; }
-        .star-toast-sub { font-size: 0.78rem; color: var(--text-muted); }
+
+        .star-toast.show {
+            transform: translateX(0);
+        }
+
+        .star-toast-icon {
+            font-size: 1.8rem;
+            flex-shrink: 0;
+            animation: spin-star 3s linear infinite;
+        }
+
+        @keyframes spin-star {
+
+            0%,
+            100% {
+                transform: rotate(-10deg);
+            }
+
+            50% {
+                transform: rotate(10deg);
+            }
+        }
+
+        .star-toast-body {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .star-toast-title {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .star-toast-sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
         .star-toast-btn {
             background: linear-gradient(135deg, #f59e0b, #f97316);
             color: white;
@@ -1609,12 +1723,21 @@
             white-space: nowrap;
             transition: box-shadow 0.2s;
         }
-        .star-toast-btn:hover { box-shadow: 0 4px 12px rgba(245,158,11,0.4); }
+
+        .star-toast-btn:hover {
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+
         .star-toast-close {
-            position: absolute; top: 8px; right: 10px;
-            background: none; border: none;
-            color: var(--text-muted); cursor: pointer;
-            font-size: 0.9rem; line-height: 1;
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.9rem;
+            line-height: 1;
         }
 
         /* === CONTRIBUTORS (F) === */
@@ -1625,6 +1748,7 @@
             justify-content: center;
             margin-top: 10px;
         }
+
         .contributor-card {
             display: flex;
             flex-direction: column;
@@ -1638,18 +1762,22 @@
             transition: var(--transition);
             text-decoration: none;
         }
+
         .contributor-card:hover {
             transform: translateY(-6px);
             border-color: var(--border-hover);
             background: var(--bg-card-hover);
-            box-shadow: 0 12px 30px rgba(59,130,246,0.15);
+            box-shadow: 0 12px 30px rgba(59, 130, 246, 0.15);
         }
+
         .contributor-avatar {
-            width: 64px; height: 64px;
+            width: 64px;
+            height: 64px;
             border-radius: 50%;
-            border: 2px solid rgba(59,130,246,0.3);
+            border: 2px solid rgba(59, 130, 246, 0.3);
             object-fit: cover;
         }
+
         .contributor-name {
             font-size: 0.78rem;
             font-weight: 600;
@@ -1657,19 +1785,21 @@
             text-align: center;
             word-break: break-word;
         }
+
         .contributor-commits {
             font-size: 0.7rem;
             color: var(--text-muted);
         }
+
         .contributors-loading {
             color: var(--text-muted);
             font-size: 0.9rem;
             text-align: center;
             padding: 20px;
         }
-
     </style>
 </head>
+
 <body>
 
     <!-- CUSTOM CURSOR (C) -->
@@ -1683,15 +1813,19 @@
         <div class="star-toast-body">
             <div class="star-toast-title">¿Te gusta la app?</div>
             <div class="star-toast-sub">Dale una estrella en GitHub y ayuda a que llegue a más profesionales</div>
-            <a href="https://github.com/jmcaamanog/BC3Viewer-App" class="star-toast-btn" target="_blank" rel="noopener">⭐ Star en GitHub</a>
+            <a href="https://github.com/jmcaamanog/BC3Viewer-App" class="star-toast-btn" target="_blank"
+                rel="noopener">⭐ Star en GitHub</a>
         </div>
     </div>
 
     <!-- NAVBAR -->
     <nav class="navbar" id="navbar">
         <a href="#" class="nav-logo" style="display: flex; align-items: center; gap: 8px;">
-            <img src="assets/icon-only.png" alt="BC3 Viewer Logo" style="height: 32px; width: 32px; border-radius: 6px;">
-            <span style="font-family: var(--font-display); font-weight: 800; font-size: 1.25rem; background: linear-gradient(135deg, var(--text-white), var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">BC3 Viewer</span>
+            <img src="assets/icon-only.png" alt="BC3 Viewer Logo"
+                style="height: 32px; width: 32px; border-radius: 6px;">
+            <span
+                style="font-family: var(--font-display); font-weight: 800; font-size: 1.25rem; background: linear-gradient(135deg, var(--text-white), var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">BC3
+                Viewer</span>
         </a>
         <ul class="nav-links">
             <li><a href="#caracteristicas">Características</a></li>
@@ -1702,9 +1836,11 @@
             <li><a href="#comunidad">Comunidad</a></li>
             <li><a href="#autor">Autor</a></li>
         </ul>
-        <a href="www/index.html" class="nav-cta" target="_blank" id="nav-cta" style="display: flex; align-items: center; gap: 6px;">
-            <img src="assets/icon-only.png" alt="App icon" style="height: 18px; width: 18px; border-radius: 3px; filter: brightness(0) invert(1);">
-            <span>Abrir App Online</span>
+        <a href="www/index.html" class="nav-cta" target="_blank" id="nav-cta"
+            style="display: flex; align-items: center; gap: 6px;">
+            <img src="assets/icon-only.png" alt="App icon"
+                style="height: 18px; width: 18px; border-radius: 3px; filter: brightness(0) invert(1);">
+            <span>App Online</span>
         </a>
     </nav>
 
@@ -1712,36 +1848,56 @@
     <header class="hero" style="position:relative; overflow:hidden;">
         <!-- CANVAS PARTICLES (D) -->
         <canvas id="hero-particles" style="position:absolute;inset:0;z-index:1;pointer-events:none;"></canvas>
-        
+
         <!-- Lado Izquierdo: Cuadro Glassmorphism -->
-        <div class="hero-glass-card reveal" style="position:relative; z-index:2; max-width: 620px; width: 100%; margin: 0;">
+        <div class="hero-glass-card reveal"
+            style="position:relative; z-index:2; max-width: 620px; width: 100%; margin: 0;">
             <div class="hero-badge" style="margin: 0 0 20px 0;">Versión 1.4.7 • Premium</div>
-            
+
             <!-- Mini Logo sobre el título -->
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                <img src="assets/icon-only.png" alt="BC3 Viewer Logo" style="height: 48px; width: 48px; filter: drop-shadow(0 0 10px rgba(59,130,246,0.5));">
-                <span style="font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; color: var(--text-white);">BC3 Viewer</span>
+                <img src="assets/icon-only.png" alt="BC3 Viewer Logo"
+                    style="height: 48px; width: 48px; filter: drop-shadow(0 0 10px rgba(59,130,246,0.5));">
+                <span
+                    style="font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; color: var(--text-white);">BC3
+                    Viewer</span>
             </div>
 
             <h1 class="hero-title" style="margin-bottom: 20px;">Visualizador y Editor de Presupuestos FIEBDC-3</h1>
             <p class="hero-description" style="margin-bottom: 30px;">
-                La herramienta web definitiva, libre, gratuita y 100% offline para profesionales de la edificación. Importa, edita, compara, planifica y exporta tus archivos <strong>.bc3</strong> desde cualquier dispositivo sin enviar tus datos a la nube.
+                La herramienta web definitiva, libre, gratuita y 100% offline para profesionales de la edificación.
+                Importa, edita, compara, planifica y exporta tus archivos <strong>.bc3</strong> desde cualquier
+                dispositivo sin enviar tus datos a la nube.
             </p>
             <div class="hero-actions" style="gap: 12px; margin-bottom: 30px;">
-                <a href="www/index.html" class="btn btn-primary" target="_blank" id="hero-btn-online" style="padding: 12px 20px; font-size: 0.9rem;">
-                    <span>⚡</span> Iniciar App Online
+                <a href="www/index.html" class="btn btn-primary" target="_blank" id="hero-btn-online"
+                    style="padding: 12px 20px; font-size: 0.9rem;">
+                    <span>⚡</span> App Online
                 </a>
-                <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.exe" class="btn btn-secondary" id="hero-download-win" style="display: inline-flex; align-items: center; gap: 6px; padding: 12px 20px; font-size: 0.9rem;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#0078d4; display:block;"><path d="M0 3.449L9.75 2.1v9.45H0V3.449zM0 12.45h9.75v9.45L0 20.551v-8.1zM10.95 1.95L24 0v11.55H10.95V1.95zM10.95 12.45H24v11.55l-13.05-1.95v-9.6z"/></svg>
+                <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.exe" class="btn btn-secondary" id="hero-download-win"
+                    style="display: inline-flex; align-items: center; gap: 6px; padding: 12px 20px; font-size: 0.9rem;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"
+                        style="color:#0078d4; display:block;">
+                        <path
+                            d="M0 3.449L9.75 2.1v9.45H0V3.449zM0 12.45h9.75v9.45L0 20.551v-8.1zM10.95 1.95L24 0v11.55H10.95V1.95zM10.95 12.45H24v11.55l-13.05-1.95v-9.6z" />
+                    </svg>
                     <span>Windows</span>
                 </a>
-                <a href="PROGRAMAS/BC3Viewer-App.apk" class="btn btn-secondary" id="hero-download-android" style="display: inline-flex; align-items: center; gap: 6px; padding: 12px 20px; font-size: 0.9rem;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#3ddc84; display:block;"><path d="M17.523 15.3l1.816 3.146a.75.75 0 1 1-1.298.75l-1.84-3.187A9.957 9.957 0 0 1 12 17a9.957 9.957 0 0 1-4.202-1.008l-1.84 3.187a.75.75 0 1 1-1.298-.75l1.816-3.146A9.972 9.972 0 0 1 2.25 10c0-.85.106-1.674.306-2.464l-.056-.032a.75.75 0 1 1 .75-1.3l.115.066A9.939 9.939 0 0 1 6.84 3.84L5.023.693a.75.75 0 1 1 .75-1.3l-.056.032A9.97 9.97 0 0 1 12 2.25c1.4 0 2.73.288 3.939.81l1.84-3.187a.75.75 0 1 1 .75 1.3l.115-.066a9.972 9.972 0 0 1 4.488 3.738z"/></svg>
+                <a href="PROGRAMAS/BC3Viewer-App.apk" class="btn btn-secondary" id="hero-download-android"
+                    style="display: inline-flex; align-items: center; gap: 6px; padding: 12px 20px; font-size: 0.9rem;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"
+                        style="color:#3ddc84; display:block;">
+                        <path
+                            d="M17.523 15.3l1.816 3.146a.75.75 0 1 1-1.298.75l-1.84-3.187A9.957 9.957 0 0 1 12 17a9.957 9.957 0 0 1-4.202-1.008l-1.84 3.187a.75.75 0 1 1-1.298-.75l1.816-3.146A9.972 9.972 0 0 1 2.25 10c0-.85.106-1.674.306-2.464l-.056-.032a.75.75 0 1 1 .75-1.3l.115.066A9.939 9.939 0 0 1 6.84 3.84L5.023.693a.75.75 0 1 1 .75-1.3l-.056.032A9.97 9.97 0 0 1 12 2.25c1.4 0 2.73.288 3.939.81l1.84-3.187a.75.75 0 1 1 .75 1.3l.115-.066a9.972 9.972 0 0 1 4.488 3.738z" />
+                    </svg>
                     <span>Android</span>
                 </a>
-                <a href="https://github.com/jmcaamanog/BC3Viewer-App" class="btn btn-secondary btn-github" target="_blank" rel="noopener" style="padding: 12px 16px; font-size: 0.9rem;">
+                <a href="https://github.com/jmcaamanog/BC3Viewer-App" class="btn btn-secondary btn-github"
+                    target="_blank" rel="noopener" style="padding: 12px 16px; font-size: 0.9rem;">
                     <svg height="18" width="18" viewBox="0 0 16 16" fill="currentColor" style="display:block;">
-                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                        <path
+                            d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z">
+                        </path>
                     </svg>
                     <span>GitHub</span>
                 </a>
@@ -1784,28 +1940,32 @@
                 <span class="stat-icon">🔌</span>
                 <div class="stat-info">
                     <h3>100% Offline</h3>
-                    <p>Funciona directo en el navegador de forma autónoma sin necesidad de servidores PHP o bases de datos.</p>
+                    <p>Funciona directo en el navegador de forma autónoma sin necesidad de servidores PHP o bases de
+                        datos.</p>
                 </div>
             </div>
             <div class="stat-card">
                 <span class="stat-icon">🔒</span>
                 <div class="stat-info">
                     <h3>Privacidad Total</h3>
-                    <p>Tus presupuestos se procesan en tu propio dispositivo. La privacidad de tus datos de obra está garantizada.</p>
+                    <p>Tus presupuestos se procesan en tu propio dispositivo. La privacidad de tus datos de obra está
+                        garantizada.</p>
                 </div>
             </div>
             <div class="stat-card">
                 <span class="stat-icon">📁</span>
                 <div class="stat-info">
                     <h3>Estándar FIEBDC-3</h3>
-                    <p>Total compatibilidad con archivos .bc3 de programas comerciales de mediciones (Presto, Arquímedes, etc.).</p>
+                    <p>Total compatibilidad con archivos .bc3 de programas comerciales de mediciones (Presto,
+                        Arquímedes, etc.).</p>
                 </div>
             </div>
             <div class="stat-card">
                 <span class="stat-icon">📱</span>
                 <div class="stat-info">
                     <h3>Multiplataforma</h3>
-                    <p>Optimizado para pantallas táctiles de móviles (Android con APK) y escritorio tradicional (Windows nativo).</p>
+                    <p>Optimizado para pantallas táctiles de móviles (Android con APK) y escritorio tradicional (Windows
+                        nativo).</p>
                 </div>
             </div>
         </div>
@@ -1816,57 +1976,66 @@
         <div class="section-header">
             <span class="section-subtitle">Potencial Ilimitado</span>
             <h2 class="section-title">Herramientas Avanzadas para Obra</h2>
-            <p class="section-desc">Todo el ecosistema de un presupuesto reunido en una interfaz interactiva de alto rendimiento.</p>
+            <p class="section-desc">Todo el ecosistema de un presupuesto reunido en una interfaz interactiva de alto
+                rendimiento.</p>
         </div>
-        
+
         <div class="features-grid">
             <!-- 1 -->
             <div class="feature-card">
                 <div class="feature-icon-wrapper">🌳</div>
                 <h3>Exploración Estructurada</h3>
-                <p>Navega a través de un árbol interactivo y jerárquico de capítulos, subcapítulos y partidas con desglose detallado e importes calculados al instante.</p>
+                <p>Navega a través de un árbol interactivo y jerárquico de capítulos, subcapítulos y partidas con
+                    desglose detallado e importes calculados al instante.</p>
             </div>
             <!-- 2 -->
             <div class="feature-card">
                 <div class="feature-icon-wrapper">📊</div>
                 <h3>Mediciones e Información ~T</h3>
-                <p>Visualiza todas las líneas de medición (~M) detalladas (unidades, dimensiones y parciales) y accede a las descripciones técnicas extendidas (~T).</p>
+                <p>Visualiza todas las líneas de medición (~M) detalladas (unidades, dimensiones y parciales) y accede a
+                    las descripciones técnicas extendidas (~T).</p>
             </div>
             <!-- 3 -->
             <div class="feature-card">
                 <div class="feature-icon-wrapper">📝</div>
                 <h3>Edición y Creación Inline</h3>
-                <p>Modifica textos, precios y añade partidas en caliente sobre el visualizador. Cuenta con historial completo de cambios (Deshacer/Rehacer Ctrl+Z/Y).</p>
+                <p>Modifica textos, precios y añade partidas en caliente sobre el visualizador. Cuenta con historial
+                    completo de cambios (Deshacer/Rehacer Ctrl+Z/Y).</p>
             </div>
             <!-- 4 -->
             <div class="feature-card">
                 <div class="feature-icon-wrapper">📅</div>
                 <h3>Planning Gantt y Ruta Crítica</h3>
-                <p>Generación automática de cronogramas a partir del presupuesto. Configura plazos, predecesores y haz seguimiento visual de la ruta crítica y las tareas de hoy.</p>
+                <p>Generación automática de cronogramas a partir del presupuesto. Configura plazos, predecesores y haz
+                    seguimiento visual de la ruta crítica y las tareas de hoy.</p>
             </div>
             <!-- 5 -->
             <div class="feature-card">
                 <div class="feature-icon-wrapper">📈</div>
                 <h3>Dashboard y Curva S</h3>
-                <p>Analiza el presupuesto con KPIs visuales locales, gráficas de distribución de costes por capítulos e indicadores acumulados (PEM/PEC).</p>
+                <p>Analiza el presupuesto con KPIs visuales locales, gráficas de distribución de costes por capítulos e
+                    indicadores acumulados (PEM/PEC).</p>
             </div>
             <!-- 6 -->
             <div class="feature-card">
                 <div class="feature-icon-wrapper">⚖️</div>
                 <h3>Comparador de Presupuestos</h3>
-                <p>Carga y contrasta de manera paralela dos archivos .bc3 para identificar variaciones en precios, desviaciones de alcance y cambios de partida.</p>
+                <p>Carga y contrasta de manera paralela dos archivos .bc3 para identificar variaciones en precios,
+                    desviaciones de alcance y cambios de partida.</p>
             </div>
             <!-- 7 -->
             <div class="feature-card">
                 <div class="feature-icon-wrapper">🏗️</div>
                 <h3>Certificación de Obra</h3>
-                <p>Registra y calcula el avance de obra de forma parcial o acumulada directamente sobre las líneas de medición del presupuesto original.</p>
+                <p>Registra y calcula el avance de obra de forma parcial o acumulada directamente sobre las líneas de
+                    medición del presupuesto original.</p>
             </div>
             <!-- 8 -->
             <div class="feature-card">
                 <div class="feature-icon-wrapper">📥</div>
                 <h3>Exportación Profesional</h3>
-                <p>Genera listados y descárgalos directamente en formato Excel (.xlsx) estructurado o PDF (A4) formateados listos para imprimir.</p>
+                <p>Genera listados y descárgalos directamente en formato Excel (.xlsx) estructurado o PDF (A4)
+                    formateados listos para imprimir.</p>
             </div>
         </div>
     </section>
@@ -1876,24 +2045,29 @@
         <div class="section-header">
             <span class="section-subtitle">Interfaz Gráfica</span>
             <h2 class="section-title">Explora la Versión 1.4.7</h2>
-            <p class="section-desc">Interactúa con el carrusel de capturas de la última versión y descubre cómo se visualiza cada módulo de la aplicación.</p>
+            <p class="section-desc">Interactúa con el carrusel de capturas de la última versión y descubre cómo se
+                visualiza cada módulo de la aplicación.</p>
         </div>
 
         <div class="gallery-container">
             <!-- Left Side: Main Preview -->
             <div class="gallery-viewer">
                 <div class="gallery-indicator" id="gallery-index">1 / 17</div>
-                <div class="gallery-image-wrapper" id="gallery-zoom-trigger" title="Haz doble clic para ampliar la imagen">
+                <div class="gallery-image-wrapper" id="gallery-zoom-trigger"
+                    title="Haz doble clic para ampliar la imagen">
                     <img src="CAPTURAS/V1.4.7/001_PORTADA.jpg" alt="Portada de la App" id="gallery-main-img">
                 </div>
-                <button class="gallery-nav-btn gallery-nav-prev" id="gallery-prev" aria-label="Anterior image">❮</button>
-                <button class="gallery-nav-btn gallery-nav-next" id="gallery-next" aria-label="Siguiente image">❯</button>
+                <button class="gallery-nav-btn gallery-nav-prev" id="gallery-prev"
+                    aria-label="Anterior image">❮</button>
+                <button class="gallery-nav-btn gallery-nav-next" id="gallery-next"
+                    aria-label="Siguiente image">❯</button>
                 <div class="gallery-caption">
                     <h4 id="gallery-title">Acceso de Seguridad y Portada</h4>
-                    <p id="gallery-desc">Pantalla de bienvenida y control de acceso con seguridad PIN para protección de datos locales.</p>
+                    <p id="gallery-desc">Pantalla de bienvenida y control de acceso con seguridad PIN para protección de
+                        datos locales.</p>
                 </div>
             </div>
-            
+
             <!-- Right Side: Thumbnails Sidebar -->
             <div class="gallery-sidebar" id="gallery-sidebar">
                 <!-- Thumbnails will be injected by JavaScript -->
@@ -1906,7 +2080,8 @@
         <div class="section-header">
             <span class="section-subtitle">Instaladores Listos</span>
             <h2 class="section-title">Centro de Descargas</h2>
-            <p class="section-desc">Instala la aplicación de forma nativa en tu ordenador o dispositivo móvil Android para mayor comodidad.</p>
+            <p class="section-desc">Instala la aplicación de forma nativa en tu ordenador o dispositivo móvil Android
+                para mayor comodidad.</p>
         </div>
 
         <div class="download-grid">
@@ -1914,36 +2089,44 @@
             <div class="download-card windows">
                 <div class="download-icon">💻</div>
                 <h3>Windows Installer</h3>
-                <p>Instalador clásico NSIS estructurado. La forma más rápida de tener la app nativa en tu ordenador de escritorio.</p>
+                <p>Instalador clásico NSIS estructurado. La forma más rápida de tener la app nativa en tu ordenador de
+                    escritorio.</p>
                 <span class="download-meta">Fichero .exe • Ultra ligero (~3 MB)</span>
-                <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.exe" class="btn btn-download" id="download-win-exe">Descargar EXE</a>
+                <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.exe" class="btn btn-download"
+                    id="download-win-exe">Descargar EXE</a>
             </div>
 
             <!-- Windows MSI -->
             <div class="download-card windows">
                 <div class="download-icon">⚙️</div>
                 <h3>Windows MSI</h3>
-                <p>Paquete estándar de instalación MSI de WiX Toolset. Recomendado para entornos corporativos o distribución simplificada.</p>
+                <p>Paquete estándar de instalación MSI de WiX Toolset. Recomendado para entornos corporativos o
+                    distribución simplificada.</p>
                 <span class="download-meta">Fichero .msi • Estable (~3.6 MB)</span>
-                <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.msi" class="btn btn-download" id="download-win-msi">Descargar MSI</a>
+                <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.msi" class="btn btn-download"
+                    id="download-win-msi">Descargar MSI</a>
             </div>
 
             <!-- Android APK -->
             <div class="download-card android">
                 <div class="download-icon">📱</div>
                 <h3>Android APK</h3>
-                <p>Llévate el visualizador a pie de obra. Instala el APK nativo para teléfonos y tabletas con sincronización offline completa.</p>
+                <p>Llévate el visualizador a pie de obra. Instala el APK nativo para teléfonos y tabletas con
+                    sincronización offline completa.</p>
                 <span class="download-meta">Fichero .apk • Compatible (~20 MB)</span>
-                <a href="PROGRAMAS/BC3Viewer-App.apk" class="btn btn-download" id="download-android-apk">Descargar APK</a>
+                <a href="PROGRAMAS/BC3Viewer-App.apk" class="btn btn-download" id="download-android-apk">Descargar
+                    APK</a>
             </div>
 
             <!-- Ejemplo BC3 -->
             <div class="download-card example">
                 <div class="download-icon">📁</div>
                 <h3>Presupuesto de Ejemplo</h3>
-                <p>Descarga un archivo en formato FIEBDC-3 (.bc3) real y cargalo en el visualizador para ver todas sus capacidades inmediatamente.</p>
+                <p>Descarga un archivo en formato FIEBDC-3 (.bc3) real y cargalo en el visualizador para ver todas sus
+                    capacidades inmediatamente.</p>
                 <span class="download-meta">Archivo .bc3 • Listo para importar</span>
-                <a href="PROGRAMAS/BC3 EJEMPLO/ARCHIVO EJEMPLO.bc3" class="btn btn-secondary btn-download" download>Descargar BC3 de Ejemplo</a>
+                <a href="PROGRAMAS/BC3 EJEMPLO/ARCHIVO EJEMPLO.bc3" class="btn btn-secondary btn-download"
+                    download>Descargar BC3 de Ejemplo</a>
             </div>
         </div>
     </section>
@@ -1953,7 +2136,8 @@
         <div class="section-header">
             <span class="section-subtitle">Evolución Continua</span>
             <h2 class="section-title">Historial de Versiones</h2>
-            <p class="section-desc">BC3 Viewer ha evolucionado desde un visualizador básico hasta una plataforma premium multiplataforma, con mejoras continuas semanales.</p>
+            <p class="section-desc">BC3 Viewer ha evolucionado desde un visualizador básico hasta una plataforma premium
+                multiplataforma, con mejoras continuas semanales.</p>
         </div>
 
         <div class="timeline">
@@ -1976,15 +2160,26 @@
                     </ul>
                     <!-- Accesos directos v1.4.7 -->
                     <div class="version-actions" style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-                        <a href="www/index.html" class="btn btn-primary" target="_blank" style="padding: 8px 16px; font-size: 0.85rem; gap: 6px; border-radius: 8px; box-shadow: none;">
+                        <a href="www/index.html" class="btn btn-primary" target="_blank"
+                            style="padding: 8px 16px; font-size: 0.85rem; gap: 6px; border-radius: 8px; box-shadow: none;">
                             <span>🌐</span> App Web
                         </a>
-                        <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.exe" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.85rem; gap: 6px; border-radius: 8px;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color:#0078d4; display:block;"><path d="M0 3.449L9.75 2.1v9.45H0V3.449zM0 12.45h9.75v9.45L0 20.551v-8.1zM10.95 1.95L24 0v11.55H10.95V1.95zM10.95 12.45H24v11.55l-13.05-1.95v-9.6z"/></svg>
+                        <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.exe" class="btn btn-secondary"
+                            style="padding: 8px 16px; font-size: 0.85rem; gap: 6px; border-radius: 8px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"
+                                style="color:#0078d4; display:block;">
+                                <path
+                                    d="M0 3.449L9.75 2.1v9.45H0V3.449zM0 12.45h9.75v9.45L0 20.551v-8.1zM10.95 1.95L24 0v11.55H10.95V1.95zM10.95 12.45H24v11.55l-13.05-1.95v-9.6z" />
+                            </svg>
                             <span>Windows</span>
                         </a>
-                        <a href="PROGRAMAS/BC3Viewer-App.apk" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.85rem; gap: 6px; border-radius: 8px;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color:#3ddc84; display:block;"><path d="M17.523 15.3l1.816 3.146a.75.75 0 1 1-1.298.75l-1.84-3.187A9.957 9.957 0 0 1 12 17a9.957 9.957 0 0 1-4.202-1.008l-1.84 3.187a.75.75 0 1 1-1.298-.75l1.816-3.146A9.972 9.972 0 0 1 2.25 10c0-.85.106-1.674.306-2.464l-.056-.032a.75.75 0 1 1 .75-1.3l.115.066A9.939 9.939 0 0 1 6.84 3.84L5.023.693a.75.75 0 1 1 .75-1.3l-.056.032A9.97 9.97 0 0 1 12 2.25c1.4 0 2.73.288 3.939.81l1.84-3.187a.75.75 0 1 1 .75 1.3l.115-.066a9.972 9.972 0 0 1 4.488 3.738z"/></svg>
+                        <a href="PROGRAMAS/BC3Viewer-App.apk" class="btn btn-secondary"
+                            style="padding: 8px 16px; font-size: 0.85rem; gap: 6px; border-radius: 8px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"
+                                style="color:#3ddc84; display:block;">
+                                <path
+                                    d="M17.523 15.3l1.816 3.146a.75.75 0 1 1-1.298.75l-1.84-3.187A9.957 9.957 0 0 1 12 17a9.957 9.957 0 0 1-4.202-1.008l-1.84 3.187a.75.75 0 1 1-1.298-.75l1.816-3.146A9.972 9.972 0 0 1 2.25 10c0-.85.106-1.674.306-2.464l-.056-.032a.75.75 0 1 1 .75-1.3l.115.066A9.939 9.939 0 0 1 6.84 3.84L5.023.693a.75.75 0 1 1 .75-1.3l-.056.032A9.97 9.97 0 0 1 12 2.25c1.4 0 2.73.288 3.939.81l1.84-3.187a.75.75 0 1 1 .75 1.3l.115-.066a9.972 9.972 0 0 1 4.488 3.738z" />
+                            </svg>
                             <span>Android</span>
                         </a>
                     </div>
@@ -2103,49 +2298,67 @@
         </div>
 
         <div style="text-align:center; margin-top: 40px;">
-            <a href="https://github.com/jmcaamanog/BC3Viewer-App/blob/main/CHANGELOG.md" class="btn btn-secondary" target="_blank" rel="noopener">
+            <a href="https://github.com/jmcaamanog/BC3Viewer-App/blob/main/CHANGELOG.md" class="btn btn-secondary"
+                target="_blank" rel="noopener">
                 <span>📋</span> Ver Changelog Completo en GitHub
             </a>
         </div>
     </section>
 
     <!-- COMING SOON / ROADMAP SECTION -->
-    <section class="section" id="roadmap" style="background: rgba(17, 24, 39, 0.25); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); padding: 100px 0;">
+    <section class="section" id="roadmap"
+        style="background: rgba(17, 24, 39, 0.25); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); padding: 100px 0;">
         <div class="section-header reveal">
             <span class="section-subtitle">Roadmap del Proyecto</span>
             <h2 class="section-title">Próximas Mejoras (Coming Soon)</h2>
-            <p class="section-desc">Evolución planificada para las próximas versiones premium del visualizador. Estas son las líneas prioritarias de desarrollo técnico.</p>
+            <p class="section-desc">Evolución planificada para las próximas versiones premium del visualizador. Estas
+                son las líneas prioritarias de desarrollo técnico.</p>
         </div>
 
         <div class="features-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
             <!-- IFC BIM -->
-            <div class="feature-card reveal" style="border-color: rgba(59, 130, 246, 0.2); background: rgba(59, 130, 246, 0.03);">
-                <div class="feature-icon-wrapper" style="background: rgba(59, 130, 246, 0.15); color: var(--accent-primary);">🏗️</div>
+            <div class="feature-card reveal"
+                style="border-color: rgba(59, 130, 246, 0.2); background: rgba(59, 130, 246, 0.03);">
+                <div class="feature-icon-wrapper"
+                    style="background: rgba(59, 130, 246, 0.15); color: var(--accent-primary);">🏗️</div>
                 <h3 style="display: flex; align-items: center; justify-content: space-between;">
                     <span>Mediciones desde IFC (BIM)</span>
-                    <span class="coming-badge" style="font-size: 0.65rem; padding: 2px 8px; margin: 0; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));">Prioritario</span>
+                    <span class="coming-badge"
+                        style="font-size: 0.65rem; padding: 2px 8px; margin: 0; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));">Prioritario</span>
                 </h3>
-                <p>Integración de un visor 3D en local basado en <strong>web-ifc</strong> para abrir archivos IFC en el navegador. Permitirá mapear entidades del modelo (muros, forjados, pilares) y extraer cantidades directamente para rellenar las líneas de medición (~M) del presupuesto BC3.</p>
+                <p>Integración de un visor 3D en local basado en <strong>web-ifc</strong> para abrir archivos IFC en el
+                    navegador. Permitirá mapear entidades del modelo (muros, forjados, pilares) y extraer cantidades
+                    directamente para rellenar las líneas de medición (~M) del presupuesto BC3.</p>
             </div>
 
             <!-- Huella de Carbono -->
-            <div class="feature-card reveal" style="border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.03);">
-                <div class="feature-icon-wrapper" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-success);">🌱</div>
+            <div class="feature-card reveal"
+                style="border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.03);">
+                <div class="feature-icon-wrapper"
+                    style="background: rgba(16, 185, 129, 0.15); color: var(--accent-success);">🌱</div>
                 <h3 style="display: flex; align-items: center; justify-content: space-between;">
                     <span>Huella de Carbono</span>
-                    <span class="coming-badge" style="font-size: 0.65rem; padding: 2px 8px; margin: 0; background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">Propuesto</span>
+                    <span class="coming-badge"
+                        style="font-size: 0.65rem; padding: 2px 8px; margin: 0; background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">Propuesto</span>
                 </h3>
-                <p>Cálculo estimado del carbono incorporado en el presupuesto. Mapeo automático de los materiales del archivo BC3 con bases de datos de eco-construcción para analizar el impacto ambiental por capítulos desde el Dashboard.</p>
+                <p>Cálculo estimado del carbono incorporado en el presupuesto. Mapeo automático de los materiales del
+                    archivo BC3 con bases de datos de eco-construcción para analizar el impacto ambiental por capítulos
+                    desde el Dashboard.</p>
             </div>
 
             <!-- Valor Ganado Gantt -->
-            <div class="feature-card reveal" style="border-color: rgba(139, 92, 246, 0.2); background: rgba(139, 92, 246, 0.03);">
-                <div class="feature-icon-wrapper" style="background: rgba(139, 92, 246, 0.15); color: var(--accent-purple);">📈</div>
+            <div class="feature-card reveal"
+                style="border-color: rgba(139, 92, 246, 0.2); background: rgba(139, 92, 246, 0.03);">
+                <div class="feature-icon-wrapper"
+                    style="background: rgba(139, 92, 246, 0.15); color: var(--accent-purple);">📈</div>
                 <h3 style="display: flex; align-items: center; justify-content: space-between;">
                     <span>Valor Ganado (EVM)</span>
-                    <span class="coming-badge" style="font-size: 0.65rem; padding: 2px 8px; margin: 0; background: rgba(139, 92, 246, 0.2); color: var(--accent-purple); border: 1px solid rgba(139, 92, 246, 0.3);">Propuesto</span>
+                    <span class="coming-badge"
+                        style="font-size: 0.65rem; padding: 2px 8px; margin: 0; background: rgba(139, 92, 246, 0.2); color: var(--accent-purple); border: 1px solid rgba(139, 92, 246, 0.3);">Propuesto</span>
                 </h3>
-                <p>Control financiero avanzado del cronograma. Comparación del valor planificado (PV), coste real (AC) y valor ganado (EV) usando tus certificaciones para proyectar el plazo e importes finales de la obra.</p>
+                <p>Control financiero avanzado del cronograma. Comparación del valor planificado (PV), coste real (AC) y
+                    valor ganado (EV) usando tus certificaciones para proyectar el plazo e importes finales de la obra.
+                </p>
             </div>
         </div>
 
@@ -2173,7 +2386,8 @@
         <div class="section-header">
             <span class="section-subtitle">En Acción</span>
             <h2 class="section-title">Vídeo Demostración</h2>
-            <p class="section-desc">Mira cómo cargar un archivo BC3 real, navegar el árbol, generar un planning Gantt y exportar a Excel en menos de 2 minutos.</p>
+            <p class="section-desc">Mira cómo cargar un archivo BC3 real, navegar el árbol, generar un planning Gantt y
+                exportar a Excel en menos de 2 minutos.</p>
         </div>
 
         <div class="video-placeholder">
@@ -2182,7 +2396,10 @@
                 <div class="video-coming-text">
                     <span class="coming-badge">Próximamente</span>
                     <h3>Demo en Vídeo — BC3 Viewer v1.4.7</h3>
-                    <p>Estamos preparando un recorrido visual completo de la aplicación. Mientras tanto, explora las <a href="#galeria" style="color: var(--accent-secondary);">capturas interactivas</a> o <a href="www/index.html" target="_blank" style="color: var(--accent-primary);">prueba la app directamente</a>.</p>
+                    <p>Estamos preparando un recorrido visual completo de la aplicación. Mientras tanto, explora las <a
+                            href="#galeria" style="color: var(--accent-secondary);">capturas interactivas</a> o <a
+                            href="www/index.html" target="_blank" style="color: var(--accent-primary);">prueba la app
+                            directamente</a>.</p>
                 </div>
             </div>
             <div class="video-preview-strip">
@@ -2199,7 +2416,8 @@
         <div class="section-header">
             <span class="section-subtitle">Únete a la Comunidad</span>
             <h2 class="section-title">Sugerencias, Ideas y Novedades</h2>
-            <p class="section-desc">¿Eres Arquitecto Técnico o profesional de la construcción? Tu opinión da forma a la siguiente versión.</p>
+            <p class="section-desc">¿Eres Arquitecto Técnico o profesional de la construcción? Tu opinión da forma a la
+                siguiente versión.</p>
         </div>
 
         <div class="community-grid">
@@ -2208,7 +2426,8 @@
             <div class="community-card">
                 <div class="community-icon">💬</div>
                 <h3>GitHub Discussions</h3>
-                <p>Abre un hilo para sugerir funciones, reportar problemas o compartir cómo usas BC3 Viewer en tu día a día.</p>
+                <p>Abre un hilo para sugerir funciones, reportar problemas o compartir cómo usas BC3 Viewer en tu día a
+                    día.</p>
                 <a href="404.html" class="btn btn-secondary">
                     <span>🚀</span> Ir a Discussions
                 </a>
@@ -2218,8 +2437,10 @@
             <div class="community-card">
                 <div class="community-icon">🐛</div>
                 <h3>Reportar un Bug</h3>
-                <p>¿Encontraste algo que no funciona bien? Abre un Issue en GitHub y lo revisaremos para la siguiente versión.</p>
-                <a href="https://github.com/jmcaamanog/BC3Viewer-App/issues/new" class="btn btn-secondary" target="_blank" rel="noopener">
+                <p>¿Encontraste algo que no funciona bien? Abre un Issue en GitHub y lo revisaremos para la siguiente
+                    versión.</p>
+                <a href="https://github.com/jmcaamanog/BC3Viewer-App/issues/new" class="btn btn-secondary"
+                    target="_blank" rel="noopener">
                     <span>📌</span> Abrir Issue
                 </a>
             </div>
@@ -2228,11 +2449,15 @@
             <div class="community-card newsletter-card">
                 <div class="community-icon">📬</div>
                 <h3>Recibe Novedades por Email</h3>
-                <p>Apúntate y te avisaremos cuando salga una nueva versión con mejoras importantes. Sin spam, solo novedades.</p>
-                <form class="newsletter-form" id="newsletter-form" action="https://formspree.io/f/xvgrvond" method="POST">
-                    <input type="email" name="email" placeholder="tu@email.com" required class="newsletter-input" id="newsletter-email">
+                <p>Apúntate y te avisaremos cuando salga una nueva versión con mejoras importantes. Sin spam, solo
+                    novedades.</p>
+                <form class="newsletter-form" id="newsletter-form" action="https://formspree.io/f/xvgrvond"
+                    method="POST">
+                    <input type="email" name="email" placeholder="tu@email.com" required class="newsletter-input"
+                        id="newsletter-email">
                     <input type="hidden" name="_subject" value="Nueva suscripción BC3 Viewer Novedades">
-                    <button type="submit" class="btn btn-primary newsletter-btn" id="newsletter-submit">Suscribirme</button>
+                    <button type="submit" class="btn btn-primary newsletter-btn"
+                        id="newsletter-submit">Suscribirme</button>
                 </form>
                 <p class="newsletter-note" id="newsletter-msg" style="display:none;"></p>
             </div>
@@ -2245,8 +2470,10 @@
         <div class="author-card">
             <div class="author-visual">
                 <div class="author-avatar-frame">
-                    <a href="https://github.com/jmcaamanog/BC3Viewer-App" target="_blank" rel="noopener" style="display:block; width:100%; height:100%;">
-                        <img src="assets/jmc.jpg" alt="José Manuel Caamaño González" class="author-photo" style="transition: transform 0.3s ease;">
+                    <a href="https://github.com/jmcaamanog/BC3Viewer-App" target="_blank" rel="noopener"
+                        style="display:block; width:100%; height:100%;">
+                        <img src="assets/jmc.jpg" alt="José Manuel Caamaño González" class="author-photo"
+                            style="transition: transform 0.3s ease;">
                     </a>
                 </div>
                 <div class="author-badges">
@@ -2255,23 +2482,34 @@
                     <span class="author-badge">Digital Product Lead</span>
                 </div>
             </div>
-            
+
             <div class="author-details">
                 <h2 class="author-name">José Manuel Caamaño González</h2>
                 <div class="author-title">Creador y Desarrollador de la Versión Premium</div>
                 <p class="author-bio">
-                    Desarrollado desde la perspectiva y necesidades reales de un <strong>Arquitecto Técnico</strong> y profesional de la construcción. Esta versión optimizada amplía una estructura básica original para dotar al sector de una herramienta de visualización e interacción de presupuestos de código abierto, accesible, segura y privada.
+                    Desarrollado desde la perspectiva y necesidades reales de un <strong>Arquitecto Técnico</strong> y
+                    profesional de la construcción. Esta versión optimizada amplía una estructura básica original para
+                    dotar al sector de una herramienta de visualización e interacción de presupuestos de código abierto,
+                    accesible, segura y privada.
                 </p>
                 <p class="author-philosophy">
                     "Abierto, libre y útil para la profesión... Seamos libres de egos."
                 </p>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                    <a href="https://www.linkedin.com/in/jmcaamanog/" class="btn btn-linkedin" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 8px;">
-                        <svg height="18" width="18" viewBox="0 0 24 24" fill="currentColor" style="display:block;"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452z"/></svg>
+                    <a href="https://www.linkedin.com/in/jmcaamanog/" class="btn btn-linkedin" target="_blank"
+                        rel="noopener" style="display: inline-flex; align-items: center; gap: 8px;">
+                        <svg height="18" width="18" viewBox="0 0 24 24" fill="currentColor" style="display:block;">
+                            <path
+                                d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452z" />
+                        </svg>
                         <span>LinkedIn Perfil</span>
                     </a>
-                    <a href="https://github.com/jmcaamanog" class="btn btn-secondary" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 8px;">
-                        <svg height="18" width="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                    <a href="https://github.com/jmcaamanog" class="btn btn-secondary" target="_blank" rel="noopener"
+                        style="display: inline-flex; align-items: center; gap: 8px;">
+                        <svg height="18" width="18" viewBox="0 0 16 16" fill="currentColor">
+                            <path
+                                d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+                        </svg>
                         <span>GitHub Perfil</span>
                     </a>
                 </div>
@@ -2283,11 +2521,11 @@
     <div class="lightbox" id="lightbox">
         <div class="lightbox-content">
             <button class="lightbox-close" id="lightbox-close">✕</button>
-            
+
             <!-- Flechas de navegación del Lightbox -->
             <button class="lightbox-nav-btn lightbox-nav-prev" id="lightbox-prev" aria-label="Anterior">❮</button>
             <button class="lightbox-nav-btn lightbox-nav-next" id="lightbox-next" aria-label="Siguiente">❯</button>
-            
+
             <img src="" alt="Ampliación" id="lightbox-img">
             <div class="lightbox-caption">
                 <h5 id="lightbox-title">Título</h5>
@@ -2311,11 +2549,14 @@
                 <li><a href="#comunidad">Comunidad</a></li>
                 <li><a href="#autor">Autor</a></li>
                 <li><a href="https://github.com/jmcaamanog/BC3Viewer-App" target="_blank">GitHub</a></li>
-                <li><a href="https://github.com/jmcaamanog/BC3Viewer-App/blob/main/LICENSE" target="_blank">Licencia MIT</a></li>
+                <li><a href="https://github.com/jmcaamanog/BC3Viewer-App/blob/main/LICENSE" target="_blank">Licencia
+                        MIT</a></li>
             </ul>
             <p class="footer-text">
-                © 2026 BC3 Viewer App. Desarrollado con ☕ por <a href="https://www.linkedin.com/in/jmcaamanog/" target="_blank">José Manuel Caamaño González</a>.
-                Licencia <a href="https://github.com/jmcaamanog/BC3Viewer-App/blob/main/LICENSE" target="_blank">MIT</a> — Código abierto para todos los profesionales de la construcción.
+                © 2026 BC3 Viewer App. Desarrollado con ☕ por <a href="https://www.linkedin.com/in/jmcaamanog/"
+                    target="_blank">José Manuel Caamaño González</a>.
+                Licencia <a href="https://github.com/jmcaamanog/BC3Viewer-App/blob/main/LICENSE" target="_blank">MIT</a>
+                — Código abierto para todos los profesionales de la construcción.
             </p>
         </div>
     </footer>
@@ -2371,9 +2612,9 @@
                 const card = document.createElement('div');
                 card.className = `thumb-card ${index === 0 ? 'active' : ''}`;
                 card.dataset.index = index;
-                
+
                 const imgNum = String(index + 1).padStart(3, '0');
-                
+
                 card.innerHTML = `
                     <img src="${item.src}" alt="${item.title}" class="thumb-img" loading="lazy">
                     <div class="thumb-info">
@@ -2381,11 +2622,11 @@
                         <span class="thumb-title" title="${item.title}">${item.title}</span>
                     </div>
                 `;
-                
+
                 card.addEventListener('click', () => {
                     setGalleryImage(index);
                 });
-                
+
                 sidebar.appendChild(card);
             });
         }
@@ -2393,10 +2634,10 @@
         // Set active image
         function setGalleryImage(index) {
             if (index < 0 || index >= screenshots.length) return;
-            
+
             currentIndex = index;
             const item = screenshots[currentIndex];
-            
+
             // Apply fade effect
             mainImg.style.opacity = 0;
             setTimeout(() => {
@@ -2410,11 +2651,11 @@
             // Update active state in sidebar
             const cards = sidebar.querySelectorAll('.thumb-card');
             cards.forEach(card => card.classList.remove('active'));
-            
+
             const activeCard = cards[currentIndex];
             if (activeCard) {
                 activeCard.classList.add('active');
-                
+
                 // Scroll thumbnail into view smoothly
                 sidebar.scrollTo({
                     top: activeCard.offsetTop - sidebar.offsetTop - 100,
@@ -2460,9 +2701,9 @@
             // Let a helper overlay or single-click option open it
             openLightbox();
         });
-        
+
         lightboxClose.addEventListener('click', closeLightbox);
-        
+
         lightboxPrev.addEventListener('click', (e) => {
             e.stopPropagation();
             let nextIdx = currentIndex - 1;
@@ -2516,7 +2757,7 @@
             // Update active menu link based on scroll position
             const sections = document.querySelectorAll('section, header');
             const navLinks = document.querySelectorAll('.nav-links a');
-            
+
             let currentSec = '';
             sections.forEach(sec => {
                 const top = sec.offsetTop - 150;
@@ -2543,7 +2784,7 @@
             'CAPTURAS/V1.4.7/015_EXPORTAR EN VARIOS FORMATOS.jpg'
         ];
         let mockupIdx = 0;
-        
+
         function rotateHeroMockup() {
             mockupIdx = (mockupIdx + 1) % mockupImages.length;
             const bgSlider = document.getElementById('hero-bg-slider');
@@ -2555,7 +2796,7 @@
                 }, 500);
             }
         }
-        
+
         // Rotate every 6 seconds
         setInterval(rotateHeroMockup, 6000);
 
@@ -2568,7 +2809,7 @@
                 bgSlider.style.backgroundImage = `url('${mockupImages[0]}')`;
                 bgSlider.style.transition = 'opacity 0.6s ease-in-out';
             }
-            
+
             // Add custom animation styles for transitions
             mainImg.style.transition = 'opacity 0.15s ease-in-out';
 
@@ -2620,7 +2861,7 @@
                         (latestRelease.assets || []).forEach(asset => {
                             const name = asset.name.toLowerCase();
                             const url = asset.browser_download_url;
-                            
+
                             if (name.endsWith('.exe')) {
                                 const btnWin = document.getElementById('hero-download-win');
                                 const btnExe = document.getElementById('download-win-exe');
@@ -2789,7 +3030,7 @@
                     t.x += (px - t.x) * (0.3 - i * 0.03);
                     t.y += (py - t.y) * (0.3 - i * 0.03);
                     const s = parseFloat(t.el.style.width);
-                    t.el.style.transform = `translate(${t.x - s/2}px, ${t.y - s/2}px)`;
+                    t.el.style.transform = `translate(${t.x - s / 2}px, ${t.y - s / 2}px)`;
                     px = t.x; py = t.y;
                 });
                 requestAnimationFrame(animateCursor);
@@ -2839,12 +3080,12 @@
                     for (let j = i + 1; j < particles.length; j++) {
                         const dx = particles[i].x - particles[j].x;
                         const dy = particles[i].y - particles[j].y;
-                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        const dist = Math.sqrt(dx * dx + dy * dy);
                         if (dist < 80) {
                             ctx.beginPath();
                             ctx.moveTo(particles[i].x, particles[i].y);
                             ctx.lineTo(particles[j].x, particles[j].y);
-                            ctx.strokeStyle = `rgba(59,130,246,${0.06 * (1 - dist/80)})`;
+                            ctx.strokeStyle = `rgba(59,130,246,${0.06 * (1 - dist / 80)})`;
                             ctx.lineWidth = 0.6;
                             ctx.stroke();
                         }
@@ -2908,4 +3149,5 @@
 
     </script>
 </body>
+
 </html>
