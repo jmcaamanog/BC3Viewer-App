@@ -8256,13 +8256,18 @@ async function checkForUpdates(isManual = false) {
 
     updateStatus("Buscando actualizaciones...");
 
+    const isWindowsTauri = !!(window.__TAURI__ || window.__TAURI_METADATA__ || window.__TAURI_IPC__);
+
     if (!window.Capacitor || !window.Capacitor.Plugins || !window.Capacitor.Plugins.CapacitorUpdater) {
-        logOta("No disponible para entorno web estándar");
-        updateStatus("No disponible en navegador web.", true);
-        return;
+        if (isWindowsTauri) {
+            logOta("Entorno Windows (Tauri) detectado. Buscando actualización...");
+        } else {
+            logOta("No disponible para entorno web estándar");
+            updateStatus("No disponible en navegador web.", true);
+            return;
+        }
     }
 
-    const { CapacitorUpdater } = window.Capacitor.Plugins;
     const updateUrl = "https://jmcaamanog.github.io/BC3Viewer-App/update.json";
     logOta(`Buscando actualizaciones en: ${updateUrl}`);
 
@@ -8287,28 +8292,42 @@ async function checkForUpdates(isManual = false) {
         const updateInfo = await response.json();
         logOta(`Parsed update.json: servidor=${updateInfo.version}, local=${APP_VERSION}`);
 
-        // Comparación simple de versiones (ej: "1.4.2" !== "1.3.4")
-        if (updateInfo.version && updateInfo.version !== APP_VERSION && updateInfo.url) {
-            logOta(`Nueva versión detectada: V${updateInfo.version}. Iniciando descarga de: ${updateInfo.url}`);
-            updateStatus(`Nueva versión V${updateInfo.version} encontrada. Descargando...`);
+        if (updateInfo.version && updateInfo.version !== APP_VERSION) {
+            if (isWindowsTauri) {
+                logOta(`Nueva versión detectada para Windows: V${updateInfo.version}`);
+                updateStatus(`Nueva versión V${updateInfo.version} disponible.`, false);
+                
+                // Si es consulta manual (o automática proactiva en Windows), preguntar
+                const confirmDownload = confirm(`Hay una nueva versión de BC3 Viewer disponible (V${updateInfo.version}).\n¿Deseas descargar el instalador de Windows para actualizar la aplicación?`);
+                if (confirmDownload) {
+                    window.open("https://github.com/jmcaamanog/BC3Viewer-App/raw/main/PROGRAMAS/BC3_Viewer_Windows_Installer.exe", "_blank");
+                    updateStatus(`Descargando instalador de Windows...`, false);
+                }
+            } else {
+                if (updateInfo.url) {
+                    logOta(`Nueva versión detectada: V${updateInfo.version}. Iniciando descarga de: ${updateInfo.url}`);
+                    updateStatus(`Nueva versión V${updateInfo.version} encontrada. Descargando...`);
 
-            // Descargar el nuevo zip de actualización en segundo plano
-            const downloadResult = await CapacitorUpdater.download({
-                url: updateInfo.url,
-                version: updateInfo.version
-            });
-            logOta(`Descarga finalizada. Guardando bundle versión ${updateInfo.version}...`);
-            updateStatus(`Instalando versión V${updateInfo.version}...`);
+                    const { CapacitorUpdater } = window.Capacitor.Plugins;
+                    // Descargar el nuevo zip de actualización en segundo plano
+                    const downloadResult = await CapacitorUpdater.download({
+                        url: updateInfo.url,
+                        version: updateInfo.version
+                    });
+                    logOta(`Descarga finalizada. Guardando bundle versión ${updateInfo.version}...`);
+                    updateStatus(`Instalando versión V${updateInfo.version}...`);
 
-            // Instalar/Establecer el nuevo bundle como la versión activa
-            await CapacitorUpdater.set(downloadResult);
-            logOta(`Nueva versión establecida correctamente. Aplicando al reiniciar.`);
-            updateStatus(`¡Actualizado! Se aplicará al reiniciar.`, false);
+                    // Instalar/Establecer el nuevo bundle como la versión activa
+                    await CapacitorUpdater.set(downloadResult);
+                    logOta(`Nueva versión establecida correctamente. Aplicando al reiniciar.`);
+                    updateStatus(`¡Actualizado! Se aplicará al reiniciar.`, false);
 
-            // Mostrar Toast no intrusivo al usuario
-            showToastMessage(`✨ Aplicación actualizada a la versión V${updateInfo.version}. Se aplicará en el próximo reinicio.`);
+                    // Mostrar Toast no intrusivo al usuario
+                    showToastMessage(`✨ Aplicación actualizada a la versión V${updateInfo.version}. Se aplicará en el próximo reinicio.`);
+                }
+            }
         } else {
-            logOta(`No se requiere actualizar (las versiones coinciden o son incompatibles)`);
+            logOta(`No se requiere actualizar (las versiones coinciden)`);
             updateStatus(`Ya tienes la versión más reciente (V${APP_VERSION}).`);
         }
     } catch (err) {
