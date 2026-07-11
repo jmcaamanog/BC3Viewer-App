@@ -190,24 +190,25 @@
             min-height: 100vh;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
             padding: 140px 0 80px 0;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 90%;
+            gap: 40px;
             position: relative;
             overflow: hidden;
-            width: 100%;
         }
 
         .hero-glass-card {
+            flex: 1.2;
             position: relative;
             z-index: 2;
-            background: rgba(9, 13, 22, 0.65);
+            background: rgba(17, 24, 39, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 24px;
-            padding: 48px 40px;
-            text-align: center;
-            max-width: 820px;
-            width: 90%;
-            margin: 0 auto;
+            padding: 35px;
+            text-align: left;
             backdrop-filter: blur(14px);
             -webkit-backdrop-filter: blur(14px);
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -229,12 +230,12 @@
             font-weight: 600;
             letter-spacing: 0.05em;
             text-transform: uppercase;
-            margin: 0 auto 20px auto;
+            margin: 0 0 20px 0;
             width: fit-content;
         }
 
         .hero-title {
-            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-size: clamp(2rem, 4vw, 3.2rem);
             line-height: 1.15;
             font-weight: 800;
             background: linear-gradient(135deg, var(--text-white) 40%, #93c5fd 70%, var(--accent-primary) 100%);
@@ -244,10 +245,10 @@
         }
 
         .hero-description {
-            font-size: 1.05rem;
+            font-size: 1rem;
             color: var(--text-muted);
-            margin: 0 auto 30px auto;
-            max-width: 680px;
+            margin: 0 0 30px 0;
+            max-width: 620px;
         }
 
         .hero-actions {
@@ -1016,16 +1017,17 @@
                 gap: 40px;
             }
 
-            .hero-content {
-                align-items: center;
+            .hero-glass-card {
+                text-align: center;
+                margin: 0 auto;
             }
 
             .hero-badge {
-                align-self: center;
+                margin: 0 auto 20px auto;
             }
 
             .hero-description {
-                margin: 0 auto;
+                margin: 0 auto 30px auto;
             }
 
             .hero-actions {
@@ -1663,48 +1665,46 @@
             <li><a href="#galeria">Capturas V1.4.7</a></li>
             <li><a href="#descargas">Descargar</a></li>
             <li><a href="#versiones">Versiones</a></li>
+            <li><a href="#roadmap">Coming Soon</a></li>
             <li><a href="#comunidad">Comunidad</a></li>
             <li><a href="#autor">Autor</a></li>
         </ul>
         <a href="www/index.html" class="nav-cta" target="_blank" id="nav-cta" style="display: flex; align-items: center; gap: 6px;">
             <img src="assets/icon-only.png" alt="App icon" style="height: 18px; width: 18px; border-radius: 3px; filter: brightness(0) invert(1);">
             <span>Abrir App Online</span>
-        </a>
-    </nav>
-
-    <!-- HERO SECTION -->
+        </a>    <!-- HERO SECTION -->
     <header class="hero" style="position:relative; overflow:hidden;">
-        <!-- Fondo slider dinámico (D) -->
-        <div id="hero-bg-slider" style="position:absolute; inset:0; z-index:0; transition: background-image 0.8s ease-in-out; background-size: cover; background-position: center; filter: blur(5px) brightness(0.35); opacity: 0.85;"></div>
         <!-- CANVAS PARTICLES (D) -->
         <canvas id="hero-particles" style="position:absolute;inset:0;z-index:1;pointer-events:none;"></canvas>
         
-        <div class="hero-glass-card reveal">
-            <div class="hero-badge">Versión 1.4.7 • Premium</div>
+        <!-- Lado Izquierdo: Cuadro Glassmorphism -->
+        <div class="hero-glass-card reveal" style="position:relative; z-index:2; max-width: 620px; width: 100%; margin: 0;">
+            <div class="hero-badge" style="margin: 0 0 20px 0;">Versión 1.4.7 • Premium</div>
             
-            <!-- Logo principal destacado -->
-            <div style="display: flex; justify-content: center; margin-bottom: 20px;">
-                <img src="assets/icon-only.png" alt="BC3 Viewer Logo" style="height: 80px; width: 80px; filter: drop-shadow(0 0 20px rgba(59,130,246,0.6));">
+            <!-- Mini Logo sobre el título -->
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                <img src="assets/icon-only.png" alt="BC3 Viewer Logo" style="height: 48px; width: 48px; filter: drop-shadow(0 0 10px rgba(59,130,246,0.5));">
+                <span style="font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; color: var(--text-white);">BC3 Viewer</span>
             </div>
 
-            <h1 class="hero-title">Visualizador y Editor de Presupuestos FIEBDC-3</h1>
-            <p class="hero-description">
+            <h1 class="hero-title" style="margin-bottom: 20px;">Visualizador y Editor de Presupuestos FIEBDC-3</h1>
+            <p class="hero-description" style="margin-bottom: 30px;">
                 La herramienta web definitiva, libre, gratuita y 100% offline para profesionales de la edificación. Importa, edita, compara, planifica y exporta tus archivos <strong>.bc3</strong> desde cualquier dispositivo sin enviar tus datos a la nube.
             </p>
-            <div class="hero-actions" style="justify-content: center; gap: 15px; margin-bottom: 30px;">
-                <a href="www/index.html" class="btn btn-primary" target="_blank" id="hero-btn-online" style="padding: 14px 24px;">
+            <div class="hero-actions" style="gap: 12px; margin-bottom: 30px;">
+                <a href="www/index.html" class="btn btn-primary" target="_blank" id="hero-btn-online" style="padding: 12px 20px; font-size: 0.9rem;">
                     <span>⚡</span> Iniciar App Online
                 </a>
-                <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.exe" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 8px; padding: 14px 24px;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color:#0078d4;"><path d="M0 3.449L9.75 2.1v9.45H0V3.449zM0 12.45h9.75v9.45L0 20.551v-8.1zM10.95 1.95L24 0v11.55H10.95V1.95zM10.95 12.45H24v11.55l-13.05-1.95v-9.6z"/></svg>
+                <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.exe" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 12px 20px; font-size: 0.9rem;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#0078d4; display:block;"><path d="M0 3.449L9.75 2.1v9.45H0V3.449zM0 12.45h9.75v9.45L0 20.551v-8.1zM10.95 1.95L24 0v11.55H10.95V1.95zM10.95 12.45H24v11.55l-13.05-1.95v-9.6z"/></svg>
                     <span>Windows</span>
                 </a>
-                <a href="PROGRAMAS/BC3Viewer-App.apk" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 8px; padding: 14px 24px;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color:#3ddc84;"><path d="M17.523 15.3l1.816 3.146a.75.75 0 1 1-1.298.75l-1.84-3.187A9.957 9.957 0 0 1 12 17a9.957 9.957 0 0 1-4.202-1.008l-1.84 3.187a.75.75 0 1 1-1.298-.75l1.816-3.146A9.972 9.972 0 0 1 2.25 10c0-.85.106-1.674.306-2.464l-.056-.032a.75.75 0 1 1 .75-1.3l.115.066A9.939 9.939 0 0 1 6.84 3.84L5.023.693a.75.75 0 1 1 .75-1.3l-.056.032A9.97 9.97 0 0 1 12 2.25c1.4 0 2.73.288 3.939.81l1.84-3.187a.75.75 0 1 1 1.298.75l-1.816 3.146a9.972 9.972 0 0 1 4.488 3.738z"/></svg>
+                <a href="PROGRAMAS/BC3Viewer-App.apk" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 12px 20px; font-size: 0.9rem;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#3ddc84; display:block;"><path d="M17.523 15.3l1.816 3.146a.75.75 0 1 1-1.298.75l-1.84-3.187A9.957 9.957 0 0 1 12 17a9.957 9.957 0 0 1-4.202-1.008l-1.84 3.187a.75.75 0 1 1-1.298-.75l1.816-3.146A9.972 9.972 0 0 1 2.25 10c0-.85.106-1.674.306-2.464l-.056-.032a.75.75 0 1 1 .75-1.3l.115.066A9.939 9.939 0 0 1 6.84 3.84L5.023.693a.75.75 0 1 1 .75-1.3l-.056.032A9.97 9.97 0 0 1 12 2.25c1.4 0 2.73.288 3.939.81l1.84-3.187a.75.75 0 1 1 .75 1.3l.115-.066a9.972 9.972 0 0 1 4.488 3.738z"/></svg>
                     <span>Android</span>
                 </a>
-                <a href="https://github.com/jmcaamanog/BC3Viewer-App" class="btn btn-secondary btn-github" target="_blank" rel="noopener" style="padding: 14px 20px;">
-                    <svg height="20" width="20" viewBox="0 0 16 16" fill="currentColor" style="display:block;">
+                <a href="https://github.com/jmcaamanog/BC3Viewer-App" class="btn btn-secondary btn-github" target="_blank" rel="noopener" style="padding: 12px 16px; font-size: 0.9rem;">
+                    <svg height="18" width="18" viewBox="0 0 16 16" fill="currentColor" style="display:block;">
                         <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
                     </svg>
                     <span>GitHub</span>
@@ -1712,7 +1712,7 @@
             </div>
 
             <!-- GitHub Live Stats -->
-            <div class="hero-stats" id="hero-github-stats" style="margin: 0 auto; display: flex; justify-content: center; width: fit-content;">
+            <div class="hero-stats" id="hero-github-stats" style="margin: 0; display: flex; width: fit-content;">
                 <div class="hero-stat-item">
                     <span class="hero-stat-icon">⭐</span>
                     <span class="hero-stat-value" id="stat-stars">—</span>
@@ -1730,6 +1730,13 @@
                     <span class="hero-stat-value" id="stat-forks">—</span>
                     <span class="hero-stat-label">Forks</span>
                 </div>
+            </div>
+        </div>
+
+        <!-- Lado Derecho: Carrusel interactivo nítido -->
+        <div class="hero-visual reveal" style="position:relative; z-index:2; flex: 1;">
+            <div class="mockup-window">
+                <div class="mockup-content" id="hero-mockup"></div>
             </div>
         </div>
     </header>
@@ -2066,6 +2073,53 @@
         </div>
     </section>
 
+    <!-- COMING SOON / ROADMAP SECTION -->
+    <section class="section" id="roadmap" style="background: rgba(17, 24, 39, 0.25); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); padding: 100px 0;">
+        <div class="section-header reveal">
+            <span class="section-subtitle">Roadmap del Proyecto</span>
+            <h2 class="section-title">Próximas Mejoras (Coming Soon)</h2>
+            <p class="section-desc">Evolución planificada para las próximas versiones premium del visualizador. Estas son las líneas prioritarias de desarrollo técnico.</p>
+        </div>
+
+        <div class="features-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
+            <!-- IFC BIM -->
+            <div class="feature-card reveal" style="border-color: rgba(59, 130, 246, 0.2); background: rgba(59, 130, 246, 0.03);">
+                <div class="feature-icon-wrapper" style="background: rgba(59, 130, 246, 0.15); color: var(--accent-primary);">🏗️</div>
+                <h3 style="display: flex; align-items: center; justify-content: space-between;">
+                    <span>Mediciones desde IFC (BIM)</span>
+                    <span class="coming-badge" style="font-size: 0.65rem; padding: 2px 8px; margin: 0; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));">Prioritario</span>
+                </h3>
+                <p>Integración de un visor 3D en local basado en <strong>web-ifc</strong> para abrir archivos IFC en el navegador. Permitirá mapear entidades del modelo (muros, forjados, pilares) y extraer cantidades directamente para rellenar las líneas de medición (~M) del presupuesto BC3.</p>
+            </div>
+
+            <!-- Huella de Carbono -->
+            <div class="feature-card reveal" style="border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.03);">
+                <div class="feature-icon-wrapper" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-success);">🌱</div>
+                <h3 style="display: flex; align-items: center; justify-content: space-between;">
+                    <span>Huella de Carbono</span>
+                    <span class="coming-badge" style="font-size: 0.65rem; padding: 2px 8px; margin: 0; background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">Propuesto</span>
+                </h3>
+                <p>Cálculo estimado del carbono incorporado en el presupuesto. Mapeo automático de los materiales del archivo BC3 con bases de datos de eco-construcción para analizar el impacto ambiental por capítulos desde el Dashboard.</p>
+            </div>
+
+            <!-- Valor Ganado Gantt -->
+            <div class="feature-card reveal" style="border-color: rgba(139, 92, 246, 0.2); background: rgba(139, 92, 246, 0.03);">
+                <div class="feature-icon-wrapper" style="background: rgba(139, 92, 246, 0.15); color: var(--accent-purple);">📈</div>
+                <h3 style="display: flex; align-items: center; justify-content: space-between;">
+                    <span>Valor Ganado (EVM)</span>
+                    <span class="coming-badge" style="font-size: 0.65rem; padding: 2px 8px; margin: 0; background: rgba(139, 92, 246, 0.2); color: var(--accent-purple); border: 1px solid rgba(139, 92, 246, 0.3);">Propuesto</span>
+                </h3>
+                <p>Control financiero avanzado del cronograma. Comparación del valor planificado (PV), coste real (AC) y valor ganado (EV) usando tus certificaciones para proyectar el plazo e importes finales de la obra.</p>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px;" class="reveal">
+            <a href="PENDING_IMPROVEMENTS.md" class="btn btn-secondary" target="_blank" rel="noopener">
+                <span>📋</span> Ver Detalle del Roadmap en GitHub
+            </a>
+        </div>
+    </section>
+
     <!-- CONTRIBUTORS SECTION (F) -->
     <section class="section" id="contribuidores" style="padding-top: 60px; padding-bottom: 60px;">
         <div class="section-header reveal">
@@ -2210,6 +2264,7 @@
                 <li><a href="#descargas">Descargas</a></li>
                 <li><a href="#demo">Demo</a></li>
                 <li><a href="#versiones">Versiones</a></li>
+                <li><a href="#roadmap">Coming Soon</a></li>
                 <li><a href="#contribuidores">Contribuidores</a></li>
                 <li><a href="#comunidad">Comunidad</a></li>
                 <li><a href="#autor">Autor</a></li>
