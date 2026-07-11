@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -370,7 +370,7 @@
             height: 100%;
             background-size: cover;
             background-position: top center;
-            background-image: url('CAPTURAS/V1.4.7/005_DASHBOARD.jpg');
+            background-image: url('CAPTURAS/V1.5/005_DASHBOARD.jpg');
             border-radius: 0 0 15px 15px;
             transition: background-image 0.5s ease-in-out;
         }
@@ -1829,7 +1829,7 @@
         </a>
         <ul class="nav-links">
             <li><a href="#caracteristicas">Características</a></li>
-            <li><a href="#galeria">Capturas V1.4.7</a></li>
+            <li><a href="#galeria">Capturas V1.5.0</a></li>
             <li><a href="#descargas">Descargar</a></li>
             <li><a href="#versiones">Versiones</a></li>
             <li><a href="#roadmap">Coming Soon</a></li>
@@ -1852,7 +1852,7 @@
         <!-- Lado Izquierdo: Cuadro Glassmorphism -->
         <div class="hero-glass-card reveal"
             style="position:relative; z-index:2; max-width: 620px; width: 100%; margin: 0;">
-            <div class="hero-badge" style="margin: 0 0 20px 0;">Versión 1.4.7 • Premium</div>
+            <div class="hero-badge" style="margin: 0 0 20px 0;">Versión 1.5.0 • Premium</div>
 
             <!-- Mini Logo sobre el título -->
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
@@ -2044,7 +2044,7 @@
     <section class="section" id="galeria">
         <div class="section-header">
             <span class="section-subtitle">Interfaz Gráfica</span>
-            <h2 class="section-title">Explora la Versión 1.4.7</h2>
+            <h2 class="section-title">Explora la Versión 1.5.0</h2>
             <p class="section-desc">Interactúa con el carrusel de capturas de la última versión y descubre cómo se
                 visualiza cada módulo de la aplicación.</p>
         </div>
@@ -2055,7 +2055,7 @@
                 <div class="gallery-indicator" id="gallery-index">1 / 17</div>
                 <div class="gallery-image-wrapper" id="gallery-zoom-trigger"
                     title="Haz doble clic para ampliar la imagen">
-                    <img src="CAPTURAS/V1.4.7/001_PORTADA.jpg" alt="Portada de la App" id="gallery-main-img">
+                    <img src="CAPTURAS/V1.5/001_PORTADA.jpg" alt="Portada de la App" id="gallery-main-img">
                 </div>
                 <button class="gallery-nav-btn gallery-nav-prev" id="gallery-prev"
                     aria-label="Anterior image">❮</button>
@@ -2142,12 +2142,56 @@
 
         <div class="timeline">
 
-            <!-- v1.4.7 -->
+            <!-- v1.5.0 -->
             <div class="timeline-item current">
                 <div class="timeline-dot"></div>
                 <div class="timeline-content">
                     <div class="timeline-header">
-                        <span class="version-badge current-badge">v1.4.7 — Actual</span>
+                        <span class="version-badge current-badge">v1.5.0 — Actual</span>
+                        <span class="version-date">11 Jul 2026</span>
+                    </div>
+                    <h3 class="version-title">Gantt Fluid y Windows Premium</h3>
+                    <ul class="version-items">
+                        <li>Zoom táctil continuo (pinch-to-zoom) fluido con requestAnimationFrame en dispositivos móviles</li>
+                        <li>Preservación de scroll horizontal (semana centrada) y scroll vertical al cambiar zoom o enlazar tareas</li>
+                        <li>Botón flotante conmutador animado inferior izquierdo adaptado al ancho de columna del Gantt</li>
+                        <li>Logotipo y marca unificada de la aplicación (icon.png) en el ejecutable y barra de tareas de Windows</li>
+                        <li>Detección de telemetría y descargas directas OTA en la versión de Windows</li>
+                    </ul>
+                    <!-- Accesos directos v1.5.0 -->
+                    <div class="version-actions" style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <a href="www/index.html" class="btn btn-primary" target="_blank"
+                            style="padding: 8px 16px; font-size: 0.85rem; gap: 6px; border-radius: 8px; box-shadow: none;">
+                            <span>🌐</span> App Web
+                        </a>
+                        <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.exe" class="btn btn-secondary"
+                            style="padding: 8px 16px; font-size: 0.85rem; gap: 6px; border-radius: 8px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"
+                                style="color:#0078d4; display:block;">
+                                <path
+                                    d="M0 3.449L9.75 2.1v9.45H0V3.449zM0 12.45h9.75v9.45L0 20.551v-8.1zM10.95 1.95L24 0v11.55H10.95V1.95zM10.95 12.45H24v11.55l-13.05-1.95v-9.6z" />
+                            </svg>
+                            <span>Windows</span>
+                        </a>
+                        <a href="PROGRAMAS/BC3Viewer-App.apk" class="btn btn-secondary"
+                            style="padding: 8px 16px; font-size: 0.85rem; gap: 6px; border-radius: 8px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"
+                                style="color:#3ddc84; display:block;">
+                                <path
+                                    d="M17.523 15.3l1.816 3.146a.75.75 0 1 1-1.298.75l-1.84-3.187A9.957 9.957 0 0 1 12 17a9.957 9.957 0 0 1-4.202-1.008l-1.84 3.187a.75.75 0 1 1-1.298-.75l1.816-3.146A9.972 9.972 0 0 1 2.25 10c0-.85.106-1.674.306-2.464l-.056-.032a.75.75 0 1 1 .75-1.3l.115.066A9.939 9.939 0 0 1 6.84 3.84L5.023.693a.75.75 0 1 1 .75-1.3l-.056.032A9.97 9.97 0 0 1 12 2.25c1.4 0 2.73.288 3.939.81l1.84-3.187a.75.75 0 1 1 .75 1.3l.115-.066a9.972 9.972 0 0 1 4.488 3.738z" />
+                            </svg>
+                            <span>Android</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- v1.4.7 -->
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="timeline-header">
+                        <span class="version-badge">v1.4.7</span>
                         <span class="version-date">10 Jul 2026</span>
                     </div>
                     <h3 class="version-title">Estabilidad, OTA y Rediseño Visual</h3>
@@ -2395,7 +2439,7 @@
                 <div class="video-play-icon">▶</div>
                 <div class="video-coming-text">
                     <span class="coming-badge">Próximamente</span>
-                    <h3>Demo en Vídeo — BC3 Viewer v1.4.7</h3>
+                    <h3>Demo en Vídeo — BC3 Viewer v1.5.0</h3>
                     <p>Estamos preparando un recorrido visual completo de la aplicación. Mientras tanto, explora las <a
                             href="#galeria" style="color: var(--accent-secondary);">capturas interactivas</a> o <a
                             href="www/index.html" target="_blank" style="color: var(--accent-primary);">prueba la app
@@ -2403,10 +2447,10 @@
                 </div>
             </div>
             <div class="video-preview-strip">
-                <img src="CAPTURAS/V1.4.7/002_PRESUPUESTO.jpg" alt="Presupuesto" class="strip-img">
-                <img src="CAPTURAS/V1.4.7/005_DASHBOARD.jpg" alt="Dashboard" class="strip-img">
-                <img src="CAPTURAS/V1.4.7/006_PLANNING DE OBRA.jpg" alt="Gantt" class="strip-img">
-                <img src="CAPTURAS/V1.4.7/015_EXPORTAR EN VARIOS FORMATOS.jpg" alt="Exportar" class="strip-img">
+                <img src="CAPTURAS/V1.5/002_PRESUPUESTO.jpg" alt="Presupuesto" class="strip-img">
+                <img src="CAPTURAS/V1.5/005_DASHBOARD.jpg" alt="Dashboard" class="strip-img">
+                <img src="CAPTURAS/V1.5/006_PLANNING DE OBRA.jpg" alt="Gantt" class="strip-img">
+                <img src="CAPTURAS/V1.5/015_EXPORTAR EN VARIOS FORMATOS.jpg" alt="Exportar" class="strip-img">
             </div>
         </div>
     </section>
@@ -2540,7 +2584,7 @@
             <div class="footer-logo">🌳 BC3 Viewer</div>
             <ul class="footer-links">
                 <li><a href="#caracteristicas">Características</a></li>
-                <li><a href="#galeria">Capturas V1.4.7</a></li>
+                <li><a href="#galeria">Capturas V1.5.0</a></li>
                 <li><a href="#descargas">Descargas</a></li>
                 <li><a href="#demo">Demo</a></li>
                 <li><a href="#versiones">Versiones</a></li>
@@ -2565,23 +2609,23 @@
     <script>
         // Array mapping the screenshots to readable titles and technical descriptions
         const screenshots = [
-            { src: 'CAPTURAS/V1.4.7/001_PORTADA.jpg', title: 'Acceso de Seguridad y Portada', desc: 'Pantalla de bienvenida y control de acceso con seguridad PIN para protección de datos locales.' },
-            { src: 'CAPTURAS/V1.4.7/002_PRESUPUESTO.jpg', title: 'Vista General de Presupuesto', desc: 'Visualización clara en forma de árbol jerárquico expandible con capítulos, subcapítulos e importes calculados en tiempo real.' },
-            { src: 'CAPTURAS/V1.4.7/003_BANCO DE PRECIOS.jpg', title: 'Banco de Precios Integrado', desc: 'Explorador y gestor interactivo de la base de precios del presupuesto.' },
-            { src: 'CAPTURAS/V1.4.7/004_PRESUPUESTO PARTIDAS Y DESGLOSE.jpg', title: 'Desglose Detallado de Partidas', desc: 'Visualización profunda de descompuestos, mediciones detalladas e importes unitarios.' },
-            { src: 'CAPTURAS/V1.4.7/005_DASHBOARD.jpg', title: 'Dashboard de Análisis PEM/PEC', desc: 'Métricas clave de costes, gráficas interactivas del peso de capítulos y tipos de recursos.' },
-            { src: 'CAPTURAS/V1.4.7/006_PLANNING DE OBRA.jpg', title: 'Planning de Obra Automático', desc: 'Diagrama de Gantt generado dinámicamente con desglose de capítulos y visualización de plazos.' },
-            { src: 'CAPTURAS/V1.4.7/007_PLANNING DE OBRA AJUSTABLE.jpg', title: 'Gantt Interactivo y Ajustable', desc: 'Modificación de fechas, duración y plazos arrastrando directamente las barras del Gantt en local.' },
-            { src: 'CAPTURAS/V1.4.7/008_PLANNING DE OBRA Y TAREAS DE HOY.jpg', title: 'Gantt con Tareas de Hoy', desc: 'Seguimiento visual de la planificación con resúmenes diarios de tareas en curso.' },
-            { src: 'CAPTURAS/V1.4.7/009_PLANNING DE OBRA EXPORTABLE.jpg', title: 'Planning de Obra Exportable', desc: 'Generación y exportación directa de diagramas y listados de plazos.' },
-            { src: 'CAPTURAS/V1.4.7/010_AJUSTE COEFICIENTES GLOBALES.jpg', title: 'Ajuste de Coeficientes de Contrata', desc: 'Simulación inmediata de Gastos Generales, Beneficio Industrial e IVA para obtener el presupuesto final (PEC).' },
-            { src: 'CAPTURAS/V1.4.7/011_COMPARAR PRESUPUESTOS.jpg', title: 'Comparador de Presupuestos', desc: 'Carga paralela de dos archivos .bc3 para comparar importes y alcances de un vistazo.' },
-            { src: 'CAPTURAS/V1.4.7/012_COMPARAR PRESUPUESTOS POR PARTIDAS.jpg', title: 'Comparativa Detallada por Partidas', desc: 'Detección exacta de desviaciones de precios y unidades por cada concepto o partida.' },
-            { src: 'CAPTURAS/V1.4.7/013_AUDITORIA EN TIEMPO REAL DE CAMBIOS.jpg', title: 'Auditoría y Log de Cambios', desc: 'Historial completo de modificaciones en caliente con capacidad de deshacer/rehacer ilimitado.' },
-            { src: 'CAPTURAS/V1.4.7/014_CERTIFICACION DE OBRA.jpg', title: 'Certificación de Obra Integrada', desc: 'Generación, edición y control de certificaciones parciales directamente sobre las mediciones.' },
-            { src: 'CAPTURAS/V1.4.7/015_EXPORTAR EN VARIOS FORMATOS.jpg', title: 'Exportación Directa Offline', desc: 'Exportación local inmediata a formato Excel estructurado y PDF listos para impresión.' },
-            { src: 'CAPTURAS/V1.4.7/016_AJUSTES GLOBALES.jpg', title: 'Panel de Ajustes Generales', desc: 'Personalización de la interfaz, temas (Claro / Oscuro) y comportamiento del visualizador.' },
-            { src: 'CAPTURAS/V1.4.7/017_INFORMACION APP.jpg', title: 'Información y Diagnóstico OTA', desc: 'Panel de soporte, créditos, diagnóstico del sistema y comprobación de actualizaciones (OTA).' }
+            { src: 'CAPTURAS/V1.5/001_PORTADA.jpg', title: 'Acceso de Seguridad y Portada', desc: 'Pantalla de bienvenida y control de acceso con seguridad PIN para protección de datos locales.' },
+            { src: 'CAPTURAS/V1.5/002_PRESUPUESTO.jpg', title: 'Vista General de Presupuesto', desc: 'Visualización clara en forma de árbol jerárquico expandible con capítulos, subcapítulos e importes calculados en tiempo real.' },
+            { src: 'CAPTURAS/V1.5/003_BANCO DE PRECIOS.jpg', title: 'Banco de Precios Integrado', desc: 'Explorador y gestor interactivo de la base de precios del presupuesto.' },
+            { src: 'CAPTURAS/V1.5/004_PRESUPUESTO PARTIDAS Y DESGLOSE.jpg', title: 'Desglose Detallado de Partidas', desc: 'Visualización profunda de descompuestos, mediciones detalladas e importes unitarios.' },
+            { src: 'CAPTURAS/V1.5/005_DASHBOARD.jpg', title: 'Dashboard de Análisis PEM/PEC', desc: 'Métricas clave de costes, gráficas interactivas del peso de capítulos y tipos de recursos.' },
+            { src: 'CAPTURAS/V1.5/006_PLANNING DE OBRA.jpg', title: 'Planning de Obra Automático', desc: 'Diagrama de Gantt generado dinámicamente con desglose de capítulos y visualización de plazos.' },
+            { src: 'CAPTURAS/V1.5/007_PLANNING DE OBRA AJUSTABLE.jpg', title: 'Gantt Interactivo y Ajustable', desc: 'Modificación de fechas, duración y plazos arrastrando directamente las barras del Gantt en local.' },
+            { src: 'CAPTURAS/V1.5/008_PLANNING DE OBRA Y TAREAS DE HOY.jpg', title: 'Gantt con Tareas de Hoy', desc: 'Seguimiento visual de la planificación con resúmenes diarios de tareas en curso.' },
+            { src: 'CAPTURAS/V1.5/009_PLANNING DE OBRA EXPORTABLE.jpg', title: 'Planning de Obra Exportable', desc: 'Generación y exportación directa de diagramas y listados de plazos.' },
+            { src: 'CAPTURAS/V1.5/010_AJUSTE COEFICIENTES GLOBALES.jpg', title: 'Ajuste de Coeficientes de Contrata', desc: 'Simulación inmediata de Gastos Generales, Beneficio Industrial e IVA para obtener el presupuesto final (PEC).' },
+            { src: 'CAPTURAS/V1.5/011_COMPARAR PRESUPUESTOS.jpg', title: 'Comparador de Presupuestos', desc: 'Carga paralela de dos archivos .bc3 para comparar importes y alcances de un vistazo.' },
+            { src: 'CAPTURAS/V1.5/012_COMPARAR PRESUPUESTOS POR PARTIDAS.jpg', title: 'Comparativa Detallada por Partidas', desc: 'Detección exacta de desviaciones de precios y unidades por cada concepto o partida.' },
+            { src: 'CAPTURAS/V1.5/013_AUDITORIA EN TIEMPO REAL DE CAMBIOS.jpg', title: 'Auditoría y Log de Cambios', desc: 'Historial completo de modificaciones en caliente con capacidad de deshacer/rehacer ilimitado.' },
+            { src: 'CAPTURAS/V1.5/014_CERTIFICACION DE OBRA.jpg', title: 'Certificación de Obra Integrada', desc: 'Generación, edición y control de certificaciones parciales directamente sobre las mediciones.' },
+            { src: 'CAPTURAS/V1.5/015_EXPORTAR EN VARIOS FORMATOS.jpg', title: 'Exportación Directa Offline', desc: 'Exportación local inmediata a formato Excel estructurado y PDF listos para impresión.' },
+            { src: 'CAPTURAS/V1.5/016_AJUSTES GLOBALES.jpg', title: 'Panel de Ajustes Generales', desc: 'Personalización de la interfaz, temas (Claro / Oscuro) y comportamiento del visualizador.' },
+            { src: 'CAPTURAS/V1.5/017_INFORMACION APP.jpg', title: 'Información y Diagnóstico OTA', desc: 'Panel de soporte, créditos, diagnóstico del sistema y comprobación de actualizaciones (OTA).' }
         ];
 
         let currentIndex = 0;
@@ -2777,11 +2821,11 @@
 
         // Simple mockup animation (rotate through images in background in the hero slider)
         const mockupImages = [
-            'CAPTURAS/V1.4.7/005_DASHBOARD.jpg',
-            'CAPTURAS/V1.4.7/002_PRESUPUESTO.jpg',
-            'CAPTURAS/V1.4.7/006_PLANNING DE OBRA.jpg',
-            'CAPTURAS/V1.4.7/011_COMPARAR PRESUPUESTOS.jpg',
-            'CAPTURAS/V1.4.7/015_EXPORTAR EN VARIOS FORMATOS.jpg'
+            'CAPTURAS/V1.5/005_DASHBOARD.jpg',
+            'CAPTURAS/V1.5/002_PRESUPUESTO.jpg',
+            'CAPTURAS/V1.5/006_PLANNING DE OBRA.jpg',
+            'CAPTURAS/V1.5/011_COMPARAR PRESUPUESTOS.jpg',
+            'CAPTURAS/V1.5/015_EXPORTAR EN VARIOS FORMATOS.jpg'
         ];
         let mockupIdx = 0;
 

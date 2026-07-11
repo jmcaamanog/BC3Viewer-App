@@ -9,13 +9,13 @@
 Visualizador web avanzado de archivos BC3 (FIEBDC-3) para presupuestos de construccion.
 **Mejora libre y gratuita para cualquier Arquitecto Tecnico, Arquitecto o profesional de la construccion by JMC.**
 
-> 📸 **¡Evolución Visual de la App!** Echa un vistazo y comprueba cómo ha progresado el visualizador en la carpeta [📁 CAPTURAS](./CAPTURAS). No te pierdas las imágenes de la última interfaz premium en la subcarpeta [🚀 CAPTURAS/V1.4.7](./CAPTURAS/V1.4.7).
+> 📸 **¡Evolución Visual de la App!** Echa un vistazo y comprueba cómo ha progresado el visualizador en la carpeta [📁 CAPTURAS](./CAPTURAS). No te pierdas las imágenes de la última interfaz premium en la subcarpeta [🚀 CAPTURAS/V1.5](./CAPTURAS/V1.5).
 
 ---
 
-### 🚀 **[¡Visita la Nueva Landing Page Interactiva del Proyecto (V1.4.7)!](https://jmcaamanog.github.io/BC3Viewer-App/landing.html)**
+### 🚀 **[¡Visita la Nueva Landing Page Interactiva del Proyecto (V1.5.0)!](https://jmcaamanog.github.io/BC3Viewer-App/landing.html)**
 Hemos creado una presentación interactiva para explorar todas las capacidades de la app:
-*   🌳 **Visor Interactivo de Capturas V1.4.7:** Explora la interfaz premium módulo a módulo con explicaciones técnicas.
+*   🌳 **Visor Interactivo de Capturas V1.5.0:** Explora la interfaz premium módulo a módulo con explicaciones técnicas.
 *   💻 **Descargas Directas:** Acceso directo a instaladores de escritorio (.exe, .msi) y APK móvil.
 *   👨‍💻 **Créditos y Autoría:** Conoce más sobre el desarrollo y enfoque profesional del proyecto.
 
@@ -41,7 +41,7 @@ El objetivo de este proyecto es empaquetar y distribuir el visualizador web orig
 > Puedes usar la versión web más reciente directamente en tu navegador sin instalar nada en:
 > 👉 **[Visualizador BC3 Online](https://jmcaamanog.github.io/BC3Viewer-App/www/index.html)**
 ---
-> 🔑 **Contraseña versión 1.4.7)** -> 1234
+> 🔑 **Contraseña versión 1.5.0)** -> 1234
 ---
 
 Esta version ampliada ha sido desarrollada por mí (`Jose Manuel Caamaño`---> [LINKEDIN](https://www.linkedin.com/in/jmcaamanog/)), partiendo de la versión muy básica básica y sin funciones disponible en [BC3php](https://github.com/jmcaamanog/BC3Viewer-App) (si lo visitais, ya contiene parte de mis mejoras XD). Añadiendo todas las capacidades avanzadas y manteniendo el espiritu del proyecto original, pero mejorándolo... SIEMPRE desde el punto de vista de un `Arquitecto Técnico` : **abierto, libre y útil para la profesion (ser libres de egos XD)**.
@@ -76,7 +76,16 @@ Esta version ampliada ha sido desarrollada por mí (`Jose Manuel Caamaño`---> [
 
 > 📜 **[Ver Historial de Versiones Completo (CHANGELOG.md)](./CHANGELOG.md)**
 
-### 📅 10/07/2026 — Versión 1.4.7 (Actual)
+### 📅 11/07/2026 — Versión 1.5.0 (Actual)
+* **Zoom Táctil y Continuo:** Implementación de gesto de pellizcar (pinch-to-zoom) fluido con `requestAnimationFrame` en dispositivos móviles y preservación del centro de la semana al cambiar el nivel de zoom.
+* **Botón Flotante Conmutador del Gantt:** Botón flotante único inferior izquierdo animado para expandir/colapsar la columna de tareas que se adapta dinámicamente al ancho de la columna de tareas.
+* **Restauración de Posición de Scroll:** Preservación completa del scroll vertical y horizontal al enlazar tareas o redibujar el Gantt.
+* **Iconografía Unificada en Windows:** Configuración de icono de marca oficial (`icon.png`) integrado en la barra de tareas y el ejecutable compilado de escritorio de Windows.
+* **Detección de Telemetría Avanzada:** Registro y telemetría de accesos diferenciados para la plataforma de `Windows` (aplicación Tauri de escritorio).
+* **Actualizaciones para Windows:** Redirección de descarga interactiva a través de navegador al buscar actualizaciones en el cliente de Windows.
+ * **Capturas:** [🚀 CAPTURAS/V1.5](./CAPTURAS/V1.5)
+
+### 📅 10/07/2026 — Versión 1.4.7
 * **Ajustes de Interfaz y Carga:** Integración del nombre de archivo cargado en el menú Ajustes (⚙️) para limpiar la cabecera, alineación derecha del menú con iconos ordenados, justificación del texto de bienvenida y ocultación estricta del botón de cierre.
 * **Actualizaciones OTA:** Añadido botón de búsqueda manual y diagnóstico OTA en el menú de información.
 * **Optimización y Estabilidad:** Solución de error temporal (TDZ) en la carga y corrección javascript del cargador inicial.

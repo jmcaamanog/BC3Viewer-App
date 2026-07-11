@@ -1,4 +1,4 @@
-const APP_VERSION = '1.4.7'; // Versión actual de la aplicación (Actualizada)
+const APP_VERSION = '1.5.0'; // Versión actual de la aplicación (Actualizada)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // URL del Webhook de Google Sheets para registrar usuarios de la app.

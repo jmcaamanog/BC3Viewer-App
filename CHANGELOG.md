@@ -4,9 +4,16 @@ En este documento se detalla la evolución completa de la aplicación, incluyend
 
 ---
 
-### Versión 1.4.7 — 10/07/2026 (Actual)
-* **Corrección de Error de Referencia Temporal (TDZ):** Eliminado el bloqueo al intentar leer variables de nombre de archivo no inicializadas durante el proceso de renderizado del presupuesto.
-* **Ocultación Estricta de la Cruz de Cierre:** Asegurada la invisibilidad absoluta del botón de cerrar presupuesto (✕) hasta que un archivo haya sido completamente cargado e interpretado.
+### Versión 1.5.0 — 11/07/2026 (Actual)
+* **Gesto de Zoom Continuo y Suave:** Rediseño del gesto pinch-to-zoom con `requestAnimationFrame` en la vista de Gantt para un zoom orgánico continuo de alta precisión.
+* **Preservación del Centro de la Vista (Zoom):** El zoom se realiza exactamente sobre la semana que el usuario está mirando, evitando desplazamientos involuntarios al principio del timeline.
+* **Preservación de Scroll Vertical y Horizontal:** El scroll vertical y horizontal se mantiene fijo al enlazar tareas o reconstruir la vista.
+* **Botón Conmutador Flotante Dinámico:** Unificación de los botones del Gantt en un único globo flotante inferior izquierdo que se desliza suavemente con transiciones CSS adaptadas al ancho de la columna izquierda.
+* **Soporte de Iconografía Nativa en Windows:** Generación y empaquetamiento automático de iconos multirresolución (`icon.ico`, `icon.icns`) basados en la imagen oficial `icon.png` para el ejecutable y barra de tareas de Windows.
+* **Telemetría para Windows:** Detección de arranque en el webview nativo de Tauri para enviar la firma "Windows" en el registro de telemetría de accesos.
+* **Actualizador en Cliente de Windows:** Implementada la redirección interactiva en el botón de actualización para permitir descargas directas del instalador ejecutable de Windows cuando hay una nueva versión disponible.
+
+### Versión 1.4.7 — 10/07/2026
 
 ### Versión 1.4.6 — 10/07/2026
 * **Nombre de Archivo en Menú Ajustes:** Se desplaza el nombre del archivo activo cargado directamente al desplegable de Ajustes (⚙️) como primer elemento, permitiendo limpiar el encabezado general. Al hacer clic sobre él, se abre la ventana de carga para seleccionar otro archivo de forma rápida.
