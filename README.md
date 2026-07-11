@@ -1,5 +1,10 @@
 # BC3 Viewer Multiplataforma (Windows & Android)
 
+[![GitHub release (latest)](https://img.shields.io/github/v/release/jmcaamanog/BC3Viewer-App?label=Versión&color=3b82f6&logo=github)](https://github.com/jmcaamanog/BC3Viewer-App/releases/latest)
+[![GitHub Stars](https://img.shields.io/github/stars/jmcaamanog/BC3Viewer-App?style=flat&label=Stars&color=f59e0b&logo=github)](https://github.com/jmcaamanog/BC3Viewer-App/stargazers)
+[![GitHub Downloads](https://img.shields.io/github/downloads/jmcaamanog/BC3Viewer-App/total?label=Descargas&color=10b981&logo=github)](https://github.com/jmcaamanog/BC3Viewer-App/releases)
+[![License: MIT](https://img.shields.io/badge/Licencia-MIT-8b5cf6.svg)](https://github.com/jmcaamanog/BC3Viewer-App/blob/main/LICENSE)
+[![Platform](https://img.shields.io/badge/Plataforma-Windows%20%7C%20Android%20%7C%20Web-06b6d4)](https://jmcaamanog.github.io/BC3Viewer-App/landing.html)
 
 Visualizador web avanzado de archivos BC3 (FIEBDC-3) para presupuestos de construccion.
 **Mejora libre y gratuita para cualquier Arquitecto Tecnico, Arquitecto o profesional de la construccion by JMC.**

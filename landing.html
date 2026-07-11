@@ -1225,6 +1225,251 @@
             top: 2px;
         }
 
+        /* HERO GITHUB STATS WIDGET */
+        .hero-stats {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin-top: 10px;
+            width: fit-content;
+        }
+
+        .hero-stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 16px;
+        }
+
+        .hero-stat-item:first-child {
+            padding-left: 0;
+        }
+
+        .hero-stat-item:last-child {
+            padding-right: 0;
+        }
+
+        .hero-stat-icon {
+            font-size: 1rem;
+        }
+
+        .hero-stat-value {
+            font-family: var(--font-display);
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-white);
+        }
+
+        .hero-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .hero-stat-divider {
+            width: 1px;
+            height: 30px;
+            background: var(--border-color);
+        }
+
+        /* VIDEO DEMO SECTION */
+        .video-placeholder {
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            overflow: hidden;
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+        }
+
+        .video-coming-soon {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            padding: 50px 40px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(6, 182, 212, 0.04) 100%);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .video-play-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: var(--text-white);
+            flex-shrink: 0;
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+            animation: pulse-play 2.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse-play {
+            0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
+            50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.7), 0 0 60px rgba(6, 182, 212, 0.3); }
+        }
+
+        .video-coming-text {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .coming-badge {
+            background: linear-gradient(135deg, #f59e0b, #f97316);
+            color: var(--text-white);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            width: fit-content;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .video-coming-text h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .video-coming-text p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .video-preview-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0;
+            opacity: 0.55;
+            transition: opacity 0.3s ease;
+        }
+
+        .video-placeholder:hover .video-preview-strip {
+            opacity: 0.75;
+        }
+
+        .strip-img {
+            width: 100%;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* COMMUNITY SECTION */
+        .community-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .community-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 35px 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: var(--transition);
+            backdrop-filter: blur(12px);
+        }
+
+        .community-card:hover {
+            transform: translateY(-5px);
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+            box-shadow: 0 12px 30px rgba(59, 130, 246, 0.12);
+        }
+
+        .community-icon {
+            font-size: 2.5rem;
+        }
+
+        .community-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .community-card p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            flex: 1;
+        }
+
+        .newsletter-card {
+            border-color: rgba(6, 182, 212, 0.2);
+            background: rgba(6, 182, 212, 0.04);
+        }
+
+        .newsletter-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .newsletter-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            font-family: var(--font-body);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .newsletter-input:focus {
+            border-color: var(--accent-secondary);
+            background: rgba(6, 182, 212, 0.06);
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+        }
+
+        .newsletter-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .newsletter-btn {
+            background: linear-gradient(135deg, #0891b2, var(--accent-secondary));
+            color: var(--text-white);
+            border: none;
+            cursor: pointer;
+        }
+
+        .newsletter-btn:hover {
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .newsletter-note {
+            font-size: 0.8rem;
+            color: var(--accent-success);
+            font-weight: 500;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            .video-coming-soon {
+                flex-direction: column;
+                text-align: center;
+                padding: 35px 20px;
+            }
+            .video-preview-strip {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .hero-stats {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -1239,6 +1484,7 @@
             <li><a href="#galeria">Capturas V1.4.7</a></li>
             <li><a href="#descargas">Descargar</a></li>
             <li><a href="#versiones">Versiones</a></li>
+            <li><a href="#comunidad">Comunidad</a></li>
             <li><a href="#autor">Autor</a></li>
         </ul>
         <a href="www/index.html" class="nav-cta" target="_blank" id="nav-cta">Abrir App Online</a>
@@ -1266,6 +1512,28 @@
                     <span>GitHub</span>
                 </a>
             </div>
+
+            <!-- GitHub Live Stats -->
+            <div class="hero-stats" id="hero-github-stats">
+                <div class="hero-stat-item">
+                    <span class="hero-stat-icon">⭐</span>
+                    <span class="hero-stat-value" id="stat-stars">—</span>
+                    <span class="hero-stat-label">GitHub Stars</span>
+                </div>
+                <div class="hero-stat-divider"></div>
+                <div class="hero-stat-item">
+                    <span class="hero-stat-icon">📥</span>
+                    <span class="hero-stat-value" id="stat-downloads">—</span>
+                    <span class="hero-stat-label">Descargas Totales</span>
+                </div>
+                <div class="hero-stat-divider"></div>
+                <div class="hero-stat-item">
+                    <span class="hero-stat-icon">🍴</span>
+                    <span class="hero-stat-value" id="stat-forks">—</span>
+                    <span class="hero-stat-label">Forks</span>
+                </div>
+            </div>
+
         </div>
         <div class="hero-visual">
             <div class="mockup-window">
@@ -1592,6 +1860,78 @@
         </div>
     </section>
 
+    <!-- VIDEO DEMO SECTION -->
+    <section class="section" id="demo">
+        <div class="section-header">
+            <span class="section-subtitle">En Acción</span>
+            <h2 class="section-title">Vídeo Demostración</h2>
+            <p class="section-desc">Mira cómo cargar un archivo BC3 real, navegar el árbol, generar un planning Gantt y exportar a Excel en menos de 2 minutos.</p>
+        </div>
+
+        <div class="video-placeholder">
+            <div class="video-coming-soon">
+                <div class="video-play-icon">▶</div>
+                <div class="video-coming-text">
+                    <span class="coming-badge">Próximamente</span>
+                    <h3>Demo en Vídeo — BC3 Viewer v1.4.7</h3>
+                    <p>Estamos preparando un recorrido visual completo de la aplicación. Mientras tanto, explora las <a href="#galeria" style="color: var(--accent-secondary);">capturas interactivas</a> o <a href="www/index.html" target="_blank" style="color: var(--accent-primary);">prueba la app directamente</a>.</p>
+                </div>
+            </div>
+            <div class="video-preview-strip">
+                <img src="CAPTURAS/V1.4.7/002_PRESUPUESTO.jpg" alt="Presupuesto" class="strip-img">
+                <img src="CAPTURAS/V1.4.7/005_DASHBOARD.jpg" alt="Dashboard" class="strip-img">
+                <img src="CAPTURAS/V1.4.7/006_PLANNING DE OBRA.jpg" alt="Gantt" class="strip-img">
+                <img src="CAPTURAS/V1.4.7/015_EXPORTAR EN VARIOS FORMATOS.jpg" alt="Exportar" class="strip-img">
+            </div>
+        </div>
+    </section>
+
+    <!-- COMMUNITY SECTION -->
+    <section class="section" id="comunidad">
+        <div class="section-header">
+            <span class="section-subtitle">Únete a la Comunidad</span>
+            <h2 class="section-title">Sugerencias, Ideas y Novedades</h2>
+            <p class="section-desc">¿Eres Arquitecto Técnico o profesional de la construcción? Tu opinión da forma a la siguiente versión.</p>
+        </div>
+
+        <div class="community-grid">
+
+            <!-- Discussions -->
+            <div class="community-card">
+                <div class="community-icon">💬</div>
+                <h3>GitHub Discussions</h3>
+                <p>Abre un hilo para sugerir funciones, reportar problemas o compartir cómo usas BC3 Viewer en tu día a día.</p>
+                <a href="https://github.com/jmcaamanog/BC3Viewer-App/discussions" class="btn btn-secondary" target="_blank" rel="noopener">
+                    <span>🚀</span> Ir a Discussions
+                </a>
+            </div>
+
+            <!-- Issues -->
+            <div class="community-card">
+                <div class="community-icon">🐛</div>
+                <h3>Reportar un Bug</h3>
+                <p>¿Encontraste algo que no funciona bien? Abre un Issue en GitHub y lo revisaremos para la siguiente versión.</p>
+                <a href="https://github.com/jmcaamanog/BC3Viewer-App/issues/new" class="btn btn-secondary" target="_blank" rel="noopener">
+                    <span>📌</span> Abrir Issue
+                </a>
+            </div>
+
+            <!-- Newsletter / Novedades -->
+            <div class="community-card newsletter-card">
+                <div class="community-icon">📬</div>
+                <h3>Recibe Novedades por Email</h3>
+                <p>Apúntate y te avisaremos cuando salga una nueva versión con mejoras importantes. Sin spam, solo novedades.</p>
+                <form class="newsletter-form" id="newsletter-form" action="https://formspree.io/f/xvgrvond" method="POST">
+                    <input type="email" name="email" placeholder="tu@email.com" required class="newsletter-input" id="newsletter-email">
+                    <input type="hidden" name="_subject" value="Nueva suscripción BC3 Viewer Novedades">
+                    <button type="submit" class="btn btn-primary newsletter-btn" id="newsletter-submit">Suscribirme</button>
+                </form>
+                <p class="newsletter-note" id="newsletter-msg" style="display:none;"></p>
+            </div>
+
+        </div>
+    </section>
+
     <!-- AUTHOR SECTION -->
     <section class="section" id="autor">
         <div class="author-card">
@@ -1640,12 +1980,17 @@
             <div class="footer-logo">🌳 BC3 Viewer Premium</div>
             <ul class="footer-links">
                 <li><a href="#caracteristicas">Características</a></li>
-                <li><a href="#galeria">Capturas</a></li>
+                <li><a href="#galeria">Capturas V1.4.7</a></li>
                 <li><a href="#descargas">Descargas</a></li>
+                <li><a href="#versiones">Versiones</a></li>
+                <li><a href="#comunidad">Comunidad</a></li>
+                <li><a href="#autor">Autor</a></li>
+                <li><a href="https://github.com/jmcaamanog/BC3Viewer-App" target="_blank">GitHub</a></li>
                 <li><a href="https://github.com/jmcaamanog/BC3Viewer-App/blob/main/LICENSE" target="_blank">Licencia MIT</a></li>
             </ul>
             <p class="footer-text">
-                © 2026 BC3 Viewer App. Desarrollado con ☕ por <a href="https://www.linkedin.com/in/jmcaamanog/" target="_blank">José Manuel Caamaño</a>.
+                © 2026 BC3 Viewer App. Desarrollado con ☕ por <a href="https://www.linkedin.com/in/jmcaamanog/" target="_blank">José Manuel Caamaño González</a>.
+                Licencia <a href="https://github.com/jmcaamanog/BC3Viewer-App/blob/main/LICENSE" target="_blank">MIT</a> — Código abierto para todos los profesionales de la construcción.
             </p>
         </div>
     </footer>
@@ -1871,7 +2216,111 @@
             
             // Add custom animation styles for transitions
             mainImg.style.transition = 'opacity 0.15s ease-in-out';
+
+            // Fetch GitHub Stats via API
+            fetchGitHubStats();
+
+            // Newsletter form handler
+            initNewsletter();
         });
+
+        // === GITHUB API: Stars, Forks & Downloads ===
+        async function fetchGitHubStats() {
+            const repo = 'jmcaamanog/BC3Viewer-App';
+            try {
+                // Fetch repo info (stars, forks)
+                const repoRes = await fetch(`https://api.github.com/repos/${repo}`, {
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+                });
+                if (repoRes.ok) {
+                    const repoData = await repoRes.json();
+                    animateCount('stat-stars', repoData.stargazers_count || 0);
+                    animateCount('stat-forks', repoData.forks_count || 0);
+                }
+
+                // Fetch releases info (download count)
+                const relRes = await fetch(`https://api.github.com/repos/${repo}/releases`, {
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+                });
+                if (relRes.ok) {
+                    const releases = await relRes.json();
+                    let totalDownloads = 0;
+                    releases.forEach(release => {
+                        (release.assets || []).forEach(asset => {
+                            totalDownloads += asset.download_count || 0;
+                        });
+                    });
+                    animateCount('stat-downloads', totalDownloads);
+                }
+            } catch (e) {
+                // Si falla la API (ej. sin conexión), no mostramos nada raro
+                ['stat-stars', 'stat-forks', 'stat-downloads'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = '—';
+                });
+            }
+        }
+
+        function animateCount(elementId, target) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            if (target === 0) {
+                el.textContent = '0';
+                return;
+            }
+            const duration = 1200;
+            const start = performance.now();
+            function step(now) {
+                const elapsed = now - start;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                el.textContent = Math.floor(eased * target).toLocaleString('es-ES');
+                if (progress < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        // === NEWSLETTER FORM (Formspree AJAX) ===
+        function initNewsletter() {
+            const form = document.getElementById('newsletter-form');
+            const msg = document.getElementById('newsletter-msg');
+            const btn = document.getElementById('newsletter-submit');
+            if (!form) return;
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                btn.textContent = 'Enviando...';
+                btn.disabled = true;
+
+                try {
+                    const res = await fetch(form.action, {
+                        method: 'POST',
+                        body: new FormData(form),
+                        headers: { 'Accept': 'application/json' }
+                    });
+
+                    if (res.ok) {
+                        form.style.display = 'none';
+                        msg.textContent = '✅ ¡Suscrito! Te avisaremos cuando haya novedades.';
+                        msg.style.display = 'block';
+                        msg.style.color = 'var(--accent-success)';
+                    } else {
+                        btn.textContent = 'Suscribirme';
+                        btn.disabled = false;
+                        msg.textContent = '⚠️ Algo fue mal. Inténtalo de nuevo.';
+                        msg.style.display = 'block';
+                        msg.style.color = '#f59e0b';
+                    }
+                } catch (err) {
+                    btn.textContent = 'Suscribirme';
+                    btn.disabled = false;
+                    msg.textContent = '⚠️ Error de red. Comprueba tu conexión.';
+                    msg.style.display = 'block';
+                    msg.style.color = '#f59e0b';
+                }
+            });
+        }
+
     </script>
 </body>
 </html>

@@ -1,0 +1,55 @@
+name: 🚀 Release Automático
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'   # Se activa al hacer push de un tag como v1.4.8, v2.0.0, etc.
+
+permissions:
+  contents: write   # Necesario para crear releases en GitHub
+
+jobs:
+  release:
+    name: Crear Release en GitHub
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: 📋 Extraer versión del tag
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          VERSION_NUM="${VERSION#v}"
+          echo "tag=${VERSION}" >> $GITHUB_OUTPUT
+          echo "number=${VERSION_NUM}" >> $GITHUB_OUTPUT
+          echo "Versión detectada: ${VERSION}"
+
+      - name: 📝 Generar notas de la release desde CHANGELOG.md
+        id: changelog
+        run: |
+          # Extrae las notas de la versión actual del CHANGELOG.md
+          TAG_NUM="${{ steps.version.outputs.number }}"
+          NOTES=$(awk "/### Versión ${TAG_NUM}/,/### Versión [0-9]/" CHANGELOG.md | head -n -1 | tail -n +2)
+          if [ -z "$NOTES" ]; then
+            NOTES="Ver [CHANGELOG completo](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) para los detalles de esta versión."
+          fi
+          # Guardamos en archivo para evitar problemas con caracteres especiales
+          echo "$NOTES" > release_notes.md
+          echo "Notas generadas correctamente"
+
+      - name: 🎉 Crear Release con instaladores adjuntos
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "🌳 BC3 Viewer ${{ steps.version.outputs.tag }}"
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+          files: |
+            PROGRAMAS/BC3_Viewer_Windows_Installer.exe
+            PROGRAMAS/BC3_Viewer_Windows_Installer.msi
+            PROGRAMAS/BC3Viewer-App.apk
+            PROGRAMAS/BC3 EJEMPLO/ARCHIVO EJEMPLO.bc3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
