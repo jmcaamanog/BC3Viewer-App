@@ -1,52 +1,49 @@
-# BC3 Viewer Multiplataforma (Windows & Android)
+# 🌳 BC3 Viewer Multiplataforma (Windows & Android)
 
-[![GitHub release (latest)](https://img.shields.io/github/v/release/jmcaamanog/BC3Viewer-App?label=Versión&color=3b82f6&logo=github)](https://github.com/jmcaamanog/BC3Viewer-App/releases/latest)
-[![GitHub Stars](https://img.shields.io/github/stars/jmcaamanog/BC3Viewer-App?style=flat&label=Stars&color=f59e0b&logo=github)](https://github.com/jmcaamanog/BC3Viewer-App/stargazers)
-[![GitHub Downloads](https://img.shields.io/github/downloads/jmcaamanog/BC3Viewer-App/total?label=Descargas&color=10b981&logo=github)](https://github.com/jmcaamanog/BC3Viewer-App/releases)
-[![License: MIT](https://img.shields.io/badge/Licencia-MIT-8b5cf6.svg)](https://github.com/jmcaamanog/BC3Viewer-App/blob/main/LICENSE)
-[![Platform](https://img.shields.io/badge/Plataforma-Windows%20%7C%20Android%20%7C%20Web-06b6d4)](https://jmcaamanog.github.io/BC3Viewer-App/landing.html)
-
-Visualizador web avanzado de archivos BC3 (FIEBDC-3) para presupuestos de construccion.
-**Mejora libre y gratuita para cualquier Arquitecto Tecnico, Arquitecto o profesional de la construccion by JMC.**
-
-> 📸 **¡Evolución Visual de la App!** Echa un vistazo y comprueba cómo ha progresado el visualizador en la carpeta [📁 CAPTURAS](./CAPTURAS). No te pierdas las imágenes de la última interfaz premium en la versión 1.5.0:
-> *   **💻 Capturas para Windows Desktop:** [📁 CAPTURAS/V1.5/WINDOWS_V1.5](./CAPTURAS/V1.5/WINDOWS_V1.5)
-> *   **📱 Capturas para Android Mobile:** [📁 CAPTURAS/V1.5/ANDROID_V1.5](./CAPTURAS/V1.5/ANDROID_V1.5)
+### La herramienta definitiva, libre y 100% offline para la gestión de presupuestos FIEBDC-3 (.bc3).
+*Desarrollado desde la perspectiva real de un Arquitecto Técnico para dotar al sector de una utilidad ágil, segura y privada.*
 
 ---
 
-### 🚀 **[¡Visita la Nueva Landing Page Interactiva del Proyecto (V1.5.0)!](https://jmcaamanog.github.io/BC3Viewer-App/landing.html)**
-Hemos creado una presentación interactiva para explorar todas las capacidades de la app:
-*   🌳 **Visor Interactivo de Capturas V1.5.0:** Explora la interfaz premium módulo a módulo con explicaciones técnicas.
-*   💻 **Descargas Directas:** Acceso directo a instaladores de escritorio (.exe, .msi) y APK móvil.
-*   👨‍💻 **Créditos y Autoría:** Conoce más sobre el desarrollo y enfoque profesional del proyecto.
-
-👉 **[Ver Presentación Web Interactiva](https://jmcaamanog.github.io/BC3Viewer-App/landing.html)**
+<p align="center">
+  <a href="https://github.com/jmcaamanog/BC3Viewer-App/releases/latest"><img src="https://img.shields.io/github/v/release/jmcaamanog/BC3Viewer-App?label=Versión&color=3b82f6&logo=github" alt="Versión"></a>
+  <a href="https://github.com/jmcaamanog/BC3Viewer-App/stargazers"><img src="https://img.shields.io/github/stars/jmcaamanog/BC3Viewer-App?style=flat&label=Stars&color=f59e0b&logo=github" alt="Stars"></a>
+  <a href="https://github.com/jmcaamanog/BC3Viewer-App/releases"><img src="https://img.shields.io/github/downloads/jmcaamanog/BC3Viewer-App/total?label=Descargas&color=10b981&logo=github" alt="Descargas"></a>
+  <a href="https://github.com/jmcaamanog/BC3Viewer-App/blob/main/LICENSE"><img src="https://img.shields.io/badge/Licencia-MIT-8b5cf6.svg" alt="Licencia"></a>
+  <a href="https://jmcaamanog.github.io/BC3Viewer-App/landing.html"><img src="https://img.shields.io/badge/Plataforma-Windows%20%7C%20Android%20%7C%20Web-06b6d4" alt="Plataformas"></a>
+</p>
 
 ---
 
-Este repositorio contiene la versión autónoma, multiplataforma y 100% offline del **BC3 Viewer (Visualizador Premium de Presupuestos FIEBDC-3)**.
+## ⚡ Enlaces y Accesos Rápidos
 
-El objetivo de este proyecto es empaquetar y distribuir el visualizador web original como aplicaciones nativas de escritorio (**Windows**) y dispositivos móviles (**Android**), mejorando la privacidad, eliminando la tediosa necesidad de servidores locales (PHP) y habilitando el uso offline en cualquier lugar.
+| 🌟 Recurso | 🚀 Acción / Enlace | 📝 Descripción |
+| :--- | :--- | :--- |
+| **Landing Page** | 👉 **[Visitar Presentación Web](https://jmcaamanog.github.io/BC3Viewer-App/landing.html)** | Web interactiva para explorar módulos y descargas. |
+| **App Online** | 👉 **[Abrir App Web](https://jmcaamanog.github.io/BC3Viewer-App/www/index.html)** | Utiliza la versión en la nube directo en tu navegador. |
+| **Capturas Windows** | 💻 **[Ver Galería Windows (V1.5.0)](./CAPTURAS/V1.5/WINDOWS_V1.5)** | Capturas de pantalla de la interfaz de escritorio Premium. |
+| **Capturas Android** | 📱 **[Ver Galería Android (V1.5.0)](./CAPTURAS/V1.5/ANDROID_V1.5)** | Capturas de pantalla de la app en móvil/tableta. |
 
+---
 
 > [!IMPORTANT]
-> **🚀 DESCARGA DIRECTA DE PROGRAMAS:**
-> Si no quieres compilar el código tú mismo y solo quieres utilizar la aplicación, puedes descargar directamente los ejecutables listos para usar:
-> *   **💻 Windows Installer (.exe):** [Descargar BC3_Viewer_Windows_Installer.exe](https://github.com/jmcaamanog/BC3Viewer-App/raw/main/PROGRAMAS/BC3_Viewer_Windows_Installer.exe)
-> *   **💻 Windows Package (.msi):** [Descargar BC3_Viewer_Windows_Installer.msi](https://github.com/jmcaamanog/BC3Viewer-App/raw/main/PROGRAMAS/BC3_Viewer_Windows_Installer.msi)
-> *   **📱 Android App (.apk):** [Descargar BC3Viewer-App.apk](https://github.com/jmcaamanog/BC3Viewer-App/raw/main/PROGRAMAS/BC3Viewer-App.apk)
-
-> *   También dispones de un presupuesto de ejemplo para probarlo inmediatamente en la carpeta [📁 PROGRAMAS/BC3 EJEMPLO](https://github.com/jmcaamanog/BC3Viewer-App/tree/main/PROGRAMAS/BC3%20EJEMPLO).
+> ### 📥 Descarga Directa de Aplicaciones (Listas para Instalar)
+> Si quieres usar la herramienta en local de forma inmediata sin compilar el código:
+> *   **💻 Windows Escritorio:**
+>     *   [Descargar Instalador .exe (NSIS)](https://github.com/jmcaamanog/BC3Viewer-App/raw/main/PROGRAMAS/BC3_Viewer_Windows_Installer.exe) *(Ultra ligero ~3 MB)*
+>     *   [Descargar Paquete .msi (WiX)](https://github.com/jmcaamanog/BC3Viewer-App/raw/main/PROGRAMAS/BC3_Viewer_Windows_Installer.msi) *(Corporativo ~3.6 MB)*
+> *   **📱 Android Móvil:**
+>     *   [Descargar Aplicación .apk](https://github.com/jmcaamanog/BC3Viewer-App/raw/main/PROGRAMAS/BC3Viewer-App.apk) *(Soporte offline ~20 MB)*
+> *   **📁 Archivo de Prueba:**
+>     *   [Descargar Presupuesto de Ejemplo (.bc3)](https://github.com/jmcaamanog/BC3Viewer-App/tree/main/PROGRAMAS/BC3%20EJEMPLO)
 >
-> **🌐 ACCESO DIRECTO EN LA WEB (Nube):**
-> Puedes usar la versión web más reciente directamente en tu navegador sin instalar nada en:
-> 👉 **[Visualizador BC3 Online](https://jmcaamanog.github.io/BC3Viewer-App/www/index.html)**
----
-> 🔑 **Contraseña versión 1.5.0)** -> 1234
+> 🔑 **Contraseña de Acceso (Versión 1.5.0):** `1234`
+
 ---
 
-Esta version ampliada ha sido desarrollada por mí (`Jose Manuel Caamaño`---> [LINKEDIN](https://www.linkedin.com/in/jmcaamanog/)), partiendo de la versión muy básica básica y sin funciones disponible en [BC3php](https://github.com/jmcaamanog/BC3Viewer-App) (si lo visitais, ya contiene parte de mis mejoras XD). Añadiendo todas las capacidades avanzadas y manteniendo el espiritu del proyecto original, pero mejorándolo... SIEMPRE desde el punto de vista de un `Arquitecto Técnico` : **abierto, libre y útil para la profesion (ser libres de egos XD)**.
+### 👨‍💻 Creador de la Versión Premium
+Desarrollado y ampliado por **José Manuel Caamaño González** ([LinkedIn Perfil](https://www.linkedin.com/in/jmcaamanog/)), Arquitecto Técnico y BIM Manager.
+*Partiendo de la base original de BC3php, este visor premium se ha optimizado bajo la filosofía ConTech de dotar al sector de una herramienta útil, abierta y libre de egos: "Abierto, libre y útil para la profesión".*
 
 ---
 
