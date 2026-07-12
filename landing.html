@@ -150,6 +150,13 @@
             box-shadow: var(--shadow-glow);
         }
 
+        .navbar.scrolled {
+            top: 10px;
+            width: 95%;
+            background: rgba(9, 13, 22, 0.85);
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
         .nav-logo {
             display: flex;
             align-items: center;
@@ -511,6 +518,47 @@
         }
 
         /* INTERACTIVE GALLERY */
+        #galeria {
+            max-width: 1500px !important;
+            width: 95%;
+            margin: 0 auto;
+        }
+
+        .gallery-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 10px 24px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--text-white);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--accent-primary);
+            color: var(--text-white);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+        }
+
         .gallery-container {
             display: grid;
             grid-template-columns: 1.8fr 1fr;
@@ -626,7 +674,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            max-height: 520px;
+            max-height: 650px;
             overflow-y: auto;
             padding-right: 10px;
         }
@@ -1132,9 +1180,12 @@
                 padding: 0 20px;
             }
 
+            .navbar.scrolled {
+                width: 95%;
+            }
+
             .nav-links {
                 display: none;
-                /* Mobile menu shortcut */
             }
         }
 
@@ -1144,12 +1195,37 @@
             }
 
             .navbar {
-                height: 60px;
+                height: 54px;
+                top: 10px !important;
+                width: calc(100% - 20px) !important;
+                padding: 0 15px;
+                border-radius: 27px;
+            }
+
+            .navbar.scrolled {
+                top: 8px !important;
+                width: calc(100% - 16px) !important;
+            }
+
+            .nav-logo {
+                gap: 6px;
+            }
+
+            .nav-logo span {
+                font-size: 1.05rem !important;
+                white-space: nowrap;
+            }
+
+            .nav-logo img {
+                height: 26px !important;
+                width: 26px !important;
+                border-radius: 5px;
             }
 
             .nav-cta {
-                padding: 8px 14px;
-                font-size: 0.75rem;
+                padding: 6px 12px;
+                font-size: 0.72rem;
+                white-space: nowrap;
             }
 
             .section-title {
@@ -2049,13 +2125,22 @@
                 visualiza cada módulo de la aplicación.</p>
         </div>
 
+        <div class="gallery-tabs">
+            <button class="tab-btn active" data-platform="windows">
+                <span>💻</span> Windows Desktop
+            </button>
+            <button class="tab-btn" data-platform="android">
+                <span>📱</span> Android Mobile
+            </button>
+        </div>
+
         <div class="gallery-container">
             <!-- Left Side: Main Preview -->
             <div class="gallery-viewer">
                 <div class="gallery-indicator" id="gallery-index">1 / 17</div>
                 <div class="gallery-image-wrapper" id="gallery-zoom-trigger"
                     title="Haz doble clic para ampliar la imagen">
-                    <img src="CAPTURAS/V1.5/001_PORTADA.jpg" alt="Portada de la App" id="gallery-main-img">
+                    <img src="CAPTURAS/V1.5/WINDOWS_V1.5/001_PORTADA.jpg" alt="Portada de la App" id="gallery-main-img">
                 </div>
                 <button class="gallery-nav-btn gallery-nav-prev" id="gallery-prev"
                     aria-label="Anterior image">❮</button>
@@ -2575,27 +2660,47 @@
 
     <!-- INTERACTIVE SCRIPTS -->
     <script>
-        // Array mapping the screenshots to readable titles and technical descriptions
-        const screenshots = [
-            { src: 'CAPTURAS/V1.5/001_PORTADA.jpg', title: 'Acceso de Seguridad y Portada', desc: 'Pantalla de bienvenida y control de acceso con seguridad PIN para protección de datos locales.' },
-            { src: 'CAPTURAS/V1.5/002_PRESUPUESTO.jpg', title: 'Vista General de Presupuesto', desc: 'Visualización clara en forma de árbol jerárquico expandible con capítulos, subcapítulos e importes calculados en tiempo real.' },
-            { src: 'CAPTURAS/V1.5/003_BANCO DE PRECIOS.jpg', title: 'Banco de Precios Integrado', desc: 'Explorador y gestor interactivo de la base de precios del presupuesto.' },
-            { src: 'CAPTURAS/V1.5/004_PRESUPUESTO PARTIDAS Y DESGLOSE.jpg', title: 'Desglose Detallado de Partidas', desc: 'Visualización profunda de descompuestos, mediciones detalladas e importes unitarios.' },
-            { src: 'CAPTURAS/V1.5/005_DASHBOARD.jpg', title: 'Dashboard de Análisis PEM/PEC', desc: 'Métricas clave de costes, gráficas interactivas del peso de capítulos y tipos de recursos.' },
-            { src: 'CAPTURAS/V1.5/006_PLANNING DE OBRA.jpg', title: 'Planning de Obra Automático', desc: 'Diagrama de Gantt generado dinámicamente con desglose de capítulos y visualización de plazos.' },
-            { src: 'CAPTURAS/V1.5/007_PLANNING DE OBRA AJUSTABLE.jpg', title: 'Gantt Interactivo y Ajustable', desc: 'Modificación de fechas, duración y plazos arrastrando directamente las barras del Gantt en local.' },
-            { src: 'CAPTURAS/V1.5/008_PLANNING DE OBRA Y TAREAS DE HOY.jpg', title: 'Gantt con Tareas de Hoy', desc: 'Seguimiento visual de la planificación con resúmenes diarios de tareas en curso.' },
-            { src: 'CAPTURAS/V1.5/009_PLANNING DE OBRA EXPORTABLE.jpg', title: 'Planning de Obra Exportable', desc: 'Generación y exportación directa de diagramas y listados de plazos.' },
-            { src: 'CAPTURAS/V1.5/010_AJUSTE COEFICIENTES GLOBALES.jpg', title: 'Ajuste de Coeficientes de Contrata', desc: 'Simulación inmediata de Gastos Generales, Beneficio Industrial e IVA para obtener el presupuesto final (PEC).' },
-            { src: 'CAPTURAS/V1.5/011_COMPARAR PRESUPUESTOS.jpg', title: 'Comparador de Presupuestos', desc: 'Carga paralela de dos archivos .bc3 para comparar importes y alcances de un vistazo.' },
-            { src: 'CAPTURAS/V1.5/012_COMPARAR PRESUPUESTOS POR PARTIDAS.jpg', title: 'Comparativa Detallada por Partidas', desc: 'Detección exacta de desviaciones de precios y unidades por cada concepto o partida.' },
-            { src: 'CAPTURAS/V1.5/013_AUDITORIA EN TIEMPO REAL DE CAMBIOS.jpg', title: 'Auditoría y Log de Cambios', desc: 'Historial completo de modificaciones en caliente con capacidad de deshacer/rehacer ilimitado.' },
-            { src: 'CAPTURAS/V1.5/014_CERTIFICACION DE OBRA.jpg', title: 'Certificación de Obra Integrada', desc: 'Generación, edición y control de certificaciones parciales directamente sobre las mediciones.' },
-            { src: 'CAPTURAS/V1.5/015_EXPORTAR EN VARIOS FORMATOS.jpg', title: 'Exportación Directa Offline', desc: 'Exportación local inmediata a formato Excel estructurado y PDF listos para impresión.' },
-            { src: 'CAPTURAS/V1.5/016_AJUSTES GLOBALES.jpg', title: 'Panel de Ajustes Generales', desc: 'Personalización de la interfaz, temas (Claro / Oscuro) y comportamiento del visualizador.' },
-            { src: 'CAPTURAS/V1.5/017_INFORMACION APP.jpg', title: 'Información y Diagnóstico OTA', desc: 'Panel de soporte, créditos, diagnóstico del sistema y comprobación de actualizaciones (OTA).' }
+        // Array mapping the screenshots for Windows Desktop
+        const windowsScreenshots = [
+            { src: 'CAPTURAS/V1.5/WINDOWS_V1.5/001_PORTADA.jpg', title: 'Acceso de Seguridad y Portada', desc: 'Pantalla de bienvenida y control de acceso con seguridad PIN para protección de datos locales.' },
+            { src: 'CAPTURAS/V1.5/WINDOWS_V1.5/002_PRESUPUESTO.jpg', title: 'Vista General de Presupuesto', desc: 'Visualización clara en forma de árbol jerárquico expandible con capítulos, subcapítulos e importes calculados en tiempo real.' },
+            { src: 'CAPTURAS/V1.5/WINDOWS_V1.5/003_BANCO DE PRECIOS.jpg', title: 'Banco de Precios Integrado', desc: 'Explorador y gestor interactivo de la base de precios del presupuesto.' },
+            { src: 'CAPTURAS/V1.5/WINDOWS_V1.5/004_PRESUPUESTO PARTIDAS Y DESGLOSE.jpg', title: 'Desglose Detallado de Partidas', desc: 'Visualización profunda de descompuestos, mediciones detalladas e importes unitarios.' },
+            { src: 'CAPTURAS/V1.5/WINDOWS_V1.5/005_DASHBOARD.jpg', title: 'Dashboard de Análisis PEM/PEC', desc: 'Métricas clave de costes, gráficas interactivas del peso de capítulos y tipos de recursos.' },
+            { src: 'CAPTURAS/V1.5/WINDOWS_V1.5/006_PLANNING DE OBRA.jpg', title: 'Planning de Obra Automático', desc: 'Diagrama de Gantt generado dinámicamente con desglose de capítulos y visualización de plazos.' },
+            { src: 'CAPTURAS/V1.5/WINDOWS_V1.5/007_PLANNING DE OBRA AJUSTABLE.jpg', title: 'Gantt Interactivo y Ajustable', desc: 'Modificación de fechas, duración y plazos arrastrando directamente las barras del Gantt en local.' },
+            { src: 'CAPTURAS/V1.5/WINDOWS_V1.5/008_PLANNING DE OBRA Y TAREAS DE HOY.jpg', title: 'Gantt con Tareas de Hoy', desc: 'Seguimiento visual de la planificación con resúmenes diarios de tareas en curso.' },
+            { src: 'CAPTURAS/V1.5/WINDOWS_V1.5/009_PLANNING DE OBRA EXPORTABLE.jpg', title: 'Planning de Obra Exportable', desc: 'Generación y exportación directa de diagramas y listados de plazos.' },
+            { src: 'CAPTURAS/V1.5/WINDOWS_V1.5/010_AJUSTE COEFICIENTES GLOBALES.jpg', title: 'Ajuste de Coeficientes de Contrata', desc: 'Simulación inmediata de Gastos Generales, Beneficio Industrial e IVA para obtener el presupuesto final (PEC).' },
+            { src: 'CAPTURAS/V1.5/WINDOWS_V1.5/011_COMPARAR PRESUPUESTOS.jpg', title: 'Comparador de Presupuestos', desc: 'Carga paralela de dos archivos .bc3 para comparar importes y alcances de un vistazo.' },
+            { src: 'CAPTURAS/V1.5/WINDOWS_V1.5/012_COMPARAR PRESUPUESTOS POR PARTIDAS.jpg', title: 'Comparativa Detallada por Partidas', desc: 'Detección exacta de desviaciones de precios y unidades por cada concepto o partida.' },
+            { src: 'CAPTURAS/V1.5/WINDOWS_V1.5/013_AUDITORIA EN TIEMPO REAL DE CAMBIOS.jpg', title: 'Auditoría y Log de Cambios', desc: 'Historial completo de modificaciones en caliente con capacidad de deshacer/rehacer ilimitado.' },
+            { src: 'CAPTURAS/V1.5/WINDOWS_V1.5/014_CERTIFICACION DE OBRA.jpg', title: 'Certificación de Obra Integrada', desc: 'Generación, edición y control de certificaciones parciales directamente sobre las mediciones.' },
+            { src: 'CAPTURAS/V1.5/WINDOWS_V1.5/015_EXPORTAR EN VARIOS FORMATOS.jpg', title: 'Exportación Directa Offline', desc: 'Exportación local inmediata a formato Excel estructurado y PDF listos para impresión.' },
+            { src: 'CAPTURAS/V1.5/WINDOWS_V1.5/016_AJUSTES GLOBALES.jpg', title: 'Panel de Ajustes Generales', desc: 'Personalización de la interfaz, temas (Claro / Oscuro) y comportamiento del visualizador.' },
+            { src: 'CAPTURAS/V1.5/WINDOWS_V1.5/017_INFORMACION APP.jpg', title: 'Información y Diagnóstico OTA', desc: 'Panel de soporte, créditos, diagnóstico del sistema y comprobación de actualizaciones (OTA).' }
         ];
 
+        // Array mapping the screenshots for Android Mobile
+        const androidScreenshots = [
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/001_PORTADA_android.png', title: 'Acceso de Seguridad Táctil', desc: 'Pantalla de bienvenida y control de acceso con seguridad PIN optimizada para dispositivos móviles y tabletas.' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/002_PRESUPUESTO_android.png', title: 'Visualización del Árbol de Partidas', desc: 'Navegación intuitiva del presupuesto adaptada a gestos táctiles y pantallas verticales.' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/003_BANCO DE PRECIOS_android.png', title: 'Consulta de Precios Rápida', desc: 'Explorador y gestor interactivo de la base de precios para verificar costes directamente en obra.' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/004_PRESUPUESTO_android.png', title: 'Detalle de Partidas en Obra', desc: 'Consulta en caliente de descompuestos, mediciones detalladas e importes unitarios en movilidad.' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/005_DASHBOARD_android.png', title: 'Dashboard de Análisis Móvil', desc: 'Métricas de PEM y PEC con distribución visual de costes adaptada a pantallas de smartphone.' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/006_PLANNING DE OBRA_android.png', title: 'Cronograma Gantt Adaptativo', desc: 'Planning de obra y tareas de hoy rediseñadas para fácil consulta sobre el terreno.' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/007_PLANNING DE OBRA _android.png', title: 'Visualización de Plazos y Tareas', desc: 'Seguimiento visual del cronograma para control de plazos diarios en cualquier lugar.' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/008_PLANNING DE OBRA AJUSTABLE_android.png', title: 'Ajuste de Tareas Táctil', desc: 'Modificación de plazos de tareas directamente arrastrando barras con control táctil.' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/009_PLANNING DE OBRA EDITABLE_android.png', title: 'Planificación de Obra en Mano', desc: 'Edición rápida de duraciones y relaciones de tareas desde dispositivo móvil.' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/010_PLANNING DE OBRA REPLEGABLE_android.png', title: 'Estructura Gantt Desplegable', desc: 'Optimización de espacio mediante expansión y contracción de capítulos en el Gantt móvil.' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/011_COMPARAR PRESUPUESTOS_android.png', title: 'Comparador de Presupuestos Móvil', desc: 'Contraste paralelo de dos archivos .bc3 para identificar variaciones de precios directamente en obra.' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/012_CERTIFICACION DE OBRA REVISABLE_android.png', title: 'Certificación en Campo', desc: 'Registro y control del avance físico y financiero de las partidas a pie de obra.' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/013_CERTIFICACION DE OBRA.png', title: 'Control de Unidades de Obra', desc: 'Avance acumulado calculado localmente sin depender de conexión a servidores.' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/014_AJUSTES GLOBALES_android.png', title: 'Configuración del Tema en Móvil', desc: 'Ajustes del visualizador y cambio de tema (Claro / Oscuro) para exteriores con alta luminosidad.' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/015_INFORMACION APP_android.png', title: 'Diagnóstico e Información', desc: 'Comprobación de actualizaciones (OTA) y panel de créditos desde la app de Android.' }
+        ];
+
+        let screenshots = windowsScreenshots;
         let currentIndex = 0;
 
         // Elements
@@ -2756,15 +2861,7 @@
         // Sticky Navbar scroll behavior
         window.addEventListener('scroll', () => {
             const navbar = document.getElementById('navbar');
-            if (window.scrollY > 50) {
-                navbar.style.top = '10px';
-                navbar.style.width = '95%';
-                navbar.style.background = 'rgba(9, 13, 22, 0.85)';
-            } else {
-                navbar.style.top = '20px';
-                navbar.style.width = '90%';
-                navbar.style.background = 'rgba(9, 13, 22, 0.7)';
-            }
+            navbar.classList.toggle('scrolled', window.scrollY > 50);
 
             // Update active menu link based on scroll position
             const sections = document.querySelectorAll('section, header');
@@ -2789,11 +2886,11 @@
 
         // Simple mockup animation (rotate through images in background in the hero slider)
         const mockupImages = [
-            'CAPTURAS/V1.5/005_DASHBOARD.jpg',
-            'CAPTURAS/V1.5/002_PRESUPUESTO.jpg',
-            'CAPTURAS/V1.5/006_PLANNING DE OBRA.jpg',
-            'CAPTURAS/V1.5/011_COMPARAR PRESUPUESTOS.jpg',
-            'CAPTURAS/V1.5/015_EXPORTAR EN VARIOS FORMATOS.jpg'
+            'CAPTURAS/V1.5/WINDOWS_V1.5/005_DASHBOARD.jpg',
+            'CAPTURAS/V1.5/WINDOWS_V1.5/002_PRESUPUESTO.jpg',
+            'CAPTURAS/V1.5/WINDOWS_V1.5/006_PLANNING DE OBRA.jpg',
+            'CAPTURAS/V1.5/WINDOWS_V1.5/011_COMPARAR PRESUPUESTOS.jpg',
+            'CAPTURAS/V1.5/WINDOWS_V1.5/015_EXPORTAR EN VARIOS FORMATOS.jpg'
         ];
         let mockupIdx = 0;
 
@@ -2815,6 +2912,29 @@
         // Initialize on load
         window.addEventListener('DOMContentLoaded', () => {
             initSidebar();
+
+            // Tab switching logic for gallery
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    const platform = btn.dataset.platform;
+                    if (platform === 'windows') {
+                        screenshots = windowsScreenshots;
+                    } else {
+                        screenshots = androidScreenshots;
+                    }
+
+                    // Re-initialize sidebar thumbnails
+                    sidebar.innerHTML = '';
+                    initSidebar();
+
+                    // Reset to first image
+                    setGalleryImage(0);
+                });
+            });
+
             // Preload background slider image
             const bgSlider = document.getElementById('hero-bg-slider');
             if (bgSlider) {

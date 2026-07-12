@@ -9,7 +9,9 @@
 Visualizador web avanzado de archivos BC3 (FIEBDC-3) para presupuestos de construccion.
 **Mejora libre y gratuita para cualquier Arquitecto Tecnico, Arquitecto o profesional de la construccion by JMC.**
 
-> 📸 **¡Evolución Visual de la App!** Echa un vistazo y comprueba cómo ha progresado el visualizador en la carpeta [📁 CAPTURAS](./CAPTURAS). No te pierdas las imágenes de la última interfaz premium en la subcarpeta [🚀 CAPTURAS/V1.5](./CAPTURAS/V1.5).
+> 📸 **¡Evolución Visual de la App!** Echa un vistazo y comprueba cómo ha progresado el visualizador en la carpeta [📁 CAPTURAS](./CAPTURAS). No te pierdas las imágenes de la última interfaz premium en la versión 1.5.0:
+> *   **💻 Capturas para Windows Desktop:** [📁 CAPTURAS/V1.5/WINDOWS_V1.5](./CAPTURAS/V1.5/WINDOWS_V1.5)
+> *   **📱 Capturas para Android Mobile:** [📁 CAPTURAS/V1.5/ANDROID_V1.5](./CAPTURAS/V1.5/ANDROID_V1.5)
 
 ---
 
@@ -83,7 +85,9 @@ Esta version ampliada ha sido desarrollada por mí (`Jose Manuel Caamaño`---> [
 * **Iconografía Unificada en Windows:** Configuración de icono de marca oficial (`icon.png`) integrado en la barra de tareas y el ejecutable compilado de escritorio de Windows.
 * **Detección de Telemetría Avanzada:** Registro y telemetría de accesos diferenciados para la plataforma de `Windows` (aplicación Tauri de escritorio).
 * **Actualizaciones para Windows:** Redirección de descarga interactiva a través de navegador al buscar actualizaciones en el cliente de Windows.
- * **Capturas:** [🚀 CAPTURAS/V1.5](./CAPTURAS/V1.5)
+ * **Capturas:** 
+   * **💻 Windows Desktop:** [📁 CAPTURAS/V1.5/WINDOWS_V1.5](./CAPTURAS/V1.5/WINDOWS_V1.5)
+   * **📱 Android Mobile:** [📁 CAPTURAS/V1.5/ANDROID_V1.5](./CAPTURAS/V1.5/ANDROID_V1.5)
 
 ### 📅 10/07/2026 — Versión 1.4.7
 * **Ajustes de Interfaz y Carga:** Integración del nombre de archivo cargado en el menú Ajustes (⚙️) para limpiar la cabecera, alineación derecha del menú con iconos ordenados, justificación del texto de bienvenida y ocultación estricta del botón de cierre.
