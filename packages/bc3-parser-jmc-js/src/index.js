@@ -1,6 +1,3 @@
-// ⚠️ ARCHIVO AUTOGENERADO - NO EDITAR DIRECTAMENTE
-// Modificar en: packages/bc3-parser-jmc-js/src/index.js
-
 class BC3Parser {
     constructor() {
         this.records = [];
@@ -307,3 +304,5 @@ class BC3Parser {
     }
 }
 
+export { BC3Parser };
+export default BC3Parser;

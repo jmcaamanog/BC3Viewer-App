@@ -3,12 +3,17 @@
   "version": "1.5.0",
   "description": "Visualizador y Editor Premium de Presupuestos BC3 (Multiplataforma)",
   "main": "www/index.html",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "build:libs": "node scripts/sync-packages.js",
+    "tauri:dev": "npm run build:libs && tauri dev",
+    "tauri:build": "npm run build:libs && tauri build"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^1.5.0"
+    "@tauri-apps/cli": "^1.5.0",
+    "vitest": "^4.1.10"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",

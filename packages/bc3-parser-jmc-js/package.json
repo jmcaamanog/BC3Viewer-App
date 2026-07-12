@@ -1,0 +1,19 @@
+{
+  "name": "bc3-parser-jmc-js",
+  "version": "1.0.0",
+  "description": "Parser FIEBDC-3 (BC3) universal y ligero en JavaScript desarrollado por JMC",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "keywords": [
+    "bc3",
+    "fiebdc-3",
+    "construccion",
+    "presupuesto",
+    "parser"
+  ],
+  "author": "José Manuel Caamaño González",
+  "license": "MIT"
+}
