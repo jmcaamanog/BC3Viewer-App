@@ -1,6 +1,6 @@
 # 🌳 BC3 Viewer Multiplataforma (Windows & Android)
 
-### La herramienta definitiva, libre y 100% offline para la gestión de presupuestos FIEBDC-3 (.bc3).
+### La herramienta libre y 100% offline para la gestión de presupuestos FIEBDC-3 (.bc3).
 *Desarrollado desde la perspectiva real de un Arquitecto Técnico para dotar al sector de una utilidad ágil, segura y privada.*
 
 ---
@@ -31,10 +31,10 @@
 > ### 📥 Descarga Directa de Aplicaciones (Listas para Instalar)
 > Si quieres usar la herramienta en local de forma inmediata sin compilar el código:
 > *   **💻 Windows Escritorio:**
->     *   [Descargar Instalador .exe (NSIS)](https://github.com/jmcaamanog/BC3Viewer-App/raw/main/PROGRAMAS/BC3_Viewer_Windows_Installer.exe) *(Ultra ligero ~3 MB)*
->     *   [Descargar Paquete .msi (WiX)](https://github.com/jmcaamanog/BC3Viewer-App/raw/main/PROGRAMAS/BC3_Viewer_Windows_Installer.msi) *(Corporativo ~3.6 MB)*
+>     *   [Descargar Instalador .exe (NSIS)](https://github.com/jmcaamanog/BC3Viewer-App/releases/download/v1.5.0/BC3_Viewer_Windows_Installer.exe) *(Ultra ligero ~3 MB)*
+>     *   [Descargar Paquete .msi (WiX)](https://github.com/jmcaamanog/BC3Viewer-App/releases/download/v1.5.0/BC3_Viewer_Windows_Installer.msi) *(Corporativo ~3.6 MB)*
 > *   **📱 Android Móvil:**
->     *   [Descargar Aplicación .apk](https://github.com/jmcaamanog/BC3Viewer-App/raw/main/PROGRAMAS/BC3Viewer-App.apk) *(Soporte offline ~20 MB)*
+>     *   [Descargar Aplicación .apk](https://github.com/jmcaamanog/BC3Viewer-App/releases/download/v1.5.0/BC3Viewer-App.apk) *(Soporte offline ~20 MB)*
 > *   **📁 Archivo de Prueba:**
 >     *   [Descargar Presupuesto de Ejemplo (.bc3)](https://github.com/jmcaamanog/BC3Viewer-App/tree/main/PROGRAMAS/BC3%20EJEMPLO)
 >
@@ -43,7 +43,7 @@
 ---
 
 ### 👨‍💻 Creador de la Versión Premium
-Desarrollado y ampliado por **José Manuel Caamaño González** ([LinkedIn Perfil](https://www.linkedin.com/in/jmcaamanog/)), Arquitecto Técnico y BIM Manager.
+Desarrollado y ampliado por `José Manuel Caamaño González` ([LinkedIn](https://www.linkedin.com/in/jmcaamanog/)), Arquitecto Técnico y BIM Manager.
 *Partiendo de la base original de BC3php, este visor premium se ha optimizado bajo la filosofía ConTech de dotar al sector de una herramienta útil, abierta y libre de egos: "Abierto, libre y útil para la profesión".*
 
 ---
