@@ -13,3 +13,7 @@ src-tauri/binaries/
 # Capacitor android/ios native builds
 android/
 ios/
+
+# NPM local config with tokens
+.npmrc
+
