@@ -1,0 +1,22 @@
+{
+  "name": "bc3-gantt-jmc-js",
+  "version": "1.0.0",
+  "description": "Componente interactivo y ligero de diagramas de Gantt para la construcción desarrollado por JMC",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "keywords": [
+    "bc3",
+    "gantt",
+    "cronograma",
+    "planificacion",
+    "construccion"
+  ],
+  "author": "José Manuel Caamaño González",
+  "license": "MIT",
+  "dependencies": {
+    "bc3-parser-jmc-js": "^1.0.0"
+  }
+}

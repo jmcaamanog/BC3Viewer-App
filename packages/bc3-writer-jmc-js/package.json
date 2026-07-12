@@ -1,0 +1,19 @@
+{
+  "name": "bc3-writer-jmc-js",
+  "version": "1.0.0",
+  "description": "Serializador y generador bidireccional inverso de JSON a formato FIEBDC-3 (.bc3) desarrollado por JMC",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "keywords": [
+    "bc3",
+    "fiebdc-3",
+    "writer",
+    "generator",
+    "construccion"
+  ],
+  "author": "José Manuel Caamaño González",
+  "license": "MIT"
+}

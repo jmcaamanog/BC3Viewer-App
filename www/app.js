@@ -3764,90 +3764,46 @@ function ganttLoad() {
     } catch (e) { return false; }
 }
 
-// Extraer tareas hasta nivel 3 desde parsedData
-function getGanttTasks() {
-    const tasks = [];
-    if (!parsedData) return tasks;
-    const roots = Array.isArray(parsedData.root_nodes)
-        ? parsedData.root_nodes
-        : Object.values(parsedData.root_nodes);
+// Instancia global del motor de Gantt
+let ganttEngine = null;
 
-    function addTask(code, depth, parentId) {
-        if (depth > 3) return;
-        const concept = parsedData.concepts[code];
-        if (!concept) return;
-        const id = code;
-        const price = parseFloat(concept.price) || 0;
-        const children = getConceptDecomposition(concept);
-        const hasKids = children.length > 0 && depth < 3;
-
-        tasks.push({
-            id,
-            code: concept.code.replace(/#+\s*$/, ''),
-            summary: concept.summary || concept.code,
-            depth,
-            parentId,
-            price,
-            hasKids
+// Inicializa o retorna el motor de Gantt sincronizado
+function getGanttEngine() {
+    if (!ganttEngine) {
+        ganttEngine = new BC3GanttEngine(parsedData, {
+            totalWeeks: ganttTotalWeeks,
+            startDate: ganttStartDate,
+            state: ganttState,
+            preWeeks: GANTT_PRE_WEEKS,
+            viewMode: ganttViewMode,
+            colPx: GANTT_COL_PX
         });
-
-        if (hasKids) {
-            children.forEach(child => addTask(child.code, depth + 1, id));
-        }
+    } else {
+        // Sincronizar estado y parámetros cambiantes
+        ganttEngine.parsedData = parsedData;
+        ganttEngine.totalWeeks = ganttTotalWeeks;
+        ganttEngine.startDate = ganttStartDate;
+        ganttEngine.state = ganttState;
+        ganttEngine.viewMode = ganttViewMode;
+        ganttEngine.colPx = GANTT_COL_PX;
     }
-
-    roots.forEach(code => addTask(code, 1, null));
-    return tasks;
+    return ganttEngine;
 }
 
-// Distribución inicial automática (proporcional al coste)
+// Extraer tareas hasta nivel 3 desde parsedData delegando al motor
+function getGanttTasks() {
+    return getGanttEngine().getGanttTasks();
+}
+
+// Distribución inicial automática delegando al motor
 function initGanttStateAuto(tasks, totalWeeks) {
-    // depth=2 son los capítulos reales; depth=1 es el nodo raíz único del proyecto BC3
-    let chapterDepth = tasks.some(t => t.depth === 2) ? 2 : 1;
-    const total = tasks.filter(t => t.depth === chapterDepth).reduce((s, t) => s + t.price, 0) || 1;
-    let cursor = 1;
-
-    tasks.forEach(task => {
-        if (ganttState[task.id]) return; // ya guardado
-        if (task.depth === chapterDepth) {
-            const proportion = task.price / total;
-            const dur = Math.max(1, Math.round(proportion * totalWeeks));
-            ganttState[task.id] = { startWeek: cursor, durationWeeks: dur, collapsed: false };
-            cursor += dur;
-        }
-    });
-
-    // Subcapítulos y partidas: distribuidos dentro del padre
-    tasks.forEach(task => {
-        if (ganttState[task.id]) return;
-        if (task.depth > chapterDepth && task.parentId && ganttState[task.parentId]) {
-            const parent = ganttState[task.parentId];
-            const siblings = tasks.filter(t => t.parentId === task.parentId);
-            const idx = siblings.indexOf(task);
-            const dur = Math.max(1, Math.round(parent.durationWeeks / siblings.length));
-            const start = parent.startWeek + idx * dur;
-            ganttState[task.id] = {
-                startWeek: Math.min(start, parent.startWeek + parent.durationWeeks - 1),
-                durationWeeks: dur,
-                collapsed: false
-            };
-        }
-    });
-
-    // Inicializar el nodo raíz si existe (depth < chapterDepth)
-    tasks.forEach(task => {
-        if (ganttState[task.id]) return;
-        if (task.depth < chapterDepth) {
-            ganttState[task.id] = { startWeek: 1, durationWeeks: totalWeeks, collapsed: false };
-        }
-    });
+    const engine = getGanttEngine();
+    ganttState = engine.initGanttStateAuto();
 }
 
-// Calcular fecha de una semana relativa a ganttStartDate
+// Calcular fecha de una semana relativa delegando al motor
 function weekToDate(weekNum) {
-    const d = new Date(ganttStartDate);
-    d.setDate(d.getDate() + (weekNum - 1) * 7);
-    return d;
+    return getGanttEngine().weekToDate(weekNum);
 }
 
 function formatDate(d) {
@@ -4045,143 +4001,30 @@ function renderPlanningModal() {
     setTimeout(focusGanttToday, 100);
 }
 
-// Recalcular dinámicamente las fechas de los capítulos (padres) basándose en sus hijos
+// Recalcular dinámicamente las fechas de los capítulos (padres) delegando al motor
 function recalculateParentTasks() {
-    if (!ganttTasks || ganttTasks.length === 0) return;
-
-    // depth=1: nodo raíz global; depth=2: capítulos; depth=3: sub-capítulos/partidas
-    // Procesar de abajo hacia arriba: 3 → 2 → 1
-    for (let d = 3; d >= 1; d--) {
-        ganttTasks.forEach(task => {
-            if (task.depth === d && task.hasKids) {
-                const children = ganttTasks.filter(c => c.parentId === task.id);
-                if (children.length > 0) {
-                    let minStart = 9999;
-                    let maxEnd = 0;
-
-                    children.forEach(c => {
-                        const cSt = ganttState[c.id];
-                        if (cSt) {
-                            if (cSt.startWeek < minStart) minStart = cSt.startWeek;
-                            const cEnd = cSt.startWeek + cSt.durationWeeks;
-                            if (cEnd > maxEnd) maxEnd = cEnd;
-                        }
-                    });
-
-                    if (minStart !== 9999 && maxEnd > 0) {
-                        if (!ganttState[task.id]) {
-                            ganttState[task.id] = { collapsed: false };
-                        }
-                        ganttState[task.id].startWeek = minStart;
-                        ganttState[task.id].durationWeeks = Math.max(1, maxEnd - minStart);
-                    }
-                }
-            }
-        });
-    }
+    const engine = getGanttEngine();
+    engine.recalculateParentTasks();
+    ganttState = engine.state;
 }
 
-// Calcular el camino crítico entre los capítulos reales (depth === 2)
+// Calcular el camino crítico delegando al motor
 function getCriticalPath() {
-    const criticalIds = new Set();
-    if (!ganttTasks || ganttTasks.length === 0) return criticalIds;
-
-    // Los capítulos reales están en depth=2 (depth=1 es el nodo raíz del proyecto)
-    let chapters = ganttTasks.filter(t => t.depth === 2);
-    if (chapters.length === 0) chapters = ganttTasks.filter(t => t.depth === 1); // fallback
-    if (chapters.length === 0) return criticalIds;
-
-    // Encontrar la semana de fin máxima de entre todos los capítulos
-    let maxEnd = 0;
-    chapters.forEach(t => {
-        const st = ganttState[t.id];
-        if (st) {
-            const end = st.startWeek + st.durationWeeks;
-            if (end > maxEnd) maxEnd = end;
-        }
-    });
-
-    if (maxEnd === 0) return criticalIds;
-
-    // Empezar con los capítulos que terminan en maxEnd
-    const endChapters = chapters.filter(t => {
-        const st = ganttState[t.id];
-        return st && (st.startWeek + st.durationWeeks === maxEnd);
-    });
-
-    endChapters.forEach(t => criticalIds.add(t.id));
-
-    // Trazar hacia atrás recursivamente
-    let changed = true;
-    while (changed) {
-        changed = false;
-        chapters.forEach(t => {
-            if (criticalIds.has(t.id)) return;
-
-            const st = ganttState[t.id];
-            if (!st) return;
-
-            const tEnd = st.startWeek + st.durationWeeks;
-
-            // Si termina exactamente cuando empieza una tarea crítica (o con 1 semana de tolerancia)
-            for (let cId of criticalIds) {
-                const cSt = ganttState[cId];
-                if (!cSt) continue;
-
-                if (tEnd >= cSt.startWeek - 1 && tEnd <= cSt.startWeek && st.startWeek < cSt.startWeek) {
-                    criticalIds.add(t.id);
-                    changed = true;
-                    break;
-                }
-            }
-        });
-    }
-
-    return criticalIds;
+    return getGanttEngine().getCriticalPath();
 }
 
-// Recalcular dinámicamente el progreso de los capítulos basándose en la media ponderada por coste de sus hijos
+// Recalcular dinámicamente el progreso de los capítulos delegando al motor
 function recalculateParentProgress() {
-    if (!ganttTasks || ganttTasks.length === 0) return;
-
-    // depth=3→2→1: procesar de abajo hacia arriba para cubrir toda la jerarquía BC3
-    for (let d = 3; d >= 1; d--) {
-        ganttTasks.forEach(task => {
-            if (task.depth === d && task.hasKids) {
-                const children = ganttTasks.filter(c => c.parentId === task.id);
-                if (children.length > 0) {
-                    let totalPrice = 0;
-                    let executedPrice = 0;
-                    children.forEach(c => {
-                        const cSt = ganttState[c.id];
-                        const price = c.price || 0;
-                        const prog = cSt ? (cSt.progress || 0) : 0;
-                        totalPrice += price;
-                        executedPrice += price * (prog / 100);
-                    });
-                    if (!ganttState[task.id]) {
-                        ganttState[task.id] = { collapsed: false };
-                    }
-                    ganttState[task.id].progress = totalPrice > 0
-                        ? Math.round((executedPrice / totalPrice) * 100)
-                        : 0;
-                }
-            }
-        });
-    }
+    const engine = getGanttEngine();
+    engine.recalculateParentProgress();
+    ganttState = engine.state;
 }
 
-// Aplicar progreso de forma recursiva a todos los descendientes
+// Aplicar progreso de forma recursiva delegando al motor
 function applyProgressToDescendants(pId, prog) {
-    ganttTasks.forEach(c => {
-        if (c.parentId === pId) {
-            if (!ganttState[c.id]) ganttState[c.id] = {};
-            ganttState[c.id].progress = prog;
-            if (c.hasKids) {
-                applyProgressToDescendants(c.id, prog);
-            }
-        }
-    });
+    const engine = getGanttEngine();
+    engine.applyProgressToDescendants(pId, prog);
+    ganttState = engine.state;
 }
 
 function rebuildGanttDOM() {
@@ -4814,25 +4657,14 @@ function rebuildGanttDOM() {
     ganttPrevColPx = GANTT_COL_PX;
 }
 
-// Calcular coordenadas izquierda y ancho de barra según el zoom y la escala activa
+// Calcular coordenadas izquierda y ancho de barra según el zoom y la escala activa delegando al motor
 function getGanttBarCoords(st) {
-    let left = 0;
-    let width = 0;
-
-    if (ganttViewMode === 'days') {
-        left = (st.startWeek - 1 + GANTT_PRE_WEEKS) * 7 * GANTT_COL_PX;
-        width = Math.max(GANTT_COL_PX * 0.5, (st.durationWeeks * 7) * GANTT_COL_PX - 2);
-    } else if (ganttViewMode === 'months') {
-        left = ((st.startWeek - 1 + GANTT_PRE_WEEKS) / 4) * GANTT_COL_PX;
-        width = Math.max(GANTT_COL_PX * 0.5, (st.durationWeeks / 4) * GANTT_COL_PX - 2);
-    } else {
-        // semanas
-        left = (st.startWeek - 1 + GANTT_PRE_WEEKS) * GANTT_COL_PX;
-        width = Math.max(GANTT_COL_PX * 0.5, st.durationWeeks * GANTT_COL_PX - 2);
-    }
-
-    return { left, width };
+    const coords = getGanttEngine().getBarCoords(st.startWeek, st.durationWeeks);
+    // Restamos 2px al ancho para dejar la separación estética original
+    coords.width = Math.max(GANTT_COL_PX * 0.5, coords.width - 2);
+    return coords;
 }
+
 
 function positionBar(barEl, startWeek, durationWeeks, totalWeeks) {
     const { left, width } = getGanttBarCoords({ startWeek, durationWeeks });
