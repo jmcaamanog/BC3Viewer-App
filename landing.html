@@ -2500,10 +2500,10 @@
                 </div>
             </div>
             <div class="video-preview-strip">
-                <img src="CAPTURAS/V1.5/002_PRESUPUESTO.jpg" alt="Presupuesto" class="strip-img">
-                <img src="CAPTURAS/V1.5/005_DASHBOARD.jpg" alt="Dashboard" class="strip-img">
-                <img src="CAPTURAS/V1.5/006_PLANNING DE OBRA.jpg" alt="Gantt" class="strip-img">
-                <img src="CAPTURAS/V1.5/015_EXPORTAR EN VARIOS FORMATOS.jpg" alt="Exportar" class="strip-img">
+                <img src="CAPTURAS/V1.5/WINDOWS_V1.5/002_PRESUPUESTO.jpg" alt="Presupuesto" class="strip-img">
+                <img src="CAPTURAS/V1.5/WINDOWS_V1.5/005_DASHBOARD.jpg" alt="Dashboard" class="strip-img">
+                <img src="CAPTURAS/V1.5/WINDOWS_V1.5/006_PLANNING DE OBRA.jpg" alt="Gantt" class="strip-img">
+                <img src="CAPTURAS/V1.5/WINDOWS_V1.5/015_EXPORTAR EN VARIOS FORMATOS.jpg" alt="Exportar" class="strip-img">
             </div>
         </div>
     </section>
@@ -2896,12 +2896,11 @@
 
         function rotateHeroMockup() {
             mockupIdx = (mockupIdx + 1) % mockupImages.length;
-            const bgSlider = document.getElementById('hero-bg-slider');
-            if (bgSlider) {
-                bgSlider.style.opacity = 0;
+            if (heroMockup) {
+                heroMockup.style.opacity = 0;
                 setTimeout(() => {
-                    bgSlider.style.backgroundImage = `url('${mockupImages[mockupIdx]}')`;
-                    bgSlider.style.opacity = 0.85;
+                    heroMockup.style.backgroundImage = `url('${mockupImages[mockupIdx]}')`;
+                    heroMockup.style.opacity = 0.85;
                 }, 500);
             }
         }
@@ -2936,10 +2935,9 @@
             });
 
             // Preload background slider image
-            const bgSlider = document.getElementById('hero-bg-slider');
-            if (bgSlider) {
-                bgSlider.style.backgroundImage = `url('${mockupImages[0]}')`;
-                bgSlider.style.transition = 'opacity 0.6s ease-in-out';
+            if (heroMockup) {
+                heroMockup.style.backgroundImage = `url('${mockupImages[0]}')`;
+                heroMockup.style.transition = 'opacity 0.6s ease-in-out';
             }
 
             // Add custom animation styles for transitions
