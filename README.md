@@ -6,11 +6,12 @@
 ---
 
 <p align="center">
-  <a href="https://github.com/jmcaamanog/BC3Viewer-App/releases/latest"><img src="https://img.shields.io/github/v/release/jmcaamanog/BC3Viewer-App?label=Versión&color=3b82f6&logo=github" alt="Versión"></a>
+  <a href="https://github.com/jmcaamanog/BC3Viewer-App/releases/latest"><img src="https://img.shields.io/github/v/release/jmcaamanog/BC3Viewer-App?label=Version&color=3b82f6&logo=github" alt="Versión"></a>
   <a href="https://github.com/jmcaamanog/BC3Viewer-App/stargazers"><img src="https://img.shields.io/github/stars/jmcaamanog/BC3Viewer-App?style=flat&label=Stars&color=f59e0b&logo=github" alt="Stars"></a>
   <a href="https://github.com/jmcaamanog/BC3Viewer-App/releases"><img src="https://img.shields.io/github/downloads/jmcaamanog/BC3Viewer-App/total?label=Descargas&color=10b981&logo=github" alt="Descargas"></a>
   <a href="https://github.com/jmcaamanog/BC3Viewer-App/blob/main/LICENSE"><img src="https://img.shields.io/badge/Licencia-MIT-8b5cf6.svg" alt="Licencia"></a>
   <a href="https://jmcaamanog.github.io/BC3Viewer-App/landing.html"><img src="https://img.shields.io/badge/Plataforma-Windows%20%7C%20Android%20%7C%20Web-06b6d4" alt="Plataformas"></a>
+  <a href="https://www.linkedin.com/in/jmcaamanog/"><img src="https://img.shields.io/badge/Profesi%C3%B3n-Arquitectos%20T%C3%A9cnicos-2e7d32?logo=micro%3Abit&logoColor=white" alt="Profesión"></a>
 </p>
 
 ---
