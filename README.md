@@ -1,5 +1,16 @@
 # 🌳 BC3 Viewer Multiplataforma (Windows & Android)
 
+![Role](https://img.shields.io/badge/Role-BIM%20%26%20ConTech-007ACC?logo=bim360&style=flat-square)
+![Location](https://img.shields.io/badge/Location-A%20Coru%C3%B1a%20%F0%9F%8C%8A-005B94?logo=lighthouse&logoColor=white&style=flat-square)
+![Sector](https://img.shields.io/badge/Sector-ConTech%20%7C%20AECO-E65100?logo=construct3&style=flat-square)
+![Maker](https://img.shields.io/badge/Maker-Software-red?logo=makerbot&style=flat-square)
+![Hardware](https://img.shields.io/badge/Hardware---grey?style=flat-square)
+![Windows](https://img.shields.io/badge/Platform-Windows-0078D6?logo=windows&style=flat-square)
+![Android](https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white&style=flat-square)
+![Language](https://img.shields.io/badge/Language-Java-ED8B00?logo=java&logoColor=white&style=flat-square)
+![Stars](https://img.shields.io/github/stars/jmcaamanog/BC3Viewer-App?style=flat-square&color=yellow&logo=github)
+![License](https://img.shields.io/github/license/jmcaamanog/BC3Viewer-App?style=flat-square&color=green)
+
 ### La herramienta libre y 100% offline para la gestión de presupuestos FIEBDC-3 (.bc3).
 *Desarrollado desde la perspectiva real de un Arquitecto Técnico para dotar al sector de una utilidad ágil, segura y privada.*
 
