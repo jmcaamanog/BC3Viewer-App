@@ -7,6 +7,9 @@
 | 🏗️ Perfil & ConTech | 📈 Repositorio & Enlaces |
 | :--- | :--- |
 
+| 🏗️ Perfil & ConTech | 📈 Repositorio & Enlaces |
+| :--- | :--- |
+
 ### La herramienta libre y 100% offline para la gestión de presupuestos FIEBDC-3 (.bc3).
 *Desarrollado desde la perspectiva real de un Arquitecto Técnico para dotar al sector de una utilidad ágil, segura y privada.*
 
