@@ -186,9 +186,8 @@ Desarrollado y ampliado por `José Manuel Caamaño González` ([LinkedIn](https:
 
 ## 👨‍💻 Autor de la versión mejorada
 
-Jose Manuel Caamaño González | Arquitecto Técnico & BIM Manager.
-Digital Product Lead | ConTech & Digital Twin SaaS | BIM, Energy Modeling & Sustainability | Data Analytics (SQL, Power BI)
+**Jose Manuel Caamaño González** | Arquitecto Técnico & BIM Manager
+Digital Product Lead | ConTech & Digital Twin SaaS | Data Analytics (SQL, Power BI)
 
 Hecho con código y café desde A Coruña. ☕
-
-Jose Manuel Caamaño González | [LinkedIn](https://www.linkedin.com/in/jmcaamanog/)
+[LinkedIn](https://www.linkedin.com/in/jmcaamanog/) · [Web](https://jmcaamanog.pages.dev)
