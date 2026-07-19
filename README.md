@@ -4,6 +4,9 @@
 | :--- | :--- |
 | ![Profesión](https://img.shields.io/badge/Profesi%C3%B3n-Arquitectos%20T%C3%A9cnicos-2e7d32?logo=micro%3Abit&logoColor=white&style=plastic) <br> ![Role](https://img.shields.io/badge/Role-BIM%20%26%20ConTech-007ACC?logo=bim360&style=plastic) <br> ![Location](https://img.shields.io/badge/Location-A%20Coru%C3%B1a%20%F0%9F%8C%8A-005B94?logo=lighthouse&logoColor=white&style=plastic) <br> ![Sector](https://img.shields.io/badge/Sector-ConTech%20%7C%20AECO-E65100?logo=construct3&style=plastic) <br> ![Maker](https://img.shields.io/badge/Maker-Software-red?logo=makerbot&style=plastic) <br> ![Hardware](https://img.shields.io/badge/Hardware---grey?style=plastic) <br> ![Windows](https://img.shields.io/badge/Platform-Windows-0078D6?logo=windows&style=plastic) <br> ![Android](https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white&style=plastic) <br> ![Language](https://img.shields.io/badge/Language-Java-ED8B00?logo=java&logoColor=white&style=plastic) | [![Versión](https://img.shields.io/github/v/release/jmcaamanog/BC3Viewer-App?label=Version&color=3b82f6&logo=github&style=plastic)](https://github.com/jmcaamanog/BC3Viewer-App/releases/latest) <br> [![Stars](https://img.shields.io/github/stars/jmcaamanog/BC3Viewer-App?style=plastic&label=Stars&color=f59e0b&logo=github)](https://github.com/jmcaamanog/BC3Viewer-App/stargazers) <br> [![Descargas](https://img.shields.io/github/downloads/jmcaamanog/BC3Viewer-App/total?label=Descargas&color=10b981&logo=github&style=plastic)](https://github.com/jmcaamanog/BC3Viewer-App/releases) <br> [![Licencia](https://img.shields.io/badge/Licencia-MIT-8b5cf6.svg?style=plastic)](https://github.com/jmcaamanog/BC3Viewer-App/blob/main/LICENSE) <br> [![Plataformas](https://img.shields.io/badge/Plataforma-Windows%20%7C%20Android%20%7C%20Web-06b6d4?style=plastic)](https://jmcaamanog.github.io/BC3Viewer-App/landing.html) <br> [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=plastic&logo=linkedin)](https://www.linkedin.com/in/jmcaamanog/) |
 
+| 🏗️ Perfil & ConTech | 📈 Repositorio & Enlaces |
+| :--- | :--- |
+
 ### La herramienta libre y 100% offline para la gestión de presupuestos FIEBDC-3 (.bc3).
 *Desarrollado desde la perspectiva real de un Arquitecto Técnico para dotar al sector de una utilidad ágil, segura y privada.*
 
@@ -94,7 +97,6 @@ Desarrollado y ampliado por `José Manuel Caamaño González` ([LinkedIn](https:
 ---
 
 ## 🛠️ ¿Qué se ha hecho en este repositorio?
-
 
 1.  **Migración Arquitectónica a Cliente Puro (Offline):**
     *   **Portado del Parser:** Tradujimos el parser original escrito en PHP (`BC3Parser.php`) a JavaScript del lado del cliente (`BC3Parser.js`). Toda la lectura e interpretación de registros (`~V`, `~C`, `~D`, `~M`, `~T`) se ejecuta ahora localmente.
