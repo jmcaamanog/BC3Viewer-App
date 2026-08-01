@@ -1,4 +1,4 @@
-const APP_VERSION = '1.5.0'; // Versión actual de la aplicación (Actualizada)
+const APP_VERSION = '1.5.1'; // Versión actual de la aplicación (Actualizada con telemetría IP)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // URL del Webhook de Google Sheets para registrar usuarios de la app.
@@ -22,10 +22,26 @@ async function registerUserAccess() {
             platform = 'Windows';
         }
 
+        // Obtener la IP pública del usuario con timeout de 2.5s para no demorar la app si no hay red
+        let userIp = '';
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2500);
+            const ipRes = await fetch('https://api.ipify.org?format=json', { signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (ipRes.ok) {
+                const ipData = await ipRes.json();
+                userIp = ipData.ip || '';
+            }
+        } catch (ipErr) {
+            // Ignorar silenciosamente si no se resuelve la IP
+        }
+
         const payload = {
             deviceId: deviceId,
             version: APP_VERSION,
             platform: platform,
+            ip: userIp,
             timestamp: new Date().toISOString()
         };
 

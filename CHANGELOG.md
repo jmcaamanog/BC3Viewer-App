@@ -2,9 +2,10 @@
 
 En este documento se detalla la evolución completa de la aplicación, incluyendo todas las revisiones y mejoras intermedias realizadas.
 
----
+### Versión 1.5.1 — 01/08/2026 (Actual)
+* **Telemetría de IP Pública:** Incorporada la resolución asíncrona de la dirección IP pública del usuario con timeout silencioso de 2.5s para incluir la IP en el webhook de registro de uso sin ralentizar la aplicación en ninguna plataforma (Web, Android, Windows).
 
-### Versión 1.5.0 — 11/07/2026 (Actual)
+### Versión 1.5.0 — 11/07/2026
 * **Gesto de Zoom Continuo y Suave:** Rediseño del gesto pinch-to-zoom con `requestAnimationFrame` en la vista de Gantt para un zoom orgánico continuo de alta precisión.
 * **Preservación del Centro de la Vista (Zoom):** El zoom se realiza exactamente sobre la semana que el usuario está mirando, evitando desplazamientos involuntarios al principio del timeline.
 * **Preservación de Scroll Vertical y Horizontal:** El scroll vertical y horizontal se mantiene fijo al enlazar tareas o reconstruir la vista.
