@@ -8155,11 +8155,16 @@ async function checkForUpdates(isManual = false) {
 
                     // Instalar/Establecer el nuevo bundle como la versión activa
                     await CapacitorUpdater.set(downloadResult);
-                    logOta(`Nueva versión establecida correctamente. Aplicando al reiniciar.`);
-                    updateStatus(`¡Actualizado! Se aplicará al reiniciar.`, false);
+                    logOta(`Nueva versión establecida correctamente.`);
+                    updateStatus(`¡Actualizado a V${updateInfo.version}!`, false);
 
-                    // Mostrar Toast no intrusivo al usuario
-                    showToastMessage(`✨ Aplicación actualizada a la versión V${updateInfo.version}. Se aplicará en el próximo reinicio.`);
+                    if (isManual || confirm(`✨ ¡Nueva versión V${updateInfo.version} instalada!\n¿Deseas reiniciar la aplicación ahora para aplicar los cambios?`)) {
+                        if (typeof CapacitorUpdater.reload === 'function') {
+                            await CapacitorUpdater.reload();
+                        }
+                    } else {
+                        showToastMessage(`✨ Aplicación actualizada a la versión V${updateInfo.version}. Se aplicará en el próximo reinicio.`);
+                    }
                 }
             }
         } else {
