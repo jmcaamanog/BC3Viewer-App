@@ -2,7 +2,10 @@
 
 En este documento se detalla la evolución completa de la aplicación, incluyendo todas las revisiones y mejoras intermedias realizadas.
 
-### Versión 1.5.1 — 01/08/2026 (Actual)
+### Versión 1.5.2 — 13/08/2026 (Actual)
+* **Corrección de Carga de Archivos BC3 (Fix Conceptos No Definidos):** Se resuelve el error `Cannot read properties of undefined (reading 'price')` que bloqueaba la apertura de presupuestos cuando contenían elementos referenciados en descomposición pero ausentes de la lista de conceptos.
+
+### Versión 1.5.1 — 01/08/2026
 * **Telemetría de IP Pública:** Incorporada la resolución asíncrona de la dirección IP pública del usuario con timeout silencioso de 2.5s para incluir la IP en el webhook de registro de uso sin ralentizar la aplicación en ninguna plataforma (Web, Android, Windows).
 
 ### Versión 1.5.0 — 11/07/2026

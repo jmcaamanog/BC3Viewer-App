@@ -1,4 +1,4 @@
-const APP_VERSION = '1.5.1'; // Versión actual de la aplicación (Actualizada con telemetría IP)
+const APP_VERSION = '1.5.2'; // Versión actual de la aplicación (Fix error apertura de archivo por concepto no definido)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // URL del Webhook de Google Sheets para registrar usuarios de la app.
@@ -1996,21 +1996,23 @@ function showDetails(code) {
 
 // Recálculo recursivo de precios ascendente
 function recalculateConceptPrice(code, visited = new Set()) {
+    const concept = parsedData && parsedData.concepts ? parsedData.concepts[code] : null;
+    if (!concept) return 0;
+
     if (visited.has(code)) {
-        return parseFloat(parsedData.concepts[code].price) || 0;
+        return parseFloat(concept.price) || 0;
     }
     visited.add(code);
-
-    const concept = parsedData.concepts[code];
-    if (!concept) return 0;
 
     let decomposition = getConceptDecomposition(concept);
 
     if (decomposition.length > 0 && !concept.isManualPrice) {
         let sum = 0;
         decomposition.forEach(item => {
-            const childPrice = recalculateConceptPrice(item.code, visited);
-            sum += childPrice * parseFloat(item.factor);
+            if (item && item.code) {
+                const childPrice = recalculateConceptPrice(item.code, visited);
+                sum += childPrice * (parseFloat(item.factor) || 0);
+            }
         });
         concept.price = sum;
     }
@@ -5624,7 +5626,7 @@ function showUsageModal(code, parentCodes) {
                 <span class="usage-item-subtitle">Cantidad en partida: ${factor.toLocaleString('es-ES')} ${parent.unit}</span>
             </div>
             <div class="usage-item-contribution">
-                ${(factor * parseFloat(parsedData.concepts[code].price || 0)).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
+                ${(factor * parseFloat(parsedData?.concepts?.[code]?.price || 0)).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
             </div>
         `;
 
