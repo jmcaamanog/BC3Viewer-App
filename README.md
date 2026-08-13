@@ -21,8 +21,8 @@
 | :--- | :--- | :--- |
 | **Landing Page** | 👉 **[Visitar Presentación Web](https://jmcaamanog.github.io/BC3Viewer-App/landing.html)** | Web interactiva para explorar módulos y descargas. |
 | **App Online** | 👉 **[Abrir App Web](https://jmcaamanog.github.io/BC3Viewer-App/www/index.html)** | Utiliza la versión en la nube directo en tu navegador. |
-| **Capturas Windows** | 💻 **[Ver Galería Windows (V1.5.0)](./CAPTURAS/V1.5/WINDOWS_V1.5)** | Capturas de pantalla de la interfaz de escritorio Premium. |
-| **Capturas Android** | 📱 **[Ver Galería Android (V1.5.0)](./CAPTURAS/V1.5/ANDROID_V1.5)** | Capturas de pantalla de la app en móvil/tableta. |
+| **Capturas Windows** | 💻 **[Ver Galería Windows (V1.5.2)](./CAPTURAS/V1.5/WINDOWS_V1.5)** | Capturas de pantalla de la interfaz de escritorio Premium. |
+| **Capturas Android** | 📱 **[Ver Galería Android (V1.5.2)](./CAPTURAS/V1.5/ANDROID_V1.5)** | Capturas de pantalla de la app en móvil/tableta. |
 
 ---
 
@@ -30,14 +30,14 @@
 > ### 📥 Descarga Directa de Aplicaciones (Listas para Instalar)
 > Si quieres usar la herramienta en local de forma inmediata sin compilar el código:
 > *   **💻 Windows Escritorio:**
->     *   [Descargar Instalador .exe (NSIS)](https://github.com/jmcaamanog/BC3Viewer-App/releases/download/v1.5.0/BC3_Viewer_Windows_Installer.exe) *(Ultra ligero ~3 MB)*
->     *   [Descargar Paquete .msi (WiX)](https://github.com/jmcaamanog/BC3Viewer-App/releases/download/v1.5.0/BC3_Viewer_Windows_Installer.msi) *(Corporativo ~3.6 MB)*
+>     *   [Descargar Instalador .exe (NSIS)](https://github.com/jmcaamanog/BC3Viewer-App/releases/download/v1.5.2/BC3_Viewer_Windows_Installer.exe) *(Ultra ligero ~3 MB)*
+>     *   [Descargar Paquete .msi (WiX)](https://github.com/jmcaamanog/BC3Viewer-App/releases/download/v1.5.2/BC3_Viewer_Windows_Installer.msi) *(Corporativo ~3.6 MB)*
 > *   **📱 Android Móvil:**
->     *   [Descargar Aplicación .apk](https://github.com/jmcaamanog/BC3Viewer-App/releases/download/v1.5.0/BC3Viewer-App.apk) *(Soporte offline ~20 MB)*
+>     *   [Descargar Aplicación .apk](https://github.com/jmcaamanog/BC3Viewer-App/releases/download/v1.5.2/BC3Viewer-App.apk) *(Soporte offline ~20 MB)*
 > *   **📁 Archivo de Prueba:**
 >     *   [Descargar Presupuesto de Ejemplo (.bc3)](https://github.com/jmcaamanog/BC3Viewer-App/tree/main/PROGRAMAS/BC3%20EJEMPLO)
 >
-> 🔑 **Contraseña de Acceso (Versión 1.5.0):** `1234`
+> 🔑 **Contraseña de Acceso (Versión 1.5.2):** `1234`
 
 ---
 
@@ -75,7 +75,11 @@ Desarrollado y ampliado por `José Manuel Caamaño González` ([LinkedIn](https:
 
 > 📜 **[Ver Historial de Versiones Completo (CHANGELOG.md)](./CHANGELOG.md)**
 
-### 📅 11/07/2026 — Versión 1.5.0 (Actual)
+### 📅 13/08/2026 — Versión 1.5.2 (Actual)
+* **Corrección de Carga de Archivos BC3:** Resuelto el fallo `Cannot read properties of undefined (reading 'price')` que impedía abrir presupuestos con desgloses que referenciaban conceptos no definidos explícitamente.
+* **Recálculo de Precios Seguro:** Verificación estricta de la presencia de cada nodo antes de la pasada recursiva.
+
+### 📅 11/07/2026 — Versión 1.5.0
 * **Zoom Táctil y Continuo:** Implementación de gesto de pellizcar (pinch-to-zoom) fluido con `requestAnimationFrame` en dispositivos móviles y preservación del centro de la semana al cambiar el nivel de zoom.
 * **Botón Flotante Conmutador del Gantt:** Botón flotante único inferior izquierdo animado para expandir/colapsar la columna de tareas que se adapta dinámicamente al ancho de la columna de tareas.
 * **Restauración de Posición de Scroll:** Preservación completa del scroll vertical y horizontal al enlazar tareas o redibujar el Gantt.
