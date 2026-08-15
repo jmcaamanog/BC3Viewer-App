@@ -2,7 +2,19 @@
 
 En este documento se detalla la evolución completa de la aplicación, incluyendo todas las revisiones y mejoras intermedias realizadas.
 
-### Versión 1.5.2 — 13/08/2026 (Actual)
+### Versión 2.0.0 — 16/08/2026 (Actual)
+* **📑 Sistema Multi-Presupuesto con Pestañas:** Pestañas superiores para gestionar varios presupuestos simultáneamente en memoria (`.budget-tab-bar`). Botón de nuevo presupuesto (`+`) con estilo punteado y guardado directo local en disco mediante File System Access API.
+* **☀️ Visualizador Sunburst Multinivel con Zoom:** Gráfico interactivo concéntrico con selector de 1 a 5 niveles de profundidad (Capítulos, Subcapítulos, Partidas, Descompuestos, Insumos básicos). Zoom dinámico por clic y ficha inferior de descompuestos con altura flexible y scroll vertical suave.
+* **🌊 Diagrama Sankey Interactivo:** Flujo visual de costes para entender la distribución porcentual e importes de los recursos y capítulos a lo largo del presupuesto de obra.
+* **🌿 Módulo de Impacto Ambiental & Huella de Carbono (CO₂):** Estimación analítica de emisiones de CO₂ (kg CO₂ eq) y reparto por tipología de materiales constructivos con gráficos Chart.js adaptados con alto contraste para tema claro y oscuro.
+* **⚙️ Desglose Completo de Coeficientes de Contrata:** Visualización en cabecera de `PEM` + `GG (13%)` + `BI (6%)` = `PEC`, con control de bajas/alzas y cuadratura matemática exacta.
+* **📝 Editor de Mediciones y Deducciones de Huecos:** Soporte para deducciones automáticas con unidades negativas (`-1`), evaluador seguro de fórmulas matemáticas `fx` y asignación de decimales inteligente por magnitud física (0 decimales para unidades, 2 para superficies/longitudes, 3 para volúmenes/pesos).
+* **📤 Menú de Importación / Exportación Homogéneo:** 6 opciones visualmente estandarizadas con paleta de colores exclusiva (`📄 PDF (.pdf)`, `📊 EXCEL (.xlsx)`, `💾 FIEBDC-3 (.bc3)`, `📊 EXCEL (.xlsx)`, `📄 CSV (.csv)`, `📂 FIEBDC-3 (.bc3)`).
+* **⌨️ Paleta de Comandos Rápida (Ctrl+K):** Búsqueda instantánea de herramientas, accesos rápidos de teclado (`Ctrl+S`, `Ctrl+F`, `Ctrl+Z`, `Ctrl+Y`) y navegación ágil.
+* **📏 Estabilización Dimensional del Modal de Dashboard:** Modal de altura fija (`90vh`) y ancho expandido (`95vw`) con transiciones estables entre sus 4 vistas integradas.
+* **🌐 Presencia del Autor y Portfolio Web:** Integración destacada de la web personal `https://jmcaamanog.pages.dev/` en la pantalla de bienvenida y documentación oficial.
+
+### Versión 1.5.2 — 13/08/2026
 * **Corrección de Carga de Archivos BC3 (Fix Conceptos No Definidos):** Se resuelve el error `Cannot read properties of undefined (reading 'price')` que bloqueaba la apertura de presupuestos cuando contenían elementos referenciados en descomposición pero ausentes de la lista de conceptos.
 
 ### Versión 1.5.1 — 01/08/2026

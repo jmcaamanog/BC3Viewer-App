@@ -2228,17 +2228,49 @@
 
         <div class="timeline">
 
-            <!-- v1.5.2 -->
+            <!-- v2.0.0 -->
             <div class="timeline-item current">
                 <div class="timeline-dot"></div>
                 <div class="timeline-content">
                     <div class="timeline-header">
-                        <span class="version-badge current-badge">v1.5.2 — Actual</span>
+                        <span class="version-badge current-badge">v2.0.0 — Actual</span>
+                        <span class="version-date">16 Ago 2026</span>
+                    </div>
+                    <h3 class="version-title">Gran Salto a la v2.0: Multi-Presupuesto, Sunburst, Sankey e Impacto Ambiental</h3>
+                    <ul class="version-items">
+                        <li><strong>Multi-Presupuesto:</strong> Pestañas simultáneas para trabajar con varios proyectos .bc3 y guardado directo en disco con File System Access API.</li>
+                        <li><strong>Visualizador Sunburst Multinivel:</strong> Zoom concéntrico con selector de 1 a 5 niveles de detalle y tabla inferior de descompuestos con scroll dinámico.</li>
+                        <li><strong>Diagrama Sankey:</strong> Flujo interactivo de costes y distribución jerárquica de la obra.</li>
+                        <li><strong>Impacto Ambiental & CO₂:</strong> Huella de carbono (kg CO₂ eq) y distribución tipológica de materiales con gráficos sincronizados en modo claro y oscuro.</li>
+                        <li><strong>Tarjetas Económicas Completas:</strong> Cuadratura matemática de PEM + GG (13%) + BI (6%) = PEC en la barra superior.</li>
+                        <li><strong>Mediciones con Fórmulas Dinámicas:</strong> Deducciones de huecos automáticas (-1), evaluador de fórmulas <code>fx</code> y formato inteligente de decimales por unidad física.</li>
+                        <li><strong>Menú de Importación / Exportación Homogéneo:</strong> 6 opciones con paleta de colores temáticos (PDF .pdf, Excel .xlsx, CSV .csv, FIEBDC-3 .bc3).</li>
+                        <li><strong>Paleta de Comandos Rápida:</strong> Acceso instantáneo a todas las herramientas con Ctrl+K.</li>
+                    </ul>
+                    <div class="version-actions" style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <a href="www/index.html" class="btn btn-primary" target="_blank"
+                            style="padding: 8px 16px; font-size: 0.85rem; gap: 6px; border-radius: 8px; box-shadow: none;">
+                            <span>🚀</span> Abrir App Web v2.0
+                        </a>
+                        <a href="https://jmcaamanog.pages.dev/" class="btn btn-secondary" target="_blank"
+                            style="padding: 8px 16px; font-size: 0.85rem; gap: 6px; border-radius: 8px; border-color: var(--accent-primary); color: #fff; background: rgba(59, 130, 246, 0.15);">
+                            <span>🌐</span> Web Personal
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- v1.5.2 -->
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="timeline-header">
+                        <span class="version-badge">v1.5.2</span>
                         <span class="version-date">13 Ago 2026</span>
                     </div>
                     <h3 class="version-title">Estabilidad de Carga y Fix de Conceptos</h3>
                     <ul class="version-items">
-                        <li>Corrección del fallo Cannot read properties of undefined (reading 'price') al abrir presupuestos BC3 con elementos no definidos.</li>
+                        <li>Corrección del fallo Cannot read properties of undefined al abrir presupuestos BC3 con elementos no definidos.</li>
                         <li>Verificación segura de existencia de partidas previa al recálculo ascendente de precios.</li>
                         <li>Actualización directa OTA para Web, Android y ejecutable de Windows.</li>
                     </ul>
@@ -2616,6 +2648,11 @@
                     "Abierto, libre y útil para la profesión... Seamos libres de egos."
                 </p>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <a href="https://jmcaamanog.pages.dev/" class="btn btn-secondary" target="_blank" rel="noopener"
+                        style="display: inline-flex; align-items: center; gap: 8px; border-color: var(--accent-primary); color: #fff; background: rgba(59, 130, 246, 0.18);">
+                        <span>🌐</span>
+                        <span>Web Personal (jmcaamanog.pages.dev)</span>
+                    </a>
                     <a href="https://www.linkedin.com/in/jmcaamanog/" class="btn btn-linkedin" target="_blank"
                         rel="noopener" style="display: inline-flex; align-items: center; gap: 8px;">
                         <svg height="18" width="18" viewBox="0 0 24 24" fill="currentColor" style="display:block;">

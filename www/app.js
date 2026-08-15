@@ -164,14 +164,86 @@ window.addEventListener('resize', function () {
     }, 250);
 });
 
+// --- Web Worker Infrastructure para Procesamiento Asíncrono ---
+let bc3Worker = null;
+const workerCallbacks = new Map();
+let workerMsgId = 0;
+
+function initBC3Worker() {
+    if (typeof Worker !== 'undefined') {
+        try {
+            bc3Worker = new Worker('bc3-worker.js');
+            bc3Worker.onmessage = function (e) {
+                const { id, success, data, error } = e.data || {};
+                if (workerCallbacks.has(id)) {
+                    const { resolve, reject } = workerCallbacks.get(id);
+                    workerCallbacks.delete(id);
+                    if (success) {
+                        resolve(data);
+                    } else {
+                        reject(new Error(error || 'Error en Web Worker'));
+                    }
+                }
+            };
+            bc3Worker.onerror = function (err) {
+                console.warn("Web Worker error, recurriendo a modo síncrono:", err);
+            };
+        } catch (e) {
+            console.warn("Web Worker no pudo instanciarse localmente, usando fallback síncrono:", e);
+            bc3Worker = null;
+        }
+    }
+}
+initBC3Worker();
+
+function parseWithWorker(content) {
+    return new Promise((resolve, reject) => {
+        if (!bc3Worker) {
+            try {
+                const parser = new BC3Parser();
+                const result = parser.parse(content);
+                return resolve(result);
+            } catch (err) {
+                return reject(err);
+            }
+        }
+
+        const id = ++workerMsgId;
+        workerCallbacks.set(id, { resolve, reject });
+        bc3Worker.postMessage({
+            id,
+            action: 'PARSE_BC3',
+            payload: { content }
+        });
+    });
+}
+
+function showWorkerLoader(text = "Procesando archivo...", subtext = "Hilo asíncrono en segundo plano") {
+    const overlay = document.getElementById('workerLoadingOverlay');
+    const textEl = document.getElementById('workerLoadingText');
+    const subtextEl = document.getElementById('workerLoadingSubtext');
+    if (textEl) textEl.textContent = text;
+    if (subtextEl) subtextEl.textContent = subtext;
+    if (overlay) overlay.style.display = 'flex';
+}
+
+function hideWorkerLoader() {
+    const overlay = document.getElementById('workerLoadingOverlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
 // 3. Upload Form Submit
 // Helper to read and decode a BC3 file locally based on its declared charset or UTF-8
 async function readAndParseBC3File(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onerror = () => reject(new Error("Error de lectura de archivo"));
-        reader.onload = function (e) {
+        reader.onerror = () => {
+            hideWorkerLoader();
+            reject(new Error("Error de lectura de archivo"));
+        };
+        reader.onload = async function (e) {
             try {
+                showWorkerLoader("Leyendo y parseando presupuesto...", file.name);
                 const arrayBuffer = e.target.result;
 
                 // First decode as ISO-8859-1 to safely inspect the header for the encoding tag
@@ -205,9 +277,8 @@ async function readAndParseBC3File(file) {
                     finalContent = realDecoder.decode(arrayBuffer);
                 }
 
-                // Parse the content using our local JS parser
-                const parser = new BC3Parser();
-                const result = parser.parse(finalContent);
+                // Parse using Web Worker (asíncrono sin bloquear la UI)
+                const result = await parseWithWorker(finalContent);
 
                 // Guardar en localStorage de forma segura para auto-carga en el siguiente inicio
                 try {
@@ -217,8 +288,10 @@ async function readAndParseBC3File(file) {
                     console.warn("No se pudo guardar el presupuesto para auto-carga (cuota de espacio excedida):", storageError);
                 }
 
+                hideWorkerLoader();
                 resolve({ success: true, data: result });
             } catch (err) {
+                hideWorkerLoader();
                 reject(err);
             }
         };
@@ -226,6 +299,358 @@ async function readAndParseBC3File(file) {
     });
 }
 
+// =============================================================================
+// SISTEMA MULTI-PRESUPUESTO POR PESTAÑAS (MULTI-TAB)
+// =============================================================================
+
+let budgetTabs = [];
+let activeTabId = null;
+let tabCounter = 0;
+
+function createBudgetTab(data, fileName, rawText) {
+    tabCounter++;
+    const tabId = 'tab_' + tabCounter + '_' + Date.now().toString(36);
+
+    const roots = Array.isArray(data.root_nodes) ? data.root_nodes : Object.values(data.root_nodes || {});
+    let pemTotal = 0;
+    roots.forEach(rCode => {
+        const c = data.concepts[rCode];
+        if (c) pemTotal += (parseFloat(c.price) || 0);
+    });
+
+    const newTab = {
+        id: tabId,
+        fileName: fileName || `Presupuesto ${tabCounter}.bc3`,
+        data: data,
+        rawText: rawText || data.original_text || '',
+        expandedNodes: new Set(),
+        stateHistory: [JSON.stringify(data)],
+        historyIndex: 0,
+        pemTotal: pemTotal,
+        navigationStack: [],
+        currentLevel: null
+    };
+
+    budgetTabs.push(newTab);
+    switchBudgetTab(tabId);
+    renderBudgetTabBar();
+    return newTab;
+}
+
+function switchBudgetTab(tabId) {
+    if (!tabId) return;
+
+    // 1. Guardar estado de la pestaña actual saliente
+    if (activeTabId && activeTabId !== tabId) {
+        const currentTab = budgetTabs.find(t => t.id === activeTabId);
+        if (currentTab && parsedData) {
+            currentTab.data = parsedData;
+            currentTab.rawText = originalFileText;
+            currentTab.expandedNodes = new Set(expandedNodes);
+            currentTab.stateHistory = stateHistory;
+            currentTab.historyIndex = historyIndex;
+            currentTab.navigationStack = navigationStack;
+            currentTab.currentLevel = currentLevel;
+        }
+    }
+
+    // 2. Cargar estado de la pestaña entrante
+    const targetTab = budgetTabs.find(t => t.id === tabId);
+    if (!targetTab) return;
+
+    activeTabId = tabId;
+    currentFileName = targetTab.fileName;
+    parsedData = targetTab.data;
+    originalFileText = targetTab.rawText;
+
+    // Restaurar estado de navegación y expansión
+    expandedNodes.clear();
+    if (targetTab.expandedNodes) {
+        targetTab.expandedNodes.forEach(code => expandedNodes.add(code));
+    }
+    stateHistory = targetTab.stateHistory || [];
+    historyIndex = targetTab.historyIndex || 0;
+    navigationStack = targetTab.navigationStack || [];
+    currentLevel = targetTab.currentLevel || null;
+
+    // Actualizar nombres en la interfaz
+    const fileNameEl = document.getElementById('fileName');
+    if (fileNameEl) fileNameEl.textContent = currentFileName;
+    const dropdownFileName = document.getElementById('dropdownFileName');
+    if (dropdownFileName) dropdownFileName.textContent = currentFileName;
+
+    // --- Renderizado ligero (sin resetear estado ni Gantt) ---
+    try {
+        // Calcular anchos de columna
+        window.columnWidths = calculateOptimalColumnWidths(parsedData);
+
+        // Actualizar botones de undo/redo
+        updateUndoRedoButtonsState();
+
+        // Mostrar controles de la app
+        const actionsWrapper = document.getElementById('actionsWrapper');
+        if (actionsWrapper) actionsWrapper.style.display = 'flex';
+        const viewsGroup = document.getElementById('viewsGroup');
+        const coeffsGroup = document.getElementById('coeffsGroup');
+        const toolsGroup = document.getElementById('toolsGroup');
+        if (viewsGroup) viewsGroup.style.display = 'flex';
+        if (coeffsGroup) coeffsGroup.style.display = 'flex';
+        if (toolsGroup) toolsGroup.style.display = 'flex';
+        const headerActionGroup = document.getElementById('headerActionGroup');
+        if (headerActionGroup) headerActionGroup.style.display = 'inline-flex';
+        const uploadGroup = document.getElementById('uploadGroup');
+        if (uploadGroup) uploadGroup.style.display = 'none';
+        const searchBarContainer = document.getElementById('searchBarContainer');
+        if (searchBarContainer) searchBarContainer.style.display = 'block';
+        const closeBudgetBtn = document.getElementById('closeBudgetBtn');
+        if (closeBudgetBtn) closeBudgetBtn.style.setProperty('display', 'inline-flex', 'important');
+
+        // Ocultar empty state
+        const emptyState = document.querySelector('#treePanel .empty-state');
+        if (emptyState) emptyState.style.display = 'none';
+
+        // Project info
+        const info = document.getElementById('projectInfo');
+        if (info) {
+            const title = document.getElementById('projectTitle');
+            if (title) {
+                const rawTitle = parsedData.properties.description || (parsedData.properties.owner + ' Project');
+                title.textContent = rawTitle.replace(/#+\s*$/, '');
+            }
+            info.style.display = 'flex';
+        }
+
+        // Recalcular presupuesto y mostrar PEM/PEC
+        recalculateAll();
+        updateTotalBudgetDisplay();
+
+        // Renderizar el árbol con el estado guardado
+        renderCurrentLevel();
+
+        // Reset view tab
+        const presupuestoBtn = document.getElementById('presupuestoBtn');
+        if (presupuestoBtn) presupuestoBtn.click();
+    } catch (e) {
+        console.error("Error al cambiar de pestaña:", e);
+    }
+
+    renderBudgetTabBar();
+
+    // Si el visualizador de descompuestos está abierto, sincronizarlo con el presupuesto activo
+    const sModal = document.getElementById('sunburstModal');
+    if (sModal && sModal.style.display === 'flex') {
+        try {
+            populateSunburstBudgetSelect();
+            sunburstRootCode = null;
+            refreshSunburst();
+        } catch (e) {
+            console.warn("Error al sincronizar Sunburst:", e);
+        }
+    }
+}
+
+function closeBudgetTab(tabId, e) {
+    if (e) e.stopPropagation();
+    const tabIdx = budgetTabs.findIndex(t => t.id === tabId);
+    if (tabIdx === -1) return;
+
+    if (budgetTabs.length === 1) {
+        if (!confirm("¿Deseas cerrar el presupuesto actual?")) return;
+        budgetTabs = [];
+        activeTabId = null;
+        renderBudgetTabBar();
+        resetToWelcomeState();
+        return;
+    }
+
+    // Cerrar pestaña
+    budgetTabs.splice(tabIdx, 1);
+
+    if (activeTabId === tabId) {
+        const nextTab = budgetTabs[Math.max(0, tabIdx - 1)];
+        if (nextTab) {
+            switchBudgetTab(nextTab.id);
+        }
+    } else {
+        renderBudgetTabBar();
+    }
+}
+
+function renderBudgetTabBar() {
+    const tabBar = document.getElementById('budgetTabBar');
+    const tabsContainer = document.getElementById('budgetTabsContainer');
+    if (!tabBar || !tabsContainer) return;
+
+    if (budgetTabs.length === 0) {
+        tabBar.style.display = 'none';
+        return;
+    }
+
+    tabBar.style.display = 'flex';
+    tabsContainer.innerHTML = '';
+
+    budgetTabs.forEach(tab => {
+        const tabEl = document.createElement('div');
+        tabEl.className = `budget-tab ${tab.id === activeTabId ? 'active' : ''}`;
+        
+        const roots = Array.isArray(tab.data.root_nodes) ? tab.data.root_nodes : Object.values(tab.data.root_nodes || {});
+        let pem = 0;
+        roots.forEach(r => {
+            const c = tab.data.concepts[r];
+            if (c) pem += (parseFloat(c.price) || 0);
+        });
+
+        const pemFormatted = pem > 0 ? pem.toLocaleString('es-ES', { maximumFractionDigits: 0 }) + ' €' : '';
+
+        tabEl.innerHTML = `
+            <span style="font-size:0.9rem;">📄</span>
+            <span class="budget-tab-title" title="${tab.fileName}">${tab.fileName}</span>
+            ${pemFormatted ? `<span class="budget-tab-badge">${pemFormatted}</span>` : ''}
+            <span class="budget-tab-close" title="Cerrar pestaña">✕</span>
+        `;
+
+        tabEl.addEventListener('click', () => {
+            if (tab.id !== activeTabId) {
+                switchBudgetTab(tab.id);
+            }
+        });
+
+        const closeBtn = tabEl.querySelector('.budget-tab-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', (ev) => {
+                closeBudgetTab(tab.id, ev);
+            });
+        }
+
+        tabsContainer.appendChild(tabEl);
+    });
+}
+
+function resetToWelcomeState() {
+    // 1. Limpiar datos y variables globales
+    parsedData = null;
+    originalFileText = "";
+    expandedNodes.clear();
+    stateHistory = [];
+    historyIndex = -1;
+    compareData = null;
+    compareActive = false;
+    currentFileName = "presupuesto.bc3";
+
+    // 2. Limpiar elementos de entrada y estadísticas
+    const fileInput = document.getElementById('bc3file');
+    if (fileInput) fileInput.value = '';
+
+    const fileNameEl = document.getElementById('fileName');
+    if (fileNameEl) {
+        fileNameEl.innerHTML = '<span class="btn-text">SELECCIONAR ARCHIVO .BC3</span>';
+    }
+
+    const stats = document.getElementById('stats');
+    if (stats) stats.textContent = '';
+
+    const info = document.getElementById('projectInfo');
+    if (info) info.style.display = 'none';
+
+    const uploadGroup = document.getElementById('uploadGroup');
+    if (uploadGroup) uploadGroup.style.display = 'none';
+
+    const searchBarContainer = document.getElementById('searchBarContainer');
+    if (searchBarContainer) searchBarContainer.style.display = 'none';
+
+    const dropdownFileLabel = document.getElementById('dropdownFileLabel');
+    if (dropdownFileLabel) dropdownFileLabel.style.display = 'none';
+
+    // 3. Ocultar los contenedores de controles de acciones
+    const actionsWrapper = document.getElementById('actionsWrapper');
+    if (actionsWrapper) actionsWrapper.style.display = 'none';
+
+    const viewsGroup = document.getElementById('viewsGroup');
+    const coeffsGroup = document.getElementById('coeffsGroup');
+    const toolsGroup = document.getElementById('toolsGroup');
+    if (viewsGroup) viewsGroup.style.display = 'none';
+    if (coeffsGroup) coeffsGroup.style.display = 'none';
+    if (toolsGroup) toolsGroup.style.display = 'none';
+
+    const headerActionGroup = document.getElementById('headerActionGroup');
+    if (headerActionGroup) headerActionGroup.style.display = 'none';
+
+    const closeBudgetBtn = document.getElementById('closeBudgetBtn');
+    if (closeBudgetBtn) closeBudgetBtn.style.setProperty('display', 'none', 'important');
+
+    // 4. Restaurar vista de bienvenida y vaciar contenido de partidas
+    const treeContent = document.getElementById('treeContent');
+    if (treeContent) treeContent.innerHTML = '';
+
+    const emptyState = document.querySelector('#treePanel .empty-state');
+    if (emptyState) emptyState.style.display = 'flex';
+
+    const treePanel = document.getElementById('treePanel');
+    if (treePanel) treePanel.style.display = 'flex';
+
+    const detailsPanel = document.getElementById('detailsPanel');
+    if (detailsPanel) detailsPanel.style.display = 'flex';
+
+    const detailsContent = document.getElementById('detailsContent');
+    if (detailsContent) detailsContent.style.display = 'none';
+
+    const detailsPanelEmpty = document.querySelector('#detailsPanel .empty-state');
+    if (detailsPanelEmpty) detailsPanelEmpty.style.display = 'block';
+
+    const pricesPanel = document.getElementById('pricesPanel');
+    if (pricesPanel) pricesPanel.style.display = 'none';
+
+    const breadcrumbContainer = document.getElementById('breadcrumbContainer');
+    if (breadcrumbContainer) breadcrumbContainer.style.display = 'none';
+
+    const compResults = document.getElementById('compareResults');
+    if (compResults) compResults.style.display = 'none';
+
+    const totalBiDisplay = document.getElementById('budgetTotalBI');
+    if (totalBiDisplay) totalBiDisplay.style.display = 'none';
+
+    const totalPecDisplay = document.getElementById('budgetTotalPEC');
+    if (totalPecDisplay) totalPecDisplay.style.display = 'none';
+
+    const coeffsPanel = document.getElementById('coeffsPanel');
+    if (coeffsPanel) coeffsPanel.style.display = 'none';
+
+    // 5. Eliminar auto-carga de localStorage
+    localStorage.removeItem('last_bc3_content');
+    localStorage.removeItem('last_bc3_filename');
+}
+
+// Botón + en la barra de pestañas para añadir nuevo presupuesto
+const budgetTabAddBtn = document.getElementById('budgetTabAddBtn');
+const bc3MultiFileInput = document.getElementById('bc3MultiFileInput');
+
+if (budgetTabAddBtn && bc3MultiFileInput) {
+    budgetTabAddBtn.addEventListener('click', () => {
+        bc3MultiFileInput.click();
+    });
+}
+
+if (bc3MultiFileInput) {
+    bc3MultiFileInput.addEventListener('change', async function () {
+        if (!this.files || this.files.length === 0) return;
+        const files = Array.from(this.files);
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            try {
+                const result = await readAndParseBC3File(file);
+                if (result.success) {
+                    createBudgetTab(result.data, file.name, result.rawText || result.data.original_text);
+                }
+            } catch (err) {
+                console.error("Error abriendo pestaña:", err);
+                alert("Error al cargar " + file.name + ": " + err.message);
+            }
+        }
+        this.value = '';
+    });
+}
+
+// Upload Form Submit
 const uploadForm = document.getElementById('uploadForm');
 if (uploadForm) {
     uploadForm.addEventListener('submit', async function (e) {
@@ -245,19 +670,18 @@ if (uploadForm) {
         }
 
         try {
-            const file = fileInput.files[0];
-            currentFileName = file.name;
-            const fileNameEl = document.getElementById('fileName');
-            if (fileNameEl) fileNameEl.textContent = currentFileName;
+            const files = Array.from(fileInput.files);
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                currentFileName = file.name;
+                const result = await readAndParseBC3File(file);
 
-            const result = await readAndParseBC3File(file);
-
-            if (result.success) {
-                renderApp(result.data);
-            } else {
-                alert('Error: ' + (result.error || 'Unknown error'));
+                if (result.success) {
+                    createBudgetTab(result.data, file.name, result.rawText || result.data.original_text);
+                } else {
+                    alert('Error: ' + (result.error || 'Unknown error'));
+                }
             }
-
         } catch (err) {
             console.error(err);
             alert('Error procesando el archivo: ' + err.message);
@@ -270,106 +694,15 @@ if (uploadForm) {
     });
 }
 
-// Botón para cerrar/salir del presupuesto (X roja al lado de PROCESA)
+// Botón para cerrar/salir del presupuesto (X roja)
 const closeBudgetBtn = document.getElementById('closeBudgetBtn');
 if (closeBudgetBtn) {
     closeBudgetBtn.addEventListener('click', () => {
-        if (!confirm("¿Estás seguro de que deseas salir del presupuesto actual?")) {
-            return;
+        if (activeTabId) {
+            closeBudgetTab(activeTabId);
+        } else {
+            resetToWelcomeState();
         }
-
-        // 1. Limpiar datos y variables globales
-        parsedData = null;
-        originalFileText = "";
-        expandedNodes.clear();
-        stateHistory = [];
-        historyIndex = -1;
-        compareData = null;
-        compareActive = false;
-        currentFileName = "presupuesto.bc3";
-
-        // 2. Limpiar elementos de entrada y estadísticas
-        const fileInput = document.getElementById('bc3file');
-        if (fileInput) fileInput.value = '';
-
-        const fileNameEl = document.getElementById('fileName');
-        if (fileNameEl) {
-            fileNameEl.innerHTML = '<span class="btn-text">SELECCIONAR ARCHIVO .BC3</span>';
-        }
-
-        const stats = document.getElementById('stats');
-        if (stats) stats.textContent = '';
-
-        const info = document.getElementById('projectInfo');
-        if (info) info.style.display = 'none';
-
-        const uploadGroup = document.getElementById('uploadGroup');
-        if (uploadGroup) uploadGroup.style.display = 'none';
-
-        const searchBarContainer = document.getElementById('searchBarContainer');
-        if (searchBarContainer) searchBarContainer.style.display = 'none';
-
-        const dropdownFileLabel = document.getElementById('dropdownFileLabel');
-        if (dropdownFileLabel) dropdownFileLabel.style.display = 'none';
-
-        // 3. Ocultar los contenedores de controles de acciones
-        const actionsWrapper = document.getElementById('actionsWrapper');
-        if (actionsWrapper) actionsWrapper.style.display = 'none';
-
-        const viewsGroup = document.getElementById('viewsGroup');
-        const toolsGroup = document.getElementById('toolsGroup');
-        const exportGroup = document.getElementById('exportGroup');
-        if (viewsGroup) viewsGroup.style.display = 'none';
-        if (toolsGroup) toolsGroup.style.display = 'none';
-        if (exportGroup) exportGroup.style.display = 'none';
-
-        const sBtn = document.getElementById('saveBtn');
-        if (sBtn) sBtn.style.display = 'none';
-
-        // Ocultar el propio botón X roja
-        closeBudgetBtn.style.setProperty('display', 'none', 'important');
-
-        // 4. Restaurar vista de bienvenida y vaciar contenido de partidas
-        const treeContent = document.getElementById('treeContent');
-        if (treeContent) treeContent.innerHTML = '';
-
-        const emptyState = document.querySelector('#treePanel .empty-state');
-        if (emptyState) emptyState.style.display = 'flex';
-
-        // Asegurar que se vuelve a ver el treePanel y detailsPanel
-        const treePanel = document.getElementById('treePanel');
-        if (treePanel) treePanel.style.display = 'flex';
-
-        const detailsPanel = document.getElementById('detailsPanel');
-        if (detailsPanel) detailsPanel.style.display = 'flex';
-
-        const detailsContent = document.getElementById('detailsContent');
-        if (detailsContent) detailsContent.style.display = 'none';
-
-        const detailsPanelEmpty = document.querySelector('#detailsPanel .empty-state');
-        if (detailsPanelEmpty) detailsPanelEmpty.style.display = 'block';
-
-        const pricesPanel = document.getElementById('pricesPanel');
-        if (pricesPanel) pricesPanel.style.display = 'none';
-
-        const breadcrumbContainer = document.getElementById('breadcrumbContainer');
-        if (breadcrumbContainer) breadcrumbContainer.style.display = 'none';
-
-        // Ocultar comparador y coeficientes
-        const compResults = document.getElementById('compareResults');
-        if (compResults) compResults.style.display = 'none';
-
-        const totalPecDisplay = document.getElementById('budgetTotalPEC');
-        if (totalPecDisplay) totalPecDisplay.style.display = 'none';
-
-        const coeffsPanel = document.getElementById('coeffsPanel');
-        if (coeffsPanel) coeffsPanel.style.display = 'none';
-
-        // 5. Eliminar auto-carga de localStorage para evitar que se cargue de nuevo al refrescar
-        localStorage.removeItem('last_bc3_content');
-        localStorage.removeItem('last_bc3_filename');
-
-        console.log("Presupuesto cerrado por el usuario. Pantalla de bienvenida restaurada.");
     });
 }
 
@@ -394,6 +727,42 @@ let currentLevel = null; // null = root level, or code of current parent
 
 // Column resizing state and defaults (Code, Unit, Qty, Price, Proportion, Amount)
 window.columnWidths = [190, 45, 80, 100, 180, 110];
+
+/**
+ * Formatea una cantidad respetando los estándares de ingeniería y construcción FIEBDC-3:
+ * - Unidades contables (ud, unid, pza, un, etc.): 0 decimales (ej. 12)
+ * - Longitud y Superficie (m, m2, m², ml, etc.): 2 decimales (ej. 145,20)
+ * - Volumen y Peso (m3, m³, kg, t, etc.): 3 decimales (ej. 12,450)
+ * - Resto (horas, porcentajes, etc.): 2 decimales
+ * Siempre incluye punto separador de miles y coma decimal.
+ */
+function formatQuantityByUnit(qty, unit = '') {
+    if (qty === null || qty === undefined || qty === '') return '';
+    const num = typeof qty === 'number' ? qty : parseFloat(String(qty).replace(',', '.'));
+    if (isNaN(num)) return '';
+    
+    const u = (unit || '').toLowerCase().trim();
+    
+    // 0 decimales: unidades contables
+    if (/^(ud|ud\.|uds|uds\.|un|un\.|u|u\.|pza|pza\.|unid|unidad|unidades|ptda|pa)$/.test(u)) {
+        return num.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    
+    // 3 decimales: volumen / peso / capacidades
+    if (/^(m3|m³|m3\.|m³\.|dm3|dm³|cm3|cm³|l|l\.|litro|litros|kg|kg\.|t|ton|ton\.|tn)$/.test(u)) {
+        return num.toLocaleString('es-ES', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+    }
+    
+    // 2 decimales: longitud, superficie (m, m2, m², ml), horas (h, hr), y resto
+    return num.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatCurrency(amount) {
+    if (amount === null || amount === undefined || amount === '') return '0,00 €';
+    const num = typeof amount === 'number' ? amount : parseFloat(String(amount).replace(',', '.'));
+    if (isNaN(num)) return '0,00 €';
+    return `${num.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+}
 
 // Calcular anchos óptimos para cada columna basándose en el contenido real
 function calculateOptimalColumnWidths(data) {
@@ -846,19 +1215,85 @@ function renderCurrentLevel() {
             }
         }
     } else {
-        // Desktop: Show full tree
+        // Desktop: Renderizado Virtualizado Adaptativo para presupuestos masivos (+10.000 líneas)
         const roots = Array.isArray(parsedData.root_nodes) ? parsedData.root_nodes : Object.values(parsedData.root_nodes);
-        roots.forEach((code, idx) => {
-            if (draftActive && draftNode.parentCode === null && draftNode.index === idx) {
+        
+        // Comprobar volumen total de conceptos para activar Virtual Scrolling en presupuestos grandes
+        const totalConceptsCount = Object.keys(parsedData.concepts || {}).length;
+
+        if (totalConceptsCount > 150) {
+            // Motor Virtualizado
+            const flatTree = [];
+            function flattenTree(code, isRoot, depth, factor, type) {
+                const c = parsedData.concepts[code];
+                if (!c) return;
+                flatTree.push({ code, isRoot, depth, factor, type });
+                if (isRoot || expandedNodes.has(code)) {
+                    const decomp = getConceptDecomposition(c);
+                    decomp.forEach(child => {
+                        flattenTree(child.code, false, depth + 1, child.factor, child.type || 0);
+                    });
+                }
+            }
+            roots.forEach(rCode => flattenTree(rCode, true, 0, 1, 0));
+
+            // Si el número de nodos desplegados es grande, usar ventana virtual
+            if (flatTree.length > 100) {
+                const rowHeight = 36;
+                const totalHeight = flatTree.length * rowHeight;
+                
+                const virtualViewport = document.createElement('div');
+                virtualViewport.className = 'virtual-tree-viewport';
+                virtualViewport.style.cssText = `position: relative; height: ${totalHeight}px; width: 100%;`;
+
+                const virtualContent = document.createElement('div');
+                virtualContent.className = 'virtual-tree-content';
+                virtualContent.style.cssText = `position: absolute; left: 0; right: 0; top: 0;`;
+
+                virtualViewport.appendChild(virtualContent);
+                rootList.appendChild(virtualViewport);
+
+                const updateVirtualWindow = () => {
+                    const scrollTop = treeContainer.scrollTop || 0;
+                    const viewportH = treeContainer.clientHeight || 800;
+
+                    const startIdx = Math.max(0, Math.floor(scrollTop / rowHeight) - 8);
+                    const endIdx = Math.min(flatTree.length, Math.ceil((scrollTop + viewportH) / rowHeight) + 8);
+
+                    virtualContent.style.transform = `translateY(${startIdx * rowHeight}px)`;
+                    virtualContent.innerHTML = '';
+
+                    for (let i = startIdx; i < endIdx; i++) {
+                        const item = flatTree[i];
+                        const nodeEl = createNode(item.code, item.isRoot, item.depth, item.factor, false, item.type);
+                        if (nodeEl) virtualContent.appendChild(nodeEl);
+                    }
+                    updateGridTemplate();
+                };
+
+                treeContainer.onscroll = () => requestAnimationFrame(updateVirtualWindow);
+                updateVirtualWindow();
+            } else {
+                roots.forEach((code, idx) => {
+                    if (draftActive && draftNode.parentCode === null && draftNode.index === idx) {
+                        rootList.appendChild(createDraftNodeRow(0));
+                    }
+                    const rootNode = createNode(code, true, 0, 1, false);
+                    if (rootNode) rootList.appendChild(rootNode);
+                });
+            }
+        } else {
+            // Renderizado directo ultrarrápido para presupuestos estándar
+            roots.forEach((code, idx) => {
+                if (draftActive && draftNode.parentCode === null && draftNode.index === idx) {
+                    rootList.appendChild(createDraftNodeRow(0));
+                }
+                const rootNode = createNode(code, true, 0, 1, false);
+                if (rootNode) rootList.appendChild(rootNode);
+            });
+            if (draftActive && draftNode.parentCode === null && draftNode.index >= roots.length) {
                 rootList.appendChild(createDraftNodeRow(0));
             }
-            const rootNode = createNode(code, true, 0, 1, false); // false = desktop mode
-            if (rootNode) {
-                rootList.appendChild(rootNode);
-            }
-        });
-        if (draftActive && draftNode.parentCode === null && draftNode.index >= roots.length) {
-            rootList.appendChild(createDraftNodeRow(0));
         }
     }
 
@@ -939,11 +1374,14 @@ function renderApp(data) {
     if (actionsWrapper) actionsWrapper.style.display = 'flex';
 
     const viewsGroup = document.getElementById('viewsGroup');
+    const coeffsGroup = document.getElementById('coeffsGroup');
     const toolsGroup = document.getElementById('toolsGroup');
-    const exportGroup = document.getElementById('exportGroup');
     if (viewsGroup) viewsGroup.style.display = 'flex';
+    if (coeffsGroup) coeffsGroup.style.display = 'flex';
     if (toolsGroup) toolsGroup.style.display = 'flex';
-    if (exportGroup) exportGroup.style.display = 'flex';
+
+    const headerActionGroup = document.getElementById('headerActionGroup');
+    if (headerActionGroup) headerActionGroup.style.display = 'inline-flex';
 
     const uploadGroup = document.getElementById('uploadGroup');
     if (uploadGroup) uploadGroup.style.display = 'none';
@@ -957,9 +1395,6 @@ function renderApp(data) {
     const searchBarContainer = document.getElementById('searchBarContainer');
     if (searchBarContainer) searchBarContainer.style.display = 'block';
 
-    const sBtn = document.getElementById('saveBtn');
-    if (sBtn) sBtn.style.display = 'inline-block';
-
     const closeBudgetBtn = document.getElementById('closeBudgetBtn');
     if (closeBudgetBtn) {
         closeBudgetBtn.style.setProperty('display', 'inline-flex', 'important');
@@ -970,6 +1405,8 @@ function renderApp(data) {
     compareActive = false;
     const compResults = document.getElementById('compareResults');
     if (compResults) compResults.style.display = 'none';
+    const totalBiDisplay = document.getElementById('budgetTotalBI');
+    if (totalBiDisplay) totalBiDisplay.style.display = 'none';
     const totalPecDisplay = document.getElementById('budgetTotalPEC');
     if (totalPecDisplay) totalPecDisplay.style.display = 'none';
     const toggleCoeffs = document.getElementById('toggleCoeffsBtn');
@@ -1386,7 +1823,7 @@ function createNode(code, isRoot = false, depth = 0, qty = 1, mobileMode = false
     if (isChapter) {
         colQty.textContent = '';
     } else {
-        colQty.textContent = isNaN(qtyVal) ? '' : qtyVal.toLocaleString('es-ES', { minimumFractionDigits: 3 });
+        colQty.textContent = isNaN(qtyVal) ? '' : formatQuantityByUnit(qtyVal, concept.unit);
 
         // Solo hacer editable si no es raíz, no es capítulo y tiene un factor (qty) válido
         const isEditableQty = !isRoot && !isChapter && !isNaN(qtyVal);
@@ -1405,9 +1842,9 @@ function createNode(code, isRoot = false, depth = 0, qty = 1, mobileMode = false
                                 if (item.code === code && !updated) {
                                     logChange(
                                         concept.code.replace(/#+\s*$/, ''),
-                                        `Cambio de cantidad: ${oldVal.toLocaleString('es-ES', { minimumFractionDigits: 3 })} → ${newVal.toLocaleString('es-ES', { minimumFractionDigits: 3 })} ${concept.unit || ''}`,
-                                        `${oldVal.toLocaleString('es-ES', { minimumFractionDigits: 3 })}`,
-                                        `${newVal.toLocaleString('es-ES', { minimumFractionDigits: 3 })}`,
+                                        `Cambio de cantidad: ${formatQuantityByUnit(oldVal, concept.unit)} → ${formatQuantityByUnit(newVal, concept.unit)} ${concept.unit || ''}`,
+                                        `${formatQuantityByUnit(oldVal, concept.unit)}`,
+                                        `${formatQuantityByUnit(newVal, concept.unit)}`,
                                         () => {
                                             item.factor = newVal;
                                             // Actualizar cantidad del concepto si tiene mediciones
@@ -1424,14 +1861,14 @@ function createNode(code, isRoot = false, depth = 0, qty = 1, mobileMode = false
                         const newAmount = newVal * (parseFloat(concept.price) || 0);
                         const amountEl = row.querySelector('.col-amount');
                         if (amountEl) {
-                            amountEl.textContent = newAmount === 0 ? '' : newAmount.toLocaleString('es-ES', { minimumFractionDigits: 2 });
+                            amountEl.textContent = newAmount === 0 ? '' : newAmount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                         }
                         return true;
                     }
                 }
                 // Revertir si valor inválido
                 colQty.querySelector('.editable-val') && (colQty.querySelector('.editable-val').textContent =
-                    isNaN(qtyVal) ? '' : qtyVal.toLocaleString('es-ES', { minimumFractionDigits: 3 }));
+                    isNaN(qtyVal) ? '' : formatQuantityByUnit(qtyVal, concept.unit));
                 return false;
             }, { isNumeric: true });
         }
@@ -1655,9 +2092,126 @@ function createNode(code, isRoot = false, depth = 0, qty = 1, mobileMode = false
  * createMeasurementTable
  * Renders a full HTML table for measurements with calculations.
  */
+/**
+ * Evaluador seguro de expresiones matemáticas para mediciones de obra.
+ * Soporta números, fórmulas (=2*3.5+1.2, 10/2, 2.5*4, (5+3)*2), deducciones y funciones estándar.
+ */
+function evaluateMeasurementExpression(val) {
+    if (val === null || val === undefined || val === '') {
+        return { num: 1, isBlank: true, raw: '', hasFormula: false, display: '' };
+    }
+
+    const rawStr = String(val).trim();
+    if (rawStr === '') {
+        return { num: 1, isBlank: true, raw: '', hasFormula: false, display: '' };
+    }
+
+    let expr = rawStr;
+    const hasEquals = expr.startsWith('=');
+    if (hasEquals) {
+        expr = expr.substring(1).trim();
+    }
+
+    // Normalizar comas a puntos decimales: ej. "2,5 * 4" -> "2.5 * 4"
+    expr = expr.replace(/(\d+),(\d+)/g, '$1.$2');
+
+    // Comprobar si es un número simple directo sin operadores
+    const directNum = Number(expr);
+    if (!isNaN(directNum) && !/[+\-*/%^()]/i.test(expr)) {
+        return {
+            num: directNum,
+            isBlank: false,
+            raw: rawStr,
+            hasFormula: hasEquals,
+            display: directNum.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 3 })
+        };
+    }
+
+    // Transformar potencia ^ a **
+    expr = expr.replace(/\^/g, '**');
+
+    // Soporte para funciones matemáticas habituales
+    expr = expr.replace(/\bsqrt\s*\(/gi, 'Math.sqrt(')
+               .replace(/\babs\s*\(/gi, 'Math.abs(')
+               .replace(/\bround\s*\(/gi, 'Math.round(')
+               .replace(/\bpi\b/gi, 'Math.PI')
+               .replace(/\bceil\s*\(/gi, 'Math.ceil(')
+               .replace(/\bfloor\s*\(/gi, 'Math.floor(');
+
+    // Sanitización estricta: asegurar que sólo contenga números, operadores matemáticos y llamadas seguras a Math
+    const testPattern = expr.replace(/Math\.(sqrt|abs|round|PI|ceil|floor)/g, '');
+    const isSafe = /^[0-9+\-*/().%\s]*$/.test(testPattern);
+
+    if (isSafe) {
+        try {
+            const calculated = new Function('"use strict"; return (' + expr + ');')();
+            if (typeof calculated === 'number' && !isNaN(calculated) && isFinite(calculated)) {
+                return {
+                    num: calculated,
+                    isBlank: false,
+                    raw: rawStr,
+                    hasFormula: true,
+                    display: calculated.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 3 })
+                };
+            }
+        } catch (err) {
+            // Ignorar y caer en fallback
+        }
+    }
+
+    // Fallback a parseFloat estándar si la expresión no evaluó
+    const fallbackVal = parseFloat(rawStr.replace(',', '.'));
+    const finalNum = isNaN(fallbackVal) ? 1 : fallbackVal;
+    return {
+        num: finalNum,
+        isBlank: false,
+        raw: rawStr,
+        hasFormula: false,
+        display: isNaN(fallbackVal) ? rawStr : finalNum.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 3 })
+    };
+}
+
+/**
+ * Renderiza la tabla interactiva de mediciones con soporte de fórmulas vivas,
+ * deducciones automáticas de huecos y herramientas de gestión de líneas.
+ */
 function createMeasurementTable(measurements, concept = null) {
     const container = document.createElement('div');
     container.className = 'measurements-container';
+
+    const isEditable = concept && !concept.code.endsWith('#');
+
+    // Si no hay mediciones, mostrar tarjeta informativa para crear la primera
+    if (!measurements || measurements.length === 0) {
+        const emptyCard = document.createElement('div');
+        emptyCard.className = 'measurements-empty-card';
+        emptyCard.innerHTML = `
+            <div class="measurements-empty-icon">📐</div>
+            <div class="measurements-empty-text">Sin líneas de medición detalladas</div>
+            <div class="measurements-empty-subtext">Puedes añadir mediciones con fórmulas dinámicas (ej. <code>=2*3.5+1.2</code>) o deducciones de huecos.</div>
+        `;
+
+        if (isEditable) {
+            const btnGroup = document.createElement('div');
+            btnGroup.className = 'measurements-empty-actions';
+
+            const addBtn = document.createElement('button');
+            addBtn.type = 'button';
+            addBtn.className = 'm-add-line-btn';
+            addBtn.innerHTML = '➕ Añadir Primera Línea';
+            addBtn.addEventListener('click', () => {
+                if (!concept.measurements) concept.measurements = [];
+                concept.measurements.push({ label: 'Medición 1', units: '1', l: '', w: '', h: '' });
+                recalculateMeasurements(concept);
+            });
+
+            btnGroup.appendChild(addBtn);
+            emptyCard.appendChild(btnGroup);
+        }
+
+        container.appendChild(emptyCard);
+        return container;
+    }
 
     const table = document.createElement('table');
     table.className = 'measurements-table';
@@ -1666,46 +2220,64 @@ function createMeasurementTable(measurements, concept = null) {
     const thead = document.createElement('thead');
     thead.innerHTML = `
         <tr>
-            <th>Descripción</th>
-            <th class="numeric">Uds</th>
-            <th class="numeric">Largo</th>
-            <th class="numeric">Ancho</th>
-            <th class="numeric">Alto</th>
-            <th class="numeric">Parcial</th>
+            <th style="width: 34%;">Comentario / Etiqueta</th>
+            <th class="numeric" style="width: 11%;">Uds</th>
+            <th class="numeric" style="width: 11%;">Largo</th>
+            <th class="numeric" style="width: 11%;">Ancho</th>
+            <th class="numeric" style="width: 11%;">Alto</th>
+            <th class="numeric" style="width: 14%;">Parcial</th>
+            ${isEditable ? '<th style="width: 8%; text-align: center;">⚙️</th>' : ''}
         </tr>
     `;
     table.appendChild(thead);
 
     const tbody = document.createElement('tbody');
-    let total = 0;
+    let totalPositive = 0;
+    let totalDeductions = 0;
+    let netTotal = 0;
 
     measurements.forEach((m, idx) => {
         const tr = document.createElement('tr');
 
-        const u = m.units === '' ? 1 : parseFloat(m.units.toString().replace(',', '.'));
-        const l = m.l === '' ? 1 : parseFloat(m.l.toString().replace(',', '.'));
-        const w = m.w === '' ? 1 : parseFloat(m.w.toString().replace(',', '.'));
-        const h = m.h === '' ? 1 : parseFloat(m.h.toString().replace(',', '.'));
+        const evalU = evaluateMeasurementExpression(m.units);
+        const evalL = evaluateMeasurementExpression(m.l);
+        const evalW = evaluateMeasurementExpression(m.w);
+        const evalH = evaluateMeasurementExpression(m.h);
 
-        const vU = isNaN(u) ? 1 : u;
-        const vL = isNaN(l) ? 1 : l;
-        const vW = isNaN(w) ? 1 : w;
-        const vH = isNaN(h) ? 1 : h;
+        const vU = evalU.isBlank ? 1 : evalU.num;
+        const vL = evalL.isBlank ? 1 : evalL.num;
+        const vW = evalW.isBlank ? 1 : evalW.num;
+        const vH = evalH.isBlank ? 1 : evalH.num;
 
         const partial = vU * vL * vW * vH;
-        total += partial;
+        m._calculatedPartial = partial;
 
-        // Celdas Editables (Solo si concept está presente y es editable)
-        const isEditable = concept && !concept.code.endsWith('#');
+        const isDeduction = partial < 0 || vU < 0;
+        if (isDeduction) {
+            tr.className = 'm-row-deduction';
+            totalDeductions += partial;
+        } else {
+            totalPositive += partial;
+        }
+        netTotal += partial;
 
-        // Descripción
+        // 1. Etiqueta / Descripción
         const tdLabel = document.createElement('td');
+        tdLabel.className = 'm-cell-label';
         tdLabel.textContent = m.label || '';
+        if (isDeduction) {
+            const dedBadge = document.createElement('span');
+            dedBadge.className = 'm-deduction-badge';
+            dedBadge.textContent = 'Deducción';
+            tdLabel.prepend(dedBadge);
+        }
+
         if (isEditable) {
-            tdLabel.className = 'm-cell-editable';
+            tdLabel.className += ' m-cell-editable';
             tdLabel.contentEditable = 'true';
             tdLabel.addEventListener('blur', () => {
-                m.label = tdLabel.textContent.trim();
+                const textWithoutBadge = tdLabel.innerText.replace(/^Deducción\s*/, '').trim();
+                m.label = textWithoutBadge;
             });
             tdLabel.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
@@ -1715,19 +2287,30 @@ function createMeasurementTable(measurements, concept = null) {
             });
         }
 
-        // Celdas numéricas editables
-        function createNumericCell(fieldValue, fieldName) {
+        // 2. Celdas numéricas editables con fórmulas dinámicas
+        function createDynamicFormulaCell(evalObj, fieldName) {
             const td = document.createElement('td');
             td.className = 'numeric';
-            td.textContent = fieldValue === '' ? '' : parseFloat(fieldValue).toLocaleString('es-ES');
+            
+            // Mostrar número evaluado o indicador de fórmula
+            td.textContent = evalObj.isBlank ? '' : evalObj.display;
+
+            if (evalObj.hasFormula) {
+                td.classList.add('m-cell-has-formula');
+                td.title = `Fórmula: ${evalObj.raw} = ${evalObj.display}`;
+                const fxIcon = document.createElement('span');
+                fxIcon.className = 'm-formula-indicator';
+                fxIcon.textContent = 'ƒx';
+                td.appendChild(fxIcon);
+            }
 
             if (isEditable) {
                 td.className += ' m-cell-editable';
                 td.contentEditable = 'true';
 
                 td.addEventListener('focus', () => {
-                    // Cargar número crudo sin formatear para editar cómodamente
-                    td.textContent = fieldValue === '' ? '' : parseFloat(fieldValue);
+                    // Cargar expresión cruda (ej. =2*3.5+1.2) para editar la fórmula directamente
+                    td.textContent = m[fieldName] !== undefined && m[fieldName] !== null ? String(m[fieldName]) : '';
                 });
 
                 td.addEventListener('keydown', (e) => {
@@ -1738,20 +2321,10 @@ function createMeasurementTable(measurements, concept = null) {
                 });
 
                 td.addEventListener('blur', () => {
-                    const rawText = td.textContent.trim().replace(',', '.');
-                    let val = parseFloat(rawText);
+                    const rawInput = td.textContent.trim();
+                    m[fieldName] = rawInput;
 
-                    if (rawText === '') {
-                        m[fieldName] = '';
-                    } else if (!isNaN(val)) {
-                        m[fieldName] = val;
-                    } else {
-                        // Revertir
-                        td.textContent = fieldValue === '' ? '' : parseFloat(fieldValue).toLocaleString('es-ES');
-                        return;
-                    }
-
-                    // Recalcular
+                    // Recalcular mediciones completas de la partida
                     recalculateMeasurements(concept);
                 });
             }
@@ -1759,14 +2332,15 @@ function createMeasurementTable(measurements, concept = null) {
             return td;
         }
 
-        const tdUnits = createNumericCell(m.units, 'units');
-        const tdL = createNumericCell(m.l, 'l');
-        const tdW = createNumericCell(m.w, 'w');
-        const tdH = createNumericCell(m.h, 'h');
+        const tdUnits = createDynamicFormulaCell(evalU, 'units');
+        const tdL = createDynamicFormulaCell(evalL, 'l');
+        const tdW = createDynamicFormulaCell(evalW, 'w');
+        const tdH = createDynamicFormulaCell(evalH, 'h');
 
+        // 3. Celda Parcial
         const tdPartial = document.createElement('td');
-        tdPartial.className = 'numeric';
-        tdPartial.innerHTML = `<b>${partial.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 3 })}</b>`;
+        tdPartial.className = 'numeric m-cell-partial' + (isDeduction ? ' m-partial-deduction' : '');
+        tdPartial.innerHTML = `<b>${formatQuantityByUnit(partial, concept ? concept.unit : '')}</b>`;
 
         tr.appendChild(tdLabel);
         tr.appendChild(tdUnits);
@@ -1775,20 +2349,115 @@ function createMeasurementTable(measurements, concept = null) {
         tr.appendChild(tdH);
         tr.appendChild(tdPartial);
 
+        // 4. Acciones por fila (Duplicar, Eliminar)
+        if (isEditable) {
+            const tdActions = document.createElement('td');
+            tdActions.className = 'm-cell-actions';
+
+            // Botón Duplicar
+            const dupBtn = document.createElement('button');
+            dupBtn.type = 'button';
+            dupBtn.className = 'm-action-icon-btn';
+            dupBtn.title = 'Duplicar línea';
+            dupBtn.innerHTML = '📋';
+            dupBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const copy = { ...m, label: m.label ? `${m.label} (copia)` : '' };
+                measurements.splice(idx + 1, 0, copy);
+                recalculateMeasurements(concept);
+            });
+
+            // Botón Eliminar
+            const delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.className = 'm-action-icon-btn m-action-del-btn';
+            delBtn.title = 'Eliminar línea';
+            delBtn.innerHTML = '🗑️';
+            delBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                measurements.splice(idx, 1);
+                recalculateMeasurements(concept);
+            });
+
+            tdActions.appendChild(dupBtn);
+            tdActions.appendChild(delBtn);
+            tr.appendChild(tdActions);
+        }
+
         tbody.appendChild(tr);
     });
 
-    // Total Row
+    // Fila de Total y Desglose
     const trTotal = document.createElement('tr');
     trTotal.className = 'total-row';
     trTotal.innerHTML = `
-        <td colspan="5" style="text-align: right;">TOTAL:</td>
-        <td class="numeric"><b>${total.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 3 })}</b></td>
+        <td colspan="5" style="text-align: right; font-weight: 700;">TOTAL MEDICIÓN:</td>
+        <td class="numeric m-total-amount"><b>${formatQuantityByUnit(netTotal, concept ? concept.unit : '')}</b></td>
+        ${isEditable ? '<td></td>' : ''}
     `;
     tbody.appendChild(trTotal);
 
     table.appendChild(tbody);
     container.appendChild(table);
+
+    // Barra inferior de herramientas y desglose de sumas
+    if (isEditable) {
+        const toolbar = document.createElement('div');
+        toolbar.className = 'measurements-toolbar';
+
+        const btnLeft = document.createElement('div');
+        btnLeft.className = 'measurements-toolbar-buttons';
+
+        // Botón Añadir Línea Normal
+        const addBtn = document.createElement('button');
+        addBtn.type = 'button';
+        addBtn.className = 'm-toolbar-btn m-toolbar-add-btn';
+        addBtn.innerHTML = '➕ Añadir Línea';
+        addBtn.addEventListener('click', () => {
+            measurements.push({
+                label: `Línea ${measurements.length + 1}`,
+                units: '1',
+                l: '',
+                w: '',
+                h: ''
+            });
+            recalculateMeasurements(concept);
+        });
+
+        // Botón Añadir Deducción de Hueco
+        const addDedBtn = document.createElement('button');
+        addDedBtn.type = 'button';
+        addDedBtn.className = 'm-toolbar-btn m-toolbar-ded-btn';
+        addDedBtn.innerHTML = '🔻 Deducción de Hueco';
+        addDedBtn.title = 'Añade una línea de deducción con unidades negativas (-1)';
+        addDedBtn.addEventListener('click', () => {
+            measurements.push({
+                label: 'Deducción hueco',
+                units: '-1',
+                l: '',
+                w: '',
+                h: ''
+            });
+            recalculateMeasurements(concept);
+        });
+
+        btnLeft.appendChild(addBtn);
+        btnLeft.appendChild(addDedBtn);
+
+        // Desglose de positivos y deducciones si existen
+        const summaryRight = document.createElement('div');
+        summaryRight.className = 'measurements-toolbar-summary';
+        if (totalDeductions < 0) {
+            summaryRight.innerHTML = `
+                <span class="m-sum-item m-sum-pos">Suma: <b>+${totalPositive.toLocaleString('es-ES', { maximumFractionDigits: 2 })}</b></span>
+                <span class="m-sum-item m-sum-ded">Deducciones: <b>${totalDeductions.toLocaleString('es-ES', { maximumFractionDigits: 2 })}</b></span>
+            `;
+        }
+
+        toolbar.appendChild(btnLeft);
+        toolbar.appendChild(summaryRight);
+        container.appendChild(toolbar);
+    }
 
     return container;
 }
@@ -1897,9 +2566,10 @@ function showDetails(code) {
     const msSection = document.getElementById('detMeasurementsSection');
     const msDiv = document.getElementById('detMeasurements');
     if (msSection && msDiv) {
-        if (concept.measurements && concept.measurements.length > 0) {
+        if (!isChapter || (concept.measurements && concept.measurements.length > 0)) {
             msSection.style.display = 'block';
             msDiv.innerHTML = '';
+            if (!concept.measurements) concept.measurements = [];
             msDiv.appendChild(createMeasurementTable(concept.measurements, concept));
         } else {
             msSection.style.display = 'none';
@@ -2062,6 +2732,8 @@ function calculateTotalCertifiedAmount() {
 
 function updateTotalBudgetDisplay() {
     const totalEl = document.getElementById('budgetTotal');
+    const totalGgEl = document.getElementById('budgetTotalGG');
+    const totalBiEl = document.getElementById('budgetTotalBI');
     const totalPecEl = document.getElementById('budgetTotalPEC');
     const toggleCoeffsBtn = document.getElementById('toggleCoeffsBtn');
 
@@ -2075,10 +2747,28 @@ function updateTotalBudgetDisplay() {
         // Mostrar botón de coeficientes
         if (toggleCoeffsBtn) toggleCoeffsBtn.style.display = 'flex';
 
-        // Calcular PEC
-        const gg = globalCoeffs.gg / 100;
-        const bi = globalCoeffs.bi / 100;
-        const baja = globalCoeffs.baja / 100;
+        // Coeficientes
+        const ggPercent = typeof globalCoeffs.gg !== 'undefined' ? globalCoeffs.gg : 13;
+        const biPercent = typeof globalCoeffs.bi !== 'undefined' ? globalCoeffs.bi : 6;
+        const bajaPercent = typeof globalCoeffs.baja !== 'undefined' ? globalCoeffs.baja : 0;
+
+        const gg = ggPercent / 100;
+        const bi = biPercent / 100;
+        const baja = bajaPercent / 100;
+
+        // Gastos Generales (€)
+        const ggAmount = pem * gg;
+        if (totalGgEl) {
+            totalGgEl.innerHTML = `<span class="lbl">GG (${ggPercent}%)</span><span class="val">${ggAmount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</span>`;
+            totalGgEl.style.display = 'flex';
+        }
+
+        // Beneficio Industrial (€)
+        const biAmount = pem * bi;
+        if (totalBiEl) {
+            totalBiEl.innerHTML = `<span class="lbl">BI (${biPercent}%)</span><span class="val">${biAmount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</span>`;
+            totalBiEl.style.display = 'flex';
+        }
 
         // PEC = (PEM * (1 + GG + BI)) * (1 + Baja)
         const pemWithCoeffs = pem * (1 + gg + bi);
@@ -2196,35 +2886,423 @@ function generateModifiedBC3() {
     return modifiedLines.join('\r\n');
 }
 
-// Botón Guardar
+// =============================================================================
+// INTEGRACIÓN PWA CON FILE SYSTEM ACCESS API & GUARDADO DIRECTO EN DISCO
+// =============================================================================
+
+/**
+ * Muestra una notificación Toast flotante y elegante
+ */
+function showAppToast(message, icon = '💾') {
+    let toast = document.getElementById('appGlobalToast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'appGlobalToast';
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: rgba(15, 23, 42, 0.95);
+            color: #f8fafc;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 99999;
+            opacity: 0;
+            transform: translateY(12px);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+            backdrop-filter: blur(8px);
+        `;
+        document.body.appendChild(toast);
+    }
+
+    toast.innerHTML = `<span style="font-size: 1.15rem;">${icon}</span><span>${message}</span>`;
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
+
+    if (window._toastTimeout) clearTimeout(window._toastTimeout);
+    window._toastTimeout = setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(12px)';
+    }, 3200);
+}
+
+/**
+ * Guarda el presupuesto actual directamente en disco (si soporta File System Access API) o mediante descarga
+ */
+async function saveCurrentBudgetFile(saveAs = false) {
+    if (!parsedData) {
+        showAppToast("No hay datos de presupuesto cargados.", "⚠️");
+        return false;
+    }
+
+    const content = generateModifiedBC3();
+    if (!content) {
+        showAppToast("Error al generar el archivo BC3 modificado.", "❌");
+        return false;
+    }
+
+    const currentTab = budgetTabs.find(t => t.id === activeTabId);
+
+    // 1. File System Access API (PWA / Chrome / Edge / Desktop nativo)
+    if (window.showSaveFilePicker && (saveAs || !currentTab || !currentTab.fileHandle)) {
+        try {
+            const suggested = (currentFileName ? currentFileName.replace(/\.[^/.]+$/, "") : "Presupuesto_modificado") + ".bc3";
+            const handle = await window.showSaveFilePicker({
+                suggestedName: suggested,
+                types: [{
+                    description: 'Archivo de Presupuesto BC3 (FIEBDC-3)',
+                    accept: { 'text/plain': ['.bc3', '.BC3', '.txt'] }
+                }]
+            });
+            const writable = await handle.createWritable();
+            await writable.write(content);
+            await writable.close();
+
+            if (currentTab) {
+                currentTab.fileHandle = handle;
+                currentTab.fileName = handle.name;
+                currentFileName = handle.name;
+                const fileNameEl = document.getElementById('fileName');
+                if (fileNameEl) fileNameEl.textContent = currentFileName;
+                const dropdownFileName = document.getElementById('dropdownFileName');
+                if (dropdownFileName) dropdownFileName.textContent = currentFileName;
+                renderBudgetTabBar();
+            }
+            showAppToast(`Presupuesto guardado en disco: ${handle.name}`, '💾');
+            return true;
+        } catch (pickerErr) {
+            if (pickerErr.name === 'AbortError') return false; // Usuario canceló el cuadro de diálogo
+            console.warn("Fallo en showSaveFilePicker, procediendo a guardado estándar:", pickerErr);
+        }
+    } else if (currentTab && currentTab.fileHandle && !saveAs) {
+        // Guardado directo ultra-rápido en el archivo físico existente
+        try {
+            const writable = await currentTab.fileHandle.createWritable();
+            await writable.write(content);
+            await writable.close();
+            showAppToast(`Cambios guardados directamente en disco: ${currentTab.fileName}`, '⚡');
+            return true;
+        } catch (writeErr) {
+            console.warn("Error escribiendo en fileHandle existente:", writeErr);
+        }
+    }
+
+    // 2. Dispositivos móviles con Capacitor (Android / iOS)
+    if (window.Capacitor && window.Capacitor.isPluginAvailable('Filesystem')) {
+        const base64Bc3 = btoa(unescape(encodeURIComponent(content)));
+        const baseName = (currentFileName || "Presupuesto").replace(/\.[^/.]+$/, "");
+        saveAndShareNativeFile(base64Bc3, `${baseName}_modificado.bc3`);
+        showAppToast("Archivo exportado a almacenamiento del dispositivo.", "📱");
+        return true;
+    }
+
+    // 3. Fallback universal por descarga Blob tradicional
+    const baseName = (currentFileName || "Presupuesto").replace(/\.[^/.]+$/, "");
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${baseName}_modificado.bc3`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showAppToast(`Descarga de archivo generada: ${baseName}_modificado.bc3`, '⬇️');
+    return true;
+}
+
+// Botón Guardar en barra superior
 const saveBtn = document.getElementById('saveBtn');
 if (saveBtn) {
-    saveBtn.addEventListener('click', () => {
-        if (!parsedData) {
-            alert("No hay datos de archivo cargados.");
-            return;
-        }
-        const content = generateModifiedBC3();
-        if (!content) {
-            alert("Error al generar el archivo modificado.");
-            return;
-        }
+    saveBtn.addEventListener('click', () => saveCurrentBudgetFile(false));
+}
 
-        const baseName = currentFileName.replace(/\.[^/.]+$/, "");
-        if (window.Capacitor && window.Capacitor.isPluginAvailable('Filesystem')) {
-            const base64Bc3 = btoa(unescape(encodeURIComponent(content)));
-            saveAndShareNativeFile(base64Bc3, `${baseName}_modificado.bc3`);
-        } else {
-            const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `${baseName}_modificado.bc3`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+// Botón Exportar / Guardar como BC3 en menú desplegable
+const exportBc3Btn = document.getElementById('exportBc3Btn');
+if (exportBc3Btn) {
+    exportBc3Btn.addEventListener('click', () => saveCurrentBudgetFile(true));
+}
+
+// Gestión de Dropdowns (Exportar/Importar, Ajustes, etc.)
+document.addEventListener('click', (e) => {
+    const toggleBtn = e.target.closest('.dropdown-toggle');
+    if (toggleBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const dropdown = toggleBtn.closest('.dropdown');
+        if (dropdown) {
+            const isShown = dropdown.classList.contains('show');
+            document.querySelectorAll('.dropdown.show').forEach(d => d.classList.remove('show'));
+            if (!isShown) dropdown.classList.add('show');
+        }
+        return;
+    }
+
+    const dropdownContentBtn = e.target.closest('.dropdown-content button, .dropdown-content label');
+    if (dropdownContentBtn) {
+        const dropdown = dropdownContentBtn.closest('.dropdown');
+        if (dropdown) dropdown.classList.remove('show');
+        return;
+    }
+
+    if (!e.target.closest('.dropdown')) {
+        document.querySelectorAll('.dropdown.show').forEach(d => d.classList.remove('show'));
+    }
+});
+
+// ── Control de Coeficientes Globales (GG, BI, Baja) ──
+const toggleCoeffsBtn = document.getElementById('toggleCoeffsBtn');
+const coeffsPanel = document.getElementById('coeffsPanel');
+const applyCoeffsBtn = document.getElementById('applyCoeffsBtn');
+
+if (toggleCoeffsBtn && coeffsPanel) {
+    toggleCoeffsBtn.addEventListener('click', () => {
+        const isHidden = coeffsPanel.style.display === 'none' || !coeffsPanel.style.display;
+        coeffsPanel.style.display = isHidden ? 'block' : 'none';
+        toggleCoeffsBtn.classList.toggle('active', isHidden);
+    });
+}
+
+if (applyCoeffsBtn) {
+    applyCoeffsBtn.addEventListener('click', () => {
+        const ggIn = document.getElementById('coeffGG');
+        const biIn = document.getElementById('coeffBI');
+        const bajaIn = document.getElementById('coeffBaja');
+
+        globalCoeffs.gg = ggIn ? (parseFloat(ggIn.value) || 0) : 13;
+        globalCoeffs.bi = biIn ? (parseFloat(biIn.value) || 0) : 6;
+        globalCoeffs.baja = bajaIn ? (parseFloat(bajaIn.value) || 0) : 0;
+
+        updateTotalBudgetDisplay();
+        if (coeffsPanel) coeffsPanel.style.display = 'none';
+        if (toggleCoeffsBtn) toggleCoeffsBtn.classList.remove('active');
+        showAppToast("Coeficientes aplicados correctamente.", "⚙️");
+    });
+}
+
+const openImportExcelBtn = document.getElementById('openImportExcelBtn');
+const openImportCsvBtn = document.getElementById('openImportCsvBtn');
+const importExcelFileInput = document.getElementById('importExcelFileInput');
+const importCsvFileInput = document.getElementById('importCsvFileInput');
+const openImportBc3Btn = document.getElementById('openImportBc3Btn');
+
+if (openImportExcelBtn && importExcelFileInput) {
+    openImportExcelBtn.addEventListener('click', () => {
+        importExcelFileInput.click();
+    });
+}
+
+if (openImportCsvBtn && importCsvFileInput) {
+    openImportCsvBtn.addEventListener('click', () => {
+        importCsvFileInput.click();
+    });
+}
+
+if (openImportBc3Btn) {
+    openImportBc3Btn.addEventListener('click', () => {
+        const bc3FileInput = document.getElementById('bc3file');
+        if (bc3FileInput) bc3FileInput.click();
+    });
+}
+
+if (importExcelFileInput) {
+    importExcelFileInput.addEventListener('change', async (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            await importSpreadsheetFile(e.target.files[0]);
+            e.target.value = '';
         }
     });
 }
+
+if (importCsvFileInput) {
+    importCsvFileInput.addEventListener('change', async (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            await importSpreadsheetFile(e.target.files[0]);
+            e.target.value = '';
+        }
+    });
+}
+
+async function importSpreadsheetFile(file) {
+    if (!file) return;
+    if (typeof XLSX === 'undefined') {
+        alert("La librería de importación (SheetJS) no está disponible. Por favor, comprueba tu conexión.");
+        return;
+    }
+
+    try {
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+
+        if (!jsonData || jsonData.length < 2) {
+            alert("El archivo no contiene suficientes filas de datos.");
+            return;
+        }
+
+        // Buscar fila de encabezados y mapear columnas
+        let headerRowIndex = 0;
+        let colCode = -1, colSummary = -1, colUnit = -1, colQty = -1, colPrice = -1;
+
+        for (let i = 0; i < Math.min(jsonData.length, 10); i++) {
+            const row = jsonData[i].map(c => String(c).toLowerCase().trim());
+            const cIdx = row.findIndex(c => c.includes('cód') || c.includes('cod') || c === 'código' || c === 'codigo' || c === 'code');
+            const sIdx = row.findIndex(c => c.includes('resumen') || c.includes('desc') || c.includes('concepto') || c.includes('partida') || c === 'título' || c === 'titulo');
+            const uIdx = row.findIndex(c => c.includes('ud') || c.includes('uni') || c.includes('unit') || c === 'u');
+            const qIdx = row.findIndex(c => c.includes('cant') || c.includes('med') || c.includes('qty'));
+            const pIdx = row.findIndex(c => c.includes('prec') || c.includes('pr') || c.includes('price') || c.includes('importe'));
+
+            if (cIdx !== -1 || sIdx !== -1) {
+                headerRowIndex = i;
+                colCode = cIdx;
+                colSummary = sIdx;
+                colUnit = uIdx;
+                colQty = qIdx;
+                colPrice = pIdx;
+                break;
+            }
+        }
+
+        // Fallbacks inteligentes
+        if (colCode === -1) colCode = 0;
+        if (colSummary === -1) colSummary = 1;
+        if (colUnit === -1) colUnit = 2;
+        if (colQty === -1) colQty = 3;
+        if (colPrice === -1) colPrice = 4;
+
+        // Construir proyecto BC3 normalizado
+        const concepts = {};
+        const rootNodes = ['OBRA#'];
+        concepts['OBRA#'] = {
+            code: 'OBRA#',
+            unit: '',
+            summary: file.name.replace(/\.[^/.]+$/, ''),
+            price: 0,
+            date: new Date().toISOString().slice(2, 8).replace(/-/g, ''),
+            type: 0,
+            children: [],
+            decomposition: [],
+            is_root: true
+        };
+
+        let currentChapter = null;
+        let chapterCounter = 1;
+        let itemCounter = 1;
+
+        for (let i = headerRowIndex + 1; i < jsonData.length; i++) {
+            const row = jsonData[i];
+            if (!row || row.length === 0 || row.every(cell => String(cell).trim() === '')) continue;
+
+            let code = colCode !== -1 && row[colCode] ? String(row[colCode]).trim() : '';
+            let summary = colSummary !== -1 && row[colSummary] ? String(row[colSummary]).trim() : '';
+            let unit = colUnit !== -1 && row[colUnit] ? String(row[colUnit]).trim() : '';
+            let qty = colQty !== -1 && row[colQty] ? parseFloat(String(row[colQty]).replace(',', '.')) : 0;
+            let price = colPrice !== -1 && row[colPrice] ? parseFloat(String(row[colPrice]).replace(',', '.')) : 0;
+
+            if (isNaN(qty)) qty = 1;
+            if (isNaN(price)) price = 0;
+
+            if (!summary && !code) continue;
+            if (!summary) summary = `Partida ${code}`;
+
+            const isChapter = code.endsWith('#') || (!unit && price === 0 && qty === 0);
+
+            if (isChapter) {
+                if (!code) code = `CAP${String(chapterCounter++).padStart(2, '0')}#`;
+                if (!code.endsWith('#')) code += '#';
+
+                currentChapter = {
+                    code: code,
+                    unit: '',
+                    summary: summary,
+                    price: 0,
+                    date: '010126',
+                    type: 0,
+                    children: [],
+                    decomposition: []
+                };
+                concepts[code] = currentChapter;
+                concepts['OBRA#'].children.push(code);
+                concepts['OBRA#'].decomposition.push({ code: code, factor: 1, type: 0 });
+                itemCounter = 1;
+            } else {
+                if (!currentChapter) {
+                    const chCode = `CAP01#`;
+                    currentChapter = {
+                        code: chCode,
+                        unit: '',
+                        summary: 'Capítulo 01',
+                        price: 0,
+                        date: '010126',
+                        type: 0,
+                        children: [],
+                        decomposition: []
+                    };
+                    concepts[chCode] = currentChapter;
+                    concepts['OBRA#'].children.push(chCode);
+                    concepts['OBRA#'].decomposition.push({ code: chCode, factor: 1, type: 0 });
+                }
+
+                if (!code) {
+                    code = `P${currentChapter.code.replace('#', '')}.${String(itemCounter++).padStart(2, '0')}`;
+                }
+
+                concepts[code] = {
+                    code: code,
+                    unit: unit || 'ud',
+                    summary: summary,
+                    price: price,
+                    quantity: qty > 0 ? qty : 1,
+                    date: '010126',
+                    type: 0,
+                    children: [],
+                    decomposition: [],
+                    measurements: [{ comment: 'Medición importada', units: 1, l: qty > 0 ? qty : 1, w: 1, h: 1, _calculatedPartial: qty > 0 ? qty : 1 }]
+                };
+
+                currentChapter.children.push(code);
+                currentChapter.decomposition.push({ code: code, factor: qty > 0 ? qty : 1, type: 0 });
+            }
+        }
+
+        const project = {
+            properties: {
+                owner: "BC3 Viewer",
+                format: "FIEBDC-3/2004",
+                generator: "BC3 Import Engine",
+                description: file.name.replace(/\.[^/.]+$/, ''),
+                charset: "ANSI"
+            },
+            concepts: concepts,
+            root_nodes: rootNodes
+        };
+
+        if (window.BC3PriceBank && typeof window.BC3PriceBank.normalizeProject === 'function') {
+            window.BC3PriceBank.normalizeProject(project, { title: project.properties.description });
+        }
+
+        loadCreatedProjectIntoViewer(project, file.name.replace(/\.[^/.]+$/, '') + ".bc3");
+        showAppToast(`Presupuesto importado con éxito: ${file.name}`, '📊');
+    } catch (err) {
+        console.error("Error importando archivo:", err);
+        alert("Error al procesar el archivo: " + err.message);
+    }
+}
+
+// Atajos de Teclado Globales: Ctrl+S (Guardar) y Ctrl+Shift+S (Guardar Como...)
+window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        saveCurrentBudgetFile(e.shiftKey);
+    }
+});
 
 // Función para guardar y compartir archivos de forma nativa en dispositivos móviles (Capacitor)
 async function saveAndShareNativeFile(base64Data, filename) {
@@ -2597,17 +3675,19 @@ function recalculateMeasurements(concept) {
 
     let total = 0;
     concept.measurements.forEach(m => {
-        const u = m.units === '' ? 1 : parseFloat(m.units.toString().replace(',', '.'));
-        const l = m.l === '' ? 1 : parseFloat(m.l.toString().replace(',', '.'));
-        const w = m.w === '' ? 1 : parseFloat(m.w.toString().replace(',', '.'));
-        const h = m.h === '' ? 1 : parseFloat(m.h.toString().replace(',', '.'));
+        const evalU = evaluateMeasurementExpression(m.units);
+        const evalL = evaluateMeasurementExpression(m.l);
+        const evalW = evaluateMeasurementExpression(m.w);
+        const evalH = evaluateMeasurementExpression(m.h);
 
-        const vU = isNaN(u) ? 1 : u;
-        const vL = isNaN(l) ? 1 : l;
-        const vW = isNaN(w) ? 1 : w;
-        const vH = isNaN(h) ? 1 : h;
+        const vU = evalU.isBlank ? 1 : evalU.num;
+        const vL = evalL.isBlank ? 1 : evalL.num;
+        const vW = evalW.isBlank ? 1 : evalW.num;
+        const vH = evalH.isBlank ? 1 : evalH.num;
 
-        total += vU * vL * vW * vH;
+        const partial = vU * vL * vW * vH;
+        m._calculatedPartial = partial;
+        total += partial;
     });
 
     // Actualizar el factor en el padre
@@ -2620,9 +3700,11 @@ function recalculateMeasurements(concept) {
     recalculateAll();
 
     // Actualizar el árbol visual
-    const scrollPos = document.getElementById('treeContent').scrollTop;
+    const scrollPos = document.getElementById('treeContent') ? document.getElementById('treeContent').scrollTop : 0;
     renderCurrentLevel();
-    document.getElementById('treeContent').scrollTop = scrollPos;
+    if (document.getElementById('treeContent')) {
+        document.getElementById('treeContent').scrollTop = scrollPos;
+    }
 
     // Refrescar panel de detalles para ver reflejado el nuevo TOTAL
     showDetails(concept.code);
@@ -3345,12 +4427,11 @@ if (exportExcelBtn) {
     });
 }
 
-const exportBc3Btn = document.getElementById('exportBc3Btn');
 if (exportBc3Btn) {
     exportBc3Btn.addEventListener('click', () => {
         const expDrop = document.getElementById('exportDropdown');
         if (expDrop) expDrop.classList.remove('show');
-        exportToBC3();
+        saveCurrentBudgetFile(true);
     });
 }
 
@@ -3359,12 +4440,13 @@ const dashboardBtn = document.getElementById('dashboardBtn');
 const dashboardModal = document.getElementById('dashboardModal');
 const closeDashboardBtn = document.getElementById('closeDashboardBtn');
 
-if (dashboardBtn && dashboardModal && closeDashboardBtn) {
+if (dashboardBtn) {
     dashboardBtn.addEventListener('click', () => {
-        dashboardModal.style.display = 'flex';
-        setTimeout(renderCharts, 50);
+        openDashboardModal('dashboard');
     });
+}
 
+if (closeDashboardBtn && dashboardModal) {
     closeDashboardBtn.addEventListener('click', () => {
         dashboardModal.style.display = 'none';
     });
@@ -3475,6 +4557,29 @@ if (infoBtn && infoModal && closeInfoBtn) {
     }
 }
 
+// About Me modal toggling
+const aboutMeBtn = document.getElementById('aboutMeBtn');
+const aboutMeModal = document.getElementById('aboutMeModal');
+const closeAboutMeBtn = document.getElementById('closeAboutMeBtn');
+
+if (aboutMeBtn && aboutMeModal && closeAboutMeBtn) {
+    aboutMeBtn.addEventListener('click', () => {
+        aboutMeModal.style.display = 'flex';
+        const setDrop = document.getElementById('settingsDropdown');
+        if (setDrop) setDrop.classList.remove('show');
+    });
+
+    closeAboutMeBtn.addEventListener('click', () => {
+        aboutMeModal.style.display = 'none';
+    });
+
+    window.addEventListener('click', (e) => {
+        if (e.target === aboutMeModal) {
+            aboutMeModal.style.display = 'none';
+        }
+    });
+}
+
 if (runCompareBtn && compareFileInput) {
     runCompareBtn.addEventListener('click', async () => {
         if (!compareFileInput.files.length) {
@@ -3558,37 +4663,6 @@ if (resourceFilter) {
     });
 }
 
-// Coeficientes globales (PEM vs PEC)
-const toggleCoeffsBtn = document.getElementById('toggleCoeffsBtn');
-const coeffsPanel = document.getElementById('coeffsPanel');
-const applyCoeffsBtn = document.getElementById('applyCoeffsBtn');
-
-if (toggleCoeffsBtn && coeffsPanel) {
-    toggleCoeffsBtn.addEventListener('click', () => {
-        if (coeffsPanel.style.display === 'none') {
-            coeffsPanel.style.display = 'block';
-        } else {
-            coeffsPanel.style.display = 'none';
-        }
-        const setDrop = document.getElementById('settingsDropdown');
-        if (setDrop) setDrop.classList.remove('show');
-    });
-}
-
-if (applyCoeffsBtn) {
-    applyCoeffsBtn.addEventListener('click', () => {
-        const ggVal = parseFloat(document.getElementById('coeffGG').value) || 0;
-        const biVal = parseFloat(document.getElementById('coeffBI').value) || 0;
-        const bajaVal = parseFloat(document.getElementById('coeffBaja').value) || 0;
-
-        globalCoeffs.gg = ggVal;
-        globalCoeffs.bi = biVal;
-        globalCoeffs.baja = bajaVal;
-
-        updateTotalBudgetDisplay();
-        coeffsPanel.style.display = 'none';
-    });
-}
 
 /* ==========================================================================
    Historial de Cambios: Deshacer (Ctrl+Z) y Rehacer (Ctrl+Y)
@@ -8223,7 +9297,7 @@ function showToastMessage(text) {
 initializeUpdater();
 
 // Función para auto-cargar el último presupuesto guardado en localStorage
-function autoLoadLastBudget() {
+async function autoLoadLastBudget() {
     try {
         const lastContent = localStorage.getItem('last_bc3_content');
         const lastFilename = localStorage.getItem('last_bc3_filename');
@@ -8235,13 +9309,15 @@ function autoLoadLastBudget() {
             const dropdownFileName = document.getElementById('dropdownFileName');
             if (dropdownFileName) dropdownFileName.textContent = currentFileName;
 
-            const parser = new BC3Parser();
-            const result = parser.parse(lastContent);
+            showWorkerLoader("Restaurando último presupuesto...", lastFilename);
+            const result = await parseWithWorker(lastContent);
+            hideWorkerLoader();
 
             renderApp(result);
             console.log("Presupuesto auto-cargado desde localStorage:", lastFilename);
         }
     } catch (e) {
+        hideWorkerLoader();
         console.error("Error al auto-cargar el último presupuesto:", e);
     }
 }
@@ -8644,5 +9720,3250 @@ function setupGanttLongPress(element, callback) {
     element.addEventListener('mouseleave', cancel);
 }
 
+/* ==========================================================================
+   Paleta de Comandos Global (Ctrl+K / Cmd+K)
+   ========================================================================== */
+let commandPaletteOpen = false;
+let commandPaletteSelectedIndex = 0;
+let commandPaletteActiveItems = [];
+
+const cmdPaletteModal = document.getElementById('commandPaletteModal');
+const cmdPaletteInput = document.getElementById('commandPaletteInput');
+const cmdPaletteResults = document.getElementById('commandPaletteResults');
+const cmdPaletteBtn = document.getElementById('cmdPaletteBtn');
+const closeCmdPaletteBtn = document.getElementById('closeCmdPaletteBtn');
+
+// Catálogo de acciones base
+function getBaseCommandPaletteActions() {
+    const actions = [
+        // Categoría: Creación y Archivo
+        {
+            category: "Creación y Archivo",
+            title: "Crear Nuevo Presupuesto",
+            desc: "Asistente guiado, plantillas sectoriales o desde cero",
+            icon: "✨",
+            shortcut: "Ctrl+N",
+            keywords: "nuevo presupuesto crear asistente plantilla reforma unifamiliar blanco fbc3",
+            action: () => {
+                openNewBudgetWizard();
+            }
+        },
+        {
+            category: "Creación y Archivo",
+            title: "Catálogo y Base de Precios ConTech",
+            desc: "Explorar e insertar partidas tipo descompuestas",
+            icon: "📚",
+            shortcut: "",
+            keywords: "base precios catalogo partidas partidas tipo descompuestos rendimiento insumos",
+            action: () => {
+                openPriceBankCatalog();
+            }
+        },
+        // Categoría: Vistas
+        {
+            category: "Vistas y Módulos",
+            title: "Ver Presupuesto",
+            desc: "Árbol jerárquico completo con PEM y PEC",
+            icon: "🌳",
+            shortcut: "Alt+1",
+            keywords: "arbol presupuesto pem pec jerarquia medicion",
+            action: () => {
+                const btn = document.getElementById('presupuestoBtn');
+                if (btn) btn.click();
+            }
+        },
+        {
+            category: "Vistas y Módulos",
+            title: "Cuadro de Precios",
+            desc: "Precios unitarios y descompuestos (MO, MAQ, MAT)",
+            icon: "🏷️",
+            shortcut: "Alt+2",
+            keywords: "precios unitarios descompuestos cuadro mano obra materiales maquinaria",
+            action: () => {
+                const btn = document.getElementById('pricesBtn');
+                if (btn) btn.click();
+            }
+        },
+        {
+            category: "Vistas y Módulos",
+            title: "Dashboard y Estadísticas",
+            desc: "Gráficos de distribución de costes y porcentajes",
+            icon: "📊",
+            shortcut: "",
+            keywords: "dashboard graficos estadisticas resumen porcentajes",
+            action: () => {
+                const btn = document.getElementById('dashboardBtn');
+                if (btn) btn.click();
+            }
+        },
+        {
+            category: "Vistas y Módulos",
+            title: "Planning y Gantt",
+            desc: "Cronograma de obra, ruta crítica y avance",
+            icon: "📅",
+            shortcut: "",
+            keywords: "planning gantt cronograma tiempo semanas fechas camino critico",
+            action: () => {
+                const btn = document.getElementById('planningBtn');
+                if (btn) btn.click();
+            }
+        },
+        {
+            category: "Vistas y Módulos",
+            title: "Visualizador Sunburst",
+            desc: "Gráfico concéntrico interactivo de costes e insumos",
+            icon: "☀️",
+            shortcut: "",
+            keywords: "sunburst descompuestos flujo costes grafico concentrico anillos insumos",
+            action: () => {
+                openDashboardModal('sunburst');
+            }
+        },
+        {
+            category: "Vistas y Módulos",
+            title: "Diagrama Sankey",
+            desc: "Flujo interactivo de capítulos hacia insumos MO, MQ, MT",
+            icon: "🌊",
+            shortcut: "",
+            keywords: "sankey flujo costes descompuestos cintas mo mq mt",
+            action: () => {
+                openDashboardModal('sankey');
+            }
+        },
+        {
+            category: "Vistas y Módulos",
+            title: "Impacto Ambiental",
+            desc: "Estimador de emisiones de CO₂ eq e informe ecológico",
+            icon: "🌿",
+            shortcut: "",
+            keywords: "impacto ambiental huella carbono co2 sostenibilidad ecologia dap medio ambiente ciclo vida",
+            action: () => {
+                openEcoModal();
+            }
+        },
+        {
+            category: "Vistas y Módulos",
+            title: "Sincronización Cloud (Google Drive / E2E)",
+            desc: "Copias de seguridad automáticas y sincronización multidispositivo con cifrado E2E",
+            icon: "☁️",
+            shortcut: "",
+            keywords: "nube cloud sync sincronizacion google drive backup copia seguridad e2e cifrado",
+            action: () => {
+                openCloudSyncModal();
+            }
+        },
+        {
+            category: "Vistas y Módulos",
+            title: "Certificaciones de Obra",
+            desc: "Control de ejecución mensual y actas oficiales",
+            icon: "🏗️",
+            shortcut: "",
+            keywords: "certificaciones obra mensual avance facturacion actas",
+            action: () => {
+                const btn = document.getElementById('certObrasBtn');
+                if (btn) btn.click();
+            }
+        },
+        {
+            category: "Vistas y Módulos",
+            title: "Planificación Financiera (EVM / Curva S)",
+            desc: "Análisis del Valor Ganado, Curva S e índices CPI / SPI",
+            icon: "📈",
+            shortcut: "",
+            keywords: "evm valor ganado curva s financiero cpi spi desviaciones eac",
+            action: () => {
+                const planBtn = document.getElementById('planningBtn');
+                if (planBtn) planBtn.click();
+                setTimeout(() => {
+                    const evmBtn = document.getElementById('toggleEvmViewBtn');
+                    if (evmBtn) evmBtn.click();
+                }, 100);
+            }
+        },
+        {
+            category: "Vistas y Módulos",
+            title: "Comparador de Presupuestos",
+            desc: "Diferencias de importes y partidas entre dos archivos .bc3",
+            icon: "🔍",
+            shortcut: "",
+            keywords: "comparar comparador version diferencias cambios",
+            action: () => {
+                const btn = document.getElementById('compareBtn');
+                if (btn) btn.click();
+            }
+        },
+
+        // Categoría: Acciones Rápidas
+        {
+            category: "Acciones y Exportación",
+            title: "Importar desde Excel (.xlsx / .csv)",
+            desc: "Convertir hoja de cálculo a presupuesto BC3 normalizado",
+            icon: "📥",
+            shortcut: "Ctrl+I",
+            keywords: "importar excel xlsx csv cuadros precios mediciones convertir",
+            action: () => {
+                openImportExcelModal();
+            }
+        },
+        {
+            category: "Acciones y Exportación",
+            title: "Exportar a Excel (.xlsx)",
+            desc: "Generar hoja de cálculo con fórmulas y árbol",
+            icon: "📊",
+            shortcut: "Ctrl+E",
+            keywords: "excel xlsx exportar descargar hoja calculo tabla",
+            action: () => {
+                exportToExcel();
+            }
+        },
+        {
+            category: "Acciones y Exportación",
+            title: "Exportar a PDF",
+            desc: "Generar documento PDF formateado listo para imprimir",
+            icon: "📄",
+            shortcut: "Ctrl+P",
+            keywords: "pdf exportar imprimir documento informe",
+            action: () => {
+                exportToPdf();
+            }
+        },
+        {
+            category: "Acciones y Exportación",
+            title: "Guardar como Archivo BC3",
+            desc: "Descargar archivo .bc3 con cambios actualizados",
+            icon: "⬇️",
+            shortcut: "Ctrl+S",
+            keywords: "guardar descargar bc3 fiebdc archivo backup",
+            action: () => {
+                exportToBC3();
+            }
+        },
+        {
+            category: "Acciones y Configuración",
+            title: "Ajustar Coeficientes (GG, BI, IVA)",
+            desc: "Modificar Gastos Generales, Beneficio y Bajas",
+            icon: "⚙️",
+            shortcut: "",
+            keywords: "coeficientes gastos generales beneficio industrial iva baja alza pec",
+            action: () => {
+                const btn = document.getElementById('toggleCoeffsBtn');
+                if (btn) {
+                    btn.click();
+                    const setDrop = document.getElementById('settingsDropdown');
+                    if (setDrop) setDrop.classList.remove('show');
+                }
+            }
+        },
+        {
+            category: "Acciones y Configuración",
+            title: "Alternar Tema Visual (Claro / Oscuro)",
+            desc: "Cambiar entre paleta oscura y clara",
+            icon: "🌙",
+            shortcut: "",
+            keywords: "tema visual modo oscuro claro noche dia dark light",
+            action: () => {
+                const btn = document.getElementById('themeToggle');
+                if (btn) btn.click();
+            }
+        },
+        {
+            category: "Acciones y Configuración",
+            title: "Historial de Auditoría",
+            desc: "Registro de cambios y ediciones realizadas",
+            icon: "📜",
+            shortcut: "",
+            keywords: "auditoria historial cambios modificaciones registro log",
+            action: () => {
+                const btn = document.getElementById('auditLogBtn');
+                if (btn) btn.click();
+            }
+        },
+        {
+            category: "Acciones y Configuración",
+            title: "Información y Novedades",
+            desc: "Versión de la app, registro OTA y créditos",
+            icon: "ℹ️",
+            shortcut: "",
+            keywords: "informacion version ota changelog novedades creditos acerca",
+            action: () => {
+                const btn = document.getElementById('infoBtn');
+                if (btn) btn.click();
+            }
+        },
+        {
+            category: "Presupuesto",
+            title: "Cargar Otro Archivo .BC3",
+            desc: "Seleccionar y abrir un nuevo archivo de presupuesto",
+            icon: "📂",
+            shortcut: "Ctrl+O",
+            keywords: "abrir cargar nuevo archivo seleccionar bc3",
+            action: () => {
+                const input = document.getElementById('bc3file');
+                if (input) input.click();
+            }
+        },
+        {
+            category: "Presupuesto",
+            title: "Cerrar Presupuesto Actual",
+            desc: "Salir del presupuesto en pantalla y volver al inicio",
+            icon: "✕",
+            shortcut: "",
+            keywords: "cerrar salir limpiar presupuesto reset",
+            action: () => {
+                const btn = document.getElementById('closeBudgetBtn');
+                if (btn) btn.click();
+            }
+        }
+    ];
+
+    return actions;
+}
+
+// Búsqueda de conceptos dentro del presupuesto cargado
+function searchBudgetConcepts(term) {
+    if (!parsedData || !parsedData.concepts || !term) return [];
+
+    const query = term.toLowerCase().trim();
+    const matches = [];
+
+    const allConcepts = Object.values(parsedData.concepts);
+
+    for (const concept of allConcepts) {
+        const code = (concept.code || '').replace(/#+\s*$/, '');
+        const summary = (concept.summary || '').toLowerCase();
+        const rawCode = (concept.code || '').toLowerCase();
+        const desc = (concept.description || '').toLowerCase();
+
+        let score = 0;
+        if (rawCode === query || code.toLowerCase() === query) {
+            score = 100;
+        } else if (rawCode.startsWith(query) || code.toLowerCase().startsWith(query)) {
+            score = 75;
+        } else if (code.toLowerCase().includes(query)) {
+            score = 50;
+        } else if (summary.includes(query)) {
+            score = 30;
+        } else if (desc.includes(query)) {
+            score = 10;
+        }
+
+        if (score > 0) {
+            const isChapter = concept.code.endsWith('#') || concept.is_root;
+            const price = parseFloat(concept.price) || 0;
+            const priceFormatted = price > 0 ? price.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €' : '';
+
+            matches.push({
+                category: isChapter ? "Capítulos del Presupuesto" : "Partidas del Presupuesto",
+                title: `${code} · ${concept.summary || '(Sin título)'}`,
+                desc: isChapter ? `Capítulo · ${priceFormatted}` : `${concept.unit ? `[${concept.unit}] ` : ''}${priceFormatted}`,
+                icon: isChapter ? "📁" : "📄",
+                badge: concept.unit || (isChapter ? 'CAP' : 'PAR'),
+                priceBadge: priceFormatted,
+                score: score,
+                conceptCode: concept.code,
+                action: () => {
+                    // 1. Conmutar a vista de presupuesto
+                    const presBtn = document.getElementById('presupuestoBtn');
+                    if (presBtn) presBtn.click();
+
+                    // 2. Cerrar modales abiertos
+                    const modals = document.querySelectorAll('.modal');
+                    modals.forEach(m => m.style.display = 'none');
+
+                    // 3. Expandir la ruta hacia este nodo en el árbol
+                    expandAncestorsOfNode(concept.code);
+
+                    // 4. Renderizar nivel
+                    renderCurrentLevel();
+
+                    // 5. Mostrar detalles del concepto en el panel inspector
+                    showDetails(concept.code);
+
+                    // 6. Hacer scroll suave hacia el nodo en el árbol
+                    setTimeout(() => {
+                        const targetEl = document.querySelector(`[data-code="${concept.code}"]`);
+                        if (targetEl) {
+                            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            targetEl.classList.add('highlight-node');
+                            setTimeout(() => targetEl.classList.remove('highlight-node'), 2500);
+                        }
+                    }, 80);
+                }
+            });
+        }
+    }
+
+    // Ordenar por relevancia
+    matches.sort((a, b) => b.score - a.score);
+    return matches.slice(0, 25);
+}
+
+// Expande los nodos ancestros de un concepto para garantizar su visibilidad en el árbol
+function expandAncestorsOfNode(targetCode) {
+    if (!parsedData || !parsedData.concepts) return;
+
+    // Buscar en el grafo quiénes son los padres
+    for (const code in parsedData.concepts) {
+        const c = parsedData.concepts[code];
+        if (c.children && c.children.includes(targetCode)) {
+            expandedNodes.add(code);
+            expandAncestorsOfNode(code);
+        }
+    }
+}
+
+// Abrir la paleta de comandos
+function openCommandPalette() {
+    if (!cmdPaletteModal) return;
+
+    commandPaletteOpen = true;
+    cmdPaletteModal.style.display = 'flex';
+    if (cmdPaletteInput) {
+        cmdPaletteInput.value = '';
+        setTimeout(() => cmdPaletteInput.focus(), 50);
+    }
+    renderCommandPaletteResults('');
+}
+
+// Cerrar la paleta de comandos
+function closeCommandPalette() {
+    if (!cmdPaletteModal) return;
+
+    commandPaletteOpen = false;
+    cmdPaletteModal.style.display = 'none';
+}
+
+// Renderizar lista de resultados en la paleta
+function renderCommandPaletteResults(term = '') {
+    if (!cmdPaletteResults) return;
+
+    const trimmed = term.toLowerCase().trim();
+    let items = [];
+
+    const baseActions = getBaseCommandPaletteActions();
+
+    if (!trimmed) {
+        items = baseActions;
+    } else {
+        // Filtrar acciones base
+        const matchedActions = baseActions.filter(item => {
+            return item.title.toLowerCase().includes(trimmed) ||
+                   item.desc.toLowerCase().includes(trimmed) ||
+                   (item.keywords && item.keywords.toLowerCase().includes(trimmed));
+        });
+
+        // Buscar conceptos del presupuesto
+        const matchedConcepts = searchBudgetConcepts(trimmed);
+
+        items = [...matchedActions, ...matchedConcepts];
+    }
+
+    commandPaletteActiveItems = items;
+    commandPaletteSelectedIndex = 0;
+
+    if (items.length === 0) {
+        cmdPaletteResults.innerHTML = `
+            <div class="command-palette-empty">
+                <span class="command-palette-empty-icon">🔍</span>
+                <p>No se encontraron comandos ni partidas para <strong>"${term}"</strong></p>
+            </div>
+        `;
+        return;
+    }
+
+    // Agrupar por categoría
+    const categoriesMap = new Map();
+    items.forEach((item, index) => {
+        const cat = item.category || 'General';
+        if (!categoriesMap.has(cat)) {
+            categoriesMap.set(cat, []);
+        }
+        categoriesMap.get(cat).push({ item, globalIndex: index });
+    });
+
+    let html = '';
+    categoriesMap.forEach((entryList, catName) => {
+        html += `<div class="command-palette-category">`;
+        html += `<div class="command-palette-category-title">${catName}</div>`;
+
+        entryList.forEach(({ item, globalIndex }) => {
+            const isActive = globalIndex === commandPaletteSelectedIndex ? 'active' : '';
+            html += `
+                <div class="command-palette-item ${isActive}" data-index="${globalIndex}">
+                    <div class="command-palette-item-left">
+                        <span class="command-palette-item-icon">${item.icon || '⚡'}</span>
+                        <div class="command-palette-item-info">
+                            <span class="command-palette-item-title">${item.title}</span>
+                            <span class="command-palette-item-desc">${item.desc}</span>
+                        </div>
+                    </div>
+                    <div class="command-palette-item-right">
+                        ${item.priceBadge ? `<span class="command-palette-badge command-palette-price-badge">${item.priceBadge}</span>` : ''}
+                        ${item.badge && !item.priceBadge ? `<span class="command-palette-badge">${item.badge}</span>` : ''}
+                        ${item.shortcut ? `<kbd class="command-palette-shortcut">${item.shortcut}</kbd>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `</div>`;
+    });
+
+    cmdPaletteResults.innerHTML = html;
+
+    // Vincular clics directos
+    const renderedItems = cmdPaletteResults.querySelectorAll('.command-palette-item');
+    renderedItems.forEach(el => {
+        el.addEventListener('click', () => {
+            const idx = parseInt(el.getAttribute('data-index'), 10);
+            executeCommandPaletteItem(idx);
+        });
+        el.addEventListener('mouseenter', () => {
+            const idx = parseInt(el.getAttribute('data-index'), 10);
+            updateCommandPaletteActiveIndex(idx);
+        });
+    });
+}
+
+function updateCommandPaletteActiveIndex(index) {
+    if (!commandPaletteActiveItems || commandPaletteActiveItems.length === 0) return;
+
+    commandPaletteSelectedIndex = (index + commandPaletteActiveItems.length) % commandPaletteActiveItems.length;
+
+    const renderedItems = cmdPaletteResults.querySelectorAll('.command-palette-item');
+    renderedItems.forEach(el => {
+        const itemIdx = parseInt(el.getAttribute('data-index'), 10);
+        if (itemIdx === commandPaletteSelectedIndex) {
+            el.classList.add('active');
+            el.scrollIntoView({ behavior: 'auto', block: 'nearest' });
+        } else {
+            el.classList.remove('active');
+        }
+    });
+}
+
+function executeCommandPaletteItem(index) {
+    if (!commandPaletteActiveItems || !commandPaletteActiveItems[index]) return;
+
+    const selected = commandPaletteActiveItems[index];
+    closeCommandPalette();
+
+    try {
+        if (typeof selected.action === 'function') {
+            selected.action();
+        }
+    } catch (err) {
+        console.error("Error ejecutando acción de paleta de comandos:", err);
+    }
+}
+
+// Event Listeners para Paleta de Comandos
+if (cmdPaletteBtn) {
+    cmdPaletteBtn.addEventListener('click', () => {
+        if (commandPaletteOpen) {
+            closeCommandPalette();
+        } else {
+            openCommandPalette();
+        }
+    });
+}
+
+if (closeCmdPaletteBtn) {
+    closeCmdPaletteBtn.addEventListener('click', closeCommandPalette);
+}
+
+if (cmdPaletteModal) {
+    cmdPaletteModal.addEventListener('click', (e) => {
+        if (e.target === cmdPaletteModal) {
+            closeCommandPalette();
+        }
+    });
+}
+
+if (cmdPaletteInput) {
+    cmdPaletteInput.addEventListener('input', (e) => {
+        renderCommandPaletteResults(e.target.value);
+    });
+
+    cmdPaletteInput.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            updateCommandPaletteActiveIndex(commandPaletteSelectedIndex + 1);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            updateCommandPaletteActiveIndex(commandPaletteSelectedIndex - 1);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            executeCommandPaletteItem(commandPaletteSelectedIndex);
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            closeCommandPalette();
+        }
+    });
+}
+
+// Atajo de teclado global Ctrl+K / Cmd+K
+document.addEventListener('keydown', (e) => {
+    // Si se pulsa Ctrl+K o Cmd+K
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        if (commandPaletteOpen) {
+            closeCommandPalette();
+        } else {
+            openCommandPalette();
+        }
+        return;
+    }
+
+    // Si se pulsa Ctrl+N o Cmd+N (Nuevo Presupuesto)
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'n' || e.key === 'N')) {
+        e.preventDefault();
+        openNewBudgetWizard();
+        return;
+    }
+
+    // Escape para cerrar la paleta si está abierta
+    if (e.key === 'Escape' && commandPaletteOpen) {
+        e.preventDefault();
+        closeCommandPalette();
+    }
+});
 
 
+/* ==========================================================================
+   VISUALIZADOR CONCÉNTRICO DE DESCOMPUESTOS (SUNBURST / SANKEY) & DASHBOARD UNIFICADO
+   ========================================================================== */
+
+let sunburstRootCode = null;
+let sunburstHierarchyData = null;
+let sunburstSectors = [];
+let sunburstHoveredSector = null;
+let sunburstChapterBoundaries = [];
+
+const dashboardHeaderIcon = document.getElementById('dashboardHeaderIcon');
+const dashboardModalTitle = document.getElementById('dashboardModalTitle');
+const tabDashboardViewBtn = document.getElementById('tabDashboardViewBtn');
+const tabSunburstViewBtn = document.getElementById('tabSunburstViewBtn');
+const tabSankeyViewBtn = document.getElementById('tabSankeyViewBtn');
+const tabEcoViewBtn = document.getElementById('tabEcoViewBtn');
+const dashboardSubToolbar = document.getElementById('dashboardSubToolbar');
+const sunburstDepthContainer = document.getElementById('sunburstDepthContainer');
+const dashboardViewSection = document.getElementById('dashboardViewSection');
+const sunburstViewSection = document.getElementById('sunburstViewSection');
+const ecoViewSection = document.getElementById('ecoViewSection');
+
+const sunburstBudgetSelect = document.getElementById('sunburstBudgetSelect');
+const sunburstDepthSelect = document.getElementById('sunburstDepthSelect');
+const sunburstNatureSelect = document.getElementById('sunburstNatureSelect');
+const sunburstResetZoomBtn = document.getElementById('sunburstResetZoomBtn');
+const sunburstCanvas = document.getElementById('sunburstCanvas');
+
+function populateSunburstBudgetSelect() {
+    if (!sunburstBudgetSelect) return;
+    sunburstBudgetSelect.innerHTML = '';
+
+    if (budgetTabs && budgetTabs.length > 0) {
+        budgetTabs.forEach(tab => {
+            const opt = document.createElement('option');
+            opt.value = tab.id;
+            opt.textContent = tab.fileName;
+            if (tab.id === activeTabId) {
+                opt.selected = true;
+            }
+            sunburstBudgetSelect.appendChild(opt);
+        });
+        const parentLabel = sunburstBudgetSelect.closest('.sunburst-filter-label');
+        if (parentLabel) parentLabel.style.display = 'flex';
+    } else if (currentFileName) {
+        const opt = document.createElement('option');
+        opt.value = 'active';
+        opt.textContent = currentFileName;
+        opt.selected = true;
+        sunburstBudgetSelect.appendChild(opt);
+    }
+}
+
+function setDashboardMainTab(tab) {
+    if (tabDashboardViewBtn) tabDashboardViewBtn.classList.toggle('active', tab === 'dashboard');
+    if (tabSunburstViewBtn) tabSunburstViewBtn.classList.toggle('active', tab === 'sunburst');
+    if (tabSankeyViewBtn) tabSankeyViewBtn.classList.toggle('active', tab === 'sankey');
+    if (tabEcoViewBtn) tabEcoViewBtn.classList.toggle('active', tab === 'eco');
+
+    const centerLabel = document.getElementById('sunburstCenterLabel');
+
+    if (tab === 'dashboard') {
+        if (dashboardHeaderIcon) dashboardHeaderIcon.textContent = '📊';
+        if (dashboardModalTitle) dashboardModalTitle.textContent = 'Dashboard & Estadísticas';
+        if (dashboardViewSection) dashboardViewSection.style.display = 'block';
+        if (sunburstViewSection) sunburstViewSection.style.display = 'none';
+        if (ecoViewSection) ecoViewSection.style.display = 'none';
+        if (dashboardSubToolbar) dashboardSubToolbar.style.display = 'none';
+        setTimeout(renderCharts, 50);
+    } else if (tab === 'sunburst') {
+        currentDecompViewMode = 'sunburst';
+        if (dashboardHeaderIcon) dashboardHeaderIcon.textContent = '☀️';
+        if (dashboardModalTitle) dashboardModalTitle.textContent = 'Visualizador Sunburst';
+        if (dashboardViewSection) dashboardViewSection.style.display = 'none';
+        if (sunburstViewSection) sunburstViewSection.style.display = 'block';
+        if (ecoViewSection) ecoViewSection.style.display = 'none';
+        if (dashboardSubToolbar) dashboardSubToolbar.style.display = 'flex';
+        if (sunburstDepthContainer) sunburstDepthContainer.style.display = 'flex';
+        if (sunburstCanvas) sunburstCanvas.style.display = 'block';
+        if (sankeyCanvas) sankeyCanvas.style.display = 'none';
+        if (centerLabel) centerLabel.style.display = 'block';
+
+        // Mostrar tabla inferior de descompuestos en Sunburst y restaurar altura del top row
+        const decompBottom = document.querySelector('.sunburst-decomp-bottom');
+        if (decompBottom) decompBottom.style.display = 'flex';
+        const topRow = document.querySelector('.sunburst-top-row');
+        if (topRow) {
+            topRow.style.height = '490px';
+            topRow.style.flex = '0 0 auto';
+        }
+
+        refreshSunburst();
+    } else if (tab === 'sankey') {
+        currentDecompViewMode = 'sankey';
+        if (dashboardHeaderIcon) dashboardHeaderIcon.textContent = '🌊';
+        if (dashboardModalTitle) dashboardModalTitle.textContent = 'Diagrama Sankey';
+        if (dashboardViewSection) dashboardViewSection.style.display = 'none';
+        if (sunburstViewSection) sunburstViewSection.style.display = 'block';
+        if (ecoViewSection) ecoViewSection.style.display = 'none';
+        if (dashboardSubToolbar) dashboardSubToolbar.style.display = 'flex';
+        if (sunburstDepthContainer) sunburstDepthContainer.style.display = 'none'; // En Sankey solo se ve la casita
+        if (sunburstCanvas) sunburstCanvas.style.display = 'none';
+        if (sankeyCanvas) sankeyCanvas.style.display = 'block';
+        if (centerLabel) centerLabel.style.display = 'none';
+
+        // Ocultar tabla inferior de descompuestos en Sankey y hacer que el top row ocupe el 100%
+        const decompBottom = document.querySelector('.sunburst-decomp-bottom');
+        if (decompBottom) decompBottom.style.display = 'none';
+        const topRow = document.querySelector('.sunburst-top-row');
+        if (topRow) {
+            topRow.style.height = '100%';
+            topRow.style.flex = '1 1 0';
+        }
+
+        refreshSunburst();
+    } else if (tab === 'eco') {
+        if (dashboardHeaderIcon) dashboardHeaderIcon.textContent = '🌿';
+        if (dashboardModalTitle) dashboardModalTitle.textContent = 'Impacto Ambiental';
+        if (dashboardViewSection) dashboardViewSection.style.display = 'none';
+        if (sunburstViewSection) sunburstViewSection.style.display = 'none';
+        if (ecoViewSection) ecoViewSection.style.display = 'block';
+        if (dashboardSubToolbar) dashboardSubToolbar.style.display = 'none';
+        setTimeout(renderEcoSection, 50);
+    }
+}
+
+function openDashboardModal(initialTab = 'dashboard') {
+    if (!parsedData || !parsedData.concepts) {
+        alert("Primero debes cargar un archivo de presupuesto (.bc3).");
+        return;
+    }
+    const dModal = document.getElementById('dashboardModal');
+    if (dModal) {
+        dModal.style.display = 'flex';
+        populateSunburstBudgetSelect();
+        sunburstRootCode = null; // Vista global
+        setDashboardMainTab(initialTab);
+    }
+}
+
+// Alias para compatibilidad hacia atrás
+function openSunburstModal(mode = 'sunburst') {
+    openDashboardModal(mode);
+}
+
+function openEcoModal() {
+    openDashboardModal('eco');
+}
+
+if (tabDashboardViewBtn) tabDashboardViewBtn.addEventListener('click', () => setDashboardMainTab('dashboard'));
+if (tabSunburstViewBtn) tabSunburstViewBtn.addEventListener('click', () => setDashboardMainTab('sunburst'));
+if (tabSankeyViewBtn) tabSankeyViewBtn.addEventListener('click', () => setDashboardMainTab('sankey'));
+if (tabEcoViewBtn) tabEcoViewBtn.addEventListener('click', () => setDashboardMainTab('eco'));
+
+if (sunburstBudgetSelect) {
+    sunburstBudgetSelect.addEventListener('change', (e) => {
+        const targetTabId = e.target.value;
+        if (targetTabId && targetTabId !== activeTabId && targetTabId !== 'active') {
+            switchBudgetTab(targetTabId);
+        }
+    });
+}
+
+if (sunburstDepthSelect) sunburstDepthSelect.addEventListener('change', () => refreshSunburst());
+if (sunburstNatureSelect) sunburstNatureSelect.addEventListener('change', () => refreshSunburst());
+if (sunburstResetZoomBtn) {
+    sunburstResetZoomBtn.addEventListener('click', () => {
+        if (sunburstRootCode !== null) {
+            sunburstRootCode = null;
+            refreshSunburst('out');
+        }
+    });
+}
+
+/* ==========================================================================
+   MOTOR DE HUELLA DE CARBONO Y SOSTENIBILIDAD CO2 (CICLO DE VIDA)
+   ========================================================================== */
+
+let ecoChartsInstances = { chapters: null, materials: null };
+
+function getConceptCarbonFactor(concept) {
+    if (!concept) return { factor: 0.20, category: 'Otros / Varios' };
+    const text = ((concept.summary || '') + ' ' + (concept.code || '')).toLowerCase();
+    const unit = (concept.unit || '').toLowerCase().trim();
+
+    // 1. Hormigones y Cimentaciones
+    if (/hormig|ciment|solera|zapata|muro|pilar|forjado|losa/.test(text)) {
+        if (unit.includes('m3') || unit.includes('m³')) return { factor: 215, category: 'Hormigón y Estructuras' };
+        if (unit.includes('m2') || unit.includes('m²')) return { factor: 42, category: 'Hormigón y Estructuras' };
+        if (unit.includes('kg')) return { factor: 0.18, category: 'Hormigón y Estructuras' };
+        return { factor: 180, category: 'Hormigón y Estructuras' };
+    }
+    // 2. Acero y Metal
+    if (/acero|ferralla|viga|perfil|armadura|chapa|metal|estructura metal/.test(text)) {
+        if (unit.includes('kg')) return { factor: 1.95, category: 'Acero y Metales' };
+        if (unit.includes('t') || unit.includes('tn')) return { factor: 1950, category: 'Acero y Metales' };
+        if (unit.includes('m2') || unit.includes('m²')) return { factor: 28, category: 'Acero y Metales' };
+        return { factor: 1.85, category: 'Acero y Metales' };
+    }
+    // 3. Albañilería, Cerámicos y Ladrillo
+    if (/ladrill|bloque|ceram|tabique|muro de carga|fabrica/.test(text)) {
+        if (unit.includes('m2') || unit.includes('m²')) return { factor: 19.5, category: 'Albañilería y Cerámica' };
+        if (unit.includes('m3') || unit.includes('m³')) return { factor: 110, category: 'Albañilería y Cerámica' };
+        return { factor: 18, category: 'Albañilería y Cerámica' };
+    }
+    // 4. Aislamientos e Impermeabilización
+    if (/aisla|xps|eps|poliuret|lana mineral|lana de roca|impermeabil|tela asfalt|asfalt/.test(text)) {
+        if (unit.includes('m2') || unit.includes('m²')) return { factor: 12.5, category: 'Aislamientos e Impermeab.' };
+        if (unit.includes('m3') || unit.includes('m³')) return { factor: 55, category: 'Aislamientos e Impermeab.' };
+        return { factor: 14, category: 'Aislamientos e Impermeab.' };
+    }
+    // 5. Carpintería, Vidrio y Fachadas
+    if (/vidrio|cristal|ventana|puerta|aluminio|pvc|carpinter|fachada/.test(text)) {
+        if (unit.includes('m2') || unit.includes('m²')) return { factor: 34, category: 'Carpintería y Vidrio' };
+        if (unit.includes('ud')) return { factor: 48, category: 'Carpintería y Vidrio' };
+        return { factor: 30, category: 'Carpintería y Vidrio' };
+    }
+    // 6. Madera y Materiales Bio
+    if (/madera|tarima|viga madera|tablero|bio/.test(text)) {
+        if (unit.includes('m3') || unit.includes('m³')) return { factor: -90, category: 'Madera (Fijación Bio)' };
+        if (unit.includes('m2') || unit.includes('m²')) return { factor: 4.5, category: 'Madera (Fijación Bio)' };
+        return { factor: 5, category: 'Madera (Fijación Bio)' };
+    }
+    // 7. Revestimientos, Yesos y Pinturas
+    if (/yeso|enfosc|enluc|pintura|paviment|gres|alicat|falso techo/.test(text)) {
+        if (unit.includes('m2') || unit.includes('m²')) return { factor: 7.2, category: 'Revestimientos y Acabados' };
+        if (unit.includes('kg')) return { factor: 0.35, category: 'Revestimientos y Acabados' };
+        return { factor: 7.0, category: 'Revestimientos y Acabados' };
+    }
+    // 8. Instalaciones y Climatización
+    if (/electr|ilumin|tub|fontan|clima|conduct|caldera|bomba|saneam|placa solar|fotov/.test(text)) {
+        if (unit.includes('m') || unit.includes('ml')) return { factor: 3.8, category: 'Instalaciones y Clima' };
+        if (unit.includes('ud')) return { factor: 22, category: 'Instalaciones y Clima' };
+        if (unit.includes('m2') || unit.includes('m²')) return { factor: 16, category: 'Instalaciones y Clima' };
+        return { factor: 18, category: 'Instalaciones y Clima' };
+    }
+    // 9. Movimiento de tierras y Demoliciones
+    if (/excav|demol|desmont|zanja|tierras|transporte/.test(text)) {
+        if (unit.includes('m3') || unit.includes('m³')) return { factor: 4.2, category: 'Mov. Tierras y Demolición' };
+        return { factor: 4.0, category: 'Mov. Tierras y Demolición' };
+    }
+
+    // Factor residual basado en precio económico (~0.22 kg CO2 / €)
+    const price = parseFloat(concept.price) || 0;
+    return { factor: Math.max(0.1, price * 0.22), category: 'Otros / Varios' };
+}
+
+function calculateProjectEcoData() {
+    if (!parsedData || !parsedData.concepts) return null;
+
+    let totalCarbonKg = 0;
+    const chaptersCarbon = {};
+    const materialsCarbon = {};
+    const partidasList = [];
+
+    const roots = Array.isArray(parsedData.root_nodes) ? parsedData.root_nodes : Object.values(parsedData.root_nodes || {});
+
+    function processChapter(chapterCode) {
+        const chConcept = parsedData.concepts[chapterCode];
+        if (!chConcept) return;
+
+        const chName = (chConcept.summary || chapterCode).replace(/#+$/, '').trim().substring(0, 24);
+        chaptersCarbon[chName] = 0;
+
+        function traverseLeafs(code, parentQty) {
+            const concept = parsedData.concepts[code];
+            if (!concept) return;
+
+            const isChapter = concept.code.endsWith('#') || (!concept.unit || concept.unit.trim() === '');
+            const children = getConceptDecomposition(concept);
+
+            if (isChapter && children.length > 0) {
+                children.forEach(child => {
+                    traverseLeafs(child.code, parentQty * (parseFloat(child.factor) || 1));
+                });
+            } else {
+                const qty = parentQty * (parseFloat(concept.quantity) || 1);
+                const info = getConceptCarbonFactor(concept);
+                const emissionKg = Math.max(0, qty * info.factor);
+
+                totalCarbonKg += emissionKg;
+                chaptersCarbon[chName] = (chaptersCarbon[chName] || 0) + emissionKg;
+                materialsCarbon[info.category] = (materialsCarbon[info.category] || 0) + emissionKg;
+
+                partidasList.push({
+                    code: concept.code.replace(/#+$/, ''),
+                    summary: concept.summary || '',
+                    unit: concept.unit || 'ud',
+                    quantity: qty,
+                    price: parseFloat(concept.price) || 0,
+                    factor: info.factor,
+                    emissionKg: emissionKg,
+                    emissionTon: emissionKg / 1000,
+                    category: info.category
+                });
+            }
+        }
+
+        traverseLeafs(chapterCode, 1.0);
+    }
+
+    roots.forEach(rootCode => {
+        const root = parsedData.concepts[rootCode];
+        if (!root) return;
+        const kids = getConceptDecomposition(root);
+        if (kids && kids.length > 0) {
+            kids.forEach(k => processChapter(k.code));
+        } else {
+            processChapter(rootCode);
+        }
+    });
+
+    const totalBudget = calculateTotalBudget() || 1;
+    const totalCarbonTon = totalCarbonKg / 1000;
+    const intensity = totalCarbonKg / totalBudget; // kg CO2 / €
+
+    // Calificación Ambiental
+    let rating = 'B';
+    let ratingLabel = 'Edificación Sostenible';
+    if (intensity < 0.16) { rating = 'A'; ratingLabel = 'Descarbonización Avanzada'; }
+    else if (intensity < 0.26) { rating = 'B'; ratingLabel = 'Edificación Sostenible'; }
+    else if (intensity < 0.38) { rating = 'C'; ratingLabel = 'Estándar Eficiente'; }
+    else if (intensity < 0.52) { rating = 'D'; ratingLabel = 'Intensivo en Carbono'; }
+    else { rating = 'E'; ratingLabel = 'Alto Impacto de Carbono'; }
+
+    const trees = Math.round(totalCarbonKg / 22); // 1 árbol absorbe aprox 22 kg CO2/año
+
+    partidasList.sort((a, b) => b.emissionKg - a.emissionKg);
+
+    return {
+        totalCarbonKg,
+        totalCarbonTon,
+        intensity,
+        rating,
+        ratingLabel,
+        trees,
+        chaptersCarbon,
+        materialsCarbon,
+        topPartidas: partidasList.slice(0, 10),
+        allPartidas: partidasList
+    };
+}
+
+function renderEcoSection() {
+    const data = calculateProjectEcoData();
+    if (!data) return;
+
+    // 1. KPIs
+    const totalEl = document.getElementById('ecoTotalCarbon');
+    const intEl = document.getElementById('ecoIntensity');
+    const badgeEl = document.getElementById('ecoRatingBadge');
+    const badgeLabelEl = document.getElementById('ecoRatingLabel');
+    const treesEl = document.getElementById('ecoTreesCount');
+
+    if (totalEl) totalEl.innerHTML = `${data.totalCarbonTon.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <small>t CO₂ eq</small>`;
+    if (intEl) intEl.innerHTML = `${data.intensity.toLocaleString('es-ES', { minimumFractionDigits: 3, maximumFractionDigits: 3 })} <small>kg CO₂ / €</small>`;
+    if (badgeEl) {
+        badgeEl.textContent = data.rating;
+        badgeEl.className = 'eco-rating-badge rating-' + data.rating.toLowerCase();
+    }
+    if (badgeLabelEl) badgeLabelEl.textContent = data.ratingLabel;
+    if (treesEl) treesEl.innerHTML = `${data.trees.toLocaleString('es-ES')} <small>árboles</small>`;
+
+    // 2. Gráficos Chart.js
+    const isDark = document.body.classList.contains('dark-theme') || document.body.classList.contains('dark-mode');
+    const labelColor = isDark ? '#ffffff' : '#1e293b';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.06)';
+
+    // Gráfico de Capítulos
+    const chCanvas = document.getElementById('ecoChaptersChart');
+    if (chCanvas && window.Chart) {
+        if (ecoChartsInstances.chapters) ecoChartsInstances.chapters.destroy();
+        const chLabels = Object.keys(data.chaptersCarbon);
+        const chVals = Object.values(data.chaptersCarbon).map(v => (v / 1000).toFixed(2));
+
+        ecoChartsInstances.chapters = new Chart(chCanvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: chLabels,
+                datasets: [{
+                    label: 'Emisiones (t CO₂ eq)',
+                    data: chVals,
+                    backgroundColor: 'rgba(16, 185, 129, 0.75)',
+                    borderColor: '#10b981',
+                    borderWidth: 1.5,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: (ctx) => `${ctx.raw} t CO₂ eq` } }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: labelColor, maxRotation: 45, minRotation: 20, font: { size: 10, weight: '600' } },
+                        grid: { color: gridColor }
+                    },
+                    y: {
+                        ticks: { color: labelColor, font: { size: 10, weight: '600' } },
+                        grid: { color: gridColor },
+                        title: { display: true, text: 't CO₂', color: labelColor, font: { weight: '700' } }
+                    }
+                }
+            }
+        });
+    }
+
+    // Gráfico de Tipologías de Materiales
+    const matCanvas = document.getElementById('ecoMaterialsChart');
+    if (matCanvas && window.Chart) {
+        if (ecoChartsInstances.materials) ecoChartsInstances.materials.destroy();
+        const matLabels = Object.keys(data.materialsCarbon);
+        const matVals = Object.values(data.materialsCarbon).map(v => (v / 1000).toFixed(2));
+        const bgColors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#64748b', '#14b8a6', '#f97316'];
+
+        ecoChartsInstances.materials = new Chart(matCanvas.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: matLabels,
+                datasets: [{
+                    data: matVals,
+                    backgroundColor: bgColors.slice(0, matLabels.length),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { color: labelColor, font: { size: 11, weight: '600' }, boxWidth: 12, padding: 8 }
+                    },
+                    tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.raw} t CO₂` } }
+                }
+            }
+        });
+    }
+
+    // 3. Tabla Top Partidas de Mayor Huella
+    const tableBody = document.getElementById('ecoTopTableBody');
+    if (tableBody) {
+        tableBody.innerHTML = data.topPartidas.map(p => {
+            const pct = data.totalCarbonKg > 0 ? ((p.emissionKg / data.totalCarbonKg) * 100).toFixed(1) : '0.0';
+            return `
+                <tr>
+                    <td style="font-family:monospace; font-weight:600; color:var(--accent); font-size:0.8rem;">${p.code}</td>
+                    <td style="font-weight:500; font-size:0.8rem;" title="${p.summary}">${p.summary}</td>
+                    <td style="text-align:right; font-size:0.8rem;">${p.quantity.toLocaleString('es-ES', { maximumFractionDigits: 2 })} ${p.unit}</td>
+                    <td style="text-align:right; font-size:0.8rem; color:var(--text-secondary);">${p.factor.toLocaleString('es-ES', { maximumFractionDigits: 2 })}</td>
+                    <td style="text-align:right; font-weight:bold; color:#10b981; font-size:0.85rem;">${p.emissionTon.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} t</td>
+                    <td style="text-align:right; font-weight:600; font-size:0.8rem;">${pct}%</td>
+                </tr>
+            `;
+        }).join('');
+    }
+}
+
+// ── Exportar Informe de Huella de Carbono a PDF ──
+function exportEcoPDF() {
+    const data = calculateProjectEcoData();
+    if (!data) return;
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+
+    const projectTitle = document.getElementById('projectTitle')?.textContent || currentFileName || 'Proyecto de Edificación';
+    const currentDate = new Date().toLocaleDateString('es-ES');
+
+    // Cabecera elegante
+    doc.setFillColor(16, 185, 129);
+    doc.rect(0, 0, 210, 26, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('INFORME DE HUELLA DE CARBONO Y SOSTENIBILIDAD', 14, 13);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Análisis del Ciclo de Vida (LCA) | ${projectTitle} | Emisión: ${currentDate}`, 14, 20);
+
+    // Resumen Ejecutivo / KPIs
+    doc.setTextColor(30, 41, 59);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('1. RESUMEN EJECUTIVO DE EMISIONES', 14, 36);
+
+    doc.autoTable({
+        startY: 40,
+        head: [['Indicador de Sostenibilidad', 'Valor Estimado', 'Unidad / Referencia']],
+        body: [
+            ['Huella Total de Carbono Incorporado', `${data.totalCarbonTon.toLocaleString('es-ES', { minimumFractionDigits: 2 })} t CO₂ eq`, 'Emisiones cuna a obra'],
+            ['Intensidad de Emisiones por Presupuesto', `${data.intensity.toLocaleString('es-ES', { minimumFractionDigits: 3 })} kg CO₂ / €`, 'Ratio PEM'],
+            ['Calificación Ambiental del Proyecto', `${data.rating} — ${data.ratingLabel}`, 'Escala CTE A-E'],
+            ['Compensación Forestal Anual', `${data.trees.toLocaleString('es-ES')} árboles`, 'Absorción 22 kg CO₂/año']
+        ],
+        theme: 'striped',
+        styles: { fontSize: 9, cellPadding: 3.5 }
+    });
+
+    // Top Partidas Críticas
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('2. PALANCAS DE DESCARBONIZACIÓN (TOP PARTIDAS CRÍTICAS)', 14, doc.lastAutoTable.finalY + 12);
+
+    const rows = data.topPartidas.map(p => [
+        p.code,
+        p.summary.substring(0, 48),
+        `${p.quantity.toLocaleString('es-ES', { maximumFractionDigits: 1 })} ${p.unit}`,
+        `${p.factor.toLocaleString('es-ES', { maximumFractionDigits: 2 })}`,
+        `${p.emissionTon.toLocaleString('es-ES', { minimumFractionDigits: 2 })} t`,
+        `${((p.emissionKg / data.totalCarbonKg) * 100).toFixed(1)}%`
+    ]);
+
+    doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 16,
+        head: [['Código', 'Partida / Unidad de Obra', 'Medición', 'Factor kg/ud', 'Emisión (t)', '% Total']],
+        body: rows,
+        theme: 'grid',
+        headStyles: { fillColor: [16, 185, 129] },
+        styles: { fontSize: 8, cellPadding: 2.5 }
+    });
+
+    // Pie de página oficial
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Página ${i} de ${totalPages} — BC3 Viewer Sostenibilidad Ambiental`, 14, 287);
+    }
+
+    const baseName = currentFileName.replace(/\.[^/.]+$/, "");
+    doc.save(`${baseName}_informe_huella_carbono.pdf`);
+}
+
+const exportEcoPdfBtn = document.getElementById('exportEcoPdfBtn');
+if (exportEcoPdfBtn) {
+    exportEcoPdfBtn.addEventListener('click', exportEcoPDF);
+}
+
+/**
+ * Calcula recursivamente el desglose económico exacto de naturalezas (Mano de Obra, Maquinaria, Materiales)
+ */
+function getConceptNatureBreakdown(code, visited = new Set()) {
+    if (visited.has(code)) return { MO: 0, MQ: 0, MT: 0, total: 0 };
+    const concept = parsedData.concepts[code];
+    if (!concept) return { MO: 0, MQ: 0, MT: 0, total: 0 };
+
+    visited.add(code);
+
+    const hasDecomp = concept.decomposition && concept.decomposition.length > 0;
+    const isChapter = concept.code.endsWith('#') || (!concept.unit || concept.unit.trim() === '');
+
+    if (!hasDecomp && !isChapter) {
+        const u = (concept.unit || '').toUpperCase().trim();
+        const codeUpper = concept.code.toUpperCase();
+        const sumLower = (concept.summary || '').toLowerCase();
+        const amount = (parseFloat(concept.price) || 0) * (parseFloat(concept.quantity) || 1);
+
+        if (u === 'H' || u === 'HR' || u === 'HORA' || codeUpper.startsWith('MO') || codeUpper.startsWith('O') || /oficial|peon|cuadrilla|encargado|ayudante|hora/.test(sumLower)) {
+            return { MO: amount, MQ: 0, MT: 0, total: amount };
+        } else if (u === 'HM' || codeUpper.startsWith('MQ') || codeUpper.startsWith('M0') || /camion|dumper|grua|retro|pala|maquinaria|compresor/.test(sumLower)) {
+            return { MO: 0, MQ: amount, MT: 0, total: amount };
+        } else {
+            return { MO: 0, MQ: 0, MT: amount, total: amount };
+        }
+    }
+
+    let bMO = 0, bMQ = 0, bMT = 0;
+    if (hasDecomp) {
+        concept.decomposition.forEach(child => {
+            const factor = parseFloat(child.factor) || 1;
+            const childBreakdown = getConceptNatureBreakdown(child.code, new Set(visited));
+            bMO += (childBreakdown.MO || 0) * factor;
+            bMQ += (childBreakdown.MQ || 0) * factor;
+            bMT += (childBreakdown.MT || 0) * factor;
+        });
+    }
+
+    const total = bMO + bMQ + bMT || ((parseFloat(concept.price) || 0) * (parseFloat(concept.quantity) || 1));
+    return { MO: bMO, MQ: bMQ, MT: bMT, total: total };
+}
+
+/**
+ * Paleta noble exclusiva para Capítulos, Subcapítulos y Partidas
+ * (Restringida para reservar Verdes a Materiales 🧱, Amarillos/Ámbares a Mano de Obra 👷, y Cyans a Maquinaria 🚜)
+ */
+const chapterColorFamilies = [
+    { l1: '#7c3aed', l2: '#8b5cf6', l3: '#a78bfa', l4: '#c4b5fd' }, // Púrpura Imperial
+    { l1: '#db2777', l2: '#ec4899', l3: '#f472b6', l4: '#fbcfe8' }, // Rosa Magenta
+    { l1: '#e11d48', l2: '#f43f5e', l3: '#fb7185', l4: '#fda4af' }, // Carmesí Rubí
+    { l1: '#4f46e5', l2: '#6366f1', l3: '#818cf8', l4: '#a5b4fc' }, // Índigo Profundo
+    { l1: '#9333ea', l2: '#a855f7', l3: '#c084fc', l4: '#e9d5ff' }, // Violeta Intenso
+    { l1: '#be185d', l2: '#e11d48', l3: '#f43f5e', l4: '#ffe4e6' }, // Frambuesa
+    { l1: '#475569', l2: '#64748b', l3: '#94a3b8', l4: '#cbd5e1' }, // Pizarra Grafito
+    { l1: '#581c87', l2: '#6b21a8', l3: '#9333ea', l4: '#d8b4fe' }, // Berenjena
+    { l1: '#3730a3', l2: '#4338ca', l3: '#6366f1', l4: '#c7d2fe' }, // Azul Medianoche Púrpura
+];
+
+// Motor de animación fluida de transición Zoom (+ y -)
+let sunburstAnim = {
+    startTime: 0,
+    duration: 380,
+    active: false,
+    direction: 'in', // 'in' o 'out'
+    progress: 1
+};
+
+function triggerSunburstZoomAnimation(direction = 'in') {
+    sunburstAnim.startTime = performance.now();
+    sunburstAnim.direction = direction;
+    sunburstAnim.active = true;
+    sunburstAnim.progress = 0;
+    requestAnimationFrame(animSunburstStep);
+}
+
+function animSunburstStep(now) {
+    if (!sunburstAnim.active) return;
+    const elapsed = now - sunburstAnim.startTime;
+    let t = Math.min(elapsed / sunburstAnim.duration, 1);
+
+    // Función de amortiguación cúbica suave: easeOutCubic
+    sunburstAnim.progress = 1 - Math.pow(1 - t, 3);
+
+    drawSunburstCanvas();
+
+    if (t < 1) {
+        requestAnimationFrame(animSunburstStep);
+    } else {
+        sunburstAnim.active = false;
+        sunburstAnim.progress = 1;
+        drawSunburstCanvas();
+    }
+}
+
+/**
+ * Construye la estructura jerárquica de costes para el gráfico Sunburst / Sankey
+ */
+function buildSunburstNode(code, currentDepth, maxDepth, natureFilter, visited = new Set()) {
+    if (visited.has(code)) return null;
+    const concept = parsedData.concepts[code];
+    if (!concept) return null;
+
+    visited.add(code);
+
+    const isChapter = concept.code.endsWith('#') || (!concept.unit || concept.unit.trim() === '');
+    const hasDecomp = concept.decomposition && concept.decomposition.length > 0;
+    
+    let type = 'PA';
+    if (isChapter) {
+        type = currentDepth <= 1 ? 'CH' : 'SUBCH';
+    } else if (!hasDecomp) {
+        const u = (concept.unit || '').toUpperCase().trim();
+        const codeUpper = concept.code.toUpperCase();
+        const sumLower = (concept.summary || '').toLowerCase();
+        if (u === 'H' || u === 'HR' || u === 'HORA' || codeUpper.startsWith('MO') || codeUpper.startsWith('O') || /oficial|peon|cuadrilla|encargado|ayudante|hora/.test(sumLower)) {
+            type = 'MO';
+        } else if (u === 'HM' || codeUpper.startsWith('MQ') || codeUpper.startsWith('M0') || /camion|dumper|grua|retro|pala|maquinaria|compresor/.test(sumLower)) {
+            type = 'MQ';
+        } else {
+            type = 'MT';
+        }
+    }
+
+    const breakdown = getConceptNatureBreakdown(concept.code);
+
+    const node = {
+        code: concept.code,
+        cleanCode: concept.code.replace(/#+\s*$/, ''),
+        summary: concept.summary || concept.code,
+        type: type,
+        unit: concept.unit || '',
+        price: parseFloat(concept.price) || 0,
+        quantity: parseFloat(concept.quantity) || 1,
+        amount: 0,
+        natureBreakdown: breakdown,
+        children: []
+    };
+
+    // Control de profundidad según los 5 niveles lógicos:
+    // 1. CAPÍTULOS: Solo capítulos principales
+    // 2. CAPÍTULOS + SUBCAPÍTULOS: Capítulos y Subcapítulos
+    // 3. CAPÍTULOS + SUBCAPÍTULOS + PARTIDAS: Capítulos + Subcapítulos hasta Partidas (no abrir decomp)
+    // 4. CAPÍTULOS + SUBCAPÍTULOS + PARTIDAS + DESCOMPUESTOS: Hasta 1er nivel de descompuestos
+    // 5. CAPÍTULOS + SUBCAPÍTULOS + PARTIDAS + DESCOMPUESTOS + MO/MQ/MT: Desglose total multinivel
+    let shouldExpandDecomp = false;
+    if (maxDepth === 1) {
+        shouldExpandDecomp = false;
+    } else if (maxDepth === 2) {
+        shouldExpandDecomp = isChapter && currentDepth < 2;
+    } else if (maxDepth === 3) {
+        shouldExpandDecomp = isChapter;
+    } else if (maxDepth === 4) {
+        shouldExpandDecomp = isChapter || currentDepth <= 3;
+    } else {
+        shouldExpandDecomp = true;
+    }
+
+    if (currentDepth < maxDepth && hasDecomp && shouldExpandDecomp) {
+        concept.decomposition.forEach(childItem => {
+            const childNode = buildSunburstNode(childItem.code, currentDepth + 1, maxDepth, natureFilter, new Set(visited));
+            if (childNode) {
+                const factor = parseFloat(childItem.factor) || 1;
+                childNode.effectiveFactor = factor;
+                childNode.amount = childNode.amount > 0 ? childNode.amount * factor : (childNode.price * factor);
+                node.children.push(childNode);
+            }
+        });
+    }
+
+    // Calcular importe del nodo
+    if (node.children.length > 0) {
+        node.amount = node.children.reduce((acc, c) => acc + c.amount, 0);
+    } else {
+        node.amount = node.price * (node.quantity || 1);
+    }
+
+    return node;
+}
+
+function refreshSunburst(zoomDirection = null) {
+    if (!parsedData || !sunburstCanvas) return;
+
+    const maxDepth = parseInt(sunburstDepthSelect ? sunburstDepthSelect.value : '5', 10);
+    const natureFilter = 'ALL';
+
+    // Determinar nodos raíz (Capítulos principales si es vista global, o hijos del nodo si es zoom)
+    let rootNodes = [];
+    let effectiveRoots = [];
+
+    if (sunburstRootCode && parsedData.concepts[sunburstRootCode]) {
+        const singleConcept = parsedData.concepts[sunburstRootCode];
+        if (singleConcept.decomposition && singleConcept.decomposition.length > 0) {
+            effectiveRoots = singleConcept.decomposition.map(d => d.code);
+        } else {
+            effectiveRoots = [sunburstRootCode];
+        }
+    } else {
+        const rawRoots = Array.isArray(parsedData.root_nodes) ? parsedData.root_nodes : Object.values(parsedData.root_nodes || {});
+        
+        // Desenvolver nodo contenedor maestro (ej: OBRA#) para extraer directamente sus Capítulos principales
+        effectiveRoots = [];
+        rawRoots.forEach(code => {
+            const c = parsedData.concepts[code];
+            if (c && c.decomposition && c.decomposition.length > 0 && (code.endsWith('#') || !c.unit || c.unit.trim() === '')) {
+                // Si este nodo raíz contiene otros capítulos/subcapítulos, extraerlos como nivel 1
+                c.decomposition.forEach(d => {
+                    if (!effectiveRoots.includes(d.code)) effectiveRoots.push(d.code);
+                });
+            } else {
+                if (!effectiveRoots.includes(code)) effectiveRoots.push(code);
+            }
+        });
+
+        if (effectiveRoots.length === 0) {
+            effectiveRoots = rawRoots;
+        }
+    }
+
+    // Deduplicar códigos de capítulos
+    const uniqueRoots = Array.from(new Set(effectiveRoots));
+
+    uniqueRoots.forEach(rCode => {
+        const rNode = buildSunburstNode(rCode, 1, maxDepth, natureFilter);
+        if (rNode && rNode.amount > 0) rootNodes.push(rNode);
+    });
+
+    const totalAmount = rootNodes.reduce((acc, r) => acc + r.amount, 0);
+
+    // Breakdown global acumulado
+    const globalBreakdown = { MO: 0, MQ: 0, MT: 0 };
+    rootNodes.forEach(r => {
+        globalBreakdown.MO += (r.natureBreakdown.MO || 0);
+        globalBreakdown.MQ += (r.natureBreakdown.MQ || 0);
+        globalBreakdown.MT += (r.natureBreakdown.MT || 0);
+    });
+
+    sunburstHierarchyData = {
+        code: sunburstRootCode || 'PRESUPUESTO GLOBAL',
+        cleanCode: sunburstRootCode ? sunburstRootCode.replace(/#+\s*$/, '') : 'GLOBAL',
+        summary: sunburstRootCode && parsedData.concepts[sunburstRootCode] ? parsedData.concepts[sunburstRootCode].summary : 'Presupuesto Total de Obra',
+        type: 'ROOT',
+        amount: totalAmount,
+        natureBreakdown: globalBreakdown,
+        children: rootNodes
+    };
+
+    // Actualizar etiqueta central
+    const centerTitle = document.getElementById('sCenterTitle');
+    const centerVal = document.getElementById('sCenterVal');
+    if (centerTitle) centerTitle.textContent = sunburstHierarchyData.cleanCode;
+    if (centerVal) centerVal.textContent = totalAmount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+
+    updateSunburstNodeCard(null); // Actualizar tarjeta con resumen global
+
+    if (currentDecompViewMode === 'sankey') {
+        if (zoomDirection) {
+            triggerSankeyZoomAnimation(zoomDirection);
+        } else {
+            drawSankeyCanvas();
+        }
+    } else if (zoomDirection) {
+        triggerSunburstZoomAnimation(zoomDirection);
+    } else {
+        drawSunburstCanvas();
+    }
+}
+
+/**
+ * Retorna un color determinista y visualmente coherente para cualquier concepto del presupuesto.
+ */
+function getStableConceptColor(code, type, depth = 1) {
+    // Colores EXCLUSIVOS para naturalezas elementales
+    if (type === 'MO') return '#f59e0b'; // Amarillo / Ámbar dorado (👷 Mano de Obra)
+    if (type === 'MQ') return '#06b6d4'; // Cyan / Turquesa (🚜 Maquinaria)
+    if (type === 'MT') return '#10b981'; // Verde Esmeralda (🧱 Materiales)
+
+    let clean = (code || '').replace(/#+\s*$/, '').trim();
+    let hash = 0;
+    for (let i = 0; i < clean.length; i++) {
+        hash = (hash << 5) - hash + clean.charCodeAt(i);
+        hash |= 0;
+    }
+    const family = chapterColorFamilies[Math.abs(hash) % chapterColorFamilies.length];
+    if (depth === 1) return family.l1;
+    if (depth === 2) return family.l2;
+    if (depth === 3) return family.l3;
+    return family.l4;
+}
+
+/**
+ * Retorna el color de un nodo respetando la familia de su anfitrión (más clara en profundidad)
+ * y los colores exclusivos para Materiales (Verde), Mano de Obra (Ámbar) y Maquinaria (Cyan).
+ */
+function getNodeColor(node, chapterIndex, depth) {
+    if (node.type === 'MO') return '#f59e0b'; // Ámbar dorado (👷 Mano de Obra)
+    if (node.type === 'MQ') return '#06b6d4'; // Cyan (🚜 Maquinaria)
+    if (node.type === 'MT') return '#10b981'; // Verde Esmeralda (🧱 Materiales)
+
+    const family = chapterColorFamilies[chapterIndex % chapterColorFamilies.length];
+    if (depth === 1) return family.l1;
+    if (depth === 2) return family.l2;
+    if (depth === 3) return family.l3;
+    return family.l4;
+}
+
+/**
+ * Trazador seguro de rectángulos con esquinas redondeadas para Canvas 2D
+ */
+function drawSafeRoundRect(ctx, x, y, w, h, r = 6) {
+    x = Math.max(0, isFinite(x) ? x : 0);
+    y = Math.max(0, isFinite(y) ? y : 0);
+    w = Math.max(10, isFinite(w) ? w : 10);
+    h = Math.max(10, isFinite(h) ? h : 10);
+    r = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.arcTo(x + w, y, x + w, y + r, r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h);
+    ctx.arcTo(x, y + h, x, y + h - r, r);
+    ctx.lineTo(x, y + r);
+    ctx.arcTo(x, y, x + r, y, r);
+    ctx.closePath();
+}
+
+/**
+ * Renderiza el gráfico concéntrico Sunburst en el canvas interactivo con "vacíos" (gaps) y animación fluida
+ */
+function drawSunburstCanvas() {
+    if (!sunburstCanvas || !sunburstHierarchyData) return;
+
+    const container = sunburstCanvas.parentElement;
+    const availW = container.clientWidth || 600;
+    const availH = container.clientHeight || 600;
+    const size = Math.max(340, Math.min(availW - 20, availH - 20, 580));
+    const dpr = window.devicePixelRatio || 1;
+
+    sunburstCanvas.width = size * dpr;
+    sunburstCanvas.height = size * dpr;
+    sunburstCanvas.style.width = `${size}px`;
+    sunburstCanvas.style.height = `${size}px`;
+
+    const ctx = sunburstCanvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, size, size);
+
+    const cx = size / 2;
+    const cy = size / 2;
+    const maxRadius = size / 2 - 12;
+    const innerHoleRadius = maxRadius * 0.28;
+
+    // Calcular factor de escala y opacidad durante la animación fluida
+    const animProg = sunburstAnim.active ? sunburstAnim.progress : 1;
+    let scaleFactor = 1;
+    let animAlpha = 1;
+
+    if (sunburstAnim.active) {
+        if (sunburstAnim.direction === 'in') {
+            scaleFactor = 0.70 + 0.30 * animProg;
+            animAlpha = 0.2 + 0.8 * animProg;
+        } else {
+            scaleFactor = 1.25 - 0.25 * animProg;
+            animAlpha = 0.2 + 0.8 * animProg;
+        }
+    }
+
+    // Calcular profundidad máxima de datos
+    function getMaxLevel(node, currentLevel = 0) {
+        if (!node.children || node.children.length === 0) return currentLevel;
+        return Math.max(...node.children.map(c => getMaxLevel(c, currentLevel + 1)));
+    }
+
+    const levelsCount = Math.max(getMaxLevel(sunburstHierarchyData), 1);
+    const ringThickness = (maxRadius - innerHoleRadius) / levelsCount;
+
+    sunburstSectors = [];
+
+    // Algoritmo de partición angular con herencia de familia cromática del anfitrión (más clara en profundidad)
+    function layoutSunburstSectors(nodes, startAngle, endAngle, depth, parentChapterIndex = 0) {
+        const totalVal = nodes.reduce((sum, n) => sum + (n.amount || 0), 0);
+        if (totalVal <= 0) return;
+
+        let currentAngle = startAngle;
+        const availableAngle = endAngle - startAngle;
+
+        nodes.forEach((node, idx) => {
+            // Nivel 1: cada capítulo visible tiene una familia cromática distinta (idx)
+            // Niveles descendientes (> 1): HEREDA exactamente la familia del anfitrión (parentChapterIndex)
+            const currentChapterIndex = depth === 1 ? idx : parentChapterIndex;
+            const nodeAngle = (node.amount / totalVal) * availableAngle;
+            const a0 = currentAngle;
+            const a1 = currentAngle + nodeAngle;
+            currentAngle = a1;
+
+            const r0 = innerHoleRadius + (depth - 1) * ringThickness;
+            const r1 = r0 + ringThickness;
+            const color = getNodeColor(node, currentChapterIndex, depth);
+
+            sunburstSectors.push({
+                node: node,
+                depth: depth,
+                chapterIndex: currentChapterIndex,
+                isChapterRoot: depth === 1,
+                r0: r0,
+                r1: r1,
+                a0: a0,
+                a1: a1,
+                color: color
+            });
+
+            if (node.children && node.children.length > 0) {
+                layoutSunburstSectors(node.children, a0, a1, depth + 1, currentChapterIndex);
+            }
+        });
+    }
+
+    if (sunburstHierarchyData.children && sunburstHierarchyData.children.length > 0) {
+        layoutSunburstSectors(sunburstHierarchyData.children, -Math.PI / 2, Math.PI * 1.5, 1);
+    }
+
+    const isDark = document.body.classList.contains('dark-mode');
+
+    // Aplicar transformación de zoom fluido focalizado desde el centro
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(scaleFactor, scaleFactor);
+    ctx.translate(-cx, -cy);
+
+    // Dibujar sectores con "vacíos" (espacios vacíos angulares y radiales de separación)
+    sunburstSectors.forEach(sec => {
+        const isHovered = sunburstHoveredSector && sunburstHoveredSector.node.code === sec.node.code;
+
+        // Separación angular (hueco vacío entre capítulos y entre partidas)
+        const angularSpan = sec.a1 - sec.a0;
+        let padAngle = sec.depth === 1 ? 0.024 : 0.008;
+        if (angularSpan <= padAngle * 1.5) {
+            padAngle = angularSpan * 0.2;
+        }
+
+        const drawA0 = sec.a0 + padAngle / 2;
+        const drawA1 = sec.a1 - padAngle / 2;
+
+        // Separación radial (hueco vacío entre anillos concéntricos)
+        const radGap = 2;
+        const drawR0 = sec.r0 + radGap;
+        const drawR1 = sec.r1 - radGap;
+
+        if (drawR1 <= drawR0 || drawA1 <= drawA0) return;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, drawR0, drawA0, drawA1, false);
+        ctx.arc(cx, cy, drawR1, drawA1, drawA0, true);
+        ctx.closePath();
+
+        ctx.fillStyle = sec.color;
+        ctx.globalAlpha = (isHovered ? 1.0 : 0.88) * animAlpha;
+        ctx.fill();
+
+        if (isHovered) {
+            ctx.strokeStyle = isDark ? '#ffffff' : '#0f172a';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+        } else if (sec.depth === 1) {
+            ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        ctx.restore();
+    });
+
+    // Círculo central decorativo (Fondo oscuro de tarjeta con borde refinado)
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, innerHoleRadius - 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#1e293b'; // Fondo de tarjeta oscuro siempre elegante
+    ctx.globalAlpha = animAlpha;
+    ctx.fill();
+    ctx.strokeStyle = isDark ? '#334155' : '#475569';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.restore(); // Fin de transformación de escala
+}
+
+// Eventos interactivos en el canvas Sunburst
+if (sunburstCanvas) {
+    sunburstCanvas.addEventListener('mousemove', (e) => {
+        if (sunburstAnim.active) return; // No interferir durante la animación de transición
+        const rect = sunburstCanvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+
+        const dx = mouseX - cx;
+        const dy = mouseY - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        let angle = Math.atan2(dy, dx); // [-PI, PI]
+        // Normalizar a [-PI/2, 3PI/2]
+        if (angle < -Math.PI / 2) angle += Math.PI * 2;
+
+        // Comprobar si está en el círculo central
+        const maxRadius = rect.width / 2 - 12;
+        const innerHoleRadius = maxRadius * 0.28;
+
+        let found = null;
+        if (dist >= innerHoleRadius && dist <= maxRadius) {
+            found = sunburstSectors.find(sec => dist >= sec.r0 && dist <= sec.r1 && angle >= sec.a0 && angle <= sec.a1);
+        }
+
+        if (found !== sunburstHoveredSector) {
+            sunburstHoveredSector = found;
+            drawSunburstCanvas();
+            updateSunburstNodeCard(found ? found.node : null);
+        }
+    });
+
+    sunburstCanvas.addEventListener('click', (e) => {
+        if (sunburstAnim.active) return;
+        const rect = sunburstCanvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+
+        const dx = mouseX - cx;
+        const dy = mouseY - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const maxRadius = rect.width / 2 - 12;
+        const innerHoleRadius = maxRadius * 0.28;
+
+        // Clic en el centro: Volver a la raíz global (Zoom Out)
+        if (dist < innerHoleRadius) {
+            if (sunburstRootCode !== null) {
+                sunburstRootCode = null;
+                refreshSunburst('out');
+            }
+            return;
+        }
+
+        if (sunburstHoveredSector) {
+            const clickedNode = sunburstHoveredSector.node;
+            const concept = parsedData.concepts[clickedNode.code];
+            const hasDecomp = concept && concept.decomposition && concept.decomposition.length > 0;
+            const hasChildren = clickedNode.children && clickedNode.children.length > 0;
+
+            // Si es un capítulo, subcapítulo o partida con descompuestos, hacer zoom in fluido
+            if (hasChildren || hasDecomp) {
+                sunburstRootCode = clickedNode.code;
+                refreshSunburst('in');
+            }
+        }
+    });
+}
+
+/* ==========================================================================
+   DIAGRAMA DE FLUJO DE COSTES SANKEY (DESCOMPUESTOS)
+   ========================================================================== */
+
+const toggleSunburstBtn = document.getElementById('toggleSunburstBtn');
+const toggleSankeyBtn = document.getElementById('toggleSankeyBtn');
+const decompModalTitle = document.getElementById('decompModalTitle');
+const sankeyCanvas = document.getElementById('sankeyCanvas');
+
+let currentDecompViewMode = 'sunburst';
+let sankeyNodes = [];
+let sankeyLinks = [];
+let sankeyHoveredNode = null;
+let sankeyHoveredLink = null;
+
+let sankeyAnim = {
+    startTime: 0,
+    duration: 460, // ms
+    active: false,
+    direction: 'in', // 'in' | 'out'
+    progress: 1
+};
+
+function triggerSankeyZoomAnimation(direction = 'in') {
+    sankeyAnim.startTime = performance.now();
+    sankeyAnim.direction = direction;
+    sankeyAnim.active = true;
+    sankeyAnim.progress = 0;
+    requestAnimationFrame(animSankeyStep);
+}
+
+function animSankeyStep(now) {
+    if (!sankeyAnim.active) return;
+    const elapsed = now - sankeyAnim.startTime;
+    let t = Math.min(elapsed / sankeyAnim.duration, 1);
+
+    // Curva de amortiguación cúbica suave: easeOutCubic
+    sankeyAnim.progress = 1 - Math.pow(1 - t, 3);
+
+    drawSankeyCanvas();
+
+    if (t < 1) {
+        requestAnimationFrame(animSankeyStep);
+    } else {
+        sankeyAnim.active = false;
+        sankeyAnim.progress = 1;
+        drawSankeyCanvas();
+    }
+}
+
+function setDecompViewMode(mode) {
+    currentDecompViewMode = mode;
+    if (toggleSunburstBtn) toggleSunburstBtn.classList.toggle('active', mode === 'sunburst');
+    if (toggleSankeyBtn) toggleSankeyBtn.classList.toggle('active', mode === 'sankey');
+
+    const centerLabel = document.getElementById('sunburstCenterLabel');
+
+    if (mode === 'sunburst') {
+        if (decompModalTitle) decompModalTitle.textContent = "Visualizador Concéntrico de Descompuestos (Sunburst)";
+        if (sunburstCanvas) sunburstCanvas.style.display = 'block';
+        if (sankeyCanvas) sankeyCanvas.style.display = 'none';
+        if (centerLabel) centerLabel.style.display = 'block';
+        drawSunburstCanvas();
+    } else {
+        if (decompModalTitle) decompModalTitle.textContent = "Diagrama de Flujo de Costes de Descompuestos (Sankey)";
+        if (sunburstCanvas) sunburstCanvas.style.display = 'none';
+        if (sankeyCanvas) sankeyCanvas.style.display = 'block';
+        if (centerLabel) centerLabel.style.display = 'none';
+        refreshSunburst();
+    }
+}
+
+if (toggleSunburstBtn) toggleSunburstBtn.addEventListener('click', () => setDecompViewMode('sunburst'));
+if (toggleSankeyBtn) toggleSankeyBtn.addEventListener('click', () => setDecompViewMode('sankey'));
+
+/**
+ * Renderiza el diagrama de flujo Sankey en Canvas 2D de alta definición con coherencia cromática y animación
+ */
+function drawSankeyCanvas() {
+    if (!sankeyCanvas || !sunburstHierarchyData || currentDecompViewMode !== 'sankey') return;
+
+    const container = sankeyCanvas.parentElement;
+    const availW = container.clientWidth || 700;
+    const availH = container.clientHeight || 600;
+    const width = Math.max(availW - 10, 560);
+    const height = Math.max(availH - 10, 580);
+    const dpr = window.devicePixelRatio || 1;
+
+    sankeyCanvas.width = width * dpr;
+    sankeyCanvas.height = height * dpr;
+    sankeyCanvas.style.width = `${width}px`;
+    sankeyCanvas.style.height = `${height}px`;
+
+    const ctx = sankeyCanvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, width, height);
+
+    const isDark = document.body.classList.contains('dark-mode');
+    const totalPEM = Math.max(sunburstHierarchyData.amount || 1, 1);
+
+    // Calcular factor de escala y opacidad durante la animación fluida
+    const animProg = sankeyAnim.active ? sankeyAnim.progress : 1;
+    let scaleFactor = 1;
+    let animAlpha = 1;
+
+    if (sankeyAnim.active) {
+        if (sankeyAnim.direction === 'in') {
+            scaleFactor = 0.84 + 0.16 * animProg;
+            animAlpha = 0.25 + 0.75 * animProg;
+        } else {
+            scaleFactor = 1.16 - 0.16 * animProg;
+            animAlpha = 0.25 + 0.75 * animProg;
+        }
+    }
+
+    const paddingY = 16;
+    const usableHeight = height - (paddingY * 2);
+
+    // ─── Medir textos para adaptar el ancho de las columnas a los títulos ───
+    ctx.font = 'bold 11px Inter, system-ui, sans-serif';
+    const rawChapters = sunburstHierarchyData.children || [];
+    let maxTitleLen = 14;
+    rawChapters.forEach(c => {
+        const title = (c.summary || c.code || '');
+        if (title.length > maxTitleLen) maxTitleLen = title.length;
+    });
+
+    // Ancho adaptativo proporcional al título y ancho de pantalla
+    const dynamicNodeWidth = Math.max(140, Math.min(Math.floor(width * 0.28), Math.max(160, maxTitleLen * 6.5 + 40)));
+    const colX = [
+        18,
+        Math.floor((width - dynamicNodeWidth) / 2),
+        width - dynamicNodeWidth - 18
+    ];
+
+    sankeyNodes = [];
+    sankeyLinks = [];
+
+    // Color del nodo raíz
+    let rootColor = isDark ? '#3b82f6' : '#2563eb';
+    if (sunburstRootCode) {
+        rootColor = getStableConceptColor(sunburstRootCode, 'CH', 1);
+    }
+
+    // 1. Nodo Col 0 (Raíz / Concepto Activo)
+    const rootNode = {
+        id: 'root',
+        col: 0,
+        code: sunburstHierarchyData.code,
+        cleanCode: sunburstHierarchyData.cleanCode,
+        summary: sunburstHierarchyData.summary || 'Presupuesto Total',
+        unit: '',
+        quantity: 1,
+        amount: totalPEM,
+        type: 'ROOT',
+        color: rootColor,
+        x: colX[0],
+        w: dynamicNodeWidth,
+        y: paddingY,
+        h: usableHeight
+    };
+    sankeyNodes.push(rootNode);
+
+    // 2. Nodos Col 1 (Capítulos / Partidas adaptados 100% en altura sin cortes)
+    const chTotal = rawChapters.reduce((sum, c) => sum + (c.amount || 0), 0) || 1;
+    const chCount = Math.max(rawChapters.length, 1);
+    
+    // Gaps dinámicos según cantidad de nodos
+    const gapY1 = Math.max(2, Math.min(8, Math.floor((usableHeight * 0.15) / chCount)));
+    const totalGaps1 = (chCount - 1) * gapY1;
+    const availH1 = Math.max(usableHeight - totalGaps1, 30);
+
+    // Calcular alturas proporcionales con garantía de encaje total dentro de usableHeight
+    const minNodeH = Math.max(14, Math.min(32, Math.floor(availH1 / chCount)));
+    let rawHeights = rawChapters.map(ch => {
+        const ratio = (ch.amount || 0) / chTotal;
+        return Math.max(minNodeH, Math.floor(ratio * availH1));
+    });
+
+    const sumRawH = rawHeights.reduce((s, h) => s + h, 0) || 1;
+    const scaleH = availH1 / sumRawH;
+
+    let currY1 = paddingY;
+    const col1Nodes = [];
+
+    rawChapters.forEach((ch, idx) => {
+        const h = Math.max(12, Math.floor(rawHeights[idx] * scaleH));
+        const nodeColor = getNodeColor(ch, idx, 1);
+        const concept = parsedData.concepts[ch.code] || {};
+
+        const n = {
+            id: 'ch_' + (ch.code || idx),
+            col: 1,
+            code: ch.code,
+            cleanCode: ch.cleanCode,
+            summary: ch.summary,
+            unit: ch.unit || concept.unit || '',
+            quantity: ch.quantity || parseFloat(concept.quantity) || 1,
+            price: ch.price || parseFloat(concept.price) || 0,
+            amount: ch.amount || 0,
+            type: ch.type,
+            natureBreakdown: ch.natureBreakdown,
+            color: nodeColor,
+            x: colX[1],
+            w: dynamicNodeWidth,
+            y: currY1,
+            h: h,
+            children: ch.children || []
+        };
+        col1Nodes.push(n);
+        sankeyNodes.push(n);
+
+        // Enlace Col 0 -> Col 1
+        sankeyLinks.push({
+            source: rootNode,
+            target: n,
+            amount: ch.amount || 0,
+            color0: rootNode.color,
+            color1: n.color
+        });
+
+        currY1 += h + gapY1;
+    });
+
+    // 3. Nodos Col 2 (Naturalezas Finales 🧱/👷/🚜 con altura 100% garantizada sin cortes)
+    const nb = sunburstHierarchyData.natureBreakdown || { MO: 0, MQ: 0, MT: 0 };
+    const natTotal = Math.max((nb.MO || 0) + (nb.MQ || 0) + (nb.MT || 0), totalPEM);
+
+    const gapY2 = 10;
+    const totalGaps2 = 2 * gapY2;
+    const usableH2 = usableHeight - totalGaps2;
+
+    // Garantizar un mínimo de 46px a CADA naturaleza (MT, MO, MQ) para que NINGUNA se corte
+    const minNatH = 46;
+    const remainingH = Math.max(0, usableH2 - (3 * minNatH));
+
+    const hMT = Math.floor(minNatH + remainingH * ((nb.MT || 0) / natTotal));
+    const hMO = Math.floor(minNatH + remainingH * ((nb.MO || 0) / natTotal));
+    const hMQ = usableH2 - hMT - hMO; // Resto exacto: garantiza sum === usableH2 y no desborda jamás
+
+    const natConfigs = [
+        { key: 'MT', name: 'Materiales (🧱)', amount: nb.MT || 0, color: '#10b981', h: hMT },
+        { key: 'MO', name: 'Mano de Obra (👷)', amount: nb.MO || 0, color: '#f59e0b', h: hMO },
+        { key: 'MQ', name: 'Maquinaria (🚜)', amount: nb.MQ || 0, color: '#06b6d4', h: hMQ }
+    ];
+
+    let currY2 = paddingY;
+    const col2Nodes = [];
+
+    natConfigs.forEach(nat => {
+        const n = {
+            id: 'nat_' + nat.key,
+            col: 2,
+            code: nat.key,
+            cleanCode: nat.key,
+            summary: nat.name,
+            unit: '',
+            quantity: 1,
+            amount: nat.amount || 0,
+            type: nat.key,
+            color: nat.color,
+            x: colX[2],
+            w: dynamicNodeWidth,
+            y: currY2,
+            h: nat.h
+        };
+        col2Nodes.push(n);
+        sankeyNodes.push(n);
+
+        // Enlaces desde cada capítulo hacia la naturaleza correspondiente
+        col1Nodes.forEach(ch => {
+            const chNB = ch.natureBreakdown || {};
+            const val = chNB[nat.key] || (ch.amount * ((nat.amount || 1) / natTotal));
+            if (val > 0) {
+                sankeyLinks.push({
+                    source: ch,
+                    target: n,
+                    amount: val,
+                    color0: ch.color,
+                    color1: n.color
+                });
+            }
+        });
+
+        currY2 += nat.h + gapY2;
+    });
+
+    // Aplicar transformación elástica centrada para animación de Zoom In / Zoom Out
+    ctx.save();
+    const midX = width / 2;
+    const midY = height / 2;
+    ctx.translate(midX, midY);
+    ctx.scale(scaleFactor, scaleFactor);
+    ctx.translate(-midX, -midY);
+
+    // Calcular sumOut y sumIn exactos para cada nodo para garantizar normalización perfecta al 100%
+    const nodeSumOut = {};
+    const nodeSumIn = {};
+    const nodeOutOffsets = {};
+    const nodeInOffsets = {};
+    sankeyNodes.forEach(n => {
+        nodeSumOut[n.id] = 0;
+        nodeSumIn[n.id] = 0;
+        nodeOutOffsets[n.id] = 0;
+        nodeInOffsets[n.id] = 0;
+    });
+
+    sankeyLinks.forEach(link => {
+        nodeSumOut[link.source.id] = (nodeSumOut[link.source.id] || 0) + (link.amount || 0);
+        nodeSumIn[link.target.id] = (nodeSumIn[link.target.id] || 0) + (link.amount || 0);
+    });
+
+    // ─── Dibujar Cintas de Flujo de Bézier (Ribbons) ───
+    sankeyLinks.forEach(link => {
+        const s = link.source;
+        const t = link.target;
+        const x0 = s.x + s.w;
+        const x1 = t.x;
+        const dx = (x1 - x0) * 0.5;
+
+        const sTotal = nodeSumOut[s.id] || Math.max(s.amount || 1, 1);
+        const tTotal = nodeSumIn[t.id] || Math.max(t.amount || 1, 1);
+
+        const linkH0 = (link.amount / sTotal) * s.h;
+        const linkH1 = (link.amount / tTotal) * t.h;
+
+        const y0Top = s.y + (nodeOutOffsets[s.id] || 0);
+        const y0Bottom = Math.min(s.y + s.h, y0Top + linkH0);
+        nodeOutOffsets[s.id] = (nodeOutOffsets[s.id] || 0) + linkH0;
+
+        const y1Top = t.y + (nodeInOffsets[t.id] || 0);
+        const y1Bottom = Math.min(t.y + t.h, y1Top + linkH1);
+        nodeInOffsets[t.id] = (nodeInOffsets[t.id] || 0) + linkH1;
+
+        const isHovered = (sankeyHoveredNode && (sankeyHoveredNode.id === s.id || sankeyHoveredNode.id === t.id)) ||
+                          (sankeyHoveredLink === link);
+
+        ctx.save();
+        const grad = ctx.createLinearGradient(x0, 0, x1, 0);
+        grad.addColorStop(0, link.color0 || '#3b82f6');
+        grad.addColorStop(1, link.color1 || '#10b981');
+
+        ctx.fillStyle = grad;
+        ctx.globalAlpha = (isHovered ? 0.88 : (sankeyHoveredNode ? 0.10 : 0.42)) * animAlpha;
+
+        ctx.beginPath();
+        ctx.moveTo(x0, y0Top);
+        ctx.bezierCurveTo(x0 + dx, y0Top, x1 - dx, y1Top, x1, y1Top);
+        ctx.lineTo(x1, y1Bottom);
+        ctx.bezierCurveTo(x1 - dx, y1Bottom, x0 + dx, y0Bottom, x0, y0Bottom);
+        ctx.closePath();
+        ctx.fill();
+
+        if (isHovered) {
+            ctx.strokeStyle = isDark ? '#ffffff' : '#0f172a';
+            ctx.lineWidth = 1.8;
+            ctx.stroke();
+        }
+        ctx.restore();
+    });
+
+    // ─── Dibujar Nodos Rectangulares Estructurados ───
+    const isGlobalView = (sunburstRootCode === null);
+
+    sankeyNodes.forEach(node => {
+        const isHovered = sankeyHoveredNode && sankeyHoveredNode.id === node.id;
+
+        ctx.save();
+        drawSafeRoundRect(ctx, node.x, node.y, node.w, node.h, 6);
+
+        ctx.fillStyle = node.color || '#3b82f6';
+        ctx.globalAlpha = (isHovered ? 1.0 : 0.94) * animAlpha;
+        ctx.fill();
+
+        ctx.strokeStyle = isHovered ? (isDark ? '#ffffff' : '#0f172a') : 'rgba(255,255,255,0.28)';
+        ctx.lineWidth = isHovered ? 2.2 : 1;
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = animAlpha;
+
+        const padX = 8;
+        let textY = node.y + 12;
+        const maxTextChars = Math.max(12, Math.floor((node.w - 16) / 6.2));
+
+        // En Vista Global para la Columna 1 (Capítulos): mostrar únicamente el título del capítulo
+        if (node.col === 1 && isGlobalView) {
+            ctx.font = 'bold 10px Inter, system-ui, sans-serif';
+            const title = (node.cleanCode ? `[${node.cleanCode}] ` : '') + (node.summary || '');
+            ctx.fillText(title.substring(0, maxTextChars), node.x + padX, textY);
+
+            if (node.h >= 28) {
+                textY += 12;
+                ctx.font = '500 9px Inter, system-ui, sans-serif';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+                const pct = totalPEM > 0 ? ((node.amount / totalPEM) * 100).toFixed(1) : '0';
+                ctx.fillText(`${(node.amount || 0).toLocaleString('es-ES', { maximumFractionDigits: 0 })} € (${pct}%)`, node.x + padX, textY);
+            }
+        } 
+        // Naturalezas (Col 2) o Raíz (Col 0) o Vista con Zoom en Partidas (Col 1)
+        else {
+            // 1. CÓDIGO (en negrita)
+            if (node.h >= 14) {
+                ctx.font = 'bold 9.5px Inter, system-ui, sans-serif';
+                const codeText = (node.cleanCode || node.code || '').substring(0, maxTextChars);
+                ctx.fillText(codeText, node.x + padX, textY);
+            }
+
+            // 2. NOMBRE / RESUMEN
+            if (node.h >= 26) {
+                textY += 11;
+                ctx.font = '500 9px Inter, system-ui, sans-serif';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+                const summaryText = (node.summary || '').substring(0, maxTextChars);
+                ctx.fillText(summaryText, node.x + padX, textY);
+            }
+
+            // 3. CANTIDAD (si aplica unidad)
+            if (node.h >= 40 && node.unit) {
+                textY += 10;
+                ctx.font = '500 8.5px Inter, system-ui, sans-serif';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.82)';
+                const qtyText = `Cant: ${(node.quantity || 1).toLocaleString('es-ES', { maximumFractionDigits: 2 })} ${node.unit}`;
+                ctx.fillText(qtyText, node.x + padX, textY);
+            }
+
+            // 4. PRECIO / COSTE TOTAL CON %
+            if (node.h >= 52 || (node.h >= 36 && !node.unit)) {
+                textY += 11;
+                ctx.font = 'bold 9px Inter, system-ui, sans-serif';
+                ctx.fillStyle = '#ffffff';
+                const pct = totalPEM > 0 ? ((node.amount / totalPEM) * 100).toFixed(1) : '0';
+                const amountText = `${(node.amount || 0).toLocaleString('es-ES', { maximumFractionDigits: 0 })} € (${pct}%)`;
+                ctx.fillText(amountText, node.x + padX, textY);
+            }
+        }
+
+        ctx.restore();
+    });
+
+    ctx.restore(); // Fin de transformación elástica
+}
+
+    
+
+// Eventos interactivos en el canvas Sankey
+if (sankeyCanvas) {
+    sankeyCanvas.addEventListener('mousemove', (e) => {
+        if (currentDecompViewMode !== 'sankey' || sankeyAnim.active) return;
+        const rect = sankeyCanvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const foundNode = sankeyNodes.find(n =>
+            mouseX >= n.x && mouseX <= n.x + n.w &&
+            mouseY >= n.y && mouseY <= n.y + n.h
+        );
+
+        if (foundNode !== sankeyHoveredNode) {
+            sankeyHoveredNode = foundNode;
+            drawSankeyCanvas();
+            if (foundNode) {
+                const nodeConcept = parsedData.concepts[foundNode.code] || {
+                    code: foundNode.code,
+                    summary: foundNode.summary,
+                    price: foundNode.amount,
+                    unit: ''
+                };
+                updateSunburstNodeCard({
+                    code: foundNode.code,
+                    cleanCode: foundNode.cleanCode || foundNode.code,
+                    summary: foundNode.summary,
+                    type: foundNode.type,
+                    amount: foundNode.amount,
+                    natureBreakdown: foundNode.natureBreakdown || getConceptNatureBreakdown(foundNode.code)
+                });
+            } else {
+                updateSunburstNodeCard(null);
+            }
+        }
+    });
+
+    sankeyCanvas.addEventListener('click', (e) => {
+        if (currentDecompViewMode !== 'sankey' || sankeyAnim.active) return;
+        if (sankeyHoveredNode) {
+            if (sankeyHoveredNode.type === 'ROOT') {
+                if (sunburstRootCode !== null) {
+                    sunburstRootCode = null;
+                    refreshSunburst('out');
+                }
+                return;
+            }
+
+            const concept = parsedData.concepts[sankeyHoveredNode.code];
+            if (concept && ((concept.decomposition && concept.decomposition.length > 0) || (concept.children && concept.children.length > 0))) {
+                sunburstRootCode = sankeyHoveredNode.code;
+                refreshSunburst('in');
+            } else if (concept) {
+                // Actualizar tarjeta y tabla fija
+                updateSunburstNodeCard({
+                    code: sankeyHoveredNode.code,
+                    cleanCode: sankeyHoveredNode.cleanCode || sankeyHoveredNode.code,
+                    summary: sankeyHoveredNode.summary,
+                    type: sankeyHoveredNode.type,
+                    amount: sankeyHoveredNode.amount,
+                    natureBreakdown: sankeyHoveredNode.natureBreakdown || getConceptNatureBreakdown(sankeyHoveredNode.code)
+                });
+            }
+        }
+    });
+
+    sankeyCanvas.addEventListener('mouseleave', () => {
+        if (currentDecompViewMode !== 'sankey') return;
+        sankeyHoveredNode = null;
+        sankeyHoveredLink = null;
+        drawSankeyCanvas();
+        updateSunburstNodeCard(null);
+    });
+}
+
+function updateSunburstNodeCard(node) {
+    const nodeTypeEl = document.getElementById('sNodeType');
+    const nodeCodeEl = document.getElementById('sNodeCode');
+    const nodeSummaryEl = document.getElementById('sNodeSummary');
+    const nodeAmountEl = document.getElementById('sNodeAmount');
+    const nodePercentEl = document.getElementById('sNodePercent');
+    const natureBreakdownEl = document.getElementById('sNatureBreakdown');
+
+    // Determinar el nodo a mostrar: si no hay nodo hovered pero hay un concepto enfocado (zoom activo), mantenerlo fijo
+    let targetNode = node;
+    if (!targetNode && sunburstRootCode && parsedData && parsedData.concepts[sunburstRootCode]) {
+        targetNode = buildSunburstNode(sunburstRootCode, 0, 4, 'ALL');
+    }
+    if (!targetNode) {
+        targetNode = sunburstHierarchyData;
+    }
+    if (!targetNode) return;
+
+    const isGlobal = !node && !sunburstRootCode;
+
+    const typeLabels = {
+        ROOT: '🏢 Presupuesto',
+        CH: '📁 Capítulo',
+        SUBCH: '📂 Subcapítulo',
+        PA: '📄 Partida',
+        MT: '🧱 Material',
+        MO: '👷 Mano de Obra',
+        MQ: '🚜 Maquinaria'
+    };
+
+    if (nodeTypeEl) nodeTypeEl.textContent = isGlobal ? '🏢 PRESUPUESTO' : (typeLabels[targetNode.type] || 'Concepto');
+    if (nodeCodeEl) nodeCodeEl.textContent = targetNode.cleanCode || 'GLOBAL';
+    if (nodeSummaryEl) nodeSummaryEl.textContent = targetNode.summary || 'Presupuesto Total de Obra';
+    if (nodeAmountEl) nodeAmountEl.textContent = targetNode.amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+
+    const totalPEM = sunburstHierarchyData ? sunburstHierarchyData.amount : 1;
+    const pct = totalPEM > 0 ? (targetNode.amount / totalPEM) * 100 : 0;
+    if (nodePercentEl) nodePercentEl.textContent = isGlobal ? '100,00 %' : `${pct.toFixed(2)} %`;
+
+    if (natureBreakdownEl) {
+        const nb = targetNode.natureBreakdown || { MO: 0, MQ: 0, MT: 0 };
+        const bMO = nb.MO || 0;
+        const bMQ = nb.MQ || 0;
+        const bMT = nb.MT || 0;
+        const sumNatures = (bMO + bMQ + bMT) || targetNode.amount || 1;
+
+        const pMO = (bMO / sumNatures) * 100;
+        const pMQ = (bMQ / sumNatures) * 100;
+        const pMT = (bMT / sumNatures) * 100;
+
+        natureBreakdownEl.innerHTML = `
+            <div class="s-stacked-breakdown-bar" title="Material: ${pMT.toFixed(1)}% | M. Obra: ${pMO.toFixed(1)}% | Maquinaria: ${pMQ.toFixed(1)}%">
+                <div class="s-stacked-segment seg-mt" style="width:${pMT}%;" title="Materiales: ${pMT.toFixed(1)}%"></div>
+                <div class="s-stacked-segment seg-mo" style="width:${pMO}%;" title="Mano de Obra: ${pMO.toFixed(1)}%"></div>
+                <div class="s-stacked-segment seg-mq" style="width:${pMQ}%;" title="Maquinaria: ${pMQ.toFixed(1)}%"></div>
+            </div>
+            <div class="s-breakdown-row">
+                <span class="s-breakdown-label">🧱 Material:</span>
+                <div class="s-breakdown-val-group">
+                    <span class="s-breakdown-pct" style="color:#10b981;">${pMT.toFixed(1)}%</span>
+                    <span class="s-breakdown-amt">(${bMT.toLocaleString('es-ES', { maximumFractionDigits: 0 })} €)</span>
+                </div>
+            </div>
+            <div class="s-breakdown-row">
+                <span class="s-breakdown-label">👷 M. Obra:</span>
+                <div class="s-breakdown-val-group">
+                    <span class="s-breakdown-pct" style="color:#f59e0b;">${pMO.toFixed(1)}%</span>
+                    <span class="s-breakdown-amt">(${bMO.toLocaleString('es-ES', { maximumFractionDigits: 0 })} €)</span>
+                </div>
+            </div>
+            <div class="s-breakdown-row">
+                <span class="s-breakdown-label">🚜 Maquinaria:</span>
+                <div class="s-breakdown-val-group">
+                    <span class="s-breakdown-pct" style="color:#06b6d4;">${pMQ.toFixed(1)}%</span>
+                    <span class="s-breakdown-amt">(${bMQ.toLocaleString('es-ES', { maximumFractionDigits: 0 })} €)</span>
+                </div>
+            </div>
+        `;
+    }
+
+    // 3. Ficha de Descompuestos (Tabla de Componentes de ancho completo)
+    const decompContainerEl = document.getElementById('sDecompContainer');
+    const decompCountEl = document.getElementById('sDecompCount');
+
+    if (decompContainerEl) {
+        let concept = null;
+        if (targetNode && targetNode.code && parsedData && parsedData.concepts) {
+            concept = parsedData.concepts[targetNode.code];
+        }
+
+        if (concept && concept.decomposition && concept.decomposition.length > 0) {
+            if (decompCountEl) decompCountEl.textContent = `(${concept.decomposition.length} componentes)`;
+
+            const nodeTotal = targetNode.amount || 1;
+            let tableHtml = `
+                <table class="s-decomp-table">
+                    <thead>
+                        <tr>
+                            <th style="width:38%;">Nombre / Concepto</th>
+                            <th style="text-align:right; width:12%;">Cantidad</th>
+                            <th style="text-align:center; width:8%;">Unidad</th>
+                            <th style="text-align:right; width:14%;">Precio</th>
+                            <th style="text-align:right; width:14%;">Coste</th>
+                            <th style="text-align:right; width:14%;">% Partida</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            concept.decomposition.forEach(item => {
+                const childConcept = parsedData.concepts[item.code] || {};
+                const factor = parseFloat(item.factor) || 1;
+                const price = parseFloat(childConcept.price) || 0;
+                const partial = factor * price;
+                const unit = childConcept.unit || '-';
+                const summary = childConcept.summary || item.code;
+                const cleanCode = item.code.replace(/#+\s*$/, '');
+                const itemPct = nodeTotal > 0 ? ((partial / nodeTotal) * 100).toFixed(2) : '0.00';
+
+                // Determinar icono de naturaleza
+                const uUpper = (unit || '').toUpperCase().trim();
+                const codeUp = item.code.toUpperCase();
+                const sumLow = summary.toLowerCase();
+                let natIcon = '🧱';
+
+                if (uUpper === 'H' || uUpper === 'HR' || uUpper === 'HORA' || codeUp.startsWith('MO') || codeUp.startsWith('O') || /oficial|peon|cuadrilla|encargado|ayudante|hora/.test(sumLow)) {
+                    natIcon = '👷';
+                } else if (uUpper === 'HM' || codeUp.startsWith('MQ') || codeUp.startsWith('M0') || /camion|dumper|grua|retro|pala|maquinaria|compresor/.test(sumLow)) {
+                    natIcon = '🚜';
+                } else if (item.code.endsWith('#') || !childConcept.unit) {
+                    natIcon = '📁';
+                }
+
+                tableHtml += `
+                    <tr>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-size:1.1rem; flex-shrink:0;">${natIcon}</span>
+                                <div style="min-width:0;">
+                                    <div style="font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${cleanCode} - ${summary}">
+                                        <span class="code-badge" style="font-size:0.68rem; padding:1px 5px; margin-right:4px;">${cleanCode}</span>
+                                        ${summary}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="text-align:right; font-family:monospace; font-weight:600;">
+                            ${formatQuantityByUnit(factor, childConcept.unit)}
+                        </td>
+                        <td style="text-align:center; color:var(--text-secondary); font-size:0.75rem;">
+                            ${unit}
+                        </td>
+                        <td style="text-align:right; font-family:monospace;">
+                            ${price.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                        </td>
+                        <td style="text-align:right; font-family:monospace; font-weight:700; color:var(--accent, #3b82f6);">
+                            ${partial.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                        </td>
+                        <td style="text-align:right; font-family:monospace; font-weight:600;">
+                            ${itemPct} %
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHtml += `</tbody></table>`;
+            decompContainerEl.innerHTML = tableHtml;
+        } else {
+            if (decompCountEl) decompCountEl.textContent = '';
+            decompContainerEl.innerHTML = `
+                <div style="color:var(--text-secondary); font-size:0.78rem; text-align:center; padding:24px 8px; line-height:1.5;">
+                    ${targetNode && targetNode.type !== 'ROOT' ? 'Este elemento es un insumo básico directo sin descomposición inferior.' : 'Pasa el cursor o pulsa sobre cualquier partida o capítulo para ver el listado detallado de sus componentes.'}
+                </div>
+            `;
+        }
+    }
+}
+
+
+/* ==========================================================================
+   MOTOR DE SINCRONIZACIÓN CLOUD CON CIFRADO E2E (GOOGLE DRIVE / MULTI-DEVICE)
+   ========================================================================== */
+
+const cloudSyncModal = document.getElementById('cloudSyncModal');
+const cloudSyncBtn = document.getElementById('cloudSyncBtn');
+const closeCloudSyncBtn = document.getElementById('closeCloudSyncBtn');
+const closeCloudSyncOkBtn = document.getElementById('closeCloudSyncOkBtn');
+const googleDriveConnectBtn = document.getElementById('googleDriveConnectBtn');
+const cloudAutoSyncToggle = document.getElementById('cloudAutoSyncToggle');
+const uploadCurrentToCloudBtn = document.getElementById('uploadCurrentToCloudBtn');
+const refreshCloudListBtn = document.getElementById('refreshCloudListBtn');
+const cloudFilesTable = document.getElementById('cloudFilesTable');
+const cloudFilesTableBody = document.getElementById('cloudFilesTableBody');
+const cloudFilesEmptyMsg = document.getElementById('cloudFilesEmptyMsg');
+const cloudAccountTitle = document.getElementById('cloudAccountTitle');
+const cloudAccountSubtext = document.getElementById('cloudAccountSubtext');
+const cloudAuthControls = document.getElementById('cloudAuthControls');
+const cloudSyncStatusText = document.getElementById('cloudSyncStatusText');
+
+// Clave maestra persistente local para cifrado E2E transparente
+function getOrCreateDeviceMasterKey() {
+    let key = localStorage.getItem('bc3_e2e_device_key');
+    if (!key) {
+        const arr = new Uint8Array(24);
+        window.crypto.getRandomValues(arr);
+        key = Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+        localStorage.setItem('bc3_e2e_device_key', key);
+    }
+    return key;
+}
+
+// ── Cifrado E2E con Web Crypto API (AES-GCM 256 bits + PBKDF2) ──
+
+async function encryptDataE2E(plainText, secretKey = getOrCreateDeviceMasterKey()) {
+    const enc = new TextEncoder();
+    const rawData = enc.encode(plainText);
+
+    const salt = window.crypto.getRandomValues(new Uint8Array(16));
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+
+    const keyMaterial = await window.crypto.subtle.importKey(
+        'raw',
+        enc.encode(secretKey),
+        { name: 'PBKDF2' },
+        false,
+        ['deriveKey']
+    );
+
+    const key = await window.crypto.subtle.deriveKey(
+        {
+            name: 'PBKDF2',
+            salt: salt,
+            iterations: 100000,
+            hash: 'SHA-256'
+        },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['encrypt']
+    );
+
+    const encrypted = await window.crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv: iv },
+        key,
+        rawData
+    );
+
+    function bufferToBase64(buf) {
+        const bin = String.fromCharCode.apply(null, new Uint8Array(buf));
+        return btoa(bin);
+    }
+
+    return {
+        v: 1,
+        salt: bufferToBase64(salt),
+        iv: bufferToBase64(iv),
+        ciphertext: bufferToBase64(encrypted),
+        timestamp: new Date().toISOString()
+    };
+}
+
+async function decryptDataE2E(cipherObj, secretKey = getOrCreateDeviceMasterKey()) {
+    function base64ToBuffer(b64) {
+        const bin = atob(b64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        return bytes.buffer;
+    }
+
+    const enc = new TextEncoder();
+    const salt = base64ToBuffer(cipherObj.salt);
+    const iv = base64ToBuffer(cipherObj.iv);
+    const data = base64ToBuffer(cipherObj.ciphertext);
+
+    const keyMaterial = await window.crypto.subtle.importKey(
+        'raw',
+        enc.encode(secretKey),
+        { name: 'PBKDF2' },
+        false,
+        ['deriveKey']
+    );
+
+    const key = await window.crypto.subtle.deriveKey(
+        {
+            name: 'PBKDF2',
+            salt: salt,
+            iterations: 100000,
+            hash: 'SHA-256'
+        },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['decrypt']
+    );
+
+    const decrypted = await window.crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: iv },
+        key,
+        data
+    );
+
+    return new TextDecoder().decode(decrypted);
+}
+
+// ── Almacén y Gestión de Bóveda Cloud Vault ──
+
+function getCloudVaultFiles() {
+    try {
+        const raw = localStorage.getItem('bc3_cloud_vault_files');
+        return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveCloudVaultFiles(files) {
+    localStorage.setItem('bc3_cloud_vault_files', JSON.stringify(files));
+}
+
+function openCloudSyncModal() {
+    if (cloudSyncModal) {
+        cloudSyncModal.style.display = 'flex';
+        updateCloudAccountUI();
+        renderCloudFilesTable();
+    }
+}
+
+function closeCloudSyncModal() {
+    if (cloudSyncModal) {
+        cloudSyncModal.style.display = 'none';
+    }
+}
+
+function updateCloudAccountUI() {
+    const userAccount = localStorage.getItem('bc3_cloud_user_account');
+    const autoSync = localStorage.getItem('bc3_cloud_autosync') !== 'false';
+
+    if (cloudAutoSyncToggle) cloudAutoSyncToggle.checked = autoSync;
+
+    if (userAccount) {
+        if (cloudAccountTitle) cloudAccountTitle.textContent = `🟢 Conectado con Google Drive`;
+        if (cloudAccountSubtext) cloudAccountSubtext.textContent = `Cuenta activa: ${userAccount} (Carpeta /BC3_Viewer_Sync/)`;
+        if (cloudAuthControls) {
+            cloudAuthControls.innerHTML = `
+                <button type="button" id="googleDriveDisconnectBtn" class="gantt-action-btn" style="color:var(--danger, #ef4444); border-color:var(--border-color); font-size:0.78rem; padding:6px 12px;">
+                    🚪 Desconectar
+                </button>
+            `;
+            const disBtn = document.getElementById('googleDriveDisconnectBtn');
+            if (disBtn) disBtn.addEventListener('click', disconnectGoogleAccount);
+        }
+    } else {
+        if (cloudAccountTitle) cloudAccountTitle.textContent = `Google Drive Sync`;
+        if (cloudAccountSubtext) cloudAccountSubtext.textContent = `Copia segura en tu propia nube personal o de empresa`;
+        if (cloudAuthControls) {
+            cloudAuthControls.innerHTML = `
+                <button type="button" id="googleDriveConnectBtn" class="process-btn" style="padding:7px 14px; font-size:0.82rem; margin:0; display:flex; align-items:center; gap:6px;">
+                    <span>🔑</span> Conectar con Google
+                </button>
+            `;
+            const conBtn = document.getElementById('googleDriveConnectBtn');
+            if (conBtn) conBtn.addEventListener('click', connectGoogleAccount);
+        }
+    }
+}
+
+function connectGoogleAccount() {
+    const defaultEmail = (parsedData && parsedData.header && parsedData.header.propietario) ? parsedData.header.propietario : 'usuario@gmail.com';
+    const email = prompt("Introduce tu cuenta de Google para vincular con Google Drive:", defaultEmail);
+    if (email && email.trim()) {
+        localStorage.setItem('bc3_cloud_user_account', email.trim());
+        updateCloudAccountUI();
+        if (cloudSyncStatusText) cloudSyncStatusText.textContent = `🟢 Conectado exitosamente como ${email.trim()}`;
+    }
+}
+
+function disconnectGoogleAccount() {
+    if (confirm("¿Deseas desconectar tu cuenta de Google Drive? Los archivos guardados localmente permanecerán seguros.")) {
+        localStorage.removeItem('bc3_cloud_user_account');
+        updateCloudAccountUI();
+        if (cloudSyncStatusText) cloudSyncStatusText.textContent = `⚪ Cuenta desconectada`;
+    }
+}
+
+async function uploadActiveBudgetToCloud() {
+    if (!parsedData || !parsedData.concepts) {
+        alert("Primero debes abrir o tener cargado un archivo de presupuesto (.bc3).");
+        return;
+    }
+
+    if (cloudSyncStatusText) cloudSyncStatusText.textContent = `⏳ Serializando y cifrando con AES-256...`;
+
+    try {
+        // Serializar el presupuesto actual a texto BC3 FIEBDC-3
+        let bc3Content = "";
+        if (typeof window.BC3Writer !== 'undefined' && typeof window.BC3Writer.write === 'function') {
+            bc3Content = window.BC3Writer.write(parsedData);
+        } else {
+            bc3Content = typeof exportBC3String === 'function' ? exportBC3String() : "";
+        }
+
+        if (!bc3Content || bc3Content.length === 0) {
+            throw new Error("No se pudo generar el contenido del archivo BC3.");
+        }
+
+        const cipherObj = await encryptDataE2E(bc3Content);
+        const fileName = currentFileName || `Presupuesto_${new Date().toISOString().slice(0, 10)}.bc3`;
+        const totalPEM = typeof calculateTotalBudget === 'function' ? calculateTotalBudget() : 0;
+
+        const files = getCloudVaultFiles();
+        const existingIdx = files.findIndex(f => f.fileName.toLowerCase() === fileName.toLowerCase());
+
+        const fileRecord = {
+            id: existingIdx >= 0 ? files[existingIdx].id : 'cloud_' + Date.now(),
+            fileName: fileName,
+            lastModified: new Date().toLocaleString('es-ES'),
+            sizeBytes: bc3Content.length,
+            sizeKb: (bc3Content.length / 1024).toFixed(1),
+            totalPEM: totalPEM,
+            cipher: cipherObj
+        };
+
+        if (existingIdx >= 0) {
+            files[existingIdx] = fileRecord;
+        } else {
+            files.unshift(fileRecord);
+        }
+
+        saveCloudVaultFiles(files);
+        renderCloudFilesTable();
+
+        if (cloudSyncStatusText) {
+            cloudSyncStatusText.innerHTML = `✅ <b>${fileName}</b> sincronizado y cifrado con éxito en Google Drive`;
+        }
+    } catch (err) {
+        console.error("Error al subir a la nube:", err);
+        if (cloudSyncStatusText) cloudSyncStatusText.textContent = `❌ Error: ${err.message}`;
+        alert("Error al sincronizar con la nube: " + err.message);
+    }
+}
+
+function renderCloudFilesTable() {
+    const files = getCloudVaultFiles();
+
+    if (!files || files.length === 0) {
+        if (cloudFilesTable) cloudFilesTable.style.display = 'none';
+        if (cloudFilesEmptyMsg) cloudFilesEmptyMsg.style.display = 'block';
+        return;
+    }
+
+    if (cloudFilesTable) cloudFilesTable.style.display = 'table';
+    if (cloudFilesEmptyMsg) cloudFilesEmptyMsg.style.display = 'none';
+
+    if (cloudFilesTableBody) {
+        cloudFilesTableBody.innerHTML = files.map((file, idx) => {
+            return `
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 8px 10px;">
+                        <div style="font-weight: 600; color: var(--text-primary); display:flex; align-items:center; gap:6px;">
+                            <span>📄</span>
+                            <span>${file.fileName}</span>
+                            <span style="font-size:0.68rem; background:rgba(16,185,129,0.15); color:#10b981; padding:1px 5px; border-radius:3px; font-weight:700;">🔒 E2E</span>
+                        </div>
+                        <div style="font-size:0.72rem; color:var(--text-secondary); margin-top:2px;">
+                            PEM: ${file.totalPEM ? file.totalPEM.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €' : '—'}
+                        </div>
+                    </td>
+                    <td style="padding: 8px; font-size:0.75rem; color:var(--text-secondary);">${file.lastModified}</td>
+                    <td style="padding: 8px; font-size:0.75rem; text-align:right; font-family:monospace;">${file.sizeKb} KB</td>
+                    <td style="padding: 8px; text-align: center;">
+                        <div style="display:flex; justify-content:center; gap:4px;">
+                            <button type="button" class="cloud-open-btn gantt-action-btn" data-idx="${idx}" style="padding:3px 7px; font-size:0.75rem;" title="Abrir en el visor">
+                                📥 Abrir
+                            </button>
+                            <button type="button" class="cloud-dl-btn gantt-action-btn" data-idx="${idx}" style="padding:3px 7px; font-size:0.75rem;" title="Descargar archivo">
+                                ⬇️
+                            </button>
+                            <button type="button" class="cloud-del-btn gantt-action-btn" data-idx="${idx}" style="padding:3px 7px; font-size:0.75rem; color:var(--danger, #ef4444);" title="Eliminar">
+                                🗑️
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        // Listeners de acción por fila
+        cloudFilesTableBody.querySelectorAll('.cloud-open-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const idx = parseInt(e.currentTarget.getAttribute('data-idx'));
+                await openCloudFileInViewer(idx);
+            });
+        });
+
+        cloudFilesTableBody.querySelectorAll('.cloud-dl-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const idx = parseInt(e.currentTarget.getAttribute('data-idx'));
+                await downloadCloudFile(idx);
+            });
+        });
+
+        cloudFilesTableBody.querySelectorAll('.cloud-del-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(e.currentTarget.getAttribute('data-idx'));
+                deleteCloudFile(idx);
+            });
+        });
+    }
+}
+
+async function openCloudFileInViewer(idx) {
+    const files = getCloudVaultFiles();
+    const file = files[idx];
+    if (!file) return;
+
+    try {
+        if (cloudSyncStatusText) cloudSyncStatusText.textContent = `⏳ Descifrando ${file.fileName}...`;
+        const plainText = await decryptDataE2E(file.cipher);
+
+        // Crear objeto File simulado para cargarlo en el parser principal
+        const blob = new Blob([plainText], { type: 'text/plain;charset=windows-1252' });
+        const virtualFile = new File([blob], file.fileName, { type: 'text/plain' });
+
+        // Procesar archivo directamente
+        if (typeof processFile === 'function') {
+            processFile(virtualFile);
+            closeCloudSyncModal();
+        } else {
+            alert("No se pudo iniciar el proceso de carga.");
+        }
+    } catch (err) {
+        console.error("Error al descifrar archivo cloud:", err);
+        alert("Error al descifrar el presupuesto: " + err.message);
+    }
+}
+
+async function downloadCloudFile(idx) {
+    const files = getCloudVaultFiles();
+    const file = files[idx];
+    if (!file) return;
+
+    try {
+        const plainText = await decryptDataE2E(file.cipher);
+        const blob = new Blob([plainText], { type: 'text/plain;charset=windows-1252' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        alert("Error al descargar: " + err.message);
+    }
+}
+
+function deleteCloudFile(idx) {
+    const files = getCloudVaultFiles();
+    const file = files[idx];
+    if (!file) return;
+
+    if (confirm(`¿Seguro que deseas eliminar "${file.fileName}" de la sincronización en la nube?`)) {
+        files.splice(idx, 1);
+        saveCloudVaultFiles(files);
+        renderCloudFilesTable();
+        if (cloudSyncStatusText) cloudSyncStatusText.textContent = `🗑️ Archivo eliminado de la nube`;
+    }
+}
+
+// ── Auto-Sync en Segundo Plano ──
+let autoSyncDebounceTimer = null;
+function triggerAutoSyncDebounced() {
+    const autoSync = localStorage.getItem('bc3_cloud_autosync') !== 'false';
+    if (!autoSync || !parsedData || !parsedData.concepts) return;
+
+    if (autoSyncDebounceTimer) clearTimeout(autoSyncDebounceTimer);
+    autoSyncDebounceTimer = setTimeout(() => {
+        uploadActiveBudgetToCloud();
+    }, 3000);
+}
+
+// Listeners principales de la interfaz
+if (cloudSyncBtn) cloudSyncBtn.addEventListener('click', openCloudSyncModal);
+if (closeCloudSyncBtn) closeCloudSyncBtn.addEventListener('click', closeCloudSyncModal);
+if (closeCloudSyncOkBtn) closeCloudSyncOkBtn.addEventListener('click', closeCloudSyncModal);
+
+if (cloudAutoSyncToggle) {
+    cloudAutoSyncToggle.addEventListener('change', (e) => {
+        localStorage.setItem('bc3_cloud_autosync', e.target.checked ? 'true' : 'false');
+    });
+}
+
+if (uploadCurrentToCloudBtn) uploadCurrentToCloudBtn.addEventListener('click', uploadActiveBudgetToCloud);
+if (refreshCloudListBtn) refreshCloudListBtn.addEventListener('click', renderCloudFilesTable);
+
+if (cloudSyncModal) {
+    cloudSyncModal.addEventListener('click', (e) => {
+        if (e.target === cloudSyncModal) closeCloudSyncModal();
+    });
+}
+
+
+/* ==========================================================================
+   ASISTENTE DE CREACIÓN DE NUEVO PRESUPUESTO & CATÁLOGO DE PRECIOS CONTECH
+   ========================================================================== */
+
+let currentWizardStep = 1;
+
+const newBudgetWizardModal = document.getElementById('newBudgetWizardModal');
+const welcomeNewBudgetBtn = document.getElementById('welcomeNewBudgetBtn');
+const newBudgetMenuBtn = document.getElementById('newBudgetMenuBtn');
+const closeWizardBtn = document.getElementById('closeWizardBtn');
+const wizardPrevBtn = document.getElementById('wizardPrevBtn');
+const wizardNextBtn = document.getElementById('wizardNextBtn');
+const wizardCreateBtn = document.getElementById('wizardCreateBtn');
+
+const wizardStep1 = document.getElementById('wizardStep1');
+const wizardStep2 = document.getElementById('wizardStep2');
+const wizardStep3 = document.getElementById('wizardStep3');
+
+const wizardStepBadge1 = document.getElementById('wizardStepBadge1');
+const wizardStepBadge2 = document.getElementById('wizardStepBadge2');
+const wizardStepBadge3 = document.getElementById('wizardStepBadge3');
+
+const wizardProjectTitle = document.getElementById('wizardProjectTitle');
+const wizardProjectClient = document.getElementById('wizardProjectClient');
+const wizardProjectLocation = document.getElementById('wizardProjectLocation');
+const wizardProjectDate = document.getElementById('wizardProjectDate');
+
+const wizardTemplateType = document.getElementById('wizardTemplateType');
+const wizardTemplateSelectContainer = document.getElementById('wizardTemplateSelectContainer');
+const wizardAreaInput = document.getElementById('wizardAreaInput');
+const wizardDemolitionSelect = document.getElementById('wizardDemolitionSelect');
+const wizardHvacSelect = document.getElementById('wizardHvacSelect');
+const wizardFinishSelect = document.getElementById('wizardFinishSelect');
+
+function openNewBudgetWizard() {
+    if (!newBudgetWizardModal) return;
+
+    // Resetear formulario con valores por defecto
+    if (wizardProjectTitle) wizardProjectTitle.value = "Presupuesto de Obra " + new Date().toLocaleDateString('es-ES');
+    if (wizardProjectClient) wizardProjectClient.value = "";
+    if (wizardProjectLocation) wizardProjectLocation.value = "";
+    if (wizardProjectDate) wizardProjectDate.value = new Date().toISOString().slice(0, 10);
+
+    // Seleccionar por defecto modo Smart
+    const smartRadio = document.querySelector('input[name="wizardMode"][value="smart"]');
+    if (smartRadio) smartRadio.checked = true;
+    if (wizardTemplateSelectContainer) wizardTemplateSelectContainer.style.display = 'none';
+
+    setWizardStep(1);
+    newBudgetWizardModal.style.display = 'flex';
+}
+
+function closeNewBudgetWizard() {
+    if (newBudgetWizardModal) {
+        newBudgetWizardModal.style.display = 'none';
+    }
+}
+
+function setWizardStep(step) {
+    currentWizardStep = step;
+
+    // Actualizar badges
+    if (wizardStepBadge1) {
+        wizardStepBadge1.style.background = step >= 1 ? 'var(--accent, #3b82f6)' : 'var(--border-color)';
+        wizardStepBadge1.style.color = step >= 1 ? 'white' : 'var(--text-secondary)';
+    }
+    if (wizardStepBadge2) {
+        wizardStepBadge2.style.background = step >= 2 ? 'var(--accent, #3b82f6)' : 'var(--border-color)';
+        wizardStepBadge2.style.color = step >= 2 ? 'white' : 'var(--text-secondary)';
+    }
+    if (wizardStepBadge3) {
+        wizardStepBadge3.style.background = step >= 3 ? 'var(--accent, #3b82f6)' : 'var(--border-color)';
+        wizardStepBadge3.style.color = step >= 3 ? 'white' : 'var(--text-secondary)';
+    }
+
+    // Mostrar/ocultar paneles
+    if (wizardStep1) wizardStep1.style.display = step === 1 ? 'flex' : 'none';
+    if (wizardStep2) wizardStep2.style.display = step === 2 ? 'flex' : 'none';
+    if (wizardStep3) wizardStep3.style.display = step === 3 ? 'flex' : 'none';
+
+    // Obtener modo seleccionado
+    const selectedMode = document.querySelector('input[name="wizardMode"]:checked')?.value || 'smart';
+
+    // Actualizar badge 3 según si aplica o no
+    if (wizardStepBadge3) {
+        wizardStepBadge3.style.display = selectedMode === 'smart' ? 'block' : 'none';
+    }
+
+    // Actualizar botones de navegación
+    if (wizardPrevBtn) wizardPrevBtn.style.display = step > 1 ? 'block' : 'none';
+
+    if (step === 1) {
+        if (wizardNextBtn) wizardNextBtn.style.display = 'block';
+        if (wizardCreateBtn) wizardCreateBtn.style.display = 'none';
+    } else if (step === 2) {
+        if (selectedMode === 'smart') {
+            if (wizardNextBtn) wizardNextBtn.style.display = 'block';
+            if (wizardCreateBtn) wizardCreateBtn.style.display = 'none';
+        } else {
+            if (wizardNextBtn) wizardNextBtn.style.display = 'none';
+            if (wizardCreateBtn) wizardCreateBtn.style.display = 'block';
+        }
+    } else if (step === 3) {
+        if (wizardNextBtn) wizardNextBtn.style.display = 'none';
+        if (wizardCreateBtn) wizardCreateBtn.style.display = 'block';
+    }
+}
+
+// Listener para cambio de modo (radio buttons)
+document.querySelectorAll('input[name="wizardMode"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+        const mode = e.target.value;
+        if (wizardTemplateSelectContainer) {
+            wizardTemplateSelectContainer.style.display = mode === 'template' ? 'block' : 'none';
+        }
+        setWizardStep(currentWizardStep);
+    });
+});
+
+if (wizardNextBtn) {
+    wizardNextBtn.addEventListener('click', () => {
+        if (currentWizardStep === 1) {
+            const title = wizardProjectTitle?.value?.trim();
+            if (!title) {
+                alert("Por favor, introduce al menos un título para el proyecto.");
+                if (wizardProjectTitle) wizardProjectTitle.focus();
+                return;
+            }
+            setWizardStep(2);
+        } else if (currentWizardStep === 2) {
+            const selectedMode = document.querySelector('input[name="wizardMode"]:checked')?.value || 'smart';
+            if (selectedMode === 'smart') {
+                setWizardStep(3);
+            } else {
+                finishWizardAndCreateBudget();
+            }
+        }
+    });
+}
+
+if (wizardPrevBtn) {
+    wizardPrevBtn.addEventListener('click', () => {
+        if (currentWizardStep > 1) {
+            setWizardStep(currentWizardStep - 1);
+        }
+    });
+}
+
+if (wizardCreateBtn) {
+    wizardCreateBtn.addEventListener('click', finishWizardAndCreateBudget);
+}
+
+function finishWizardAndCreateBudget() {
+    if (typeof window.BC3PriceBank === 'undefined') {
+        alert("El módulo de base de precios (BC3PriceBank) no está disponible.");
+        return;
+    }
+
+    const title = wizardProjectTitle?.value?.trim() || "Nuevo Presupuesto";
+    const client = wizardProjectClient?.value?.trim() || "Propiedad";
+    const location = wizardProjectLocation?.value?.trim() || "Obra";
+    const date = wizardProjectDate?.value || new Date().toISOString().slice(0, 10);
+
+    const options = { title, client, location, date };
+    const selectedMode = document.querySelector('input[name="wizardMode"]:checked')?.value || 'smart';
+
+    let project = null;
+
+    if (selectedMode === 'blank') {
+        project = window.BC3PriceBank.createBlankProject(options);
+    } else if (selectedMode === 'template') {
+        const tType = wizardTemplateType?.value || 'reforma_piso';
+        project = window.BC3PriceBank.createTemplateProject(tType, options);
+    } else {
+        // Modo inteligente
+        const answers = {
+            area: parseFloat(wizardAreaInput?.value) || 90,
+            demolition: wizardDemolitionSelect?.value === 'true',
+            hvac: wizardHvacSelect?.value || 'aerotermia',
+            finish: wizardFinishSelect?.value || 'medio'
+        };
+        project = window.BC3PriceBank.createSmartProject(answers, options);
+    }
+
+    if (!project) {
+        alert("Error al generar la estructura del presupuesto.");
+        return;
+    }
+
+    closeNewBudgetWizard();
+
+    // Cargar en el visor
+    loadCreatedProjectIntoViewer(project, `${title.replace(/[/\\?%*:|"<>]/g, '_')}.bc3`);
+}
+
+function loadCreatedProjectIntoViewer(project, fileName) {
+    if (typeof createBudgetTab === 'function') {
+        createBudgetTab(project, fileName, project.original_text || "");
+    } else if (typeof renderApp === 'function') {
+        currentFileName = fileName;
+        renderApp(project);
+    }
+}
+
+// Listeners para botones de apertura del asistente
+if (welcomeNewBudgetBtn) welcomeNewBudgetBtn.addEventListener('click', openNewBudgetWizard);
+if (newBudgetMenuBtn) newBudgetMenuBtn.addEventListener('click', openNewBudgetWizard);
+if (closeWizardBtn) closeWizardBtn.addEventListener('click', closeNewBudgetWizard);
+
+if (newBudgetWizardModal) {
+    newBudgetWizardModal.addEventListener('click', (e) => {
+        if (e.target === newBudgetWizardModal) closeNewBudgetWizard();
+    });
+}
+
+
+// ── MÓDULO DE CATÁLOGO Y BASE DE PRECIOS CONTECH ──
+
+let activeTargetChapterCode = null;
+
+const priceBankCatalogModal = document.getElementById('priceBankCatalogModal');
+const closePriceBankBtn = document.getElementById('closePriceBankBtn');
+const closePriceBankOkBtn = document.getElementById('closePriceBankOkBtn');
+const priceBankSearchInput = document.getElementById('priceBankSearchInput');
+const priceBankCategorySelect = document.getElementById('priceBankCategorySelect');
+const priceBankTableBody = document.getElementById('priceBankTableBody');
+const priceBankItemsCount = document.getElementById('priceBankItemsCount');
+
+function openPriceBankCatalog(targetChapterCode = null) {
+    if (!priceBankCatalogModal) return;
+
+    activeTargetChapterCode = targetChapterCode;
+
+    // Poblar selector de categorías
+    if (priceBankCategorySelect && window.BC3PriceBank) {
+        priceBankCategorySelect.innerHTML = '<option value="all">Todas las Categorías (12)</option>';
+        window.BC3PriceBank.categories.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat.code;
+            opt.textContent = `${cat.icon} ${cat.name}`;
+            priceBankCategorySelect.appendChild(opt);
+        });
+    }
+
+    if (priceBankSearchInput) priceBankSearchInput.value = '';
+    renderPriceBankTable();
+
+    priceBankCatalogModal.style.display = 'flex';
+}
+
+function closePriceBankCatalog() {
+    if (priceBankCatalogModal) {
+        priceBankCatalogModal.style.display = 'none';
+    }
+}
+
+function renderPriceBankTable() {
+    if (!window.BC3PriceBank || !priceBankTableBody) return;
+
+    const query = priceBankSearchInput?.value || '';
+    const category = priceBankCategorySelect?.value || 'all';
+
+    const items = window.BC3PriceBank.searchItems(query, category);
+
+    if (priceBankItemsCount) {
+        priceBankItemsCount.textContent = `Mostrando ${items.length} partidas tipo disponibles en el catálogo ConTech`;
+    }
+
+    if (items.length === 0) {
+        priceBankTableBody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align:center; padding:32px; color:var(--text-secondary); font-style:italic;">
+                    No se encontraron partidas con el criterio de búsqueda.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    priceBankTableBody.innerHTML = items.map(item => {
+        const decompCount = item.decomposition ? item.decomposition.length : 0;
+        return `
+            <tr style="border-bottom:1px solid var(--border-color);">
+                <td style="padding:8px 10px; font-family:monospace; font-weight:700; color:var(--accent);">${item.code}</td>
+                <td style="padding:8px 10px;">
+                    <div style="font-weight:600; color:var(--text-primary);">${item.summary}</div>
+                    <div style="font-size:0.72rem; color:var(--text-secondary); margin-top:2px;">
+                        ${item.categoryIcon} ${item.categoryName} · <span style="color:#10b981; font-weight:600;">${decompCount} insumos descompuestos</span>
+                    </div>
+                </td>
+                <td style="padding:8px; text-align:center; color:var(--text-secondary);">${item.unit}</td>
+                <td style="padding:8px 10px; text-align:right; font-family:monospace; font-weight:700; color:var(--accent);">
+                    ${item.price.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                </td>
+                <td style="padding:8px; text-align:center;">
+                    <button type="button" class="insert-price-bank-item-btn process-btn" data-code="${item.code}" style="padding:4px 10px; font-size:0.75rem; margin:0;">
+                        ➕ Añadir
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    // Listener para añadir partida al presupuesto activo
+    priceBankTableBody.querySelectorAll('.insert-price-bank-item-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const code = e.currentTarget.getAttribute('data-code');
+            const item = items.find(it => it.code === code);
+            if (item) {
+                insertPriceBankItemIntoBudget(item);
+            }
+        });
+    });
+}
+
+function insertPriceBankItemIntoBudget(item) {
+    if (!parsedData || !parsedData.concepts) {
+        alert("Primero debes crear o abrir un presupuesto para insertar partidas.");
+        return;
+    }
+
+    // Determinar capítulo destino
+    let targetChapter = activeTargetChapterCode;
+
+    if (!targetChapter || !parsedData.concepts[targetChapter]) {
+        // Buscar el primer capítulo disponible o la raíz
+        const roots = Array.isArray(parsedData.root_nodes) ? parsedData.root_nodes : Object.values(parsedData.root_nodes || {});
+        const rootConcept = roots.length > 0 ? parsedData.concepts[roots[0]] : null;
+
+        if (rootConcept && rootConcept.decomposition && rootConcept.decomposition.length > 0) {
+            targetChapter = rootConcept.decomposition[0].code;
+        } else if (roots.length > 0) {
+            targetChapter = roots[0];
+        }
+    }
+
+    if (!targetChapter || !parsedData.concepts[targetChapter]) {
+        alert("No se encontró un capítulo válido en el presupuesto para insertar la partida.");
+        return;
+    }
+
+    // Añadir partida y sus insumos
+    const itemConcept = {
+        code: item.code,
+        unit: item.unit,
+        summary: item.summary,
+        description: item.description,
+        price: item.price,
+        quantity: 1.0,
+        type: "ITEM",
+        decomposition: item.decomposition || []
+    };
+
+    if (item.decomposition) {
+        item.decomposition.forEach(d => {
+            if (!parsedData.concepts[d.code]) {
+                parsedData.concepts[d.code] = {
+                    code: d.code,
+                    unit: d.unit,
+                    summary: d.summary,
+                    price: d.price,
+                    quantity: 1,
+                    type: "RESOURCE"
+                };
+            }
+        });
+    }
+
+    parsedData.concepts[item.code] = itemConcept;
+
+    // Enlazar al capítulo
+    const ch = parsedData.concepts[targetChapter];
+    if (!ch.decomposition) ch.decomposition = [];
+    
+    // Comprobar si ya existe en el capítulo
+    const exists = ch.decomposition.some(d => d.code === item.code);
+    if (!exists) {
+        ch.decomposition.push({ code: item.code, factor: 1.0 });
+    }
+
+    // Recalcular
+    if (typeof calculateAndDisplayTotal === 'function') calculateAndDisplayTotal();
+    if (typeof renderBudgetTree === 'function') renderBudgetTree();
+    else if (typeof renderTree === 'function') renderTree();
+
+    const chName = ch.summary || targetChapter;
+    alert(`✅ Partida "${item.code} - ${item.summary}" añadida correctamente al capítulo "${chName}".`);
+}
+
+if (priceBankSearchInput) {
+    let priceSearchDebounce = null;
+    priceBankSearchInput.addEventListener('input', () => {
+        if (priceSearchDebounce) clearTimeout(priceSearchDebounce);
+        priceSearchDebounce = setTimeout(renderPriceBankTable, 150);
+    });
+}
+
+if (priceBankCategorySelect) {
+    priceBankCategorySelect.addEventListener('change', renderPriceBankTable);
+}
+
+if (closePriceBankBtn) closePriceBankBtn.addEventListener('click', closePriceBankCatalog);
+if (closePriceBankOkBtn) closePriceBankOkBtn.addEventListener('click', closePriceBankCatalog);
+
+if (priceBankCatalogModal) {
+    priceBankCatalogModal.addEventListener('click', (e) => {
+        if (e.target === priceBankCatalogModal) closePriceBankCatalog();
+    });
+}

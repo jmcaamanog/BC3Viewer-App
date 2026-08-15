@@ -22,51 +22,108 @@
         <header class="main-header">
             <div class="header-top-row"
                 style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 16px;">
-                <div class="left-header-section" style="display:flex; align-items:center; gap:16px;">
+                <div class="left-header-section" style="display:flex; align-items:center; gap:12px;">
                     <div class="logo">
                         <a href="https://github.com/jmcaamanog/BC3Viewer-App" target="_blank" rel="noopener noreferrer"
                             style="display: block;">
                             <img src="assets/icon.png" alt="BC3 Viewer">
                         </a>
                     </div>
-                    <!-- Contenedor PEM & PEC Widget (ahora segundo, a la derecha del nombre) -->
+                    <!-- Contenedor PEM, BI & PEC Widget -->
                     <div class="project-info" id="projectInfo"
                         style="display:none; flex-direction:column; align-items:flex-start;">
                         <div class="budget-widget" style="margin:0;">
-                            <div class="budget-card pem-card" id="budgetTotal">
+                            <div class="budget-card pem-card" id="budgetTotal" title="Presupuesto de Ejecución Material">
                                 <span class="lbl">PEM</span>
                                 <span class="val">0,00 €</span>
                             </div>
-                            <div class="budget-card pec-card" id="budgetTotalPEC" style="display:none;">
+                            <div class="budget-card gg-card" id="budgetTotalGG" style="display:none;" title="Gastos Generales (% y Cantidad)">
+                                <span class="lbl">GG (13%)</span>
+                                <span class="val">0,00 €</span>
+                            </div>
+                            <div class="budget-card bi-card" id="budgetTotalBI" style="display:none;" title="Beneficio Industrial (% y Cantidad)">
+                                <span class="lbl">BI (6%)</span>
+                                <span class="val">0,00 €</span>
+                            </div>
+                            <div class="budget-card pec-card" id="budgetTotalPEC" style="display:none;" title="Presupuesto de Ejecución por Contrata">
                                 <span class="lbl">PEC</span>
                                 <span class="val">0,00 €</span>
                             </div>
                         </div>
                         <div id="stats" style="font-size: 0.68rem; color: #888; margin-top: 2px;"></div>
                     </div>
-                    <!-- Botón de salir (X roja), movido aquí al lado de PEM y PEC -->
+
+                    <!-- Botones de Acción Rápida: Guardar y Exportar/Importar agrupados a la izquierda de la X -->
+                    <div class="header-action-group" id="headerActionGroup" style="display:none; align-items:center; gap:6px;">
+                        <button type="button" id="saveBtn" class="header-icon-btn save-header-btn" title="Guardar Presupuesto (.bc3) (Ctrl+S)">
+                            💾
+                        </button>
+                        
+                        <div class="dropdown" id="exportDropdown">
+                            <button type="button" class="header-icon-btn export-header-btn dropdown-toggle" title="Exportar e Importar">
+                                <span>📤</span><span style="font-size: 0.6rem; margin-left: 2px;">▾</span>
+                            </button>
+                            <div class="dropdown-content export-dropdown-menu" style="min-width: 240px; left: 0; right: auto;">
+                                <!-- Bloque 1: Exportar -->
+                                <div style="padding: 6px 14px; font-size: 0.68rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-color); background: var(--bg-hover); text-align: left;">
+                                    📤 Exportar
+                                </div>
+                                <button type="button" id="exportPdfBtn" class="export-menu-item export-pdf-item">
+                                    <span class="menu-icon">📄</span><span class="btn-text">PDF (.pdf)</span>
+                                </button>
+                                <button type="button" id="exportExcelBtn" class="export-menu-item export-excel-item">
+                                    <span class="menu-icon">📊</span><span class="btn-text">EXCEL (.xlsx)</span>
+                                </button>
+                                <button type="button" id="exportBc3Btn" class="export-menu-item export-bc3-item">
+                                    <span class="menu-icon">💾</span><span class="btn-text">FIEBDC-3 (.bc3)</span>
+                                </button>
+
+                                <!-- Bloque 2: Importar -->
+                                <div style="padding: 6px 14px; font-size: 0.68rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); background: var(--bg-hover); margin-top: 2px; text-align: left;">
+                                    📥 Importar
+                                </div>
+                                <button type="button" id="openImportExcelBtn" class="export-menu-item import-excel-item">
+                                    <span class="menu-icon">📊</span><span class="btn-text">EXCEL (.xlsx)</span>
+                                </button>
+                                <button type="button" id="openImportCsvBtn" class="export-menu-item import-csv-item">
+                                    <span class="menu-icon">📄</span><span class="btn-text">CSV (.csv)</span>
+                                </button>
+                                <button type="button" id="openImportBc3Btn" class="export-menu-item import-bc3-item">
+                                    <span class="menu-icon">📂</span><span class="btn-text">FIEBDC-3 (.bc3)</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botón de salir (X roja) -->
                     <button type="button" id="closeBudgetBtn" class="close-budget-btn" title="Cerrar Presupuesto"
                         style="display:none;">✕</button>
                 </div>
 
-                <!-- Botones del extremo derecho: Menú Ajustes (Engranaje) -->
+                <!-- Botones del extremo derecho: Paleta de Comandos y Menú Ajustes -->
                 <div class="right-controls" style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" class="cmd-palette-toggle-btn" id="cmdPaletteBtn" aria-label="Paleta de Comandos (Ctrl+K)"
+                        title="Paleta de Comandos (Ctrl+K)">
+                        <span class="cmd-palette-btn-icon">⌘K</span>
+                    </button>
                     <div class="dropdown" id="settingsDropdown">
                         <button type="button" class="settings-toggle-btn" id="settingsBtn" aria-label="Ajustes"
                             title="Ajustes">⚙️</button>
                         <div class="dropdown-content dropdown-content-right"
-                            style="right: 0; left: auto; min-width: 180px; width: max-content; max-width: 90vw;">
-                            <!-- Archivo Cargado (Se muestra/oculta por JS y permite cargar otro archivo) -->
+                            style="right: 0; left: auto; min-width: 200px; width: max-content; max-width: 90vw; max-height: 80vh; overflow-y: auto;">
+                            <!-- Archivo cargado (oculto del menú, solo uso interno) -->
                             <label for="bc3file" id="dropdownFileLabel"
-                                style="display:none; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer; font-size:0.8rem; font-weight:600; color:var(--accent); border-bottom:1px solid var(--border-color); margin-bottom:4px; box-sizing:border-box;">
+                                style="display:none !important; width:0; height:0; overflow:hidden; padding:0; margin:0; border:none; position:absolute;">
                                 <span id="dropdownFileName"
-                                    style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:min(300px, 60vw);">Archivo</span>
-                                <span style="font-size:1rem;">📄</span>
+                                    style="display:none;">Archivo</span>
                             </label>
 
-                            <button type="button" id="toggleCoeffsBtn"
-                                style="display:none; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Coeficientes
-                                <span style="font-size:1rem;">⚙️</span></button>
+                            <button type="button" id="newBudgetMenuBtn"
+                                style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer; color:var(--accent); font-weight:600;">Nuevo Presupuesto
+                                <span style="font-size:1rem;">✨</span></button>
+                            <button type="button" id="cloudSyncBtn"
+                                style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Sincronización Cloud
+                                <span style="font-size:1rem;">☁️</span></button>
                             <button type="button" id="auditLogBtn"
                                 style="display:none; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Auditoría
                                 <span style="font-size:1rem;">📜</span></button>
@@ -74,15 +131,33 @@
                                 style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Tema
                                 Visual <span id="themeToggleIcon" style="font-size:1rem;">🌙</span></button>
                             <button type="button" id="infoBtn"
-                                style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Información
+                                style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer; color:var(--text-primary);">Información
                                 <span style="font-size:1rem;">ℹ️</span></button>
+                            <hr style="border:none; border-top:1px solid var(--border-color); margin:4px 0;">
+                            <button type="button" id="aboutMeBtn"
+                                style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer; color:var(--text-primary);">Sobre mí
+                                <span style="font-size:1rem;">👨‍💻</span></button>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Barra Multi-Presupuesto por Pestañas (Multi-Tab) -->
+            <div class="budget-tab-bar" id="budgetTabBar" style="display:none;">
+                <div class="budget-tabs-container" id="budgetTabsContainer">
+                    <!-- Pestañas dinámicas de presupuestos -->
+                </div>
+                <button type="button" class="budget-tab-add" id="budgetTabAddBtn" title="Abrir otro presupuesto (.bc3) en una nueva pestaña">
+                    <span>+</span>
+                </button>
+            </div>
+
             <div class="upload-area" style="width: 100%;">
                 <form id="uploadForm">
+                    <!-- Inputs ocultos para carga múltiple, Excel y CSV -->
+                    <input type="file" id="bc3MultiFileInput" accept=".bc3" multiple hidden>
+                    <input type="file" id="importExcelFileInput" accept=".xlsx, .xls" hidden>
+                    <input type="file" id="importCsvFileInput" accept=".csv, .txt" hidden>
                     <!-- Grupo 1: Carga y Procesado (Oculto al inicio, se muestra al cargar un presupuesto) -->
                     <div class="control-container" id="uploadGroup" style="display:none;">
                         <label for="bc3file" class="upload-btn">
@@ -100,6 +175,12 @@
                                     class="btn-text">PRECIOS</span></button>
                         </div>
 
+                        <!-- Botón Coeficientes entre PRECIOS y DASHBOARD -->
+                        <div class="control-container tools-group" id="coeffsGroup" style="display:none;">
+                            <button type="button" id="toggleCoeffsBtn" class="tool-btn" title="Ajustes de Presupuesto por Coeficientes (GG, BI, Baja)">⚙️ <span
+                                    class="btn-text">COEFICIENTES</span></button>
+                        </div>
+
                         <!-- Grupo 3: Herramientas Auxiliares -->
                         <div class="control-container tools-group" id="toolsGroup" style="display:none;">
                             <button type="button" id="dashboardBtn" class="tool-btn">📊 <span
@@ -110,24 +191,6 @@
                                     class="btn-text">CERTIF.</span></button>
                             <button type="button" id="compareBtn" class="tool-btn">🔍 <span
                                     class="btn-text">COMPARAR</span></button>
-                        </div>
-
-                        <!-- Grupo 4: Guardar y Exportar -->
-                        <div class="control-container export-group" id="exportGroup" style="display:none;">
-                            <button type="button" id="saveBtn" class="save-btn" style="display:none;">💾 <span
-                                    class="btn-text">GUARDAR</span></button>
-                            <div class="dropdown" id="exportDropdown">
-                                <button type="button" class="export-btn dropdown-toggle">📤 <span
-                                        class="btn-text">EXPORTAR</span> ▾</button>
-                                <div class="dropdown-content">
-                                    <button type="button" id="exportPdfBtn">📄 <span class="btn-text">EXPORTAR A
-                                            PDF</span></button>
-                                    <button type="button" id="exportExcelBtn">📊 <span class="btn-text">EXPORTAR A
-                                            EXCEL</span></button>
-                                    <button type="button" id="exportBc3Btn" style="color: #059669; font-weight: 600;">⬇
-                                        <span class="btn-text">GUARDAR COMO BC3</span></button>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </form>
@@ -162,7 +225,7 @@
             <div class="tree-panel" id="treePanel">
                 <!-- Welcome / Empty State Card -->
                 <div class="empty-state"
-                    style="padding: 24px; font-style: normal; text-align: left; display: flex; flex-direction: column; justify-content: center; max-width: 680px; margin: 0 auto; height: 100%; box-sizing: border-box;">
+                    style="padding: 24px; font-style: normal; text-align: left; display: flex; flex-direction: column; justify-content: center; max-width: 900px; margin: 0 auto; height: 100%; box-sizing: border-box;">
                     <div
                         style="background-color: var(--hover-bg, rgba(59, 130, 246, 0.03)); border: 1px solid var(--border-color); border-radius: 12px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 16px; width: 100%;">
                         <!-- Animated Construction Scene (SVG + CSS Keyframes) -->
@@ -263,71 +326,86 @@
                             </svg>
                         </div>
 
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
-                            <div style="font-size: 1.8rem;">🏢</div>
+                        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 6px;">
+                            <div style="font-size: 2.2rem; filter: drop-shadow(0 2px 8px rgba(59, 130, 246, 0.3));">🏢</div>
                             <div>
-                                <h2
-                                    style="margin: 0; font-size: 1.25rem; color: var(--accent, #3b82f6); font-weight: 600;">
-                                    BC3 Viewer Premium</h2>
-                                <span
-                                    style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Visualizador
-                                    & Editor <strong>FIEBDC-3 (.bc3)</strong> de Código Abierto diseñado por y para
-                                    profesionales de la edificación.</span>
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <h2 style="margin: 0; font-size: 1.35rem; color: var(--accent, #3b82f6); font-weight: 700; letter-spacing: -0.02em;">
+                                        BC3 Viewer Premium
+                                    </h2>
+                                    <span style="font-size: 0.72rem; font-weight: 700; background: linear-gradient(135deg, #3b82f6, #06b6d4); color: white; padding: 2px 8px; border-radius: 12px; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.35);">
+                                        v2.0
+                                    </span>
+                                </div>
+                                <span style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 500;">
+                                    Visualizador, Editor y Motor de Análisis <strong>FIEBDC-3 (.bc3)</strong> ConTech para Arquitectos Técnicos y profesionales de la edificación.
+                                </span>
                             </div>
                         </div>
 
-                        <p
-                            style="margin: 0; font-size: 0.85rem; line-height: 1.5; color: var(--text-primary); text-align: justify;">
-                            ¡Bienvenido al visualizador y editor interactivo de presupuestos <strong>FIEBDC-3
-                                (.bc3)</strong> de referencia para profesionales y Arquitectos Técnicos!
+                        <p style="margin: 0; font-size: 0.85rem; line-height: 1.55; color: var(--text-primary); text-align: justify;">
+                            ¡Bienvenido al entorno interactivo de referencia para la gestión offline de presupuestos <strong>FIEBDC-3 (.bc3)</strong>! Explora, edita, analiza la estructura de costes, planifica plazos y calcula el impacto ambiental en un único flujo de trabajo rápido y 100% privado.
                         </p>
 
-                        <div style="margin: 2px 0;">
-                            <h4
-                                style="margin: 0 0 6px 0; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary);">
-                                ¿Qué puedes hacer con esta versión?</h4>
-                            <ul
-                                style="margin: 0; padding-left: 1.2rem; font-size: 0.8rem; line-height: 1.5; color: var(--text-secondary); display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px;">
-                                <li>🌳 Exploración y edición inline en árbol</li>
-                                <li>📊 Dashboard interactivo con KPIs</li>
-                                <li>📅 Planning Gantt con ruta crítica y HOY</li>
-                                <li>📈 Curva S de avance acumulado</li>
-                                <li>🔗 Enlazar tareas y propagar retrasos</li>
-                                <li>➕ Crear nuevas partidas en caliente</li>
-                                <li>📝 Visualización de mediciones detalladas</li>
-                                <li>📥 Guardar BC3 y exportar a Excel y PDF</li>
+                        <!-- Panel de Novedades y Capacidades v2.0 -->
+                        <div style="margin: 4px 0; background: var(--hover-bg, rgba(0,0,0,0.02)); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 14px;">
+                            <h4 style="margin: 0 0 8px 0; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--accent, #3b82f6); display: flex; align-items: center; gap: 6px;">
+                                <span>🚀</span> Novedades Principales de la Versión 2.0
+                            </h4>
+                            <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.8rem; line-height: 1.6; color: var(--text-secondary); display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px;">
+                                <li>📑 <strong>Multi-Presupuesto:</strong> Pestañas simultáneas y guardado directo</li>
+                                <li>☀️ <strong>Sunburst Multinivel:</strong> Zoom y descompuestos a fondo</li>
+                                <li>🌊 <strong>Diagrama Sankey:</strong> Flujo interactivo de costes</li>
+                                <li>🌿 <strong>Impacto Ambiental:</strong> Huella de carbono CO₂ y materiales</li>
+                                <li>⚙️ <strong>Coeficientes Completos:</strong> PEM + GG 13% + BI 6% = PEC</li>
+                                <li>📝 <strong>Mediciones con Fórmulas:</strong> Deducciones de huecos y <code>fx</code></li>
+                                <li>📅 <strong>Planning Gantt:</strong> Ruta crítica, plazos y curva S</li>
+                                <li>📤 <strong>Importar / Exportar:</strong> PDF, Excel, CSV y FIEBDC-3 a color</li>
                             </ul>
                         </div>
 
-                        <div
-                            style="background-color: rgba(59, 130, 246, 0.04); border-left: 4px solid var(--accent, #3b82f6); padding: 12px; border-radius: 0 8px 8px 0; font-size: 0.78rem; line-height: 1.4; color: var(--text-secondary); text-align: justify;">
-                            <strong>🛠️ Herramienta en Desarrollo Activo:</strong> Este proyecto es de código abierto.
-                            Si tienes sugerencias o ideas de mejoras, ponte en contacto
-                            con el creador del repositorio de la App original <strong>Jose Manuel
-                                Caamaño</strong> via <a href="https://www.linkedin.com/in/jmcaamanog/" target="_blank"
-                                style="color:var(--accent); text-decoration:none; font-weight:600;">LinkedIn</a>, el
-                            repositorio completo y libre (<a href="https://github.com/jmcaamanog/BC3Viewer-App"
-                                target="_blank"
-                                style="color:var(--accent); text-decoration:none; font-weight:600;">BC3Viewer-App</a>) o
-                            mediante su Colegio Profesional de la Arquitectura Técnica al que orgullosamente pertenece
-                            (<a href="https://www.coatac.es/" target="_blank"
-                                style="color:var(--accent); text-decoration:none; font-weight:600;">COATAC</a>).
+                        <!-- Tarjeta de Presentación del Autor y Enlace a Web Personal -->
+                        <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(6, 182, 212, 0.05)); border: 1.5px solid rgba(59, 130, 246, 0.25); padding: 14px 16px; border-radius: 10px; font-size: 0.8rem; line-height: 1.5; color: var(--text-primary); text-align: justify; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.06);">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span style="font-size: 1.1rem;">🛠️</span>
+                                    <strong style="color: var(--accent, #3b82f6); font-size: 0.85rem;">Proyecto ConTech en Desarrollo Activo</strong>
+                                </div>
+                                <a href="https://jmcaamanog.pages.dev/" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #2563eb, #0284c7); color: #ffffff !important; font-weight: 700; font-size: 0.75rem; padding: 5px 12px; border-radius: 20px; text-decoration: none; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35); transition: transform 0.2s ease;">
+                                    <span>🌐</span>
+                                    <span>Visitar mi Web: jmcaamanog.pages.dev</span>
+                                    <span style="font-size: 0.7rem;">↗</span>
+                                </a>
+                            </div>
+                            <div>
+                                Este proyecto es 100% de código abierto para la profesión. Desarrollado y mantenido por <strong>Jose Manuel Caamaño González</strong> (Arquitecto Técnico & BIM Manager). Puedes conectar via 
+                                <a href="https://www.linkedin.com/in/jmcaamanog/" target="_blank" style="color:var(--accent); text-decoration:none; font-weight:600;">LinkedIn</a>, 
+                                explorar el repositorio libre en <a href="https://github.com/jmcaamanog/BC3Viewer-App" target="_blank" style="color:var(--accent); text-decoration:none; font-weight:600;">GitHub</a> 
+                                o consultar a través del Colegio Oficial de la Arquitectura Técnica (<a href="https://www.coatac.es/" target="_blank" style="color:var(--accent); text-decoration:none; font-weight:600;">COATAC</a>).
+                            </div>
                         </div>
-                        <div
-                            style="background-color: rgba(59, 130, 246, 0.04); border-left: 4px solid var(--accent, #3b82f6); padding: 12px; border-radius: 0 8px 8px 0; font-size: 0.78rem; line-height: 1.4; color: var(--text-secondary); text-align: justify;">
-                            📱 Y no olvides decargar la versión <strong>App para Android</strong> y/o el programa para
-                            <strong>Windows</strong>. Es gratis! -> <a
-                                href="https://github.com/jmcaamanog/BC3Viewer-App/tree/main/PROGRAMAS" target="_blank"
-                                style="color:var(--accent); text-decoration:none; font-weight:600;">ENLACE</a>
+
+                        <!-- Descarga de Aplicaciones Nativas -->
+                        <div style="background: rgba(16, 185, 129, 0.05); border-left: 4px solid #10b981; padding: 10px 14px; border-radius: 0 8px 8px 0; font-size: 0.78rem; line-height: 1.45; color: var(--text-secondary); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                            <span>📱 <strong>Apps Nativas Gratuitas:</strong> Descarga la versión para <strong>Android (.apk)</strong> y el instalador de escritorio para <strong>Windows (.exe / .msi)</strong>.</span>
+                            <a href="https://github.com/jmcaamanog/BC3Viewer-App/tree/main/PROGRAMAS" target="_blank" style="color: #059669; font-weight: 700; text-decoration: none; background: rgba(16, 185, 129, 0.12); padding: 4px 10px; border-radius: 6px; white-space: nowrap;">
+                                📥 Ver Instaladores ↗
+                            </a>
                         </div>
 
                         <div
-                            style="display: flex; flex-direction: column; align-items: center; gap: 12px; font-size: 0.8rem; color: var(--text-primary); font-weight: 500; margin-top: 4px; justify-content: center; background: var(--bg-hover); padding: 16px; border-radius: 8px; border: 1px dashed var(--border-color);">
-                            <span>👉 Arrastra un archivo <strong>.bc3</strong> aquí, o haz clic en el botón:</span>
+                            style="display: flex; flex-direction: column; align-items: center; gap: 14px; font-size: 0.8rem; color: var(--text-primary); font-weight: 500; margin-top: 4px; justify-content: center; background: var(--bg-hover); padding: 18px; border-radius: 8px; border: 1px dashed var(--border-color);">
+                            <span>👉 Elige cómo deseas comenzar a trabajar:</span>
 
-                            <label for="bc3file" class="welcome-load-btn">
-                                🚀 CARGAR ARCHIVO .BC3
-                            </label>
+                            <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: 100%;">
+                                <label for="bc3file" class="welcome-load-btn" style="flex: 1; min-width: 200px; max-width: 280px; text-align: center; margin: 0;">
+                                    📂 CARGAR ARCHIVO .BC3
+                                </label>
+
+                                <button type="button" id="welcomeNewBudgetBtn" class="welcome-load-btn" style="flex: 1; min-width: 200px; max-width: 280px; text-align: center; margin: 0; background: var(--accent, #3b82f6); border-color: var(--accent, #3b82f6); color: white;">
+                                    ✨ CREAR NUEVO PRESUPUESTO
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -590,57 +668,252 @@
             <span>V1.5.2</span>
         </footer>
     </div>
-    <!-- Dashboard Modal -->
-    <div id="dashboardModal" class="modal" style="display:none;">
+    <!-- Modal: Dashboard y Visualizador de Descompuestos (Sunburst / Sankey) -->
+    <div id="dashboardModal" class="modal" style="display:none;" role="dialog" aria-modal="true" aria-label="Dashboard y Descompuestos">
         <div class="modal-content dashboard-modal-content">
-            <div class="modal-header">
-                <h3>📊 Dashboard</h3>
-                <button type="button" id="closeDashboardBtn" class="close-btn">✕</button>
+            <div class="modal-header dashboard-modal-header" style="display: flex; flex-direction: column; gap: 10px; padding: 12px 18px; border-bottom: 1px solid var(--border-color);">
+                <!-- Fila 1: Título a la izquierda | Selector de Presupuesto y Botón X en la esquina superior derecha -->
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:1.3rem;" id="dashboardHeaderIcon">📊</span>
+                        <h3 style="margin:0; font-size:1.15rem;" id="dashboardModalTitle">Dashboard & Análisis</h3>
+                    </div>
+                    
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <!-- Selector de Presupuesto en la esquina superior derecha -->
+                        <label class="sunburst-filter-label" id="dashboardBudgetLabel" style="margin:0; font-size:0.8rem; display:flex; align-items:center; gap:6px;">Presupuesto:
+                            <select id="sunburstBudgetSelect" class="sunburst-select" style="font-weight:600; max-width:220px; padding:4px 8px; font-size:0.8rem;">
+                                <!-- Opciones cargadas dinámicamente según pestañas abiertas -->
+                            </select>
+                        </label>
+                        <!-- Botón Cerrar (X) siempre en la esquina superior derecha -->
+                        <button type="button" class="close-btn" id="closeDashboardBtn" title="Cerrar">✕</button>
+                    </div>
+                </div>
+                
+                <!-- Fila 2: Las 4 Pestañas Principales siempre DEBAJO del nombre -->
+                <div style="display:flex; align-items:center; justify-content:flex-start; width: 100%;">
+                    <div class="chart-toggle-group">
+                        <button type="button" class="chart-toggle-btn active" id="tabDashboardViewBtn" title="Dashboard General con KPIs y Gráficos">📊 Dashboard</button>
+                        <button type="button" class="chart-toggle-btn" id="tabSunburstViewBtn" title="Visualizador Sunburst">☀️ Visualizador Sunburst</button>
+                        <button type="button" class="chart-toggle-btn" id="tabSankeyViewBtn" title="Diagrama Sankey">🌊 Diagrama Sankey</button>
+                        <button type="button" class="chart-toggle-btn" id="tabEcoViewBtn" title="Impacto Ambiental">🌿 Impacto Ambiental</button>
+                    </div>
+                </div>
             </div>
-            <!-- KPI Strip -->
-            <div class="db-kpi-strip" id="dbKpiStrip"></div>
-            <!-- Charts Grid -->
-            <div class="modal-body dashboard-grid">
-                <div class="chart-card">
-                    <h4>Distribución de Costes por Tipo de Recurso</h4>
-                    <div class="chart-container">
-                        <canvas id="resourceTypeChart"></canvas>
+
+            <!-- Fila de Controles Secundarios (Casita y Nivel de Detalle) -->
+            <div class="sunburst-toolbar" id="dashboardSubToolbar" style="display:none; padding: 6px 16px; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.08);">
+                <div class="sunburst-toolbar-left" style="width: 100%; display:flex; align-items:center; gap:12px;">
+                    <!-- Botón de la casita 🏠 justo antes de Nivel de Detalle -->
+                    <button type="button" id="sunburstResetZoomBtn" class="chart-toggle-btn" title="Vista Global (Volver al inicio)" style="font-size: 1.1rem; padding: 4px 10px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;">🏠</button>
+                    
+                    <!-- Selector de Nivel de Detalle (visible en Sunburst, oculto en Sankey) -->
+                    <label class="sunburst-filter-label" id="sunburstDepthContainer" style="margin:0; display:flex; align-items:center; gap:8px;">Nivel de Detalle:
+                        <select id="sunburstDepthSelect" class="sunburst-select" style="font-size:0.8rem; padding:4px 8px;">
+                            <option value="1">1. CAPÍTULOS</option>
+                            <option value="2">2. CAPÍTULOS + SUBCAPÍTULOS</option>
+                            <option value="3">3. CAPÍTULOS + SUBCAPÍTULOS + PARTIDAS</option>
+                            <option value="4">4. CAPÍTULOS + SUBCAPÍTULOS + PARTIDAS + DESCOMPUESTOS</option>
+                            <option value="5" selected>5. CAPÍTULOS + SUBCAPÍTULOS + PARTIDAS + DESCOMPUESTOS + MO/MQ/MT</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Contenido Modal: Sección 1 (Dashboard) -->
+            <div id="dashboardViewSection" style="display:block; overflow-y:auto; flex:1;">
+                <!-- KPI Strip -->
+                <div class="db-kpi-strip" id="dbKpiStrip"></div>
+                <!-- Charts Grid -->
+                <div class="modal-body dashboard-grid">
+                    <div class="chart-card">
+                        <h4>Distribución de Costes por Tipo de Recurso</h4>
+                        <div class="chart-container">
+                            <canvas id="resourceTypeChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h4>Top Capítulos por Peso Económico (€)</h4>
+                        <div class="chart-container">
+                            <canvas id="chaptersCostChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h4>Desglose MO / MAQ / MAT por Capítulo</h4>
+                        <div class="chart-container">
+                            <canvas id="chapterBreakdownChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h4>Precio Medio y Precio Máximo por Capítulo</h4>
+                        <div class="chart-container">
+                            <canvas id="priceAvgMaxChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h4>Distribución de Partidas por Rango de Precio</h4>
+                        <div class="chart-container">
+                            <canvas id="priceRangeChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h4>% Peso Económico por Capítulo (Treemap)</h4>
+                        <div class="chart-container">
+                            <canvas id="weightPieChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card chart-card--full">
+                        <h4>📈 Curva S — Avance Económico Acumulado (Planificado vs. Ejecutado)</h4>
+                        <div class="chart-container" style="height:220px;">
+                            <canvas id="sCurveChart"></canvas>
+                        </div>
                     </div>
                 </div>
-                <div class="chart-card">
-                    <h4>Top Capítulos por Peso Económico (€)</h4>
-                    <div class="chart-container">
-                        <canvas id="chaptersCostChart"></canvas>
+            </div>
+
+            <!-- Contenido Modal: Sección 2 (Descompuestos: Sunburst & Sankey) -->
+            <div id="sunburstViewSection" style="display:none; overflow-y:auto; flex:1;">
+                <div class="sunburst-modal-body" style="padding:14px;">
+                    <!-- Fila Superior: Gráfico (Izquierda) + Ficha Leyenda y Ficha Presupuesto (Derecha) -->
+                    <div class="sunburst-top-row">
+                        <div class="sunburst-chart-container" id="decompChartContainer">
+                            <canvas id="sunburstCanvas"></canvas>
+                            <canvas id="sankeyCanvas" style="display:none;"></canvas>
+                            <div id="sunburstCenterLabel" class="sunburst-center-label">
+                                <div class="s-center-title" id="sCenterTitle">PRESUPUESTO TOTAL</div>
+                                <div class="s-center-val" id="sCenterVal">0,00 €</div>
+                            </div>
+                        </div>
+                        <div class="sunburst-sidebar">
+                            <!-- Ficha 1: Leyenda y Estructura -->
+                            <div class="sunburst-legend">
+                                <div class="s-legend-title">Leyenda y Estructura</div>
+                                <div class="s-legend-item"><span class="s-legend-color" style="background: linear-gradient(135deg, #7c3aed, #db2777, #e11d48, #4f46e5, #475569);"></span> Estructura: Capítulos y Partidas (Púrpuras/Rosas/Índigos)</div>
+                                <div class="s-legend-item"><span class="s-legend-color s-color-mt"></span> Materiales exclusivos (🧱 Verde)</div>
+                                <div class="s-legend-item"><span class="s-legend-color s-color-mo"></span> Mano de Obra exclusiva (👷 Ámbar)</div>
+                                <div class="s-legend-item"><span class="s-legend-color s-color-mq"></span> Maquinaria exclusiva (🚜 Cyan)</div>
+                                <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed var(--border-color); font-size: 0.68rem; color: var(--text-secondary); line-height: 1.35;">
+                                    💡 Pasa el ratón para inspeccionar o haz clic en cualquier sector para hacer zoom.
+                                </div>
+                            </div>
+
+                            <!-- Ficha 2: Ficha de Presupuesto / Concepto -->
+                            <div class="sunburst-node-card" id="sunburstNodeCard">
+                                <div class="s-node-type" id="sNodeType">Presupuesto</div>
+                                <div class="s-node-code" id="sNodeCode">GLOBAL</div>
+                                <div class="s-node-summary" id="sNodeSummary">Presupuesto Total de Obra</div>
+                                <div class="s-node-stats">
+                                    <div class="s-stat-item">
+                                        <span class="s-stat-label">Importe:</span>
+                                        <span class="s-stat-val" id="sNodeAmount">0,00 €</span>
+                                    </div>
+                                    <div class="s-stat-item">
+                                        <span class="s-stat-label">% sobre PEM:</span>
+                                        <span class="s-stat-val" id="sNodePercent">100,00 %</span>
+                                    </div>
+                                </div>
+                                <div class="s-nature-breakdown" id="sNatureBreakdown">
+                                    <!-- Desglose MO, MQ, MT -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fila Inferior (Ancho Completo): Tabla de Descompuestos del Concepto (Mínimo 6 filas visibles) -->
+                    <div class="sunburst-decomp-card sunburst-decomp-bottom" id="sunburstDecompCard">
+                        <div class="s-decomp-title">
+                            <span>🧩 Descompuestos del Concepto</span>
+                            <span id="sDecompCount" style="font-size:0.72rem; color:var(--text-secondary); font-weight:600;"></span>
+                        </div>
+                        <div class="s-decomp-container" id="sDecompContainer">
+                            <!-- Tabla dinámica de descompuestos -->
+                        </div>
                     </div>
                 </div>
-                <div class="chart-card">
-                    <h4>Desglose MO / MAQ / MAT por Capítulo</h4>
-                    <div class="chart-container">
-                        <canvas id="chapterBreakdownChart"></canvas>
+            </div>
+
+            <!-- Contenido Modal: Sección 3 (Huella de Carbono y Sostenibilidad CO₂) -->
+            <div id="ecoViewSection" style="display:none; overflow-y:auto; flex:1;">
+                <div class="eco-modal-body" style="padding: 16px;">
+                    <!-- Botón de Exportar Informe PDF en la parte superior -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                        <h4 style="margin:0; font-size:1rem; color:var(--text-primary);">🌱 Análisis del Ciclo de Vida y Emisiones de CO₂</h4>
+                        <button type="button" id="exportEcoPdfBtn" class="eco-action-btn" style="background:var(--success, #10b981); color:white; border:none; border-radius:6px; padding:6px 12px; font-weight:600; font-size:0.8rem; cursor:pointer;">📄 Exportar Informe PDF</button>
                     </div>
-                </div>
-                <div class="chart-card">
-                    <h4>Precio Medio y Precio Máximo por Capítulo</h4>
-                    <div class="chart-container">
-                        <canvas id="priceAvgMaxChart"></canvas>
+
+                    <!-- Tarjetas KPI -->
+                    <div class="eco-kpis-grid">
+                        <div class="eco-kpi-card">
+                            <div class="eco-kpi-icon">🌍</div>
+                            <div class="eco-kpi-content">
+                                <div class="eco-kpi-label">Huella Total de Carbono</div>
+                                <div class="eco-kpi-value" id="ecoTotalCarbon">0,00 <small>t CO₂ eq</small></div>
+                                <div class="eco-kpi-subtext">Emisiones incorporadas estimadas</div>
+                            </div>
+                        </div>
+                        <div class="eco-kpi-card">
+                            <div class="eco-kpi-icon">⚡</div>
+                            <div class="eco-kpi-content">
+                                <div class="eco-kpi-label">Intensidad de Emisiones</div>
+                                <div class="eco-kpi-value" id="ecoIntensity">0,00 <small>kg CO₂ / €</small></div>
+                                <div class="eco-kpi-subtext">Eficiencia de carbono por presupuesto</div>
+                            </div>
+                        </div>
+                        <div class="eco-kpi-card eco-kpi-badge-card">
+                            <div class="eco-kpi-label">Calificación Ambiental</div>
+                            <div class="eco-rating-badge" id="ecoRatingBadge">B</div>
+                            <div class="eco-rating-label" id="ecoRatingLabel">Edificación Sostenible</div>
+                        </div>
+                        <div class="eco-kpi-card">
+                            <div class="eco-kpi-icon">🌳</div>
+                            <div class="eco-kpi-content">
+                                <div class="eco-kpi-label">Compensación Estimada</div>
+                                <div class="eco-kpi-value" id="ecoTreesCount">0 <small>árboles</small></div>
+                                <div class="eco-kpi-subtext">Árboles necesarios / año para absorción</div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="chart-card">
-                    <h4>Distribución de Partidas por Rango de Precio</h4>
-                    <div class="chart-container">
-                        <canvas id="priceRangeChart"></canvas>
+
+                    <!-- Gráficos de Sostenibilidad -->
+                    <div class="eco-charts-grid">
+                        <div class="eco-chart-box">
+                            <h4>📊 Emisiones de CO₂ por Capítulo</h4>
+                            <div class="eco-canvas-wrap">
+                                <canvas id="ecoChaptersChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="eco-chart-box">
+                            <h4>🧱 Distribución por Tipología de Material</h4>
+                            <div class="eco-canvas-wrap">
+                                <canvas id="ecoMaterialsChart"></canvas>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="chart-card">
-                    <h4>% Peso Económico por Capítulo (Treemap)</h4>
-                    <div class="chart-container">
-                        <canvas id="weightPieChart"></canvas>
-                    </div>
-                </div>
-                <div class="chart-card chart-card--full">
-                    <h4>📈 Curva S — Avance Económico Acumulado (Planificado vs. Ejecutado)</h4>
-                    <div class="chart-container" style="height:220px;">
-                        <canvas id="sCurveChart"></canvas>
+
+                    <!-- Top Partidas de Mayor Huella -->
+                    <div class="eco-table-section">
+                        <div class="eco-table-header">
+                            <h4>🎯 Top Partidas con Mayor Impacto de Carbono (Palancas de Descarbonización)</h4>
+                            <span class="eco-table-hint">Identifica los elementos clave para sustitución ecológica</span>
+                        </div>
+                        <div class="eco-table-container">
+                            <table class="eco-table">
+                                <thead>
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Resumen / Partida</th>
+                                        <th class="numeric">Medición</th>
+                                        <th class="numeric">Factor (kg CO₂/ud)</th>
+                                        <th class="numeric">Emisión (t CO₂)</th>
+                                        <th class="numeric">% Huella</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ecoTopTableBody">
+                                    <!-- Filas dinámicas -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -836,11 +1109,17 @@
         </div>
     </div>
 
-    <!-- Modal Planning / Gantt -->
+    <!-- Modal Planning / Gantt y Valor Ganado (EVM) -->
     <div id="planningModal" class="planning-modal-overlay" style="display:none;">
         <div class="planning-modal-content" style="position: relative;">
-            <div class="planning-modal-header">
-                <div class="planning-controls">
+            <div class="planning-modal-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <!-- Conmutador Gantt / EVM -->
+                <div class="chart-toggle-group" style="display:flex; align-items:center;">
+                    <button type="button" class="chart-toggle-btn active" id="toggleGanttViewBtn" title="Diagrama de Barras Gantt">📅 Gantt</button>
+                    <button type="button" class="chart-toggle-btn" id="toggleEvmViewBtn" title="Método del Valor Ganado y Curva S">📈 Valor Ganado (EVM)</button>
+                </div>
+
+                <div class="planning-controls" id="ganttControlsGroup">
                     <!-- Dropdown Ajustes Plazos -->
                     <div class="dropdown" id="ganttConfigDropdown">
                         <button type="button" class="gantt-action-btn dropdown-toggle"
@@ -910,8 +1189,114 @@
                         style="background-color: #ef4444; color: white; border: none; border-radius: 6px; width: 38px; height: 34px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; padding: 0; flex-shrink: 0;">✕</button>
                 </div>
             </div>
-            <div class="gantt-summary-bar" id="ganttSummaryBar"></div>
-            <div id="ganttContainer" class="gantt-container"></div>
+
+            <!-- Sección Gantt -->
+            <div id="ganttViewSection">
+                <div class="gantt-summary-bar" id="ganttSummaryBar"></div>
+                <div id="ganttContainer" class="gantt-container"></div>
+            </div>
+
+            <!-- Sección EVM (Earned Value Management) -->
+            <div id="evmViewSection" style="display:none; padding:16px; overflow-y:auto; max-height:calc(85vh - 70px); box-sizing:border-box;">
+                <!-- Toolbar EVM -->
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px; background:var(--card-bg, #1e293b); padding:10px 16px; border-radius:10px; border:1px solid var(--border-color, #334155);">
+                    <div style="display:flex; align-items:center; gap:14px;">
+                        <label style="font-size:0.82rem; font-weight:600; color:var(--text-secondary); display:flex; align-items:center; gap:8px;">
+                            <span>📆 Semana de Corte:</span>
+                            <input type="range" id="evmCutoffSlider" min="1" max="26" value="12" style="width:130px; cursor:pointer;">
+                            <span id="evmCutoffLabel" style="font-weight:700; color:var(--accent, #3b82f6); min-width:80px;">Semana 12</span>
+                        </label>
+                    </div>
+                    <button type="button" id="exportEvmExcelBtn" class="gantt-action-btn" style="padding:5px 12px; font-size:0.8rem; display:flex; align-items:center; gap:6px; cursor:pointer;">📊 Exportar Informe EVM</button>
+                </div>
+
+                <!-- Grid de KPIs EVM -->
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(115px, 1fr)); gap:8px; margin-bottom:14px;">
+                    <div class="evm-kpi-card" style="background:var(--card-bg, #1e293b); border:1px solid var(--border-color, #334155); border-radius:8px; padding:10px; text-align:center;">
+                        <div style="font-size:0.68rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">BAC (Presupuesto)</div>
+                        <div id="evmBacVal" style="font-size:1.05rem; font-weight:800; color:var(--text-primary); margin:3px 0;">0 €</div>
+                        <div style="font-size:0.62rem; color:var(--text-secondary);">Coste Planificado Total</div>
+                    </div>
+                    <div class="evm-kpi-card" style="background:var(--card-bg, #1e293b); border:1px solid var(--border-color, #334155); border-radius:8px; padding:10px; text-align:center;">
+                        <div style="font-size:0.68rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">PV (Planificado)</div>
+                        <div id="evmPvVal" style="font-size:1.05rem; font-weight:800; color:#3b82f6; margin:3px 0;">0 €</div>
+                        <div style="font-size:0.62rem; color:var(--text-secondary);">Planned Value</div>
+                    </div>
+                    <div class="evm-kpi-card" style="background:var(--card-bg, #1e293b); border:1px solid var(--border-color, #334155); border-radius:8px; padding:10px; text-align:center;">
+                        <div style="font-size:0.68rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">EV (Valor Ganado)</div>
+                        <div id="evmEvVal" style="font-size:1.05rem; font-weight:800; color:#10b981; margin:3px 0;">0 €</div>
+                        <div style="font-size:0.62rem; color:var(--text-secondary);">Earned Value</div>
+                    </div>
+                    <div class="evm-kpi-card" style="background:var(--card-bg, #1e293b); border:1px solid var(--border-color, #334155); border-radius:8px; padding:10px; text-align:center;">
+                        <div style="font-size:0.68rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">AC (Coste Real)</div>
+                        <div id="evmAcVal" style="font-size:1.05rem; font-weight:800; color:#f59e0b; margin:3px 0;">0 €</div>
+                        <div style="font-size:0.62rem; color:var(--text-secondary);">Actual Cost</div>
+                    </div>
+                    <div class="evm-kpi-card" style="background:var(--card-bg, #1e293b); border:1px solid var(--border-color, #334155); border-radius:8px; padding:10px; text-align:center;">
+                        <div style="font-size:0.68rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">CPI (Coste)</div>
+                        <div id="evmCpiVal" style="font-size:1.05rem; font-weight:800; color:#10b981; margin:3px 0;">1.00</div>
+                        <div id="evmCpiStatus" style="font-size:0.62rem; color:var(--text-secondary);">En Coste</div>
+                    </div>
+                    <div class="evm-kpi-card" style="background:var(--card-bg, #1e293b); border:1px solid var(--border-color, #334155); border-radius:8px; padding:10px; text-align:center;">
+                        <div style="font-size:0.68rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">SPI (Plazo)</div>
+                        <div id="evmSpiVal" style="font-size:1.05rem; font-weight:800; color:#10b981; margin:3px 0;">1.00</div>
+                        <div id="evmSpiStatus" style="font-size:0.62rem; color:var(--text-secondary);">En Plazo</div>
+                    </div>
+                    <div class="evm-kpi-card" style="background:var(--card-bg, #1e293b); border:1px solid var(--border-color, #334155); border-radius:8px; padding:10px; text-align:center;">
+                        <div style="font-size:0.68rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">CV (Desv. Coste)</div>
+                        <div id="evmCvVal" style="font-size:1.05rem; font-weight:800; color:var(--text-primary); margin:3px 0;">0 €</div>
+                        <div style="font-size:0.62rem; color:var(--text-secondary);">EV - AC</div>
+                    </div>
+                    <div class="evm-kpi-card" style="background:var(--card-bg, #1e293b); border:1px solid var(--border-color, #334155); border-radius:8px; padding:10px; text-align:center;">
+                        <div style="font-size:0.68rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">EAC (Estim. Fin)</div>
+                        <div id="evmEacVal" style="font-size:1.05rem; font-weight:800; color:#8b5cf6; margin:3px 0;">0 €</div>
+                        <div style="font-size:0.62rem; color:var(--text-secondary);">BAC / CPI</div>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Curva S en Canvas 2D -->
+                <div style="background:var(--card-bg, #1e293b); border:1px solid var(--border-color, #334155); border-radius:10px; padding:14px; margin-bottom:14px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h4 style="margin:0; font-size:0.9rem; font-weight:700; color:var(--text-primary);">📈 Curva S Financiera y Proyección EVM</h4>
+                        <div style="display:flex; gap:12px; font-size:0.72rem;">
+                            <span style="display:flex; align-items:center; gap:5px; color:#3b82f6;"><span style="width:10px; height:3px; background:#3b82f6; border-radius:2px;"></span> PV (Planificado)</span>
+                            <span style="display:flex; align-items:center; gap:5px; color:#10b981;"><span style="width:10px; height:3px; background:#10b981; border-radius:2px;"></span> EV (Ganado)</span>
+                            <span style="display:flex; align-items:center; gap:5px; color:#f59e0b;"><span style="width:10px; height:3px; background:#f59e0b; border-radius:2px;"></span> AC (Coste Real)</span>
+                            <span style="display:flex; align-items:center; gap:5px; color:#8b5cf6;"><span style="width:10px; height:3px; background:#8b5cf6; border-radius:2px;"></span> EAC (Proyección)</span>
+                        </div>
+                    </div>
+                    <div style="position:relative; width:100%; height:230px;">
+                        <canvas id="evmCurveCanvas" style="width:100%; height:100%; display:block;"></canvas>
+                    </div>
+                </div>
+
+                <!-- Tabla de Desglose por Capítulos -->
+                <div style="background:var(--card-bg, #1e293b); border:1px solid var(--border-color, #334155); border-radius:10px; overflow:hidden;">
+                    <div style="padding:10px 14px; border-bottom:1px solid var(--border-color, #334155); font-weight:700; font-size:0.8rem; color:var(--text-primary);">
+                        📋 Estado y Desviaciones por Capítulos
+                    </div>
+                    <div style="max-height:200px; overflow-y:auto;">
+                        <table style="width:100%; border-collapse:collapse; font-size:0.76rem; text-align:left;">
+                            <thead style="background:rgba(0,0,0,0.15); color:var(--text-secondary); font-size:0.7rem; text-transform:uppercase; position:sticky; top:0;">
+                                <tr>
+                                    <th style="padding:6px 10px;">Capítulo / Partida</th>
+                                    <th style="padding:6px 8px; text-align:right;">BAC (€)</th>
+                                    <th style="padding:6px 8px; text-align:right;">PV (€)</th>
+                                    <th style="padding:6px 8px; text-align:right;">Progreso</th>
+                                    <th style="padding:6px 8px; text-align:right;">EV (€)</th>
+                                    <th style="padding:6px 8px; text-align:right;">AC (€)</th>
+                                    <th style="padding:6px 8px; text-align:center;">CPI</th>
+                                    <th style="padding:6px 8px; text-align:center;">SPI</th>
+                                    <th style="padding:6px 10px; text-align:center;">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="evmChapterTableBody">
+                                <!-- Filas dinámicas -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
             <!-- Cartel flotante de ayuda del Gantt -->
             <div id="ganttHelpCard" class="gantt-help-card" style="position: absolute; bottom: 75px; right: 20px; width: 280px; background-color: var(--card-bg, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; padding: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); z-index: 1002; display: none; flex-direction: column; gap: 8px; color: var(--text-primary, #0f172a); font-family: inherit;">
@@ -934,6 +1319,75 @@
         </div>
     </div>
 
+    <!-- Modal Importador Bidireccional Excel <-> BC3 -->
+    <div id="importExcelModal" class="modal" style="display:none; justify-content:center; align-items:center; z-index:10002;">
+        <div class="modal-content" style="max-width:850px; width:92%; max-height:90vh; display:flex; flex-direction:column; padding:0; border-radius:14px; overflow:hidden; background:var(--card-bg, #1e293b); border:1px solid var(--border-color, #334155); box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--border-color, #334155); background:rgba(0,0,0,0.15);">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:1.3rem;">📊</span>
+                    <h3 style="margin:0; font-size:1.1rem; font-weight:700;">Importador Bidireccional Excel ↔ BC3</h3>
+                </div>
+                <button type="button" id="closeImportExcelBtn" class="close-btn" style="background:none; border:none; color:var(--text-secondary); font-size:1.2rem; cursor:pointer;">✕</button>
+            </div>
+            <div class="modal-body" style="padding:20px; overflow-y:auto; flex:1;">
+                <!-- Paso 1: Cargar Archivo Excel -->
+                <div id="importExcelStep1" style="border:2px dashed var(--border-color, #334155); border-radius:12px; padding:32px; text-align:center; background:rgba(255,255,255,0.02); cursor:pointer;">
+                    <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display:none;">
+                    <div style="font-size:2.5rem; margin-bottom:10px;">📥</div>
+                    <h4 style="margin:0 0 6px 0; font-size:1.05rem; color:var(--text-primary);">Arrastra o selecciona un archivo Excel (.xlsx, .xls, .csv)</h4>
+                    <p style="margin:0; font-size:0.8rem; color:var(--text-secondary);">Cuadros de precios, ofertas de contrata o mediciones de proveedores</p>
+                </div>
+
+                <!-- Paso 2: Mapeo de Columnas y Previsualización -->
+                <div id="importExcelStep2" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+                        <span id="excelFileLoadedName" style="font-weight:700; font-size:0.9rem; color:var(--accent, #3b82f6);">archivo.xlsx</span>
+                        <label style="font-size:0.8rem; color:var(--text-secondary); display:flex; align-items:center; gap:8px;">
+                            Hoja: <select id="excelSheetSelect" class="sunburst-select" style="padding:4px 8px; font-size:0.8rem;"></select>
+                        </label>
+                    </div>
+
+                    <div style="background:rgba(0,0,0,0.15); padding:12px; border-radius:8px; margin-bottom:16px; border:1px solid var(--border-color, #334155);">
+                        <div style="font-weight:700; font-size:0.8rem; margin-bottom:10px; text-transform:uppercase; color:var(--text-secondary);">Mapeo de Columnas FIEBDC-3:</div>
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px;">
+                            <div>
+                                <label style="font-size:0.75rem; font-weight:600; display:block; margin-bottom:4px;">Código *</label>
+                                <select id="mapColCode" class="sunburst-select" style="width:100%;"></select>
+                            </div>
+                            <div>
+                                <label style="font-size:0.75rem; font-weight:600; display:block; margin-bottom:4px;">Resumen / Nombre *</label>
+                                <select id="mapColSummary" class="sunburst-select" style="width:100%;"></select>
+                            </div>
+                            <div>
+                                <label style="font-size:0.75rem; font-weight:600; display:block; margin-bottom:4px;">Unidad</label>
+                                <select id="mapColUnit" class="sunburst-select" style="width:100%;"></select>
+                            </div>
+                            <div>
+                                <label style="font-size:0.75rem; font-weight:600; display:block; margin-bottom:4px;">Cantidad</label>
+                                <select id="mapColQty" class="sunburst-select" style="width:100%;"></select>
+                            </div>
+                            <div>
+                                <label style="font-size:0.75rem; font-weight:600; display:block; margin-bottom:4px;">Precio *</label>
+                                <select id="mapColPrice" class="sunburst-select" style="width:100%;"></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="font-weight:700; font-size:0.8rem; margin-bottom:6px; color:var(--text-secondary);">Previsualización de Filas:</div>
+                    <div style="max-height:180px; overflow:auto; border:1px solid var(--border-color, #334155); border-radius:8px; margin-bottom:16px;">
+                        <table id="excelPreviewTable" style="width:100%; border-collapse:collapse; font-size:0.75rem; text-align:left;">
+                            <!-- Generado dinámicamente -->
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:10px; padding:14px 20px; border-top:1px solid var(--border-color, #334155); background:rgba(0,0,0,0.15);">
+                <button type="button" id="cancelImportExcelBtn" class="gantt-action-btn" style="padding:6px 14px; font-size:0.85rem; cursor:pointer;">Cancelar</button>
+                <button type="button" id="executeImportExcelBtn" class="process-btn" style="padding:6px 18px; font-size:0.85rem; display:none; cursor:pointer;">🚀 Convertir y Cargar como BC3</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Info Modal -->
     <div id="infoModal" class="modal" style="display:none;">
         <div class="modal-content info-modal-content">
@@ -945,36 +1399,59 @@
                 <div style="text-align: center; margin-bottom: 1.2rem;">
                     <div style="font-size: 2.5rem; margin-bottom: 0.25rem;">ℹ️</div>
                     <h4 style="font-size: 1.2rem; margin: 0; color: var(--accent);">Visualizador BC3 Premium</h4>
-                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Versión 1.5.2</span>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight:700;">Versión 2.0.0 (Gran Salto de Versión)</span>
                 </div>
 
                 <p style="font-size: 0.85rem; margin-bottom: 1rem;">Esta herramienta permite la importación,
-                    visualización y análisis interactivo de presupuestos en formato <strong>Standard FIEBDC-3
-                        (.bc3)</strong>.</p>
+                    visualización, edición, comparativa y análisis interactivo de presupuestos en formato <strong>Standard FIEBDC-3
+                        (.bc3)</strong> con arquitectura 100% offline y privada.</p>
 
                 <div
                     style="background-color: var(--hover-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.8rem; margin-bottom: 1rem;">
-                    <h5 style="margin-top: 0; margin-bottom: 0.4rem; font-size: 0.85rem;">Características Principales:
+                    <h5 style="margin-top: 0; margin-bottom: 0.4rem; font-size: 0.85rem; color: var(--accent);">Características Principales v2.0:
                     </h5>
                     <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.8rem; color: var(--text-secondary);">
-                        <li>Navegación jerárquica en árbol de capítulos y partidas.</li>
-                        <li>Dashboard con gráficos dinámicos de distribución de costes.</li>
-                        <li>Diagrama de Gantt interactivo para la planificación temporal.</li>
-                        <li>Ajuste de presupuesto mediante coeficientes globales (PEM a PEC).</li>
-                        <li>Exportación completa a formatos Excel y PDF.</li>
-                        <li>Comparador avanzado entre versiones de presupuestos.</li>
+                        <li>Pestañas multi-presupuesto simultáneas con guardado nativo directo (.bc3).</li>
+                        <li>Dashboard integrado con 4 vistas: KPIs, Sunburst Multinivel, Diagrama Sankey e Impacto Ambiental.</li>
+                        <li>Módulo de Sostenibilidad y Huella de Carbono (Emisiones de CO₂ y materiales).</li>
+                        <li>Cálculo exacto de coeficientes: PEM + GG (13%) + BI (6%) = PEC con control de bajas.</li>
+                        <li>Editor de mediciones dinámicas con deducción de huecos (-1) y fórmulas matemáticas fx.</li>
+                        <li>Paleta de Comandos Rápida (Ctrl+K) y atajos de teclado profesionales.</li>
+                        <li>Exportación e Importación homogénea a 6 formatos con distintivo visual por colores.</li>
+                        <li>Planning Gantt interactivo con ruta crítica y curva S acumulada.</li>
                     </ul>
                 </div>
 
                 <!-- Historial de Versiones (desplegable) -->
-                <details class="version-history-details" style="margin-top: 1.2rem;">
+                <details class="version-history-details" style="margin-top: 1.2rem;" open>
                     <summary>Historial de Versiones</summary>
                     <div class="version-history-body">
-                        <!-- Versión 1.5.2 -->
+                        <!-- Versión 2.0.0 -->
                         <div style="margin-bottom: 1rem; border-left: 3px solid var(--accent); padding-left: 8px;">
                             <div
+                                style="display: flex; justify-content: space-between; font-weight: 700; color: var(--accent);">
+                                <span>V2.0.0 (Actual)</span>
+                                <span>16/08/2026</span>
+                            </div>
+                            <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 4px;">Autor:
+                                Jose Manuel Caamaño González</div>
+                            <ul
+                                style="margin: 0; padding-left: 1rem; color: var(--text-secondary); font-size: 0.75rem; line-height: 1.5;">
+                                <li><strong>📑 Sistema Multi-Presupuesto:</strong> Barra de pestañas para abrir múltiples archivos .bc3 en paralelo, botón de añadir (+) con estilo punteado y guardado en disco con File System Access API.</li>
+                                <li><strong>☀️ Visualizador Sunburst Multinivel:</strong> Gráfico concéntrico interactivo con selector de profundidad (niveles 1 a 5), zoom dinámico y tabla inferior de descompuestos a altura completa con scroll suave.</li>
+                                <li><strong>🌊 Diagrama Sankey:</strong> Representación gráfica del flujo de costes y descomposición jerárquica de la obra.</li>
+                                <li><strong>🌿 Impacto Ambiental & Huella de Carbono:</strong> Análisis de emisiones de CO₂ (kg CO₂ eq) y reparto por tipología de materiales con soporte completo para temas claro/oscuro.</li>
+                                <li><strong>⚙️ Coeficientes Económicos y Tarjeta GG:</strong> Desglose completo PEM + GG (13%) + BI (6%) = PEC en la cabecera, con cálculo exacto y formato de miles homologado.</li>
+                                <li><strong>📝 Formato Inteligente de Mediciones:</strong> Precisión de decimales según magnitud física (0 decimales para unidades, 2 para m/m², 3 para m³/kg) y deducción automática de huecos.</li>
+                                <li><strong>📤 Menú Homogéneo de Importación / Exportación:</strong> 6 opciones unificadas con paleta cromática exclusiva (PDF .pdf, Excel .xlsx, CSV .csv, FIEBDC-3 .bc3).</li>
+                                <li><strong>⌨️ Paleta de Comandos (Ctrl+K):</strong> Búsqueda instantánea de acciones, navegación y atajos rápidos de teclado.</li>
+                            </ul>
+                        </div>
+                        <!-- Versión 1.5.2 -->
+                        <div style="margin-bottom: 1rem; border-left: 3px solid var(--border-color); padding-left: 8px;">
+                            <div
                                 style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary);">
-                                <span>V1.5.2 (Actual)</span>
+                                <span>V1.5.2</span>
                                 <span>13/08/2026</span>
                             </div>
                             <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 4px;">Autor:
@@ -1367,6 +1844,55 @@
         </div>
     </div>
 
+    <!-- About Me Modal -->
+    <div id="aboutMeModal" class="modal" style="display:none;">
+        <div class="modal-content info-modal-content" style="max-width: 520px;">
+            <div class="modal-header">
+                <h3>👨‍💻 Sobre mí</h3>
+                <button type="button" id="closeAboutMeBtn" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body" style="line-height: 1.6; padding: 20px;">
+                <div style="text-align: center; margin-bottom: 1.2rem;">
+                    <img src="jmcg.gif" alt="Jose Manuel Caamaño González"
+                        style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin: 0 auto 12px; display: block; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3); border: 3px solid var(--accent);">
+                    <h4 style="font-size: 1.1rem; margin: 0 0 4px; color: var(--text-primary); font-weight: 700;">Jose Manuel Caamaño González</h4>
+                    <p style="font-size: 0.82rem; color: var(--accent); margin: 0 0 2px; font-weight: 600;">Arquitecto Técnico & BIM Manager</p>
+                    <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0;">📍 A Coruña, Galicia</p>
+                </div>
+
+                <div id="aboutMeContent" style="font-size: 0.82rem; color: var(--text-secondary); text-align: justify; margin-bottom: 1rem;">
+                    <p style="margin: 0 0 10px;">Desarrollador de herramientas digitales para el sector de la construcción (ConTech). Especializado en la automatización de procesos de medición, presupuestación y gestión de obra mediante tecnología BIM y estándares abiertos como FIEBDC-3.</p>
+                    <p style="margin: 0;">Este visualizador es un proyecto personal de software libre, desarrollado con pasión, código y mucho café. ☕</p>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 1rem;">
+                    <a href="https://jmcaamanog.pages.dev/" target="_blank" rel="noopener noreferrer"
+                        style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; text-decoration: none; font-size: 0.78rem; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(59,130,246,0.3);"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(59,130,246,0.4)'"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(59,130,246,0.3)'">
+                        🌐 Web Personal
+                    </a>
+                    <a href="https://www.linkedin.com/in/jmcaamanog/" target="_blank" rel="noopener noreferrer"
+                        style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; background: linear-gradient(135deg, #0077b5, #005e93); color: white; text-decoration: none; font-size: 0.78rem; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(0,119,181,0.3);"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,119,181,0.4)'"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,119,181,0.3)'">
+                        💼 LinkedIn
+                    </a>
+                    <a href="https://github.com/jmcaamanog" target="_blank" rel="noopener noreferrer"
+                        style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; background: linear-gradient(135deg, #333, #1a1a1a); color: white; text-decoration: none; font-size: 0.78rem; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.4)'"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.3)'">
+                        🐙 GitHub
+                    </a>
+                </div>
+
+                <p style="font-size: 0.72rem; color: var(--text-secondary); text-align: center; margin: 0; border-top: 1px solid var(--border-color); padding-top: 10px; font-style: italic;">
+                    Hecho con código y café desde A Coruña. ☕
+                </p>
+            </div>
+        </div>
+    </div>
+
     <!-- Usage Modal (Dónde se usa) -->
     <div id="usageModal" class="modal" style="display:none;">
         <div class="modal-content info-modal-content" style="max-width: 500px;">
@@ -1491,6 +2017,111 @@
         </div>
     </div>
 
+    <!-- Modal: Sincronización Cloud y Copias de Seguridad E2E -->
+    <div id="cloudSyncModal" class="modal" style="display:none;" role="dialog" aria-modal="true" aria-label="Sincronización Cloud">
+        <div class="modal-content" style="max-width: 680px; width: 95%; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:1.3rem;">☁️</span>
+                    <h3 style="margin:0;">Sincronización Cloud & Copias de Seguridad</h3>
+                </div>
+                <button type="button" class="close-btn" id="closeCloudSyncBtn" title="Cerrar">✕</button>
+            </div>
+            <div class="modal-body" style="padding: 18px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto;">
+                
+                <!-- Tarjeta 1: Proveedor y Estado de Conexión -->
+                <div style="background: var(--bg-hover, rgba(255,255,255,0.04)); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div style="width:38px; height:38px; border-radius:8px; background:white; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+                                <svg width="22" height="22" viewBox="0 0 24 24">
+                                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div style="font-weight:600; font-size:0.95rem; color:var(--text-primary);" id="cloudAccountTitle">Google Drive Sync</div>
+                                <div style="font-size:0.75rem; color:var(--text-secondary);" id="cloudAccountSubtext">Copia segura en tu propia nube personal o de empresa</div>
+                            </div>
+                        </div>
+                        <div id="cloudAuthControls">
+                            <button type="button" id="googleDriveConnectBtn" class="process-btn" style="padding:7px 14px; font-size:0.82rem; margin:0; display:flex; align-items:center; gap:6px;">
+                                <span>🔑</span> Conectar con Google
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Insignia de Cifrado E2E -->
+                    <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                        <div style="display:flex; align-items:center; gap:6px; font-size:0.75rem; color:var(--success, #10b981); font-weight:600;">
+                            <span>🔒</span> Cifrado Militar E2E (AES-256 GCM) Activo
+                        </div>
+                        <div style="font-size:0.72rem; color:var(--text-secondary);">
+                            Tus presupuestos se cifran localmente antes de sincronizarse.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 2: Opciones de Sincronización -->
+                <div style="background: var(--bg-hover, rgba(255,255,255,0.04)); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px; display:flex; flex-direction:column; gap:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <label for="cloudAutoSyncToggle" style="font-size:0.85rem; font-weight:600; color:var(--text-primary); cursor:pointer;">
+                            🔄 Sincronización Automática en Segundo Plano
+                        </label>
+                        <input type="checkbox" id="cloudAutoSyncToggle" checked style="cursor:pointer; width:18px; height:18px;">
+                    </div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary); line-height:1.4;">
+                        Guarda automáticamente una copia cifrada en la nube al realizar cambios en partidas, mediciones o plazos de Gantt.
+                    </div>
+                </div>
+
+                <!-- Tarjeta 3: Acciones Rápidas y Lista de Archivos -->
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <h4 style="margin:0; font-size:0.9rem; color:var(--text-primary);">📁 Presupuestos en la Nube</h4>
+                        <div style="display:flex; gap:6px;">
+                            <button type="button" id="uploadCurrentToCloudBtn" class="gantt-action-btn" style="font-size:0.78rem; padding:4px 10px; background:var(--accent, #3b82f6); color:white; border:none;" title="Subir el presupuesto abierto actualmente">
+                                ⬆️ Subir Actual
+                            </button>
+                            <button type="button" id="refreshCloudListBtn" class="gantt-action-btn" style="font-size:0.78rem; padding:4px 8px;" title="Actualizar lista">
+                                🔄 Refrescar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Lista de archivos en la nube -->
+                    <div id="cloudFilesListContainer" style="max-height: 240px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color);">
+                        <div id="cloudFilesEmptyMsg" style="text-align: center; padding: 24px; color: var(--text-secondary); font-size: 0.8rem; font-style: italic;">
+                            No hay presupuestos sincronizados todavía. Pulsa "Subir Actual" para guardar tu primer proyecto en la nube.
+                        </div>
+                        <table id="cloudFilesTable" style="width: 100%; border-collapse: collapse; font-size: 0.8rem; display:none;">
+                            <thead>
+                                <tr style="background: var(--bg-hover); border-bottom: 1px solid var(--border-color); color: var(--text-primary); text-align: left;">
+                                    <th style="padding: 8px 10px;">Nombre del Proyecto</th>
+                                    <th style="padding: 8px; width: 130px;">Última Modif.</th>
+                                    <th style="padding: 8px; width: 70px; text-align: right;">Tamaño</th>
+                                    <th style="padding: 8px; width: 110px; text-align: center;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cloudFilesTableBody">
+                                <!-- Filas dinámicas -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer" style="padding: 12px 18px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 0.72rem; color: var(--text-secondary);" id="cloudSyncStatusText">
+                    🟢 Listo para sincronizar
+                </div>
+                <button type="button" id="closeCloudSyncOkBtn" class="process-btn" style="padding: 6px 16px; margin: 0;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <div id="dragOverlay" class="drag-overlay" style="display: none;">
         <div class="drag-overlay-box">
             <div class="drag-overlay-icon">📁</div>
@@ -1547,12 +2178,259 @@
         </div>
     </div>
 
+    <!-- Paleta de Comandos Global (Ctrl+K) -->
+    <div id="commandPaletteModal" class="command-palette-overlay" style="display:none;" role="dialog" aria-modal="true" aria-label="Paleta de Comandos">
+        <div class="command-palette-container">
+                <div class="command-palette-header">
+                <span class="command-palette-search-icon">🔍</span>
+                <input type="text" id="commandPaletteInput" class="command-palette-input" placeholder="Escribe un comando o busca una partida..." autocomplete="off" spellcheck="false">
+                <kbd class="command-palette-esc-badge" id="closeCmdPaletteBtn" title="Cerrar (Esc)">ESC</kbd>
+            </div>
+            <div class="command-palette-body">
+                <div id="commandPaletteResults" class="command-palette-results">
+                    <!-- Elementos generados dinámicamente -->
+                </div>
+            </div>
+            <div class="command-palette-footer">
+                <div class="command-palette-footer-left">
+                    <span class="command-palette-hint"><kbd>↑</kbd><kbd>↓</kbd> Navegar</span>
+                    <span class="command-palette-hint"><kbd>↵</kbd> Seleccionar</span>
+                    <span class="command-palette-hint"><kbd>ESC</kbd> Cerrar</span>
+                </div>
+                <div class="command-palette-footer-right">
+                    <span class="command-palette-brand">BC3 Viewer</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Asistente de Creación de Nuevo Presupuesto -->
+    <div id="newBudgetWizardModal" class="modal" style="display:none;" role="dialog" aria-modal="true" aria-label="Crear Nuevo Presupuesto">
+        <div class="modal-content" style="max-width: 650px; width: 95%; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:1.3rem;">✨</span>
+                    <h3 style="margin:0;">Crear Nuevo Presupuesto</h3>
+                </div>
+                <button type="button" class="close-btn" id="closeWizardBtn" title="Cerrar">✕</button>
+            </div>
+
+            <!-- Wizard Progress Steps Bar -->
+            <div style="display:flex; background:var(--bg-hover); border-bottom:1px solid var(--border-color); padding:10px 18px; gap:8px;">
+                <div class="wizard-step-badge active" id="wizardStepBadge1" style="flex:1; text-align:center; padding:6px; font-size:0.75rem; font-weight:600; border-radius:4px; background:var(--accent, #3b82f6); color:white;">
+                    1. Datos Generales
+                </div>
+                <div class="wizard-step-badge" id="wizardStepBadge2" style="flex:1; text-align:center; padding:6px; font-size:0.75rem; font-weight:600; border-radius:4px; background:var(--border-color); color:var(--text-secondary);">
+                    2. Modalidad de Inicio
+                </div>
+                <div class="wizard-step-badge" id="wizardStepBadge3" style="flex:1; text-align:center; padding:6px; font-size:0.75rem; font-weight:600; border-radius:4px; background:var(--border-color); color:var(--text-secondary); display:none;">
+                    3. Alcance y Dimensiones
+                </div>
+            </div>
+
+            <div class="modal-body" style="padding: 20px; overflow-y: auto; display:flex; flex-direction:column; gap:16px;">
+                
+                <!-- PASO 1: Datos Generales -->
+                <div id="wizardStep1" style="display:flex; flex-direction:column; gap:14px;">
+                    <div style="font-size:0.85rem; color:var(--text-secondary);">
+                        Introduce la información identificativa principal para el encabezado oficial de tu presupuesto FIEBDC-3.
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--text-primary);">Título del Proyecto / Nombre de la Obra *</label>
+                        <input type="text" id="wizardProjectTitle" placeholder="Ej. Reforma Integral de Vivienda en C/ Mayor" style="width:100%; padding:9px 12px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-color); color:var(--text-primary); box-sizing:border-box; font-size:0.85rem;" required>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                        <div>
+                            <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--text-primary);">Cliente / Propietario</label>
+                            <input type="text" id="wizardProjectClient" placeholder="Ej. Familia Gómez / Promociones Norte" style="width:100%; padding:9px 12px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-color); color:var(--text-primary); box-sizing:border-box; font-size:0.85rem;">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--text-primary);">Emplazamiento / Localidad</label>
+                            <input type="text" id="wizardProjectLocation" placeholder="Ej. A Coruña / Madrid" style="width:100%; padding:9px 12px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-color); color:var(--text-primary); box-sizing:border-box; font-size:0.85rem;">
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--text-primary);">Fecha de Valoración</label>
+                        <input type="date" id="wizardProjectDate" style="width:100%; padding:9px 12px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-color); color:var(--text-primary); box-sizing:border-box; font-size:0.85rem;">
+                    </div>
+                </div>
+
+                <!-- PASO 2: Modalidad de Inicio -->
+                <div id="wizardStep2" style="display:none; flex-direction:column; gap:14px;">
+                    <div style="font-size:0.85rem; color:var(--text-secondary);">
+                        Selecciona cómo deseas generar la estructura de capítulos y partidas:
+                    </div>
+                    
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <!-- Tarjeta A: Asistente Guiado Inteligente -->
+                        <label class="wizard-mode-card" style="display:flex; align-items:flex-start; gap:12px; padding:14px; border:2px solid var(--accent, #3b82f6); background:rgba(59,130,246,0.06); border-radius:8px; cursor:pointer;">
+                            <input type="radio" name="wizardMode" value="smart" checked style="margin-top:3px; cursor:pointer;">
+                            <div>
+                                <div style="font-weight:700; font-size:0.9rem; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+                                    <span>🧙</span> Asistente Guiado Inteligente <span style="font-size:0.65rem; background:var(--accent); color:white; padding:1px 6px; border-radius:10px;">Recomendado</span>
+                                </div>
+                                <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:3px; line-height:1.4;">
+                                    Responde a 4 preguntas sobre la superficie, instalaciones y acabados para auto-calcular mediciones estimadas de referencia.
+                                </div>
+                            </div>
+                        </label>
+
+                        <!-- Tarjeta B: Plantilla Sectorial -->
+                        <label class="wizard-mode-card" style="display:flex; align-items:flex-start; gap:12px; padding:14px; border:1px solid var(--border-color); background:var(--bg-hover); border-radius:8px; cursor:pointer;">
+                            <input type="radio" name="wizardMode" value="template" style="margin-top:3px; cursor:pointer;">
+                            <div style="flex:1;">
+                                <div style="font-weight:700; font-size:0.9rem; color:var(--text-primary);">
+                                    📋 Plantilla Sectorial Estructurada
+                                </div>
+                                <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:3px; line-height:1.4;">
+                                    Carga un árbol estándar de capítulos y partidas según la tipología de obra.
+                                </div>
+                                <div id="wizardTemplateSelectContainer" style="margin-top:10px; display:none;">
+                                    <select id="wizardTemplateType" style="width:100%; padding:8px 10px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-color); color:var(--text-primary); font-size:0.8rem;">
+                                        <option value="reforma_piso">🔨 Reforma Integral de Piso / Vivienda</option>
+                                        <option value="unifamiliar">🏠 Vivienda Unifamiliar de Obra Nueva</option>
+                                        <option value="local_comercial">🏬 Reforma de Local Comercial / Oficinas</option>
+                                        <option value="completo">🏢 Edificación Completa (Todos los Capítulos)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </label>
+
+                        <!-- Tarjeta C: Proyecto en Blanco -->
+                        <label class="wizard-mode-card" style="display:flex; align-items:flex-start; gap:12px; padding:14px; border:1px solid var(--border-color); background:var(--bg-hover); border-radius:8px; cursor:pointer;">
+                            <input type="radio" name="wizardMode" value="blank" style="margin-top:3px; cursor:pointer;">
+                            <div>
+                                <div style="font-weight:700; font-size:0.9rem; color:var(--text-primary);">
+                                    📄 Presupuesto en Blanco (Totalmente de Cero)
+                                </div>
+                                <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:3px; line-height:1.4;">
+                                    Inicia con un archivo vacío para crear manualmente tus propios capítulos y partidas.
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- PASO 3: Preguntas de Alcance (Smart Mode) -->
+                <div id="wizardStep3" style="display:none; flex-direction:column; gap:14px;">
+                    <div style="font-size:0.85rem; color:var(--text-secondary);">
+                        Ajusta los parámetros para adaptar los capítulos, partidas y mediciones orientativas:
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                        <div>
+                            <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--text-primary);">Superficie Construida Estimada (m²)</label>
+                            <input type="number" id="wizardAreaInput" value="95" min="10" max="10000" style="width:100%; padding:9px 12px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-color); color:var(--text-primary); box-sizing:border-box; font-size:0.85rem;">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--text-primary);">¿Incluye Demolición Previa?</label>
+                            <select id="wizardDemolitionSelect" style="width:100%; padding:9px 12px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-color); color:var(--text-primary); box-sizing:border-box; font-size:0.85rem;">
+                                <option value="true">Sí (Derribos y picados de tabiquería)</option>
+                                <option value="false">No (Obra limpia o nueva)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                        <div>
+                            <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--text-primary);">Sistema de Climatización</label>
+                            <select id="wizardHvacSelect" style="width:100%; padding:9px 12px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-color); color:var(--text-primary); box-sizing:border-box; font-size:0.85rem;">
+                                <option value="aerotermia">Aerotermia + Suelo Radiante / ACS</option>
+                                <option value="basica">Instalación Básica (Splits / Radiadores)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:4px; color:var(--text-primary);">Nivel de Acabados</label>
+                            <select id="wizardFinishSelect" style="width:100%; padding:9px 12px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-color); color:var(--text-primary); box-sizing:border-box; font-size:0.85rem;">
+                                <option value="medio">Estándar / Calidad Media</option>
+                                <option value="alto">Calidad Alta</option>
+                                <option value="premium">Premium / Lujo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer" style="padding: 12px 20px; border-top: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                <button type="button" id="wizardPrevBtn" class="gantt-action-btn" style="display:none; padding:7px 16px;">
+                    ⬅️ Anterior
+                </button>
+                <div style="margin-left:auto; display:flex; gap:8px;">
+                    <button type="button" id="wizardNextBtn" class="process-btn" style="padding:7px 20px; margin:0;">
+                        Siguiente ➡️
+                    </button>
+                    <button type="button" id="wizardCreateBtn" class="process-btn" style="display:none; padding:7px 20px; margin:0; background:var(--accent, #3b82f6);">
+                        🚀 Generar y Abrir Presupuesto
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Catálogo de Base de Precios Estándar -->
+    <div id="priceBankCatalogModal" class="modal" style="display:none;" role="dialog" aria-modal="true" aria-label="Catálogo de Precios">
+        <div class="modal-content" style="max-width: 820px; width: 95%; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:1.3rem;">📚</span>
+                    <h3 style="margin:0;">Catálogo de Base de Precios ConTech</h3>
+                </div>
+                <button type="button" class="close-btn" id="closePriceBankBtn" title="Cerrar">✕</button>
+            </div>
+            <div class="modal-body" style="padding: 16px; display:flex; flex-direction:column; gap:12px; overflow-y:auto;">
+                
+                <!-- Buscador y Filtro por Categoría -->
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <input type="text" id="priceBankSearchInput" placeholder="🔍 Buscar por palabra clave (ej. pladur, solera, ventana, pintura, pilar...)" style="flex:1; min-width:240px; padding:8px 12px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-color); color:var(--text-primary); font-size:0.85rem;" autocomplete="off">
+                    <select id="priceBankCategorySelect" style="padding:8px 12px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-color); color:var(--text-primary); font-size:0.85rem; max-width:260px;">
+                        <option value="all">Todas las Categorías (12)</option>
+                    </select>
+                </div>
+
+                <!-- Lista de Partidas -->
+                <div style="max-height: 420px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.8rem;">
+                        <thead>
+                            <tr style="background:var(--bg-hover); border-bottom:1px solid var(--border-color); color:var(--text-primary); text-align:left;">
+                                <th style="padding:8px 10px; width:85px;">Código</th>
+                                <th style="padding:8px 10px;">Resumen / Descripción</th>
+                                <th style="padding:8px; width:50px; text-align:center;">Ud</th>
+                                <th style="padding:8px 10px; width:90px; text-align:right;">Precio</th>
+                                <th style="padding:8px; width:90px; text-align:center;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="priceBankTableBody">
+                            <!-- Filas dinámicas -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 10px 16px; border-top: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-size:0.75rem; color:var(--text-secondary);" id="priceBankItemsCount">
+                    Cargando partidas...
+                </div>
+                <button type="button" id="closePriceBankOkBtn" class="process-btn" style="padding: 5px 14px; margin: 0;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicador de Procesamiento Asíncrono / Web Worker -->
+    <div id="workerLoadingOverlay" class="worker-loading-overlay" style="display:none;">
+        <div class="worker-loading-card">
+            <div class="worker-loading-spinner"></div>
+            <div class="worker-loading-text" id="workerLoadingText">Procesando archivo...</div>
+            <div class="worker-loading-subtext" id="workerLoadingSubtext">Hilo asíncrono en segundo plano</div>
+        </div>
+    </div>
+
     <script src="jspdf.umd.min.js"></script>
     <script src="jspdf.plugin.autotable.min.js"></script>
     <script src="chart.min.js"></script>
     <script src="xlsx.full.min.js"></script>
     <script src="BC3Parser.js"></script>
     <script src="BC3GanttEngine.js"></script>
+    <script src="BC3PriceBank.js"></script>
     <script src="BC3Writer.js"></script>
     <script src="app.js"></script>
 </body>
