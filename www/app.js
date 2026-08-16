@@ -14060,10 +14060,17 @@ async function validateGeminiApiKey(key) {
     const cleanKey = (key || '').trim();
     if (!cleanKey) return { success: false, error: 'Por favor introduce una clave de API válida.' };
 
+    if (!cleanKey.startsWith('AIzaSy')) {
+        return { 
+            success: false, 
+            error: 'Formato no válido: Las claves de Google AI Studio empiezan siempre por "AIzaSy...". Asegúrate de entrar en https://aistudio.google.com/app/apikey y pulsar en el botón azul "Create API key".' 
+        };
+    }
+
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${cleanKey}`;
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
 
         const response = await fetch(url, {
             method: 'POST',
@@ -14080,7 +14087,12 @@ async function validateGeminiApiKey(key) {
             let errorMsg = `Error HTTP ${response.status}`;
             try {
                 const errData = await response.json();
-                if (errData?.error?.message) errorMsg = errData.error.message;
+                if (errData?.error?.message) {
+                    errorMsg = errData.error.message;
+                    if (errorMsg.includes('API key not valid') || errorMsg.includes('is not found')) {
+                        errorMsg = 'Clave API no reconocida por Google AI Studio. Por favor verifica que esté activa en aistudio.google.com/app/apikey.';
+                    }
+                }
             } catch (e) {}
             return { success: false, error: errorMsg };
         }

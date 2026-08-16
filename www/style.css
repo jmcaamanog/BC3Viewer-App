@@ -6896,13 +6896,16 @@ body.dark-theme .eco-table-section,
     gap: 10px;
     padding: 10px 12px;
     border-radius: 8px;
-    background: var(--bg-hover, #f8fafc);
-    border: 1px solid var(--border-color, #e2e8f0);
+    background: var(--hover-bg, #f1f5f9);
+    border: 1px solid var(--border-color, #cbd5e1);
+    color: var(--text-primary, #0f172a);
 }
 
+body.dark-theme .gemini-step-card,
 .dark-mode .gemini-step-card {
-    background: #1e293b;
-    border-color: #334155;
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
 }
 
 .gemini-step-card .step-number {
@@ -6922,8 +6925,13 @@ body.dark-theme .eco-table-section,
 
 .gemini-step-card .step-text {
     font-size: 0.78rem;
-    color: var(--text-primary, #0f172a);
+    color: inherit;
     line-height: 1.4;
+}
+
+body.dark-theme .gemini-step-card .step-text,
+.dark-mode .gemini-step-card .step-text {
+    color: #f8fafc !important;
 }
 
 .gemini-chip-btn {
@@ -6941,10 +6949,11 @@ body.dark-theme .eco-table-section,
     gap: 4px;
 }
 
+body.dark-theme .gemini-chip-btn,
 .dark-mode .gemini-chip-btn {
-    background: #1e293b;
-    border-color: #334155;
-    color: #f1f5f9;
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
 }
 
 .gemini-chip-btn:hover {
