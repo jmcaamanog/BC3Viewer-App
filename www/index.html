@@ -53,10 +53,9 @@
                     </div>
 
                     <!-- Botones de Acción Rápida: Guardar, Asistente IA y Exportar/Importar -->
-                    <div class="header-action-group" id="headerActionGroup" style="display:none; align-items:center; gap:6px;">
-                        <button type="button" id="openAssistantBtn" class="header-icon-btn" title="Asistente IA ConTech (Gemini)" style="color:#8b5cf6; display:flex; align-items:center; gap:4px; padding:0 8px; border-color:rgba(139,92,246,0.3);">
-                            <span>🤖</span>
-                            <span class="hide-on-mobile" style="font-size:0.75rem; font-weight:600;">Asistente IA</span>
+                        <button type="button" id="openAssistantBtn" class="header-icon-btn" title="Asesor IA (jmcaamanog)" style="color:var(--text-primary); display:flex; align-items:center; gap:6px; padding:0 10px; border-color:rgba(56,189,248,0.4);">
+                            <img src="img/Yo_icono.png" class="jm-avatar-icon" alt="jmcaamanog" />
+                            <span class="hide-on-mobile" style="font-size:0.75rem; font-weight:600;">Asesor IA</span>
                         </button>
                         <button type="button" id="saveBtn" class="header-icon-btn save-header-btn" title="Guardar Presupuesto (.bc3) (Ctrl+S)">
                             💾
@@ -139,9 +138,9 @@
                                 style="display:flex; justify-content:space-between; align-items:center; width:100%; border:none; background:none; padding:8px 12px; cursor:pointer; color:var(--text-primary); gap:10px;">
                                 <div style="display:flex; align-items:center; gap:8px;">
                                     <span class="gemini-status-dot disconnected" id="geminiStatusDot"></span>
-                                    <span style="font-size:0.85rem; font-weight:600; color:#8b5cf6;">Asistente IA</span>
+                                    <span style="font-size:0.85rem; font-weight:600; color:#38bdf8;">Asesor IA (jmcaamanog)</span>
                                 </div>
-                                <span style="font-size:1rem;">🤖</span>
+                                <img src="img/Yo_icono.png" class="jm-avatar-icon" alt="jmcaamanog" />
                             </button>
                             <button type="button" id="cloudSyncBtn"
                                 style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Sincronización Cloud
@@ -1872,13 +1871,13 @@
             <!-- Header -->
             <div class="modal-header" style="padding: 14px 18px; border-bottom: 1px solid var(--border-color); background: var(--bg-hover); display: flex; justify-content: space-between; align-items: center;">
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <span style="font-size:1.4rem;">🤖</span>
+                    <img src="img/Yo_icono.png" style="width:34px; height:34px; border-radius:50%; object-fit:cover; border:2px solid #38bdf8; box-shadow:0 0 10px rgba(56,189,248,0.35);" alt="jmcaamanog" />
                     <div>
                         <div style="display:flex; align-items:center; gap:8px;">
-                            <h3 style="margin:0; font-size:1.05rem;">Asistente IA</h3>
+                            <h3 style="margin:0; font-size:1.05rem;">Asesor IA · jmcaamanog</h3>
                             <span class="gemini-status-badge connected" id="assistantStatusBadge" style="font-size:0.65rem;">
                                 <span class="gemini-status-dot connected" id="assistantStatusDot"></span>
-                                <span id="assistantStatusText">Gemini 1.5 Flash</span>
+                                <span id="assistantStatusText">Gemini 3.5 Flash</span>
                             </span>
                             <button type="button" id="assistantConfigKeyBtn" class="gantt-action-btn" title="Configurar Clave API de Gemini" style="padding:2px 7px; font-size:0.68rem; margin-left:4px; display:inline-flex; align-items:center; gap:3px;">
                                 ⚙️ Clave API
@@ -1912,10 +1911,12 @@
             <div id="geminiChatHistory" style="flex: 1; overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; background: var(--bg-color);">
                 <!-- Mensaje de Bienvenida del Asistente -->
                 <div class="assistant-msg ai-msg">
-                    <div class="msg-avatar">🤖</div>
+                    <div class="msg-avatar">
+                        <img src="img/Yo_icono.png" alt="jmcaamanog" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />
+                    </div>
                     <div class="msg-bubble">
-                        <div style="font-weight: 700; margin-bottom: 4px; color: var(--accent, #8b5cf6);">¡Hola! Soy tu Asistente IA ConTech.</div>
-                        <div style="font-size: 0.82rem; line-height: 1.5; color: var(--text-primary);">
+                        <div style="font-weight: 700; margin-bottom: 4px; color: #38bdf8;">¡Hola! 👋 Soy jmcaamanog, tu asesor de IA de la herramienta.</div>
+                        <div style="font-size: 0.84rem; line-height: 1.55;">
                             Puedo ayudarte a gestionar y optimizar tu presupuesto en tiempo real:
                             <ul style="margin: 6px 0 8px 18px; padding: 0;">
                                 <li><strong>Auditar tu obra:</strong> detectar partidas faltantes, revisar desviaciones o calcular ratios por m².</li>
@@ -1929,11 +1930,19 @@
             </div>
 
             <!-- Sugerencias rápidas (Chips) -->
-            <div style="padding: 6px 18px; border-top: 1px solid var(--border-color); background: var(--bg-hover); display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;">
-                <button type="button" class="gemini-chip-btn assistant-quick-chip" data-query="¿Qué partidas críticas podrían faltar en este presupuesto según las buenas prácticas de construcción?">🔍 ¿Falta alguna partida?</button>
-                <button type="button" class="gemini-chip-btn assistant-quick-chip" data-query="Analiza los capítulos y dime cuáles son las 3 partidas con mayor impacto económico en el PEM.">📊 3 partidas más caras</button>
-                <button type="button" class="gemini-chip-btn assistant-quick-chip" data-query="Crea una partida de falso techo continuo de placa de yeso laminado (pladur) con aislamiento de lana de roca de 40mm, incluyendo estructura y acabado Q2.">🔨 Crear partida de pladur</button>
-                <button type="button" class="gemini-chip-btn assistant-quick-chip" data-query="Redacta un resumen ejecutivo del presupuesto con desglose por capítulos y recomendaciones técnicas.">📄 Resumen ejecutivo</button>
+            <div style="padding: 8px 18px; border-top: 1px solid var(--border-color); background: var(--bg-hover); display: flex; gap: 6px; overflow-x: auto; flex-wrap: nowrap;" class="hide-scrollbar">
+                <button type="button" class="gemini-chip-btn assistant-quick-chip" data-query="¿Falta alguna partida esencial según la estructura de este presupuesto?">
+                    🔍 ¿Falta alguna partida?
+                </button>
+                <button type="button" class="gemini-chip-btn assistant-quick-chip" data-query="Analiza las 3 partidas más costosas del presupuesto y sugiere posibles optimizaciones de precio.">
+                    📊 3 partidas más caras
+                </button>
+                <button type="button" class="gemini-chip-btn assistant-quick-chip" data-query="Crea una partida descompuesta completa de tabiquería de cartón-yeso (pladur) con perfiles de 46mm y placa de 15mm.">
+                    🔨 Crear partida de pladur
+                </button>
+                <button type="button" class="gemini-chip-btn assistant-quick-chip" data-query="Redacta un resumen ejecutivo de la obra para presentar al cliente con desglose por capítulos.">
+                    📄 Resumen ejecutivo
+                </button>
             </div>
 
             <!-- Chat Input Footer -->
@@ -1953,7 +1962,7 @@
         <div class="modal-content" style="max-width: 580px; width: 95%; max-height: 90vh; display: flex; flex-direction: column;">
             <div class="modal-header">
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="font-size:1.4rem;">🤖</span>
+                    <img src="img/Yo_icono.png" class="jm-avatar-icon" style="width:28px; height:28px;" alt="jmcaamanog" />
                     <div>
                         <h3 style="margin:0;">Configuración de Google Gemini IA</h3>
                         <span style="font-size:0.72rem; color:var(--text-secondary);">Presupuestación y redacción generativa ConTech (100% Gratis)</span>

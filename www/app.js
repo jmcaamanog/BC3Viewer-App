@@ -14706,9 +14706,9 @@ function openAssistantModal(targetChapterCode = null) {
         const firstBubble = geminiChatHistory.querySelector('.assistant-msg.ai-msg .msg-bubble');
         if (firstBubble) {
             firstBubble.innerHTML = `
-                <div style="font-weight: 700; margin-bottom: 4px; color: #38bdf8;">${userGreeting} Soy tu Asistente IA ConTech.</div>
+                <div style="font-weight: 700; margin-bottom: 4px; color: #38bdf8;">${userGreeting} Soy jmcaamanog, tu asesor de IA de la herramienta.</div>
                 <div style="font-size: 0.84rem; line-height: 1.55;">
-                    Puedo auditar tu presupuesto, resolver dudas técnicas sobre unidades de obra o redactar y añadir nuevas partidas directamente a tus capítulos.
+                    Puedo ayudarte a auditar tu presupuesto, resolver dudas técnicas sobre unidades de obra o redactar y añadir nuevas partidas directamente a tus capítulos.
                 </div>
             `;
         }
@@ -14744,7 +14744,9 @@ if (clearAssistantChatBtn && geminiChatHistory) {
         const g = u.firstName ? `¡Hola de nuevo, ${u.firstName}! 👋` : `¡Hola! 👋`;
         geminiChatHistory.innerHTML = `
             <div class="assistant-msg ai-msg">
-                <div class="msg-avatar">🤖</div>
+                <div class="msg-avatar">
+                    <img src="img/Yo_icono.png" alt="jmcaamanog" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />
+                </div>
                 <div class="msg-bubble">
                     <div style="font-weight: 700; margin-bottom: 4px; color: #38bdf8;">${g} Conversación reiniciada.</div>
                     <div style="font-size: 0.84rem; line-height: 1.55;">
@@ -14827,8 +14829,8 @@ ${chaptersList.join('\n')}`;
     const user = getLoggedUserProfile();
     const userIdentPrompt = user.name || user.firstName ? `El usuario se llama "${user.name || user.firstName}". Puedes dirigirte a él por su nombre de pila de forma cercana y profesional cuando sea oportuno.\n` : '';
 
-    const systemPrompt = `Eres el "Asistente IA ConTech", un Arquitecto Técnico y Director de Obra experto en normativa, control de costes y estándar FIEBDC-3 / BC3 en España.
-Tienes acceso al presupuesto que el usuario tiene abierto en pantalla.
+    const systemPrompt = `Eres "jmcaamanog", el Asesor de IA oficial de la herramienta BC3 Viewer (un Arquitecto Técnico y BIM Manager senior de Galicia, experto en presupuestación, normativa de edificación, control de costes y estándar FIEBDC-3 / BC3 en España).
+Te presentas y actúas siempre como el asesor de IA oficial de la herramienta (jmcaamanog).
 ${userIdentPrompt}
 CONTEXTO DEL PRESUPUESTO ACTUAL:
 ${budgetContext}
@@ -14893,7 +14895,16 @@ function appendChatMessage(role, rawContent) {
 
     const avatar = document.createElement('div');
     avatar.className = 'msg-avatar';
-    avatar.textContent = role === 'user' ? '👤' : '🤖';
+    if (role === 'user') {
+        const user = getLoggedUserProfile();
+        if (user.picture) {
+            avatar.innerHTML = `<img src="${user.picture}" alt="Usuario" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+        } else {
+            avatar.textContent = user.firstName ? user.firstName.charAt(0).toUpperCase() : '👤';
+        }
+    } else {
+        avatar.innerHTML = `<img src="img/Yo_icono.png" alt="jmcaamanog" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+    }
 
     const bubble = document.createElement('div');
     bubble.className = 'msg-bubble';
@@ -14941,59 +14952,64 @@ function createPartidaActionCard(item) {
 
     const header = document.createElement('div');
     header.className = 'partida-action-header';
-    header.innerHTML = `
-        <span class="partida-action-code">🏷️ ${item.code} [${item.unit || 'ud'}]</span>
-        <span class="partida-action-price">${new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(item.price || 0)}</span>
-    `;
+
+    const codeSpan = document.createElement('span');
+    codeSpan.className = 'partida-action-code';
+    codeSpan.textContent = `${item.code || 'NUEVA'} · ${item.unit || 'ud'}`;
+
+    const priceSpan = document.createElement('span');
+    priceSpan.className = 'partida-action-price';
+    priceSpan.textContent = `${(parseFloat(item.price) || 0).toFixed(2)} €/${item.unit || 'ud'}`;
+
+    header.appendChild(codeSpan);
+    header.appendChild(priceSpan);
 
     const summary = document.createElement('div');
     summary.style.fontWeight = '600';
     summary.style.fontSize = '0.8rem';
-    summary.style.margin = '3px 0';
-    summary.textContent = item.summary || 'Unidad de obra';
+    summary.style.marginBottom = '4px';
+    summary.textContent = item.summary || 'Partida sin título';
 
     const desc = document.createElement('div');
     desc.style.fontSize = '0.72rem';
     desc.style.color = 'var(--text-secondary)';
-    desc.style.lineHeight = '1.3';
-    desc.textContent = item.description ? (item.description.length > 130 ? item.description.slice(0, 130) + '...' : item.description) : '';
-
-    let targetCh = item.targetChapter || 'CAP01##';
-    if (assistantTargetChapterSelect && assistantTargetChapterSelect.value !== 'auto') {
-        targetCh = assistantTargetChapterSelect.value;
-    }
+    desc.style.lineHeight = '1.4';
+    desc.textContent = (item.description || '').slice(0, 140) + ((item.description || '').length > 140 ? '...' : '');
 
     const insertBtn = document.createElement('button');
     insertBtn.className = 'partida-action-btn';
-    insertBtn.innerHTML = `<span>➕ Insertar en Capítulo (${targetCh})</span>`;
+    insertBtn.innerHTML = `<span>➕ Insertar en el Presupuesto</span>`;
 
-    insertBtn.onclick = () => {
-        if (typeof parsedData === 'undefined' || !parsedData?.concepts) {
-            alert("No hay un presupuesto abierto en pantalla para insertar esta partida.");
+    insertBtn.addEventListener('click', () => {
+        if (!parsedData || !parsedData.concepts) {
+            alert("No hay un presupuesto abierto en memoria donde insertar la partida.");
             return;
         }
 
-        let resolvedChapter = targetCh;
-        if (!parsedData.concepts[resolvedChapter]) {
-            const firstCh = Object.keys(parsedData.concepts).find(k => k.endsWith('##') || (k.endsWith('#') && k !== 'OBRA#'));
-            if (firstCh) resolvedChapter = firstCh;
-            else {
-                alert("No se encontró ningún capítulo en el presupuesto para insertar la partida.");
-                return;
-            }
+        let targetCh = assistantTargetChapterSelect?.value;
+        if (!targetCh || targetCh === 'auto') {
+            targetCh = item.targetChapter;
+        }
+
+        const resolvedChapter = resolveOrCreateChapter(targetCh);
+        if (!resolvedChapter) {
+            alert("No se pudo localizar ni crear un capítulo adecuado para insertar la partida.");
+            return;
         }
 
         const itemConcept = {
-            code: item.code,
-            unit: item.unit || "ud",
-            summary: item.summary || "Unidad de obra",
+            code: item.code || `PAR_${Date.now().toString().slice(-4)}`,
+            unit: item.unit || 'ud',
+            summary: item.summary || 'Partida generada por IA',
+            description: item.description || '',
             price: parseFloat(item.price) || 0,
             quantity: parseFloat(item.quantity) || 1.0,
             type: 0,
-            description: item.description || item.summary,
             children: [],
             decomposition: [],
-            measurements: []
+            measurements: [
+                { comment: "Medición estimada", units: 1, length: parseFloat(item.quantity) || 1.0, width: 1, height: 1, total: parseFloat(item.quantity) || 1.0 }
+            ]
         };
 
         if (item.components && Array.isArray(item.components)) {
@@ -15049,12 +15065,8 @@ function createPartidaActionCard(item) {
 
         insertBtn.disabled = true;
         insertBtn.innerHTML = `<span>✅ Insertada en ${resolvedChapter}</span>`;
-        insertBtn.style.background = '#16a34a';
-
-        if (typeof showToastMessage === 'function') {
-            showToastMessage(`✨ Partida ${item.code} insertada en ${resolvedChapter}`);
-        }
-    };
+        showAppToast(`Partida ${item.code} añadida con éxito a ${resolvedChapter}`, '✨');
+    });
 
     card.appendChild(header);
     card.appendChild(summary);
@@ -15070,10 +15082,12 @@ function appendChatLoading(id) {
     msgDiv.id = id;
     msgDiv.className = 'assistant-msg ai-msg';
     msgDiv.innerHTML = `
-        <div class="msg-avatar">🤖</div>
+        <div class="msg-avatar">
+            <img src="img/Yo_icono.png" alt="jmcaamanog" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />
+        </div>
         <div class="msg-bubble" style="display:flex; align-items:center; gap:8px; font-style:italic; color:var(--text-secondary);">
             <div class="worker-loading-spinner" style="width:16px; height:16px; border-width:2px;"></div>
-            <span>Consultando con Gemini AI...</span>
+            <span>jmcaamanog está analizando...</span>
         </div>
     `;
     geminiChatHistory.appendChild(msgDiv);
