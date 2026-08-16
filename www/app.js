@@ -12854,8 +12854,13 @@ async function encryptDataE2E(plainText, secretKey = getOrCreateDeviceMasterKey(
     );
 
     function bufferToBase64(buf) {
-        const bin = String.fromCharCode.apply(null, new Uint8Array(buf));
-        return btoa(bin);
+        const bytes = new Uint8Array(buf);
+        let binary = '';
+        const chunkSize = 0x8000; // 32768 bytes por bloque para evitar desbordamiento del call stack
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+            binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+        }
+        return btoa(binary);
     }
 
     return {
@@ -12933,21 +12938,204 @@ function openCloudSyncModal() {
     }
 }
 
-function closeCloudSyncModal() {
-    if (cloudSyncModal) {
-        cloudSyncModal.style.display = 'none';
+// ── Motor Oficial de Google Drive Sync & Google Identity Services (OAuth2) ──
+
+let googleTokenClient = null;
+let googleAccessToken = sessionStorage.getItem('bc3_gdrive_access_token') || null;
+let googleDriveFolderId = localStorage.getItem('bc3_gdrive_folder_id') || null;
+
+function getGoogleClientId() {
+    return localStorage.getItem('bc3_google_custom_client_id') || '452148719266-placeholder.apps.google.com';
+}
+
+function initGoogleIdentity() {
+    if (typeof window.google === 'undefined' || !window.google.accounts || !window.google.accounts.oauth2) {
+        return false;
+    }
+    const clientId = getGoogleClientId();
+    if (!clientId) return false;
+
+    try {
+        googleTokenClient = window.google.accounts.oauth2.initTokenClient({
+            client_id: clientId,
+            scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
+            callback: async (tokenResponse) => {
+                if (tokenResponse.error !== undefined) {
+                    console.error("Google Auth Error:", tokenResponse);
+                    if (cloudSyncStatusText) cloudSyncStatusText.textContent = `❌ Error de Google: ${tokenResponse.error}`;
+                    alert("Error de autenticación con Google: " + tokenResponse.error);
+                    return;
+                }
+                googleAccessToken = tokenResponse.access_token;
+                sessionStorage.setItem('bc3_gdrive_access_token', googleAccessToken);
+
+                if (cloudSyncStatusText) cloudSyncStatusText.textContent = `⏳ Verificando cuenta de Google...`;
+
+                // 1. Obtener perfil oficial del usuario desde Google
+                const profile = await fetchGoogleUserProfile(googleAccessToken);
+                const userEmail = (profile && profile.email) ? profile.email : 'usuario@gmail.com';
+                localStorage.setItem('bc3_cloud_user_account', userEmail);
+                if (profile && profile.name) localStorage.setItem('bc3_cloud_user_name', profile.name);
+                if (profile && profile.picture) localStorage.setItem('bc3_cloud_user_picture', profile.picture);
+
+                // 2. Localizar o crear la carpeta /BC3_Viewer_Sync/ en Google Drive
+                if (cloudSyncStatusText) cloudSyncStatusText.textContent = `⏳ Localizando carpeta /BC3_Viewer_Sync/...`;
+                googleDriveFolderId = await getOrCreateDriveFolder(googleAccessToken);
+                if (googleDriveFolderId) {
+                    localStorage.setItem('bc3_gdrive_folder_id', googleDriveFolderId);
+                }
+
+                updateCloudAccountUI();
+                await syncFilesFromGoogleDrive();
+                if (cloudSyncStatusText) cloudSyncStatusText.textContent = `🟢 Conectado con éxito a Google Drive`;
+                showAppToast(`Google Drive conectado: ${userEmail}`, '🟢');
+            }
+        });
+        return true;
+    } catch (e) {
+        console.warn("No se pudo inicializar Google Identity Client:", e);
+        return false;
+    }
+}
+
+async function fetchGoogleUserProfile(token) {
+    try {
+        const resp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (resp.ok) return await resp.json();
+    } catch (e) {
+        console.warn("Aviso al obtener userinfo:", e);
+    }
+    return null;
+}
+
+async function getOrCreateDriveFolder(token, folderName = 'BC3_Viewer_Sync') {
+    try {
+        // Buscar si ya existe la carpeta
+        const query = encodeURIComponent(`name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+        const searchResp = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name)`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (searchResp.ok) {
+            const data = await searchResp.json();
+            if (data.files && data.files.length > 0) {
+                return data.files[0].id;
+            }
+        }
+
+        // Si no existe, crear la carpeta en la raíz del Drive
+        const createResp = await fetch('https://www.googleapis.com/drive/v3/files', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: folderName,
+                mimeType: 'application/vnd.google-apps.folder',
+                description: 'Carpeta de sincronización segura de presupuestos de BC3 Viewer'
+            })
+        });
+        if (createResp.ok) {
+            const created = await createResp.json();
+            return created.id;
+        }
+    } catch (e) {
+        console.warn("Aviso al gestionar carpeta de Google Drive:", e);
+    }
+    return null;
+}
+
+async function uploadFileToGoogleDriveAPI(token, folderId, fileName, cipherObj, rawSize, totalPEM) {
+    const boundary = '-------314159265358979323846';
+    const delimiter = "\r\n--" + boundary + "\r\n";
+    const close_delim = "\r\n--" + boundary + "--";
+
+    const metadata = {
+        name: fileName,
+        mimeType: 'application/json',
+        parents: folderId ? [folderId] : [],
+        description: `Presupuesto BC3 cifrado E2E con AES-256. PEM: ${totalPEM} €`,
+        appProperties: {
+            bc3Encrypted: 'true',
+            rawSize: String(rawSize),
+            totalPEM: String(totalPEM),
+            timestamp: new Date().toISOString()
+        }
+    };
+
+    const payload = JSON.stringify(cipherObj);
+    const multipartRequestBody =
+        delimiter +
+        'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+        JSON.stringify(metadata) +
+        delimiter +
+        'Content-Type: application/json\r\n\r\n' +
+        payload +
+        close_delim;
+
+    const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': `multipart/related; boundary=${boundary}`
+        },
+        body: multipartRequestBody
+    });
+
+    if (!response.ok) {
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.error ? errJson.error.message : `HTTP ${response.status} en Google Drive`);
+    }
+
+    return await response.json();
+}
+
+async function syncFilesFromGoogleDrive() {
+    if (!googleAccessToken) return;
+    try {
+        const folderId = googleDriveFolderId || await getOrCreateDriveFolder(googleAccessToken);
+        if (!folderId) return;
+
+        const query = encodeURIComponent(`'${folderId}' in parents and trashed=false`);
+        const resp = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,modifiedTime,size,appProperties,description)`, {
+            headers: { 'Authorization': `Bearer ${googleAccessToken}` }
+        });
+
+        if (resp.ok) {
+            const data = await resp.json();
+            if (data.files) {
+                const cloudFiles = data.files.map(f => ({
+                    id: f.id,
+                    driveId: f.id,
+                    fileName: f.name,
+                    lastModified: new Date(f.modifiedTime).toLocaleString('es-ES'),
+                    sizeKb: f.size ? (parseInt(f.size) / 1024).toFixed(1) : '—',
+                    totalPEM: f.appProperties && f.appProperties.totalPEM ? parseFloat(f.appProperties.totalPEM) : null,
+                    isDrive: true
+                }));
+                // Mezclar con la caché local
+                const localFiles = getCloudVaultFiles().filter(lf => !cloudFiles.some(cf => cf.fileName.toLowerCase() === lf.fileName.toLowerCase()));
+                saveCloudVaultFiles([...cloudFiles, ...localFiles]);
+                renderCloudFilesTable();
+            }
+        }
+    } catch (e) {
+        console.warn("Aviso al sincronizar lista de Drive:", e);
     }
 }
 
 function updateCloudAccountUI() {
     const userAccount = localStorage.getItem('bc3_cloud_user_account');
+    const userName = localStorage.getItem('bc3_cloud_user_name');
     const autoSync = localStorage.getItem('bc3_cloud_autosync') !== 'false';
 
     if (cloudAutoSyncToggle) cloudAutoSyncToggle.checked = autoSync;
 
     if (userAccount) {
         if (cloudAccountTitle) cloudAccountTitle.textContent = `🟢 Conectado con Google Drive`;
-        if (cloudAccountSubtext) cloudAccountSubtext.textContent = `Cuenta activa: ${userAccount} (Carpeta /BC3_Viewer_Sync/)`;
+        if (cloudAccountSubtext) cloudAccountSubtext.textContent = `Cuenta: ${userAccount} ${userName ? '(' + userName + ')' : ''} | Carpeta /BC3_Viewer_Sync/`;
         if (cloudAuthControls) {
             cloudAuthControls.innerHTML = `
                 <button type="button" id="googleDriveDisconnectBtn" class="gantt-action-btn" style="color:var(--danger, #ef4444); border-color:var(--border-color); font-size:0.78rem; padding:6px 12px;">
@@ -12973,19 +13161,41 @@ function updateCloudAccountUI() {
 }
 
 function connectGoogleAccount() {
+    // 1. Intentar inicio de sesión oficial con Google Identity Services
+    const gisReady = initGoogleIdentity();
+    if (gisReady && googleTokenClient) {
+        googleTokenClient.requestAccessToken({ prompt: 'consent' });
+        return;
+    }
+
+    // 2. Si aún no está cargado el SDK o se usa en entorno local sin Client ID público, permitir vinculación de cuenta
     const currentAccount = localStorage.getItem('bc3_cloud_user_account') || '';
     const defaultEmail = currentAccount || (parsedData && parsedData.properties && parsedData.properties.owner ? `${parsedData.properties.owner.toLowerCase().replace(/\s+/g, '')}@gmail.com` : 'usuario@gmail.com');
-    const email = prompt("Introduce tu cuenta de correo de Google para vincular la sincronización Cloud:", defaultEmail);
+    const email = prompt("Introduce tu cuenta de Google para activar la bóveda de sincronización cifrada:", defaultEmail);
     if (email !== null) {
         const trimmed = email.trim();
         if (trimmed.length > 0 && trimmed.includes('@')) {
             localStorage.setItem('bc3_cloud_user_account', trimmed);
             updateCloudAccountUI();
-            if (cloudSyncStatusText) cloudSyncStatusText.textContent = `🟢 Conectado exitosamente como ${trimmed}`;
-            showAppToast(`Cuenta vinculada: ${trimmed}`, '🔑');
+            if (cloudSyncStatusText) cloudSyncStatusText.textContent = `🟢 Bóveda vinculada exitosamente como ${trimmed}`;
+            showAppToast(`Bóveda vinculada: ${trimmed}`, '🔑');
         } else if (trimmed.length > 0) {
             alert("Por favor introduce un correo válido (ej: usuario@gmail.com).");
         }
+    }
+}
+
+function disconnectGoogleAccount() {
+    if (confirm("¿Deseas desconectar tu cuenta de Google Drive? Los archivos guardados permanecerán seguros.")) {
+        localStorage.removeItem('bc3_cloud_user_account');
+        localStorage.removeItem('bc3_cloud_user_name');
+        localStorage.removeItem('bc3_cloud_user_picture');
+        localStorage.removeItem('bc3_gdrive_folder_id');
+        sessionStorage.removeItem('bc3_gdrive_access_token');
+        googleAccessToken = null;
+        googleDriveFolderId = null;
+        updateCloudAccountUI();
+        if (cloudSyncStatusText) cloudSyncStatusText.textContent = `⚪ Cuenta desconectada`;
     }
 }
 
@@ -13055,17 +13265,31 @@ async function uploadActiveBudgetToCloud() {
         const fileName = currentFileName || `Presupuesto_${new Date().toISOString().slice(0, 10)}.bc3`;
         const totalPEM = typeof calculateTotalBudget === 'function' ? calculateTotalBudget() : 0;
 
+        let driveFileId = null;
+        // 4. Si hay sesión activa en Google Drive, subir directamente por API a la carpeta /BC3_Viewer_Sync/
+        if (googleAccessToken) {
+            if (cloudSyncStatusText) cloudSyncStatusText.textContent = `⏳ Subiendo a tu Google Drive...`;
+            const folderId = googleDriveFolderId || await getOrCreateDriveFolder(googleAccessToken);
+            const driveResult = await uploadFileToGoogleDriveAPI(googleAccessToken, folderId, fileName, cipherObj, bc3Content.length, totalPEM);
+            if (driveResult && driveResult.id) {
+                driveFileId = driveResult.id;
+            }
+        }
+
+        // 5. Guardar en la bóveda local sincronizada
         const files = getCloudVaultFiles();
         const existingIdx = files.findIndex(f => f.fileName.toLowerCase() === fileName.toLowerCase());
 
         const fileRecord = {
-            id: existingIdx >= 0 ? files[existingIdx].id : 'cloud_' + Date.now(),
+            id: driveFileId || (existingIdx >= 0 ? files[existingIdx].id : 'cloud_' + Date.now()),
+            driveId: driveFileId,
             fileName: fileName,
             lastModified: new Date().toLocaleString('es-ES'),
             sizeBytes: bc3Content.length,
             sizeKb: (bc3Content.length / 1024).toFixed(1),
             totalPEM: totalPEM,
-            cipher: cipherObj
+            cipher: cipherObj,
+            isDrive: !!driveFileId
         };
 
         if (existingIdx >= 0) {
@@ -13078,8 +13302,9 @@ async function uploadActiveBudgetToCloud() {
         renderCloudFilesTable();
 
         if (cloudSyncStatusText) {
-            cloudSyncStatusText.innerHTML = `✅ <b>${fileName}</b> sincronizado y cifrado con éxito en Google Drive`;
+            cloudSyncStatusText.innerHTML = `✅ <b>${fileName}</b> ${driveFileId ? 'guardado en tu Google Drive' : 'sincronizado y cifrado con AES-256'}`;
         }
+        showAppToast(`Presupuesto guardado en la nube: ${fileName}`, '☁️');
     } catch (err) {
         console.error("Error al subir a la nube:", err);
         if (cloudSyncStatusText) cloudSyncStatusText.textContent = `❌ Error: ${err.message}`;
@@ -13101,6 +13326,7 @@ function renderCloudFilesTable() {
 
     if (cloudFilesTableBody) {
         cloudFilesTableBody.innerHTML = files.map((file, idx) => {
+            const driveBadge = file.driveId ? `<span style="font-size:0.65rem; background:rgba(66,133,244,0.15); color:#4285F4; padding:1px 5px; border-radius:3px; font-weight:700;">Google Drive</span>` : '';
             return `
                 <tr style="border-bottom: 1px solid var(--border-color);">
                     <td style="padding: 8px 10px;">
@@ -13108,6 +13334,7 @@ function renderCloudFilesTable() {
                             <span>📄</span>
                             <span>${file.fileName}</span>
                             <span style="font-size:0.68rem; background:rgba(16,185,129,0.15); color:#10b981; padding:1px 5px; border-radius:3px; font-weight:700;">🔒 E2E</span>
+                            ${driveBadge}
                         </div>
                         <div style="font-size:0.72rem; color:var(--text-secondary); margin-top:2px;">
                             PEM: ${file.totalPEM ? file.totalPEM.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €' : '—'}
@@ -13148,9 +13375,9 @@ function renderCloudFilesTable() {
         });
 
         cloudFilesTableBody.querySelectorAll('.cloud-del-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 const idx = parseInt(e.currentTarget.getAttribute('data-idx'));
-                deleteCloudFile(idx);
+                await deleteCloudFile(idx);
             });
         });
     }
@@ -13164,7 +13391,23 @@ async function openCloudFileInViewer(idx) {
     try {
         if (cloudSyncStatusText) cloudSyncStatusText.textContent = `⏳ Descifrando y cargando ${file.fileName}...`;
         showWorkerLoader("Descifrando y cargando desde la nube...", file.fileName);
-        const plainText = await decryptDataE2E(file.cipher);
+        
+        let cipherData = file.cipher;
+        // Si proviene de Google Drive y no está en caché local, descargarlo
+        if (!cipherData && file.driveId && googleAccessToken) {
+            const fetchResp = await fetch(`https://www.googleapis.com/drive/v3/files/${file.driveId}?alt=media`, {
+                headers: { 'Authorization': `Bearer ${googleAccessToken}` }
+            });
+            if (fetchResp.ok) {
+                cipherData = await fetchResp.json();
+            }
+        }
+
+        if (!cipherData) {
+            throw new Error("No se encontraron los datos cifrados del archivo.");
+        }
+
+        const plainText = await decryptDataE2E(cipherData);
         const result = await parseWithWorker(plainText);
         hideWorkerLoader();
 
@@ -13188,7 +13431,17 @@ async function downloadCloudFile(idx) {
     if (!file) return;
 
     try {
-        const plainText = await decryptDataE2E(file.cipher);
+        let cipherData = file.cipher;
+        if (!cipherData && file.driveId && googleAccessToken) {
+            const fetchResp = await fetch(`https://www.googleapis.com/drive/v3/files/${file.driveId}?alt=media`, {
+                headers: { 'Authorization': `Bearer ${googleAccessToken}` }
+            });
+            if (fetchResp.ok) {
+                cipherData = await fetchResp.json();
+            }
+        }
+
+        const plainText = await decryptDataE2E(cipherData);
         const blob = new Blob([plainText], { type: 'text/plain;charset=windows-1252' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -13203,12 +13456,22 @@ async function downloadCloudFile(idx) {
     }
 }
 
-function deleteCloudFile(idx) {
+async function deleteCloudFile(idx) {
     const files = getCloudVaultFiles();
     const file = files[idx];
     if (!file) return;
 
     if (confirm(`¿Seguro que deseas eliminar "${file.fileName}" de la sincronización en la nube?`)) {
+        if (file.driveId && googleAccessToken) {
+            try {
+                await fetch(`https://www.googleapis.com/drive/v3/files/${file.driveId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${googleAccessToken}` }
+                });
+            } catch (e) {
+                console.warn("Aviso al borrar de Google Drive:", e);
+            }
+        }
         files.splice(idx, 1);
         saveCloudVaultFiles(files);
         renderCloudFilesTable();
@@ -13240,7 +13503,10 @@ if (cloudAutoSyncToggle) {
 }
 
 if (uploadCurrentToCloudBtn) uploadCurrentToCloudBtn.addEventListener('click', uploadActiveBudgetToCloud);
-if (refreshCloudListBtn) refreshCloudListBtn.addEventListener('click', renderCloudFilesTable);
+if (refreshCloudListBtn) refreshCloudListBtn.addEventListener('click', async () => {
+    await syncFilesFromGoogleDrive();
+    renderCloudFilesTable();
+});
 
 if (cloudSyncModal) {
     cloudSyncModal.addEventListener('click', (e) => {
