@@ -1,4 +1,4 @@
-# 🌳 BC3 Viewer Multiplataforma (Windows & Android) — v2.2
+# 🌳 BC3 Viewer Multiplataforma (Windows & Android) — v2.2.1
 
 | 🏗️ Perfil & ConTech | 📈 Repositorio & Enlaces |
 | :--- | :--- |
@@ -13,11 +13,11 @@
 
 | 🌟 Recurso | 🚀 Acción / Enlace | 📝 Descripción |
 | :--- | :--- | :--- |
-| **Landing Page** | 👉 **[Visitar Presentación Web](https://jmcaamanog.github.io/BC3Viewer-App/landing.html)** | Web interactiva para explorar módulos y descargas. |
-| **App Online** | 👉 **[Abrir App Web (v2.2)](https://jmcaamanog.github.io/BC3Viewer-App/www/index.html)** | Utiliza la versión en la nube directo en tu navegador. |
+| **Landing Page** | 👉 **[Visitar Presentación Web](https://jmcaamanog.github.io/BC3Viewer-App/landing.html)** | Web interactiva con galería de 32 capturas y descargas. |
+| **App Online** | 👉 **[Abrir App Web (v2.2.1)](https://jmcaamanog.github.io/BC3Viewer-App/www/index.html)** | Utiliza la versión en la nube directo en tu navegador. |
 | **Web Personal** | 🌐 **[jmcaamanog.pages.dev](https://jmcaamanog.pages.dev/)** | Portfolio profesional y proyectos ConTech del autor. |
-| **Capturas Windows** | 💻 **[Ver Galería Windows (V2.0)](./CAPTURAS/V1.5/WINDOWS_V1.5)** | Capturas de pantalla de la interfaz de escritorio Premium. |
-| **Capturas Android** | 📱 **[Ver Galería Android (V2.0)](./CAPTURAS/V1.5/ANDROID_V1.5)** | Capturas de pantalla de la app en móvil/tableta. |
+| **Capturas Windows** | 💻 **[Ver Galería Windows (V2.0)](./CAPTURAS/V2.0/WINDOWS_V2.0)** | Capturas de pantalla de la interfaz de escritorio Premium. |
+| **Capturas Android** | 📱 **[Ver Galería Android (V1.5)](./CAPTURAS/V1.5/ANDROID_V1.5)** | Capturas de pantalla de la app en móvil/tableta. |
 
 ---
 
@@ -28,17 +28,17 @@
 >     *   [Descargar Instalador .exe (NSIS)](https://github.com/jmcaamanog/BC3Viewer-App/releases/download/v2.0.0/BC3_Viewer_Windows_Installer.exe) *(Ultra ligero ~3 MB)*
 >     *   [Descargar Paquete .msi (WiX)](https://github.com/jmcaamanog/BC3Viewer-App/releases/download/v2.0.0/BC3_Viewer_Windows_Installer.msi) *(Corporativo ~3.6 MB)*
 > *   **📱 Android Móvil:**
->     *   [Descargar Aplicación .apk (v2.2.0)](https://github.com/jmcaamanog/BC3Viewer-App/releases/download/v2.2.0/BC3Viewer-App.apk) *(Soporte offline ~26 MB)*
+>     *   [Descargar Aplicación .apk (v2.2.1)](https://github.com/jmcaamanog/BC3Viewer-App/releases/download/v2.2.1/BC3Viewer-App.apk) *(Soporte offline ~26 MB)*
 > *   **📁 Archivo de Prueba:**
 >     *   [Descargar Presupuesto de Ejemplo (.bc3)](https://github.com/jmcaamanog/BC3Viewer-App/tree/main/PROGRAMAS/BC3%20EJEMPLO)
 >
-> 🔑 **Contraseña de Acceso (Versión 2.2.0):** `1234`
+> 🔑 **Contraseña de Acceso (Versión 2.2.1):** `1234`
 
 ---
 
 ### 👨‍💻 Creador de la Versión Premium
 Desarrollado y ampliado por `José Manuel Caamaño González` ([LinkedIn](https://www.linkedin.com/in/jmcaamanog/) · [Web Personal](https://jmcaamanog.pages.dev/)), Arquitecto Técnico y BIM Manager.  
-A Coruña, Galicia, España.
+Comprometido con el software libre y el empoderamiento tecnológico en el sector AECO.
 
 ---
 
@@ -48,11 +48,11 @@ A Coruña, Galicia, España.
 
 ---
 
-## 🌟 Características Principales (FIEBDC-3 Premium v2.2)
+## 🌟 Características Principales (FIEBDC-3 Premium v2.2.1)
 
 | Módulo | Icono | Funcionalidades Destacadas |
 | :--- | :---: | :--- |
-| **Asistente IA Generativo** | 🤖 | **Creación con Google Gemini AI (BYOK)**: Genera presupuestos completos desde lenguaje natural con descompuestos (~D), unidades y mediciones (~M). Chat interactivo con auditoría técnica e inserción directa de partidas en capítulos. |
+| **Asesor IA Oficial (jmcaamanog)** | 👨‍💻 | **Asesor de IA con Google Gemini (BYOK)**: Consultoría técnica experta, auditoría de partidas faltantes y redacción e inserción de nuevas partidas directamente en tus capítulos con un clic. Avatar oficial y personalización con Google Sign-In. |
 | **Multi-Presupuesto** | 📑 | **Barra de pestañas superior** para abrir y gestionar simultáneamente múltiples presupuestos en memoria. Creación de nuevos proyectos y guardado directo local en disco mediante File System Access API. |
 | **Google Drive Sync & EVM** | ☁️ | **Sincronización oficial OAuth 2.0 en `/BC3Viewer/`**, cifrado local E2E (AES-256 GCM) en IndexedDB y **Curva S de Valor Ganado (EVM)** con 8 KPIs económicos e informe Excel. |
 | **Visualización Estructurada** | 🌳 | **Árbol jerárquico expandible** de capítulos, subcapítulos y partidas. Columnas ajustables de Código, Resumen, Cantidad, Precio e Importe. **Vista drill-down** adaptada a móviles y breadcrumbs. |
@@ -73,8 +73,15 @@ A Coruña, Galicia, España.
 
 > 📋 **[Ver Historial de Versiones Completo (CHANGELOG.md)](./CHANGELOG.md)**
 
-### 📅 16/08/2026 — Versión 2.2.0 (Actual)
-* **🤖 Asistente IA Generativo (Google Gemini AI - BYOK 100% Gratis):** Creación inteligente de presupuestos completos desde lenguaje natural con árbol de capítulos, partidas normalizadas FIEBDC-3, descripciones técnicas completas (`~T`), descomposición elemental (`~D`: mano de obra, maquinaria y materiales) y mediciones estimadas (`~M`).
+### 📅 16/08/2026 — Versión 2.2.1 (Actual)
+* **👨‍💻 Asesor de IA Oficial ConTech (jmcaamanog):** Identidad, rigor técnico y avatar oficial del autor (`jmcaamanog.png`) integrado en el chat interactivo para auditoría técnica de presupuestos, detección de partidas faltantes y creación de descompuestos con Google Gemini BYOK.
+* **💬 Interfaz en Azul Pizarra ConTech:** Burbujas de chat de alto contraste en azul marino (#111e38) y azul hielo (#e0f2fe).
+* **👤 Personalización de Usuario con Google Sign-In:** Saludo dinámico por nombre de pila y carga de foto de perfil con `referrerpolicy="no-referrer"`.
+* **📍 Acceso Rápido Superior Derecho:** Botón fijo siempre accesible ubicado junto a la Paleta de Comandos (Ctrl+K).
+* **🖼️ Galería Interactiva Ampliada:** Incorporación de 3 nuevas capturas oficiales de la IA (total 32 capturas en Landing Page).
+
+### 📅 16/08/2026 — Versión 2.2.0
+* **🤖 Asistente IA Generativo (Google Gemini AI - BYOK 100% Gratis):** Creación inteligente de presupuestos completos desde lenguaje natural con árbol de capítulos, partidas normalizadas FIEBDC-3, descripciones técnicas completas (`~T`), descomposición elemental (`~D`: mano de obra, maquinaria y materiales) y mediciones estimadas (`~M`). lenguaje natural con árbol de capítulos, partidas normalizadas FIEBDC-3, descripciones técnicas completas (`~T`), descomposición elemental (`~D`: mano de obra, maquinaria y materiales) y mediciones estimadas (`~M`).
 * **💬 Asistente IA ConTech Interactivo (Consultoría, Auditoría e Inserción en Vivo):** Chat conversacional integrado capaz de leer el presupuesto activo en tiempo real para resolver dudas técnicas, auditar partidas faltantes, analizar las unidades más costosas y generar partidas con inserción directa en capítulos mediante tarjetas interactivas.
 * **🟢 Indicador de Estado en Tiempo Real (Respiración Verde Esmeralda):** Indicador visual en el menú de Ajustes y en el chat con animación luminosa pulsante (`● Conectado` / `● Desconectado`).
 * **📖 Guía Visual de Conexión en 30s:** Asistente de configuración integrado con enlace directo a Google AI Studio, validación instantánea de clave y almacenamiento 100% privado en local (`localStorage`).

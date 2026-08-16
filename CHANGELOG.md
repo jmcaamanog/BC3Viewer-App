@@ -2,7 +2,14 @@
 
 En este documento se detalla la evolución completa de la aplicación, incluyendo todas las revisiones y mejoras intermedias realizadas.
 
-### Versión 2.2.0 — 16/08/2026 (Actual)
+### Versión 2.2.1 — 16/08/2026 (Actual)
+* **👨‍💻 Asesor de IA Oficial ConTech (jmcaamanog):** Identidad, rigor técnico y avatar oficial del autor (`jmcaamanog.png`) integrado en el chat interactivo para auditoría técnica de presupuestos, detección de partidas faltantes y creación de descompuestos con Google Gemini BYOK.
+* **💬 Interfaz en Azul Pizarra ConTech:** Burbujas de chat de alto contraste en azul marino (#111e38) y azul hielo (#e0f2fe).
+* **👤 Personalización de Usuario con Google Sign-In:** Saludo dinámico por nombre de pila y carga de foto de perfil con `referrerpolicy="no-referrer"`.
+* **📍 Acceso Rápido Superior Derecho:** Botón fijo siempre accesible ubicado junto a la Paleta de Comandos (Ctrl+K).
+* **🖼️ Galería Interactiva Ampliada:** Incorporación de 3 nuevas capturas oficiales de la IA (total 32 capturas en Landing Page).
+
+### Versión 2.2.0 — 16/08/2026
 * **🤖 Asistente IA Generativo (Google Gemini AI - BYOK 100% Gratis):** Creación inteligente de presupuestos completos desde cero en lenguaje natural con árbol de capítulos, partidas normalizadas FIEBDC-3, descripciones técnicas completas (`~T`), descomposición elemental (`~D`: mano de obra, maquinaria y materiales) y mediciones estimadas (`~M`).
 * **💬 Asistente IA ConTech Interactivo (Consultoría, Auditoría e Inserción en Vivo):** Chat conversacional integrado capaz de leer el presupuesto activo en tiempo real para resolver dudas técnicas, auditar partidas faltantes, analizar las unidades más costosas y generar partidas con inserción directa en capítulos mediante tarjetas interactivas.
 * **🟢 Indicador de Estado en Tiempo Real (Respiración Verde Esmeralda):** Indicador visual en el menú de Ajustes y en el chat con animación luminosa pulsante (`● Conectado` / `● Desconectado`).
