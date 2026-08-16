@@ -14015,7 +14015,8 @@ document.querySelectorAll('.gemini-chip-btn').forEach(btn => {
 // ==========================================================================
 
 const GEMINI_API_STORAGE_KEY = 'bc3_gemini_api_key';
-const GEMINI_MODEL = 'gemini-1.5-flash';
+const GEMINI_MODELS = ['gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite'];
+const GEMINI_MODEL = 'gemini-3.5-flash';
 
 const geminiConfigModal = document.getElementById('geminiConfigModal');
 const geminiConfigBtn = document.getElementById('geminiConfigBtn');
@@ -14060,51 +14061,44 @@ async function validateGeminiApiKey(key) {
     const cleanKey = (key || '').trim();
     if (!cleanKey) return { success: false, error: 'Por favor introduce una clave de API válida.' };
 
-    if (!cleanKey.startsWith('AIzaSy')) {
-        return { 
-            success: false, 
-            error: 'Formato no válido: Las claves de Google AI Studio empiezan siempre por "AIzaSy...". Asegúrate de entrar en https://aistudio.google.com/app/apikey y pulsar en el botón azul "Create API key".' 
-        };
-    }
+    let lastError = 'No se pudo conectar con Google AI Studio.';
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${cleanKey}`;
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000);
+    for (const model of GEMINI_MODELS) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${cleanKey}`;
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: 'Responde estrictamente con la palabra OK si esta petición funciona correctamente.' }] }],
-                generationConfig: { maxOutputTokens: 10 }
-            }),
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: 'Responde estrictamente con la palabra OK si esta petición funciona correctamente.' }] }],
+                    generationConfig: { maxOutputTokens: 10 }
+                }),
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
 
-        if (!response.ok) {
-            let errorMsg = `Error HTTP ${response.status}`;
-            try {
-                const errData = await response.json();
-                if (errData?.error?.message) {
-                    errorMsg = errData.error.message;
-                    if (errorMsg.includes('API key not valid') || errorMsg.includes('is not found')) {
-                        errorMsg = 'Clave API no reconocida por Google AI Studio. Por favor verifica que esté activa en aistudio.google.com/app/apikey.';
-                    }
+            if (response.ok) {
+                const data = await response.json();
+                if (data?.candidates && data.candidates.length > 0) {
+                    return { success: true, workingModel: model };
                 }
-            } catch (e) {}
-            return { success: false, error: errorMsg };
+            } else {
+                let errorMsg = `Error HTTP ${response.status}`;
+                try {
+                    const errData = await response.json();
+                    if (errData?.error?.message) errorMsg = errData.error.message;
+                } catch (e) {}
+                lastError = errorMsg;
+            }
+        } catch (err) {
+            lastError = err.name === 'AbortError' ? 'Tiempo de espera agotado al conectar con Google AI Studio.' : (err.message || lastError);
         }
-
-        const data = await response.json();
-        if (data?.candidates && data.candidates.length > 0) {
-            return { success: true };
-        }
-        return { success: false, error: 'Respuesta inesperada del servidor de Google.' };
-    } catch (err) {
-        return { success: false, error: err.name === 'AbortError' ? 'Tiempo de espera agotado al conectar con Google AI Studio.' : (err.message || 'Error de conexión con Google AI.') };
     }
+
+    return { success: false, error: lastError };
 }
 
 function updateGeminiStatusUI() {
@@ -14256,6 +14250,39 @@ if (removeGeminiKeyBtn) {
     });
 }
 
+async function callGeminiApi(apiKey, bodyPayload, timeoutMs = 45000) {
+    let lastError = null;
+    for (const model of GEMINI_MODELS) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bodyPayload),
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (response.ok) {
+                const data = await response.json();
+                return data;
+            } else {
+                let errMsg = `Error HTTP ${response.status}`;
+                try {
+                    const errData = await response.json();
+                    if (errData?.error?.message) errMsg = errData.error.message;
+                } catch (e) {}
+                lastError = new Error(errMsg);
+            }
+        } catch (e) {
+            lastError = e;
+        }
+    }
+    throw lastError || new Error("No se pudo conectar con ningún modelo activo de Gemini.");
+}
+
 // Generador de presupuesto estructurado con Gemini
 async function generateBudgetWithGemini(userPrompt, options) {
     const apiKey = getGeminiApiKey();
@@ -14314,48 +14341,28 @@ REGLAS OBLIGATORIAS:
    - "measurements": líneas de medición con desglose de dimensiones estimadas si procede.
 3. No incluyas explicaciones en texto ni bloques markdown adicionales, únicamente el JSON puro.`;
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
-
     const loadingOverlay = document.getElementById('wizardGeminiLoading');
     if (loadingOverlay) loadingOverlay.style.display = 'flex';
 
     try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [
-                    {
-                        parts: [
-                            { text: `Genera el presupuesto en formato JSON para el siguiente proyecto:\nTítulo: ${options.title}\nCliente: ${options.client}\nUbicación: ${options.location}\nDescripción del alcance: ${cleanPrompt}` }
-                        ]
-                    }
-                ],
-                systemInstruction: {
-                    parts: [{ text: systemInstruction }]
-                },
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    temperature: 0.2
+        const payload = {
+            contents: [
+                {
+                    parts: [
+                        { text: `Genera el presupuesto en formato JSON para el siguiente proyecto:\nTítulo: ${options.title}\nCliente: ${options.client}\nUbicación: ${options.location}\nDescripción del alcance: ${cleanPrompt}` }
+                    ]
                 }
-            }),
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
+            ],
+            systemInstruction: {
+                parts: [{ text: systemInstruction }]
+            },
+            generationConfig: {
+                responseMimeType: "application/json",
+                temperature: 0.2
+            }
+        };
 
-        if (!response.ok) {
-            let errMsg = `Error HTTP ${response.status}`;
-            try {
-                const errJson = await response.json();
-                if (errJson?.error?.message) errMsg = errJson.error.message;
-            } catch (e) {}
-            throw new Error(errMsg);
-        }
-
-        const data = await response.json();
+        const data = await callGeminiApi(apiKey, payload, 60000);
         const candidate = data.candidates?.[0];
         const contentText = candidate?.content?.parts?.[0]?.text;
 
@@ -14791,37 +14798,18 @@ INSTRUCCIONES CLAVE:
     assistantChatMessages.push({ role: "user", parts: [{ text }] });
 
     try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 35000);
-
         // Enviar historial reciente (últimos 8 mensajes)
         const recentHistory = assistantChatMessages.slice(-8);
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: recentHistory,
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-                generationConfig: { temperature: 0.3 }
-            }),
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
+        const payload = {
+            contents: recentHistory,
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+            generationConfig: { temperature: 0.3 }
+        };
 
+        const data = await callGeminiApi(apiKey, payload, 35000);
         removeChatLoading(loadingId);
 
-        if (!response.ok) {
-            let errMsg = `Error HTTP ${response.status}`;
-            try {
-                const errData = await response.json();
-                if (errData?.error?.message) errMsg = errData.error.message;
-            } catch (e) {}
-            throw new Error(errMsg);
-        }
-
-        const data = await response.json();
         const candidate = data.candidates?.[0];
         const aiText = candidate?.content?.parts?.[0]?.text || "No pude generar una respuesta.";
 
