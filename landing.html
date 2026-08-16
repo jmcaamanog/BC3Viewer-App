@@ -1395,6 +1395,95 @@
             top: 2px;
         }
 
+        /* TIMELINE LATEST VERSION BUTTONS GRID */
+        .version-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            width: 100%;
+            margin-top: 22px;
+        }
+
+        .version-action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 46px;
+            padding: 0 10px;
+            border-radius: 12px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            text-decoration: none;
+            box-sizing: border-box;
+            white-space: nowrap;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+        }
+
+        .version-action-btn.btn-web {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            color: #ffffff;
+            border: 1px solid rgba(59, 130, 246, 0.5);
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+        }
+        .version-action-btn.btn-web:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.55);
+            border-color: #60a5fa;
+        }
+
+        .version-action-btn.btn-apk {
+            background: rgba(16, 185, 129, 0.12);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+        .version-action-btn.btn-apk:hover {
+            background: rgba(16, 185, 129, 0.22);
+            border-color: #10b981;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+            color: #6ee7b7;
+        }
+
+        .version-action-btn.btn-exe {
+            background: rgba(59, 130, 246, 0.12);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.35);
+        }
+        .version-action-btn.btn-exe:hover {
+            background: rgba(59, 130, 246, 0.22);
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+            color: #93c5fd;
+        }
+
+        .version-action-btn.btn-author {
+            background: rgba(147, 51, 234, 0.12);
+            color: #c084fc;
+            border: 1px solid rgba(147, 51, 234, 0.35);
+        }
+        .version-action-btn.btn-author:hover {
+            background: rgba(147, 51, 234, 0.22);
+            border-color: #9333ea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(147, 51, 234, 0.25);
+            color: #d8b4fe;
+        }
+
+        @media (max-width: 900px) {
+            .version-actions-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .version-actions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* HERO GITHUB STATS WIDGET */
         .hero-stats {
             display: flex;
@@ -2269,22 +2358,22 @@
                         <li><strong>Valor Ganado (EVM) y Curva S Interactiva:</strong> Cálculo de los 8 KPIs financieros estándar (BAC, PV, EV, AC, CPI, SPI, CV, EAC) y exportación a Excel.</li>
                         <li><strong>Desplazamiento Suave (Pan) en Gantt:</strong> Arrastre horizontal y vertical sincronizado en el cronograma de obra.</li>
                     </ul>
-                    <div class="version-actions" style="margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                        <a href="www/index.html" class="btn btn-primary" target="_blank"
-                            style="padding: 9px 18px; font-size: 0.85rem; font-weight: 600; gap: 7px; border-radius: 10px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);">
-                            <span>🚀</span> Abrir App Web v2.1
+                    <div class="version-actions-grid">
+                        <a href="www/index.html" class="version-action-btn btn-web" target="_blank">
+                            <span>🚀</span>
+                            <span>Abrir App Web</span>
                         </a>
-                        <a href="PROGRAMAS/BC3Viewer-App.apk" class="btn btn-download"
-                            style="padding: 9px 18px; font-size: 0.85rem; font-weight: 600; gap: 7px; border-radius: 10px; background: rgba(16, 185, 129, 0.18); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399;" download>
-                            <span>🤖</span> Descargar .APK
+                        <a href="PROGRAMAS/BC3Viewer-App.apk" class="version-action-btn btn-apk" download>
+                            <span>🤖</span>
+                            <span>Descargar .APK</span>
                         </a>
-                        <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.exe" class="btn btn-download"
-                            style="padding: 9px 18px; font-size: 0.85rem; font-weight: 600; gap: 7px; border-radius: 10px; background: rgba(59, 130, 246, 0.18); border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa;" download>
-                            <span>💻</span> Descargar .EXE
+                        <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.exe" class="version-action-btn btn-exe" download>
+                            <span>💻</span>
+                            <span>Descargar .EXE</span>
                         </a>
-                        <a href="https://jmcaamanog.pages.dev/" class="btn btn-secondary" target="_blank"
-                            style="padding: 9px 18px; font-size: 0.85rem; font-weight: 600; gap: 7px; border-radius: 10px; border-color: rgba(147, 51, 234, 0.4); color: #c084fc; background: rgba(147, 51, 234, 0.15);">
-                            <span>👨‍💻</span> Sobre el Autor
+                        <a href="https://jmcaamanog.pages.dev/" class="version-action-btn btn-author" target="_blank" rel="noopener">
+                            <span>👨‍💻</span>
+                            <span>Sobre el Autor</span>
                         </a>
                     </div>
                 </div>
