@@ -12945,7 +12945,7 @@ let googleAccessToken = sessionStorage.getItem('bc3_gdrive_access_token') || nul
 let googleDriveFolderId = localStorage.getItem('bc3_gdrive_folder_id') || null;
 
 function getGoogleClientId() {
-    return localStorage.getItem('bc3_google_custom_client_id') || '452148719266-placeholder.apps.google.com';
+    return localStorage.getItem('bc3_google_custom_client_id') || '423499084317-d1epb2522jeiq5964nflpp8m8raavfqj.apps.googleusercontent.com';
 }
 
 function initGoogleIdentity() {
