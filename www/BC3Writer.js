@@ -2,6 +2,11 @@
 // Modificar en: packages/bc3-writer-jmc-js/src/index.js
 
 class BC3Writer {
+    static write(parsedData) {
+        const writer = new BC3Writer();
+        return writer.write(parsedData);
+    }
+
     constructor() {
         this.lines = [];
     }

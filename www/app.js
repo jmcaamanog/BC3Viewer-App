@@ -12989,12 +12989,23 @@ function connectGoogleAccount() {
     }
 }
 
-function disconnectGoogleAccount() {
-    if (confirm("¿Deseas desconectar tu cuenta de Google Drive? Los archivos guardados localmente permanecerán seguros.")) {
-        localStorage.removeItem('bc3_cloud_user_account');
-        updateCloudAccountUI();
-        if (cloudSyncStatusText) cloudSyncStatusText.textContent = `⚪ Cuenta desconectada`;
+function generateBasicBC3FromData(data) {
+    if (!data || !data.concepts) return "";
+    const lines = [];
+    const props = data.properties || {};
+    lines.push(`~V|${props.owner || ''}|${props.format || 'FIEBDC-3/2020'}|${props.generator || 'BC3Viewer'}|${props.description || ''}|`);
+    for (const code in data.concepts) {
+        const c = data.concepts[code];
+        lines.push(`~C|${c.code || ''}|${c.unit || ''}|${(c.summary || '').replace(/[\r\n]/g, ' ')}|${c.price || 0}|${c.date || ''}|${c.type || 0}|`);
+        if (c.decomposition && c.decomposition.length > 0) {
+            const decompStr = c.decomposition.map(d => `${d.code}\\${d.factor || 1}\\${d.percentage || 0}`).join('\\');
+            lines.push(`~D|${c.code}|${decompStr}|`);
+        }
+        if (c.description) {
+            lines.push(`~T|${c.code}|${c.description}|`);
+        }
     }
+    return lines.join('\r\n') + '\r\n';
 }
 
 async function uploadActiveBudgetToCloud() {
@@ -13008,13 +13019,35 @@ async function uploadActiveBudgetToCloud() {
     try {
         // Serializar el presupuesto actual a texto BC3 FIEBDC-3
         let bc3Content = "";
-        if (typeof window.BC3Writer !== 'undefined' && typeof window.BC3Writer.write === 'function') {
-            bc3Content = window.BC3Writer.write(parsedData);
-        } else {
-            bc3Content = typeof exportBC3String === 'function' ? exportBC3String() : "";
+
+        // 1. Intentar con el motor BC3Writer
+        if (typeof BC3Writer !== 'undefined') {
+            try {
+                const writer = new BC3Writer();
+                bc3Content = writer.write(parsedData);
+            } catch (wErr) {
+                console.warn("Aviso al serializar con BC3Writer:", wErr);
+            }
         }
 
-        if (!bc3Content || bc3Content.length === 0) {
+        // 2. Si no se generó, usar el texto original o el texto de la pestaña activa
+        if (!bc3Content || bc3Content.trim().length === 0) {
+            if (originalFileText && originalFileText.trim().length > 0) {
+                bc3Content = originalFileText;
+            } else if (typeof currentBudgetTabId !== 'undefined' && currentBudgetTabId) {
+                const tab = budgetTabs.find(t => t.id === currentBudgetTabId);
+                if (tab && tab.rawText && tab.rawText.trim().length > 0) {
+                    bc3Content = tab.rawText;
+                }
+            }
+        }
+
+        // 3. Generador de respaldo estructurado
+        if (!bc3Content || bc3Content.trim().length === 0) {
+            bc3Content = generateBasicBC3FromData(parsedData);
+        }
+
+        if (!bc3Content || bc3Content.trim().length === 0) {
             throw new Error("No se pudo generar el contenido del archivo BC3.");
         }
 
