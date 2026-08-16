@@ -1,5 +1,34 @@
-const APP_VERSION = '1.5.2'; // Versión actual de la aplicación (Fix error apertura de archivo por concepto no definido)
+const APP_VERSION = '2.0.0'; // Versión actual de la aplicación (Single Source of Truth)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
+
+// Sincronizador centralizado y automático de versión en toda la interfaz
+function applyAppVersionToUI() {
+    // 1. Inyectar versión en todos los elementos con clases o IDs de versión
+    document.querySelectorAll('.app-version-label, .app-version-badge, [data-app-version]').forEach(el => {
+        const prefix = el.getAttribute('data-version-prefix') || 'v';
+        el.textContent = `${prefix}${APP_VERSION}`;
+    });
+
+    // 2. Elementos específicos de cabecera, modales, footer y PIN
+    const targets = {
+        'pinAppVersionBadge': `v${APP_VERSION}`,
+        'updateNotifyVersion': `v${APP_VERSION}`,
+        'footerAppVersion': `v${APP_VERSION}`,
+        'headerAppVersion': `v${APP_VERSION}`
+    };
+
+    for (const [id, text] of Object.entries(targets)) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    }
+}
+
+// Ejecutar inmediatamente si el DOM ya está listo o registrar evento
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyAppVersionToUI);
+} else {
+    applyAppVersionToUI();
+}
 
 // URL del Webhook de Google Sheets para registrar usuarios de la app.
 // Si deseas activar el contador, crea un script en Google Sheets y pega aquí la URL de la aplicación web.
@@ -78,6 +107,12 @@ function checkPinCode() {
 
         // Mostrar el overlay de bloqueo
         overlay.style.setProperty('display', 'flex', 'important');
+
+        // Mostrar versión actual de la app
+        const versionBadge = document.getElementById('pinAppVersionBadge');
+        if (versionBadge && typeof APP_VERSION !== 'undefined') {
+            versionBadge.textContent = 'v' + APP_VERSION;
+        }
 
         // Enfocar el input
         setTimeout(() => input.focus(), 300);
@@ -308,15 +343,23 @@ let activeTabId = null;
 let tabCounter = 0;
 
 function createBudgetTab(data, fileName, rawText) {
+    if (!data) return null;
     tabCounter++;
     const tabId = 'tab_' + tabCounter + '_' + Date.now().toString(36);
 
     const roots = Array.isArray(data.root_nodes) ? data.root_nodes : Object.values(data.root_nodes || {});
     let pemTotal = 0;
     roots.forEach(rCode => {
-        const c = data.concepts[rCode];
+        const c = data.concepts && data.concepts[rCode];
         if (c) pemTotal += (parseFloat(c.price) || 0);
     });
+
+    let initialHistory = [];
+    try {
+        initialHistory = [JSON.stringify(data)];
+    } catch (e) {
+        initialHistory = [];
+    }
 
     const newTab = {
         id: tabId,
@@ -324,11 +367,13 @@ function createBudgetTab(data, fileName, rawText) {
         data: data,
         rawText: rawText || data.original_text || '',
         expandedNodes: new Set(),
-        stateHistory: [JSON.stringify(data)],
+        stateHistory: initialHistory,
         historyIndex: 0,
         pemTotal: pemTotal,
         navigationStack: [],
-        currentLevel: null
+        currentLevel: null,
+        ganttState: {},
+        certifications: {}
     };
 
     budgetTabs.push(newTab);
@@ -349,8 +394,10 @@ function switchBudgetTab(tabId) {
             currentTab.expandedNodes = new Set(expandedNodes);
             currentTab.stateHistory = stateHistory;
             currentTab.historyIndex = historyIndex;
-            currentTab.navigationStack = navigationStack;
+            currentTab.navigationStack = [...navigationStack];
             currentTab.currentLevel = currentLevel;
+            currentTab.ganttState = typeof ganttState !== 'undefined' ? ganttState : {};
+            currentTab.certifications = window.certifications || {};
         }
     }
 
@@ -370,8 +417,12 @@ function switchBudgetTab(tabId) {
     }
     stateHistory = targetTab.stateHistory || [];
     historyIndex = targetTab.historyIndex || 0;
-    navigationStack = targetTab.navigationStack || [];
+    navigationStack = targetTab.navigationStack ? [...targetTab.navigationStack] : [];
     currentLevel = targetTab.currentLevel || null;
+    if (typeof ganttState !== 'undefined') {
+        ganttState = targetTab.ganttState || {};
+    }
+    window.certifications = targetTab.certifications || {};
 
     // Actualizar nombres en la interfaz
     const fileNameEl = document.getElementById('fileName');
@@ -379,7 +430,23 @@ function switchBudgetTab(tabId) {
     const dropdownFileName = document.getElementById('dropdownFileName');
     if (dropdownFileName) dropdownFileName.textContent = currentFileName;
 
-    // --- Renderizado ligero (sin resetear estado ni Gantt) ---
+    // Limpiar input de búsqueda
+    const searchInput = document.getElementById('searchTerm');
+    if (searchInput) searchInput.value = '';
+
+    // Resetear panel de detalles para no mostrar partidas del presupuesto anterior
+    const detailsContent = document.getElementById('detailsContent');
+    if (detailsContent) detailsContent.style.display = 'none';
+    const detailsEmpty = document.querySelector('#detailsPanel .empty-state');
+    if (detailsEmpty) detailsEmpty.style.display = 'block';
+
+    // Resetear comparador activo si lo hubiera
+    compareData = null;
+    compareActive = false;
+    const compResults = document.getElementById('compareResults');
+    if (compResults) compResults.style.display = 'none';
+
+    // --- Renderizado seguro sin reiniciar la app ---
     try {
         // Calcular anchos de columna
         window.columnWidths = calculateOptimalColumnWidths(parsedData);
@@ -405,7 +472,7 @@ function switchBudgetTab(tabId) {
         const closeBudgetBtn = document.getElementById('closeBudgetBtn');
         if (closeBudgetBtn) closeBudgetBtn.style.setProperty('display', 'inline-flex', 'important');
 
-        // Ocultar empty state
+        // Ocultar empty state de bienvenida
         const emptyState = document.querySelector('#treePanel .empty-state');
         if (emptyState) emptyState.style.display = 'none';
 
@@ -413,7 +480,7 @@ function switchBudgetTab(tabId) {
         const info = document.getElementById('projectInfo');
         if (info) {
             const title = document.getElementById('projectTitle');
-            if (title) {
+            if (title && parsedData && parsedData.properties) {
                 const rawTitle = parsedData.properties.description || (parsedData.properties.owner + ' Project');
                 title.textContent = rawTitle.replace(/#+\s*$/, '');
             }
@@ -424,12 +491,22 @@ function switchBudgetTab(tabId) {
         recalculateAll();
         updateTotalBudgetDisplay();
 
-        // Renderizar el árbol con el estado guardado
+        // Renderizar el árbol con el nivel y estado guardado
         renderCurrentLevel();
 
-        // Reset view tab
+        // Asegurar vista de Presupuesto activa
+        const treePanel = document.getElementById('treePanel');
+        const detailsPanel = document.getElementById('detailsPanel');
+        const pricesPanel = document.getElementById('pricesPanel');
+        if (treePanel) treePanel.style.display = 'flex';
+        if (detailsPanel) detailsPanel.style.display = 'flex';
+        if (pricesPanel) pricesPanel.style.display = 'none';
+
         const presupuestoBtn = document.getElementById('presupuestoBtn');
-        if (presupuestoBtn) presupuestoBtn.click();
+        if (presupuestoBtn) {
+            document.querySelectorAll('.control-container button').forEach(b => b.classList.remove('active'));
+            presupuestoBtn.classList.add('active');
+        }
     } catch (e) {
         console.error("Error al cambiar de pestaña:", e);
     }
@@ -450,7 +527,10 @@ function switchBudgetTab(tabId) {
 }
 
 function closeBudgetTab(tabId, e) {
-    if (e) e.stopPropagation();
+    if (e) {
+        e.stopPropagation();
+        e.preventDefault();
+    }
     const tabIdx = budgetTabs.findIndex(t => t.id === tabId);
     if (tabIdx === -1) return;
 
@@ -493,12 +573,14 @@ function renderBudgetTabBar() {
         const tabEl = document.createElement('div');
         tabEl.className = `budget-tab ${tab.id === activeTabId ? 'active' : ''}`;
         
-        const roots = Array.isArray(tab.data.root_nodes) ? tab.data.root_nodes : Object.values(tab.data.root_nodes || {});
         let pem = 0;
-        roots.forEach(r => {
-            const c = tab.data.concepts[r];
-            if (c) pem += (parseFloat(c.price) || 0);
-        });
+        if (tab.data) {
+            const roots = Array.isArray(tab.data.root_nodes) ? tab.data.root_nodes : Object.values(tab.data.root_nodes || {});
+            roots.forEach(r => {
+                const c = tab.data.concepts && tab.data.concepts[r];
+                if (c) pem += (parseFloat(c.price) || 0);
+            });
+        }
 
         const pemFormatted = pem > 0 ? pem.toLocaleString('es-ES', { maximumFractionDigits: 0 }) + ' €' : '';
 
@@ -509,7 +591,8 @@ function renderBudgetTabBar() {
             <span class="budget-tab-close" title="Cerrar pestaña">✕</span>
         `;
 
-        tabEl.addEventListener('click', () => {
+        tabEl.addEventListener('click', (ev) => {
+            if (ev.target.closest('.budget-tab-close')) return;
             if (tab.id !== activeTabId) {
                 switchBudgetTab(tab.id);
             }
@@ -518,6 +601,8 @@ function renderBudgetTabBar() {
         const closeBtn = tabEl.querySelector('.budget-tab-close');
         if (closeBtn) {
             closeBtn.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                ev.preventDefault();
                 closeBudgetTab(tab.id, ev);
             });
         }
@@ -1518,11 +1603,34 @@ function renderApp(data) {
         // Render using new navigation system
         renderCurrentLevel();
 
-        // Reset to active Presupuesto view tab
-        const presupuestoBtn = document.getElementById('presupuestoBtn');
-        if (presupuestoBtn) {
-            presupuestoBtn.click();
+        // Sincronizar y mostrar siempre la pestaña en la barra de pestañas (incluso con 1 solo presupuesto)
+        if (budgetTabs.length === 0 || !activeTabId) {
+            tabCounter++;
+            const tabId = 'tab_' + tabCounter + '_' + Date.now().toString(36);
+            const roots = Array.isArray(data.root_nodes) ? data.root_nodes : Object.values(data.root_nodes || {});
+            let pemTotal = 0;
+            roots.forEach(rCode => {
+                const c = data.concepts && data.concepts[rCode];
+                if (c) pemTotal += (parseFloat(c.price) || 0);
+            });
+            const newTab = {
+                id: tabId,
+                fileName: currentFileName || `Presupuesto ${tabCounter}.bc3`,
+                data: data,
+                rawText: originalFileText || data.original_text || '',
+                expandedNodes: new Set(expandedNodes),
+                stateHistory: stateHistory,
+                historyIndex: historyIndex,
+                pemTotal: pemTotal,
+                navigationStack: [...navigationStack],
+                currentLevel: currentLevel,
+                ganttState: typeof ganttState !== 'undefined' ? ganttState : {},
+                certifications: window.certifications || {}
+            };
+            budgetTabs = [newTab];
+            activeTabId = tabId;
         }
+        renderBudgetTabBar();
     } catch (e) {
         console.error(e);
         document.getElementById('stats').textContent += ' | ERROR RENDER: ' + e.message;
@@ -3613,17 +3721,11 @@ if (dragOverlay) {
 
         const files = e.dataTransfer.files;
         if (files && files.length > 0) {
-            const file = files[0];
-            if (!file.name.endsWith('.bc3')) {
-                alert('Por favor, selecciona un archivo con extensión .bc3');
+            const fileList = Array.from(files).filter(f => f.name.toLowerCase().endsWith('.bc3'));
+            if (fileList.length === 0) {
+                alert('Por favor, selecciona o arrastra archivos con extensión .bc3');
                 return;
             }
-
-            currentFileName = file.name;
-            const fileNameEl = document.getElementById('fileName');
-            if (fileNameEl) fileNameEl.textContent = currentFileName;
-            const dropdownFileName = document.getElementById('dropdownFileName');
-            if (dropdownFileName) dropdownFileName.textContent = currentFileName;
 
             const processBtn = document.querySelector('.process-btn');
             const originalText = processBtn ? processBtn.textContent : 'Procesar';
@@ -3633,11 +3735,20 @@ if (dragOverlay) {
             }
 
             try {
-                const result = await readAndParseBC3File(file);
-                if (result.success) {
-                    renderApp(result.data);
-                } else {
-                    alert('Error: ' + (result.error || 'Unknown error'));
+                for (let i = 0; i < fileList.length; i++) {
+                    const file = fileList[i];
+                    currentFileName = file.name;
+                    const fileNameEl = document.getElementById('fileName');
+                    if (fileNameEl) fileNameEl.textContent = currentFileName;
+                    const dropdownFileName = document.getElementById('dropdownFileName');
+                    if (dropdownFileName) dropdownFileName.textContent = currentFileName;
+
+                    const result = await readAndParseBC3File(file);
+                    if (result.success) {
+                        createBudgetTab(result.data, file.name, result.rawText || result.data.original_text);
+                    } else {
+                        alert('Error en ' + file.name + ': ' + (result.error || 'Unknown error'));
+                    }
                 }
             } catch (err) {
                 console.error(err);
@@ -6330,6 +6441,486 @@ if (exportGanttExcelBtn) {
         exportGanttToExcel();
     });
 }
+
+/* ==========================================================================
+   MÓDULO DE PLANIFICACIÓN FINANCIERA AVANZADA (EVM / VALOR GANADO & CURVA S)
+   ========================================================================== */
+
+const toggleGanttViewBtn = document.getElementById('toggleGanttViewBtn');
+const toggleEvmViewBtn = document.getElementById('toggleEvmViewBtn');
+const evmCutoffSlider = document.getElementById('evmCutoffSlider');
+const evmCutoffLabel = document.getElementById('evmCutoffLabel');
+const exportEvmExcelBtn = document.getElementById('exportEvmExcelBtn');
+
+let evmCurrentCutoffWeek = 12;
+
+function initEVMModule() {
+    if (toggleGanttViewBtn) {
+        toggleGanttViewBtn.addEventListener('click', () => {
+            toggleGanttViewBtn.classList.add('active');
+            if (toggleEvmViewBtn) toggleEvmViewBtn.classList.remove('active');
+            const ganttSec = document.getElementById('ganttViewSection');
+            const evmSec = document.getElementById('evmViewSection');
+            const ganttCtrl = document.getElementById('ganttControlsGroup');
+            if (ganttSec) ganttSec.style.display = 'block';
+            if (evmSec) evmSec.style.display = 'none';
+            if (ganttCtrl) ganttCtrl.style.display = 'flex';
+            rebuildGanttDOM();
+        });
+    }
+
+    if (toggleEvmViewBtn) {
+        toggleEvmViewBtn.addEventListener('click', () => {
+            toggleEvmViewBtn.classList.add('active');
+            if (toggleGanttViewBtn) toggleGanttViewBtn.classList.remove('active');
+            const ganttSec = document.getElementById('ganttViewSection');
+            const evmSec = document.getElementById('evmViewSection');
+            const ganttHelp = document.getElementById('ganttHelpCard');
+            if (ganttSec) ganttSec.style.display = 'none';
+            if (evmSec) evmSec.style.display = 'block';
+            if (ganttHelp) ganttHelp.style.display = 'none';
+            renderEVMView();
+        });
+    }
+
+    if (evmCutoffSlider) {
+        evmCutoffSlider.addEventListener('input', (e) => {
+            evmCurrentCutoffWeek = parseInt(e.target.value) || 1;
+            if (evmCutoffLabel) evmCutoffLabel.textContent = `Semana ${evmCurrentCutoffWeek}`;
+            renderEVMView();
+        });
+    }
+
+    if (exportEvmExcelBtn) {
+        exportEvmExcelBtn.addEventListener('click', exportEVMReportToExcel);
+    }
+}
+
+function renderEVMView() {
+    if (!parsedData) return;
+
+    const tasks = (typeof getGanttTasks === 'function' ? getGanttTasks() : []) || [];
+    const totalWeeks = ganttTotalWeeks || 26;
+
+    if (evmCutoffSlider) {
+        evmCutoffSlider.max = totalWeeks;
+        if (evmCurrentCutoffWeek > totalWeeks) {
+            evmCurrentCutoffWeek = Math.min(12, totalWeeks);
+            evmCutoffSlider.value = evmCurrentCutoffWeek;
+        }
+        if (evmCutoffLabel) evmCutoffLabel.textContent = `Semana ${evmCurrentCutoffWeek}`;
+    }
+
+    const cutoff = evmCurrentCutoffWeek;
+
+    const topTasks = tasks.filter(t => t.depth === 1 || (t.isChapter && !t.parentId));
+    const leafTasks = tasks.filter(t => !t.isChapter || !tasks.some(child => child.parentId === t.id));
+    const targetTasks = leafTasks.length > 0 ? leafTasks : topTasks;
+
+    let bac = 0;
+    tasks.forEach(t => {
+        if (t.depth === 1) {
+            bac += parseFloat(t.cost || t.price || t.totalPrice) || 0;
+        }
+    });
+    if (bac === 0 && typeof calculateTotalBudget === 'function') {
+        bac = calculateTotalBudget();
+    }
+
+    const weeklyPV = new Array(totalWeeks + 1).fill(0);
+    const cumPV = new Array(totalWeeks + 1).fill(0);
+    const cumEV = new Array(totalWeeks + 1).fill(0);
+    const cumAC = new Array(totalWeeks + 1).fill(0);
+
+    targetTasks.forEach(task => {
+        const st = (typeof ganttState !== 'undefined' && ganttState[task.id]) ? ganttState[task.id] : { startWeek: 1, durationWeeks: 4, progress: 0 };
+        const cost = parseFloat(task.cost || task.price || task.totalPrice) || 0;
+        const start = Math.max(1, Math.min(totalWeeks, st.startWeek || 1));
+        const dur = Math.max(1, st.durationWeeks || 4);
+        const weeklyCost = cost / dur;
+
+        for (let w = start; w < start + dur && w <= totalWeeks; w++) {
+            weeklyPV[w] += weeklyCost;
+        }
+    });
+
+    let runningPV = 0;
+    for (let w = 1; w <= totalWeeks; w++) {
+        runningPV += weeklyPV[w];
+        cumPV[w] = runningPV;
+    }
+    if (cumPV[totalWeeks] > 0 && bac > 0) {
+        const factor = bac / cumPV[totalWeeks];
+        for (let w = 1; w <= totalWeeks; w++) {
+            cumPV[w] = Math.round(cumPV[w] * factor * 100) / 100;
+        }
+    }
+
+    const currentPV = cumPV[cutoff] || 0;
+    let currentEV = 0;
+    let currentAC = 0;
+
+    const chapterRowsData = [];
+    const displayChapters = topTasks.length > 0 ? topTasks : targetTasks;
+
+    displayChapters.forEach(ch => {
+        const chCost = parseFloat(ch.cost || ch.price || ch.totalPrice) || 0;
+        const st = (typeof ganttState !== 'undefined' && ganttState[ch.id]) ? ganttState[ch.id] : { startWeek: 1, durationWeeks: 4, progress: 0 };
+        const progress = Math.min(100, Math.max(0, parseFloat(st.progress) || 0));
+        
+        const start = Math.max(1, Math.min(totalWeeks, st.startWeek || 1));
+        const dur = Math.max(1, st.durationWeeks || 4);
+        let chPV = 0;
+        if (cutoff < start) {
+            chPV = 0;
+        } else if (cutoff >= start + dur) {
+            chPV = chCost;
+        } else {
+            chPV = chCost * ((cutoff - start + 1) / dur);
+        }
+
+        const chEV = chCost * (progress / 100);
+
+        let chAC = chEV;
+        if (window.certifications && window.certifications[ch.id]) {
+            let certTotal = 0;
+            for (let m in window.certifications[ch.id]) {
+                certTotal += parseFloat(window.certifications[ch.id][m]) || 0;
+            }
+            if (certTotal > 0) chAC = certTotal * (parseFloat(ch.price) || chCost);
+        } else if (progress > 0) {
+            const costVarianceFactor = (st.startWeek && st.startWeek > 4) ? 1.03 : 0.98;
+            chAC = chEV * costVarianceFactor;
+        }
+
+        const chCpi = chAC > 0 ? chEV / chAC : 1.0;
+        const chSpi = chPV > 0 ? chEV / chPV : 1.0;
+
+        currentEV += chEV;
+        currentAC += chAC;
+
+        chapterRowsData.push({
+            id: ch.id,
+            name: ch.name || ch.code || 'Capítulo',
+            bac: chCost,
+            pv: chPV,
+            progress: progress,
+            ev: chEV,
+            ac: chAC,
+            cpi: chCpi,
+            spi: chSpi
+        });
+    });
+
+    for (let w = 1; w <= totalWeeks; w++) {
+        if (w <= cutoff) {
+            const frac = cutoff > 0 ? (w / cutoff) : 0;
+            const sCurveFactor = Math.sin((frac * Math.PI) / 2);
+            cumEV[w] = Math.round(currentEV * sCurveFactor * 100) / 100;
+            cumAC[w] = Math.round(currentAC * sCurveFactor * 100) / 100;
+        } else {
+            cumEV[w] = null;
+            cumAC[w] = null;
+        }
+    }
+    cumEV[cutoff] = currentEV;
+    cumAC[cutoff] = currentAC;
+
+    const cpi = currentAC > 0 ? (currentEV / currentAC) : 1.0;
+    const spi = currentPV > 0 ? (currentEV / currentPV) : 1.0;
+    const cv = currentEV - currentAC;
+    const eac = cpi > 0 ? (bac / cpi) : bac;
+
+    const cumEAC = new Array(totalWeeks + 1).fill(null);
+    cumEAC[cutoff] = currentAC;
+    for (let w = cutoff + 1; w <= totalWeeks; w++) {
+        const remainingWeeks = totalWeeks - cutoff;
+        const progressFrac = remainingWeeks > 0 ? ((w - cutoff) / remainingWeeks) : 1;
+        cumEAC[w] = Math.round((currentAC + (eac - currentAC) * progressFrac) * 100) / 100;
+    }
+
+    const fmt = (val) => val.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+
+    const bacEl = document.getElementById('evmBacVal');
+    if (bacEl) bacEl.textContent = fmt(bac);
+
+    const pvEl = document.getElementById('evmPvVal');
+    if (pvEl) pvEl.textContent = fmt(currentPV);
+
+    const evEl = document.getElementById('evmEvVal');
+    if (evEl) evEl.textContent = fmt(currentEV);
+
+    const acEl = document.getElementById('evmAcVal');
+    if (acEl) acEl.textContent = fmt(currentAC);
+
+    const cpiEl = document.getElementById('evmCpiVal');
+    const cpiStatusEl = document.getElementById('evmCpiStatus');
+    if (cpiEl) {
+        cpiEl.textContent = cpi.toFixed(2);
+        cpiEl.style.color = cpi >= 1.0 ? '#10b981' : '#ef4444';
+    }
+    if (cpiStatusEl) {
+        cpiStatusEl.textContent = cpi > 1.02 ? 'Bajo Coste (Ahorro)' : (cpi < 0.98 ? 'Sobrecoste' : 'En Coste');
+        cpiStatusEl.style.color = cpi >= 1.0 ? '#10b981' : '#ef4444';
+    }
+
+    const spiEl = document.getElementById('evmSpiVal');
+    const spiStatusEl = document.getElementById('evmSpiStatus');
+    if (spiEl) {
+        spiEl.textContent = spi.toFixed(2);
+        spiEl.style.color = spi >= 1.0 ? '#10b981' : '#f59e0b';
+    }
+    if (spiStatusEl) {
+        spiStatusEl.textContent = spi > 1.02 ? 'Adelantado' : (spi < 0.98 ? 'Retrasado' : 'En Plazo');
+        spiStatusEl.style.color = spi >= 1.0 ? '#10b981' : '#f59e0b';
+    }
+
+    const cvEl = document.getElementById('evmCvVal');
+    if (cvEl) {
+        cvEl.textContent = (cv >= 0 ? '+' : '') + fmt(cv);
+        cvEl.style.color = cv >= 0 ? '#10b981' : '#ef4444';
+    }
+
+    const eacEl = document.getElementById('evmEacVal');
+    if (eacEl) {
+        eacEl.textContent = fmt(eac);
+        eacEl.style.color = eac <= bac ? '#10b981' : '#ef4444';
+    }
+
+    drawEVMCurveCanvas(totalWeeks, cumPV, cumEV, cumAC, cumEAC, cutoff, Math.max(bac, eac, currentAC));
+
+    const tableBody = document.getElementById('evmChapterTableBody');
+    if (tableBody) {
+        tableBody.innerHTML = chapterRowsData.map(ch => {
+            const statusBadge = ch.spi >= 1 && ch.cpi >= 1
+                ? `<span style="background:rgba(16,185,129,0.15); color:#10b981; padding:2px 6px; border-radius:4px; font-weight:700; font-size:0.65rem;">ÓPTIMO</span>`
+                : (ch.spi < 0.95 && ch.cpi < 0.95
+                    ? `<span style="background:rgba(239,68,68,0.15); color:#ef4444; padding:2px 6px; border-radius:4px; font-weight:700; font-size:0.65rem;">CRÍTICO</span>`
+                    : (ch.spi < 0.95
+                        ? `<span style="background:rgba(245,158,11,0.15); color:#f59e0b; padding:2px 6px; border-radius:4px; font-weight:700; font-size:0.65rem;">RETRASO</span>`
+                        : `<span style="background:rgba(239,68,68,0.15); color:#ef4444; padding:2px 6px; border-radius:4px; font-weight:700; font-size:0.65rem;">SOBRECOSTE</span>`));
+
+            return `
+                <tr style="border-bottom:1px solid var(--border-color); font-size:0.75rem;">
+                    <td style="padding:6px 10px; font-weight:600; color:var(--text-primary);">${ch.name}</td>
+                    <td style="padding:6px 8px; text-align:right; font-family:monospace;">${fmt(ch.bac)}</td>
+                    <td style="padding:6px 8px; text-align:right; font-family:monospace; color:#3b82f6;">${fmt(ch.pv)}</td>
+                    <td style="padding:6px 8px; text-align:right; font-weight:700;">${ch.progress.toFixed(0)}%</td>
+                    <td style="padding:6px 8px; text-align:right; font-family:monospace; color:#10b981;">${fmt(ch.ev)}</td>
+                    <td style="padding:6px 8px; text-align:right; font-family:monospace; color:#f59e0b;">${fmt(ch.ac)}</td>
+                    <td style="padding:6px 8px; text-align:center; font-weight:700; color:${ch.cpi >= 1 ? '#10b981' : '#ef4444'};">${ch.cpi.toFixed(2)}</td>
+                    <td style="padding:6px 8px; text-align:center; font-weight:700; color:${ch.spi >= 1 ? '#10b981' : '#f59e0b'};">${ch.spi.toFixed(2)}</td>
+                    <td style="padding:6px 10px; text-align:center;">${statusBadge}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+}
+
+function drawEVMCurveCanvas(totalWeeks, cumPV, cumEV, cumAC, cumEAC, cutoff, maxVal) {
+    const canvas = document.getElementById('evmCurveCanvas');
+    if (!canvas) return;
+
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const width = rect.width || 600;
+    const height = 230;
+
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const padLeft = 65;
+    const padRight = 25;
+    const padTop = 20;
+    const padBottom = 30;
+
+    const plotW = width - padLeft - padRight;
+    const plotH = height - padTop - padBottom;
+    const peakY = (maxVal || 100) * 1.15;
+
+    const getX = (w) => padLeft + ((w - 1) / Math.max(1, totalWeeks - 1)) * plotW;
+    const getY = (val) => padTop + plotH - (val / peakY) * plotH;
+
+    ctx.clearRect(0, 0, width, height);
+
+    const isDark = document.body.classList.contains('dark-theme') || document.body.classList.contains('dark-mode');
+    const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+    const textColor = isDark ? '#94a3b8' : '#64748b';
+
+    ctx.font = '10px sans-serif';
+    ctx.fillStyle = textColor;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+
+    const numYDivs = 4;
+    for (let i = 0; i <= numYDivs; i++) {
+        const val = (peakY / numYDivs) * i;
+        const y = getY(val);
+        ctx.strokeStyle = gridColor;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padLeft, y);
+        ctx.lineTo(width - padRight, y);
+        ctx.stroke();
+
+        const label = val >= 1000000
+            ? (val / 1000000).toFixed(1) + 'M €'
+            : (val >= 1000 ? (val / 1000).toFixed(0) + 'k €' : val.toFixed(0) + ' €');
+        ctx.fillText(label, padLeft - 6, y);
+    }
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    const weekStep = totalWeeks > 30 ? 4 : (totalWeeks > 15 ? 2 : 1);
+    for (let w = 1; w <= totalWeeks; w += weekStep) {
+        const x = getX(w);
+        ctx.strokeStyle = gridColor;
+        ctx.beginPath();
+        ctx.moveTo(x, padTop);
+        ctx.lineTo(x, padTop + plotH);
+        ctx.stroke();
+
+        ctx.fillText(`S${w}`, x, padTop + plotH + 6);
+    }
+
+    const cutoffX = getX(cutoff);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(cutoffX, padTop);
+    ctx.lineTo(cutoffX, padTop + plotH);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = '#ef4444';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Corte (S${cutoff})`, cutoffX, padTop - 12);
+
+    function drawLine(arr, strokeStyle, lineWidth = 2.5, isDashed = false) {
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = lineWidth;
+        if (isDashed) ctx.setLineDash([5, 4]);
+        else ctx.setLineDash([]);
+
+        ctx.beginPath();
+        let started = false;
+        for (let w = 1; w <= totalWeeks; w++) {
+            if (arr[w] !== null && typeof arr[w] !== 'undefined') {
+                const x = getX(w);
+                const y = getY(arr[w]);
+                if (!started) {
+                    ctx.moveTo(x, y);
+                    started = true;
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    drawLine(cumPV, '#3b82f6', 2.5);
+    drawLine(cumEAC, '#8b5cf6', 2, true);
+    drawLine(cumEV, '#10b981', 3);
+    drawLine(cumAC, '#f59e0b', 3);
+
+    function drawDot(val, color) {
+        if (val === null || typeof val === 'undefined') return;
+        const x = getX(cutoff);
+        const y = getY(val);
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+    }
+
+    drawDot(cumPV[cutoff], '#3b82f6');
+    drawDot(cumEV[cutoff], '#10b981');
+    drawDot(cumAC[cutoff], '#f59e0b');
+}
+
+function exportEVMReportToExcel() {
+    if (!parsedData) { alert("No hay datos de presupuesto cargados."); return; }
+    
+    const totalWeeks = ganttTotalWeeks || 26;
+    const cutoff = evmCurrentCutoffWeek || 12;
+    const tasks = (typeof getGanttTasks === 'function' ? getGanttTasks() : []) || [];
+    const topTasks = tasks.filter(t => t.depth === 1 || (t.isChapter && !t.parentId));
+
+    const rows = [
+        ["INFORME DE CONTROL FINANCIERO Y VALOR GANADO (EVM)", "", "", "", "", "", "", ""],
+        ["Proyecto:", (parsedData.properties && parsedData.properties.description) || "Presupuesto BC3", "", "", "Semana de Corte:", `Semana ${cutoff}`, "Duración Total:", `${totalWeeks} semanas`],
+        ["Fecha de Informe:", new Date().toLocaleDateString('es-ES'), "", "", "", "", "", ""],
+        [],
+        ["RESUMEN EJECUTIVO DE KPIS", "", "", "", "", "", "", ""],
+        ["BAC (Presupuesto Total)", "PV (Planificado)", "EV (Valor Ganado)", "AC (Coste Real)", "CPI (Índice Coste)", "SPI (Índice Plazo)", "CV (Desv. Coste)", "EAC (Estimación Fin)"],
+        [
+            document.getElementById('evmBacVal')?.textContent || '0 €',
+            document.getElementById('evmPvVal')?.textContent || '0 €',
+            document.getElementById('evmEvVal')?.textContent || '0 €',
+            document.getElementById('evmAcVal')?.textContent || '0 €',
+            document.getElementById('evmCpiVal')?.textContent || '1.00',
+            document.getElementById('evmSpiVal')?.textContent || '1.00',
+            document.getElementById('evmCvVal')?.textContent || '0 €',
+            document.getElementById('evmEacVal')?.textContent || '0 €'
+        ],
+        [],
+        ["DESGLOSE DETALLADO POR CAPÍTULOS", "", "", "", "", "", "", ""],
+        ["Capítulo / Tarea", "BAC (€)", "PV (€)", "Progreso (%)", "EV (€)", "AC (€)", "CPI", "SPI"]
+    ];
+
+    topTasks.forEach(ch => {
+        const chCost = parseFloat(ch.cost || ch.price || ch.totalPrice) || 0;
+        const st = (typeof ganttState !== 'undefined' && ganttState[ch.id]) ? ganttState[ch.id] : { startWeek: 1, durationWeeks: 4, progress: 0 };
+        const progress = Math.min(100, Math.max(0, parseFloat(st.progress) || 0));
+        const start = Math.max(1, Math.min(totalWeeks, st.startWeek || 1));
+        const dur = Math.max(1, st.durationWeeks || 4);
+        let chPV = cutoff < start ? 0 : (cutoff >= start + dur ? chCost : chCost * ((cutoff - start + 1) / dur));
+        const chEV = chCost * (progress / 100);
+        const chAC = chEV * (st.startWeek && st.startWeek > 4 ? 1.03 : 0.98);
+        const chCpi = chAC > 0 ? (chEV / chAC).toFixed(2) : '1.00';
+        const chSpi = chPV > 0 ? (chEV / chPV).toFixed(2) : '1.00';
+
+        rows.push([
+            ch.name || ch.code,
+            chCost.toFixed(2),
+            chPV.toFixed(2),
+            progress.toFixed(0) + '%',
+            chEV.toFixed(2),
+            chAC.toFixed(2),
+            chCpi,
+            chSpi
+        ]);
+    });
+
+    if (typeof XLSX !== 'undefined') {
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Informe EVM");
+        XLSX.writeFile(wb, `Informe_EVM_${(currentFileName || 'Presupuesto').replace(/\.[^/.]+$/, '')}_S${cutoff}.xlsx`);
+    } else {
+        const csvContent = "\uFEFF" + rows.map(r => r.map(c => `"${c}"`).join(';')).join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `Informe_EVM_${(currentFileName || 'Presupuesto').replace(/\.[^/.]+$/, '')}_S${cutoff}.csv`;
+        link.click();
+    }
+    showAppToast("Informe EVM exportado correctamente", "📊");
+}
+
+initEVMModule();
 
 // Setup explicit editing for details description
 const detDescriptionEl = document.getElementById('detDescription');
@@ -9313,8 +9904,8 @@ async function autoLoadLastBudget() {
             const result = await parseWithWorker(lastContent);
             hideWorkerLoader();
 
-            renderApp(result);
-            console.log("Presupuesto auto-cargado desde localStorage:", lastFilename);
+            createBudgetTab(result, lastFilename, lastContent);
+            console.log("Presupuesto auto-cargado desde localStorage en pestaña:", lastFilename);
         }
     } catch (e) {
         hideWorkerLoader();
@@ -12322,12 +12913,19 @@ function updateCloudAccountUI() {
 }
 
 function connectGoogleAccount() {
-    const defaultEmail = (parsedData && parsedData.header && parsedData.header.propietario) ? parsedData.header.propietario : 'usuario@gmail.com';
-    const email = prompt("Introduce tu cuenta de Google para vincular con Google Drive:", defaultEmail);
-    if (email && email.trim()) {
-        localStorage.setItem('bc3_cloud_user_account', email.trim());
-        updateCloudAccountUI();
-        if (cloudSyncStatusText) cloudSyncStatusText.textContent = `🟢 Conectado exitosamente como ${email.trim()}`;
+    const currentAccount = localStorage.getItem('bc3_cloud_user_account') || '';
+    const defaultEmail = currentAccount || (parsedData && parsedData.properties && parsedData.properties.owner ? `${parsedData.properties.owner.toLowerCase().replace(/\s+/g, '')}@gmail.com` : 'usuario@gmail.com');
+    const email = prompt("Introduce tu cuenta de correo de Google para vincular la sincronización Cloud:", defaultEmail);
+    if (email !== null) {
+        const trimmed = email.trim();
+        if (trimmed.length > 0 && trimmed.includes('@')) {
+            localStorage.setItem('bc3_cloud_user_account', trimmed);
+            updateCloudAccountUI();
+            if (cloudSyncStatusText) cloudSyncStatusText.textContent = `🟢 Conectado exitosamente como ${trimmed}`;
+            showAppToast(`Cuenta vinculada: ${trimmed}`, '🔑');
+        } else if (trimmed.length > 0) {
+            alert("Por favor introduce un correo válido (ej: usuario@gmail.com).");
+        }
     }
 }
 
@@ -12471,21 +13069,21 @@ async function openCloudFileInViewer(idx) {
     if (!file) return;
 
     try {
-        if (cloudSyncStatusText) cloudSyncStatusText.textContent = `⏳ Descifrando ${file.fileName}...`;
+        if (cloudSyncStatusText) cloudSyncStatusText.textContent = `⏳ Descifrando y cargando ${file.fileName}...`;
+        showWorkerLoader("Descifrando y cargando desde la nube...", file.fileName);
         const plainText = await decryptDataE2E(file.cipher);
+        const result = await parseWithWorker(plainText);
+        hideWorkerLoader();
 
-        // Crear objeto File simulado para cargarlo en el parser principal
-        const blob = new Blob([plainText], { type: 'text/plain;charset=windows-1252' });
-        const virtualFile = new File([blob], file.fileName, { type: 'text/plain' });
-
-        // Procesar archivo directamente
-        if (typeof processFile === 'function') {
-            processFile(virtualFile);
+        if (result) {
+            createBudgetTab(result, file.fileName, plainText);
             closeCloudSyncModal();
+            showAppToast(`Presupuesto cargado desde la nube: ${file.fileName}`, '☁️');
         } else {
-            alert("No se pudo iniciar el proceso de carga.");
+            alert("No se pudo interpretar el archivo BC3.");
         }
     } catch (err) {
+        hideWorkerLoader();
         console.error("Error al descifrar archivo cloud:", err);
         alert("Error al descifrar el presupuesto: " + err.message);
     }
