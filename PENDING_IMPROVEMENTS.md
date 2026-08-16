@@ -71,3 +71,20 @@ Este documento recoge el inventario completo de mejoras técnicas, de experienci
   - *Impacto:* Movilidad total entre la oficina y la obra sin costes de servidores y con privacidad absoluta de precios y márgenes.
 
 ---
+
+## 🤖 5. Inteligencia Artificial Agéntica y Automatización ConTech (AI & Agents)
+
+- [ ] **Asistente Inteligente de Presupuestación Generativa con Gemini API (In-App)**
+  - *Descripción:* Integración dentro del *Creador de Presupuestos* de un asistente conversacional y generador estructurado basado en la API de Gemini (Gemini 1.5 Flash / Pro). Permite al usuario describir un proyecto, reforma o partida en lenguaje natural (ej. *"Reforma integral de baño de 6 m² con alicatado porcelánico, plato de ducha de resina e inodoro suspendido"*) y el motor de IA genera al vuelo la estructura de capítulos, partidas normalizadas con código FIEBDC-3, unidades, textos descriptivos (~T), descomposición de costes elementales (mano de obra, materiales, maquinaria) y líneas de medición estimadas (~M).
+  - *Impacto:* Acelera drásticamente la creación de ofertas y presupuestos base desde cero, reduciendo horas de trabajo a segundos y funcionando con la clave de API gratuita del propio usuario sin costes de infraestructura centralizada.
+
+- [ ] **Agente Autónomo de Seguimiento de Obras y Workspace con Gemini Spark (Cloud 24/7)**
+  - *Descripción:* Plantillas y flujos de automatización agéntica en segundo plano conectando el agente persistente **Gemini Spark** de Google Workspace con la carpeta oficial `/BC3Viewer/` de Google Drive.
+  - *Capacidades Previstas:*
+    - *Auditoría y Resumen Ejecutivo Automático:* Monitorización continua de la carpeta `/BC3Viewer/` para detectar nuevas versiones o certificaciones y redactar actas de obra e informes de estado en Google Docs / Google Sheets analizando el Valor Ganado (EVM), desviaciones de costes y cumplimiento de plazos.
+    - *Comunicaciones Proactivas de Obra:* Generación de borradores de correo en Gmail para la dirección facultativa o clientes con el estado de avance mensual sin intervención manual.
+    - *Monitorización de Costes y Pliegos Técnicos:* Rastreo de variaciones de costes de materiales de construcción y redacción automática de justificaciones de precios y pliegos de condiciones técnicas vinculados a los conceptos del presupuesto.
+  - *Impacto:* Transforma el visualizador en un centro de control de obra inteligente 24/7 que trabaja de manera autónoma en la nube del usuario incluso con sus dispositivos apagados.
+
+---
+
