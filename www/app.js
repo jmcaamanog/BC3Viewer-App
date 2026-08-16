@@ -13102,9 +13102,9 @@ async function fetchGoogleUserProfile(token) {
     return null;
 }
 
-async function getOrCreateDriveFolder(token, folderName = 'BC3_Viewer_Sync') {
+async function getOrCreateDriveFolder(token, folderName = 'BC3Viewer') {
     try {
-        // Buscar si ya existe la carpeta
+        // Buscar si ya existe la carpeta oficial BC3Viewer
         const query = encodeURIComponent(`name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
         const searchResp = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name)`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -13126,7 +13126,7 @@ async function getOrCreateDriveFolder(token, folderName = 'BC3_Viewer_Sync') {
             body: JSON.stringify({
                 name: folderName,
                 mimeType: 'application/vnd.google-apps.folder',
-                description: 'Carpeta de sincronización segura de presupuestos de BC3 Viewer'
+                description: 'Carpeta oficial de sincronización segura de presupuestos de BC3 Viewer'
             })
         });
         if (createResp.ok) {
@@ -13240,12 +13240,14 @@ function updateCloudAccountUI() {
     const userAccount = localStorage.getItem('bc3_cloud_user_account');
     const userName = localStorage.getItem('bc3_cloud_user_name');
     const autoSync = localStorage.getItem('bc3_cloud_autosync') !== 'false';
+    const folderId = localStorage.getItem('bc3_gdrive_folder_id');
 
     if (cloudAutoSyncToggle) cloudAutoSyncToggle.checked = autoSync;
 
     if (userAccount) {
         if (cloudAccountTitle) cloudAccountTitle.textContent = `🟢 Conectado con Google Drive`;
-        if (cloudAccountSubtext) cloudAccountSubtext.textContent = `Cuenta: ${userAccount} ${userName ? '(' + userName + ')' : ''} | Carpeta /BC3_Viewer_Sync/`;
+        const driveFolderLink = folderId ? `<a href="https://drive.google.com/drive/folders/${folderId}" target="_blank" style="color:var(--accent-primary, #3b82f6); text-decoration:underline; font-weight:600; margin-left:6px;">📁 Abrir /BC3Viewer/ en Google Drive ↗</a>` : `<span>📁 Carpeta: /BC3Viewer/</span>`;
+        if (cloudAccountSubtext) cloudAccountSubtext.innerHTML = `Cuenta: <b>${userAccount}</b> ${userName ? '(' + userName + ')' : ''} | ${driveFolderLink}`;
         if (cloudAuthControls) {
             cloudAuthControls.innerHTML = `
                 <button type="button" id="googleDriveDisconnectBtn" class="gantt-action-btn" style="color:var(--danger, #ef4444); border-color:var(--border-color); font-size:0.78rem; padding:6px 12px;">
@@ -13257,7 +13259,7 @@ function updateCloudAccountUI() {
         }
     } else {
         if (cloudAccountTitle) cloudAccountTitle.textContent = `Google Drive Sync`;
-        if (cloudAccountSubtext) cloudAccountSubtext.textContent = `Copia segura en tu propia nube personal o de empresa`;
+        if (cloudAccountSubtext) cloudAccountSubtext.textContent = `Copia segura y automática en la carpeta /BC3Viewer/ de tu propio Google Drive`;
         if (cloudAuthControls) {
             cloudAuthControls.innerHTML = `
                 <button type="button" id="googleDriveConnectBtn" class="process-btn" style="padding:7px 14px; font-size:0.82rem; margin:0; display:flex; align-items:center; gap:6px;">
