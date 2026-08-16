@@ -4560,11 +4560,17 @@ if (dashboardBtn) {
 if (closeDashboardBtn && dashboardModal) {
     closeDashboardBtn.addEventListener('click', () => {
         dashboardModal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+        const fab = document.getElementById('expandHeaderBtn');
+        if (fab) fab.style.display = 'flex';
     });
 
     window.addEventListener('click', (e) => {
         if (e.target === dashboardModal) {
             dashboardModal.style.display = 'none';
+            document.body.classList.remove('modal-open');
+            const fab = document.getElementById('expandHeaderBtn');
+            if (fab) fab.style.display = 'flex';
         }
     });
 }
@@ -11185,6 +11191,9 @@ function openDashboardModal(initialTab = 'dashboard') {
     }
     const dModal = document.getElementById('dashboardModal');
     if (dModal) {
+        document.body.classList.add('modal-open');
+        const fab = document.getElementById('expandHeaderBtn');
+        if (fab) fab.style.display = 'none';
         dModal.style.display = 'flex';
         populateSunburstBudgetSelect();
         sunburstRootCode = null; // Vista global
@@ -14717,6 +14726,9 @@ function openAssistantModal(targetChapterCode = null) {
         }
     }
 
+    document.body.classList.add('modal-open');
+    const fab = document.getElementById('expandHeaderBtn');
+    if (fab) fab.style.display = 'none';
     geminiAssistantModal.style.display = 'flex';
     if (geminiChatInput) geminiChatInput.focus();
 }
@@ -14724,6 +14736,9 @@ function openAssistantModal(targetChapterCode = null) {
 function closeAssistantModal() {
     if (geminiAssistantModal) {
         geminiAssistantModal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+        const fab = document.getElementById('expandHeaderBtn');
+        if (fab) fab.style.display = 'flex';
     }
 }
 

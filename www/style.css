@@ -1193,7 +1193,7 @@ body.dark-theme .pec-total {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 20000;
     animation: fadeIn 0.2s ease-out;
 }
 .modal-content {
@@ -3754,15 +3754,15 @@ body.dark-theme .badge-critical-tree {
 /* Botón flotante para restaurar/colapsar la cabecera (FAB) */
 .floating-expand-btn {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 10000;
+    bottom: 42px;
+    right: 24px;
+    z-index: 900;
     background-color: var(--accent, #0ea5e9);
     color: #ffffff;
     border: none;
     border-radius: 50%;
-    width: 46px;
-    height: 46px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3770,12 +3770,20 @@ body.dark-theme .badge-critical-tree {
     cursor: pointer;
     opacity: 0.85;
     transition: opacity 0.2s, transform 0.2s, background-color 0.2s;
-    font-size: 1.3rem;
+    font-size: 1.2rem;
 }
 .floating-expand-btn:hover {
     opacity: 1;
     transform: scale(1.08);
     background-color: var(--accent-hover, #0284c7);
+}
+
+/* Ocultar botón flotante de cabecera cuando cualquier modal (Asistente IA, Dashboard, etc.) está abierto */
+body.modal-open .floating-expand-btn,
+body:has(.modal:not([style*="display: none"]):not([style*="display:none"])) .floating-expand-btn,
+body:has(#geminiAssistantModal:not([style*="display: none"]):not([style*="display:none"])) .floating-expand-btn,
+body:has(#dashboardModal:not([style*="display: none"]):not([style*="display:none"])) .floating-expand-btn {
+    display: none !important;
 }
 
 /* Estilos adaptativos para pantallas móviles de menos de 1024px */
