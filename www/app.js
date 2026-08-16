@@ -14575,3 +14575,448 @@ if (priceBankCatalogModal) {
         if (e.target === priceBankCatalogModal) closePriceBankCatalog();
     });
 }
+
+// ==========================================================================
+// 🤖 ASISTENTE IA CONTECH INTERACTIVO (CONSULTORÍA, AUDITORÍA Y EDICIÓN EN VIVO)
+// ==========================================================================
+
+const geminiAssistantModal = document.getElementById('geminiAssistantModal');
+const openAssistantBtn = document.getElementById('openAssistantBtn');
+const closeGeminiAssistantBtn = document.getElementById('closeGeminiAssistantBtn');
+const clearAssistantChatBtn = document.getElementById('clearAssistantChatBtn');
+const geminiChatHistory = document.getElementById('geminiChatHistory');
+const geminiChatInput = document.getElementById('geminiChatInput');
+const sendGeminiChatBtn = document.getElementById('sendGeminiChatBtn');
+const assistantTargetChapterSelect = document.getElementById('assistantTargetChapterSelect');
+const assistantContextInfo = document.getElementById('assistantContextInfo');
+
+let assistantChatMessages = [];
+
+function openAssistantModal(targetChapterCode = null) {
+    if (!geminiAssistantModal) return;
+
+    // Verificar si hay clave configurada
+    const key = getGeminiApiKey();
+    if (!key) {
+        alert("Para utilizar el Asistente IA necesitas conectar primero tu clave gratuita de Google Gemini en Ajustes.");
+        openGeminiConfigModal();
+        return;
+    }
+
+    // Poblar selector de capítulos del presupuesto activo
+    if (assistantTargetChapterSelect) {
+        assistantTargetChapterSelect.innerHTML = '<option value="auto">✨ Detección Automática por IA</option>';
+        if (typeof parsedData !== 'undefined' && parsedData?.concepts) {
+            const root = parsedData.concepts["OBRA#"] || Object.values(parsedData.concepts).find(c => c.type === 'ROOT' || (c.code && c.code.endsWith('#')));
+            if (root && root.decomposition) {
+                root.decomposition.forEach(d => {
+                    const ch = parsedData.concepts[d.code];
+                    if (ch) {
+                        const opt = document.createElement('option');
+                        opt.value = ch.code;
+                        opt.textContent = `${ch.code} - ${ch.summary || 'Capítulo'}`;
+                        if (targetChapterCode && ch.code === targetChapterCode) {
+                            opt.selected = true;
+                        }
+                        assistantTargetChapterSelect.appendChild(opt);
+                    }
+                });
+            }
+        }
+    }
+
+    // Actualizar texto de contexto del presupuesto
+    if (assistantContextInfo) {
+        if (typeof parsedData !== 'undefined' && parsedData?.concepts) {
+            const numConcepts = Object.keys(parsedData.concepts).length;
+            const pem = (typeof calculateTotalPEM === 'function' ? calculateTotalPEM() : (parsedData.concepts["OBRA#"]?.price || 0));
+            const formattedPem = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(pem);
+            assistantContextInfo.textContent = `Presupuesto activo: ${currentFileName || 'Presupuesto'} | PEM: ${formattedPem} (${numConcepts} conceptos)`;
+        } else {
+            assistantContextInfo.textContent = 'Presupuesto activo: Ninguno (Modo asesoramiento general)';
+        }
+    }
+
+    geminiAssistantModal.style.display = 'flex';
+    if (geminiChatInput) geminiChatInput.focus();
+}
+
+function closeAssistantModal() {
+    if (geminiAssistantModal) {
+        geminiAssistantModal.style.display = 'none';
+    }
+}
+
+const settingsAssistantBtn = document.getElementById('settingsAssistantBtn');
+if (openAssistantBtn) openAssistantBtn.addEventListener('click', () => openAssistantModal());
+if (settingsAssistantBtn) settingsAssistantBtn.addEventListener('click', () => openAssistantModal());
+if (closeGeminiAssistantBtn) closeGeminiAssistantBtn.addEventListener('click', closeAssistantModal);
+
+if (geminiAssistantModal) {
+    geminiAssistantModal.addEventListener('click', (e) => {
+        if (e.target === geminiAssistantModal) closeAssistantModal();
+    });
+}
+
+if (clearAssistantChatBtn && geminiChatHistory) {
+    clearAssistantChatBtn.addEventListener('click', () => {
+        assistantChatMessages = [];
+        geminiChatHistory.innerHTML = `
+            <div class="assistant-msg ai-msg">
+                <div class="msg-avatar">🤖</div>
+                <div class="msg-bubble">
+                    <div style="font-weight: 700; margin-bottom: 4px; color: var(--accent, #8b5cf6);">Conversación reiniciada.</div>
+                    <div style="font-size: 0.82rem; line-height: 1.5; color: var(--text-primary);">
+                        ¿En qué más te puedo ayudar sobre este presupuesto?
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+}
+
+// Chips de consultas rápidas en el Asistente
+document.querySelectorAll('.assistant-quick-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const query = btn.getAttribute('data-query');
+        if (query) {
+            if (geminiChatInput) geminiChatInput.value = query;
+            sendAssistantUserMessage();
+        }
+    });
+});
+
+if (sendGeminiChatBtn) {
+    sendGeminiChatBtn.addEventListener('click', sendAssistantUserMessage);
+}
+
+if (geminiChatInput) {
+    geminiChatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendAssistantUserMessage();
+        }
+    });
+}
+
+async function sendAssistantUserMessage() {
+    const text = geminiChatInput?.value?.trim();
+    if (!text) return;
+
+    const apiKey = getGeminiApiKey();
+    if (!apiKey) {
+        alert("Por favor conecta tu clave API de Gemini en Ajustes.");
+        openGeminiConfigModal();
+        return;
+    }
+
+    // Limpiar input
+    geminiChatInput.value = '';
+
+    // Añadir mensaje del usuario al historial visual
+    appendChatMessage('user', text);
+
+    // Indicador de "pensando..."
+    const loadingId = 'ai-typing-' + Date.now();
+    appendChatLoading(loadingId);
+
+    // Construir contexto resumido del presupuesto abierto
+    let budgetContext = "No hay ningún archivo de presupuesto cargado actualmente en memoria.";
+    if (typeof parsedData !== 'undefined' && parsedData?.concepts) {
+        const root = parsedData.concepts["OBRA#"] || Object.values(parsedData.concepts).find(c => c.type === 'ROOT' || (c.code && c.code.endsWith('#')));
+        const chaptersList = [];
+        if (root && root.decomposition) {
+            root.decomposition.forEach(d => {
+                const ch = parsedData.concepts[d.code];
+                if (ch) {
+                    const itemCount = ch.decomposition ? ch.decomposition.length : 0;
+                    chaptersList.push(`- Capítulo ${ch.code}: "${ch.summary || ''}" (${itemCount} partidas, Subtotal: ${ch.price || 0} €)`);
+                }
+            });
+        }
+        const pem = typeof calculateTotalPEM === 'function' ? calculateTotalPEM() : (root?.price || 0);
+        budgetContext = `PRESUPUESTO ACTIVO EN PANTALLA:
+Título: ${currentFileName || 'Presupuesto'}
+PEM Total: ${pem} €
+Estructura de Capítulos:
+${chaptersList.join('\n')}`;
+    }
+
+    const selectedTargetChapter = assistantTargetChapterSelect?.value || 'auto';
+
+    const systemPrompt = `Eres el "Asistente IA ConTech", un Arquitecto Técnico y Director de Obra experto en normativa, control de costes y estándar FIEBDC-3 / BC3 en España.
+Tienes acceso al presupuesto que el usuario tiene abierto en pantalla.
+
+CONTEXTO DEL PRESUPUESTO ACTUAL:
+${budgetContext}
+
+CAPÍTULO SELECCIONADO POR EL USUARIO PARA INSERCIÓN: ${selectedTargetChapter}
+
+INSTRUCCIONES CLAVE:
+1. Responde de forma clara, profesional, concisa y orientada a la ingeniería de edificación.
+2. Si el usuario te pide una CONSULTA, AUDITORÍA, REVISIÓN o REDACCIÓN DE MEMORIA: respóndele en lenguaje natural estructurado con viñetas y formato Markdown.
+3. Si el usuario te pide CREAR o AÑADIR UNA PARTIDA (o si una partida es la solución directa a lo que pide):
+   - Además de explicar brevemente la partida, INCLUYE AL FINAL UN BLOQUE JSON con la etiqueta exacta \`\`\`json_partida ... \`\`\` con el siguiente formato estricto:
+\`\`\`json_partida
+{
+  "code": "ALB010",
+  "unit": "m2",
+  "summary": "Resumen conciso en una línea",
+  "description": "Descripción técnica completa y pliego de ejecución de la unidad de obra.",
+  "price": 28.50,
+  "quantity": 10.0,
+  "targetChapter": "CAP01##",
+  "components": [
+    { "code": "MO_OFIC", "type": "MO", "summary": "Oficial 1ª albañilería", "unit": "h", "qty": 0.6, "price": 26.00 },
+    { "code": "MT_LADR", "type": "MT", "summary": "Ladrillo cerámico hueco triple", "unit": "ud", "qty": 25, "price": 0.35 }
+  ]
+}
+\`\`\`
+   - "targetChapter": Usa el código del capítulo donde mejor encaje (ej: CAP01##, CAP02##) o el que el usuario haya indicado.`;
+
+    assistantChatMessages.push({ role: "user", parts: [{ text }] });
+
+    try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 35000);
+
+        // Enviar historial reciente (últimos 8 mensajes)
+        const recentHistory = assistantChatMessages.slice(-8);
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: recentHistory,
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: { temperature: 0.3 }
+            }),
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        removeChatLoading(loadingId);
+
+        if (!response.ok) {
+            let errMsg = `Error HTTP ${response.status}`;
+            try {
+                const errData = await response.json();
+                if (errData?.error?.message) errMsg = errData.error.message;
+            } catch (e) {}
+            throw new Error(errMsg);
+        }
+
+        const data = await response.json();
+        const candidate = data.candidates?.[0];
+        const aiText = candidate?.content?.parts?.[0]?.text || "No pude generar una respuesta.";
+
+        assistantChatMessages.push({ role: "model", parts: [{ text: aiText }] });
+
+        appendChatMessage('ai', aiText);
+
+    } catch (err) {
+        removeChatLoading(loadingId);
+        appendChatMessage('ai', `❌ Error al consultar con Gemini AI: ${err.message || err}`);
+    }
+}
+
+function appendChatMessage(role, rawContent) {
+    if (!geminiChatHistory) return;
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `assistant-msg ${role === 'user' ? 'user-msg' : 'ai-msg'}`;
+
+    const avatar = document.createElement('div');
+    avatar.className = 'msg-avatar';
+    avatar.textContent = role === 'user' ? '👤' : '🤖';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+
+    if (role === 'user') {
+        bubble.textContent = rawContent;
+    } else {
+        let cleanText = rawContent;
+        let partidaObj = null;
+
+        const partidaMatch = rawContent.match(/```json_partida\s*([\s\S]*?)\s*```/);
+        if (partidaMatch) {
+            try {
+                partidaObj = JSON.parse(partidaMatch[1]);
+                cleanText = rawContent.replace(/```json_partida\s*[\s\S]*?\s*```/, '').trim();
+            } catch (e) {
+                console.warn("Error parseando json_partida", e);
+            }
+        }
+
+        let formattedHtml = cleanText
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/`([^`]+)`/g, '<code>$1</code>')
+            .replace(/\n\n/g, '<br><br>')
+            .replace(/\n- /g, '<br>• ');
+
+        bubble.innerHTML = formattedHtml;
+
+        if (partidaObj && partidaObj.code) {
+            const card = createPartidaActionCard(partidaObj);
+            bubble.appendChild(card);
+        }
+    }
+
+    msgDiv.appendChild(avatar);
+    msgDiv.appendChild(bubble);
+    geminiChatHistory.appendChild(msgDiv);
+    geminiChatHistory.scrollTop = geminiChatHistory.scrollHeight;
+}
+
+function createPartidaActionCard(item) {
+    const card = document.createElement('div');
+    card.className = 'partida-action-card';
+
+    const header = document.createElement('div');
+    header.className = 'partida-action-header';
+    header.innerHTML = `
+        <span class="partida-action-code">🏷️ ${item.code} [${item.unit || 'ud'}]</span>
+        <span class="partida-action-price">${new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(item.price || 0)}</span>
+    `;
+
+    const summary = document.createElement('div');
+    summary.style.fontWeight = '600';
+    summary.style.fontSize = '0.8rem';
+    summary.style.margin = '3px 0';
+    summary.textContent = item.summary || 'Unidad de obra';
+
+    const desc = document.createElement('div');
+    desc.style.fontSize = '0.72rem';
+    desc.style.color = 'var(--text-secondary)';
+    desc.style.lineHeight = '1.3';
+    desc.textContent = item.description ? (item.description.length > 130 ? item.description.slice(0, 130) + '...' : item.description) : '';
+
+    let targetCh = item.targetChapter || 'CAP01##';
+    if (assistantTargetChapterSelect && assistantTargetChapterSelect.value !== 'auto') {
+        targetCh = assistantTargetChapterSelect.value;
+    }
+
+    const insertBtn = document.createElement('button');
+    insertBtn.className = 'partida-action-btn';
+    insertBtn.innerHTML = `<span>➕ Insertar en Capítulo (${targetCh})</span>`;
+
+    insertBtn.onclick = () => {
+        if (typeof parsedData === 'undefined' || !parsedData?.concepts) {
+            alert("No hay un presupuesto abierto en pantalla para insertar esta partida.");
+            return;
+        }
+
+        let resolvedChapter = targetCh;
+        if (!parsedData.concepts[resolvedChapter]) {
+            const firstCh = Object.keys(parsedData.concepts).find(k => k.endsWith('##') || (k.endsWith('#') && k !== 'OBRA#'));
+            if (firstCh) resolvedChapter = firstCh;
+            else {
+                alert("No se encontró ningún capítulo en el presupuesto para insertar la partida.");
+                return;
+            }
+        }
+
+        const itemConcept = {
+            code: item.code,
+            unit: item.unit || "ud",
+            summary: item.summary || "Unidad de obra",
+            price: parseFloat(item.price) || 0,
+            quantity: parseFloat(item.quantity) || 1.0,
+            type: 0,
+            description: item.description || item.summary,
+            children: [],
+            decomposition: [],
+            measurements: []
+        };
+
+        if (item.components && Array.isArray(item.components)) {
+            item.components.forEach((comp, idx) => {
+                let cCode = comp.code || `COMP_${idx + 1}`;
+                let cType = 0;
+                const cTypeStr = (comp.type || "").toUpperCase();
+                if (cTypeStr === 'MO' || cCode.startsWith('MO')) { cType = 1; if (!cCode.startsWith('MO')) cCode = 'MO_' + cCode; }
+                else if (cTypeStr === 'MQ' || cCode.startsWith('MQ')) { cType = 2; if (!cCode.startsWith('MQ')) cCode = 'MQ_' + cCode; }
+                else if (cTypeStr === 'MT' || cCode.startsWith('MT')) { cType = 3; if (!cCode.startsWith('MT')) cCode = 'MT_' + cCode; }
+
+                const cFactor = parseFloat(comp.qty || comp.factor) || 1.0;
+                const cPrice = parseFloat(comp.price) || 0;
+                const cUnit = comp.unit || (cType === 1 ? 'h' : (cType === 2 ? 'h' : 'ud'));
+                const cSummary = comp.summary || "Elemento descompuesto";
+
+                if (!parsedData.concepts[cCode]) {
+                    parsedData.concepts[cCode] = {
+                        code: cCode,
+                        unit: cUnit,
+                        summary: cSummary,
+                        price: cPrice,
+                        quantity: 1,
+                        type: cType,
+                        children: [],
+                        decomposition: [],
+                        measurements: []
+                    };
+                }
+
+                itemConcept.decomposition.push({
+                    code: cCode,
+                    factor: cFactor,
+                    unit: cUnit,
+                    price: cPrice,
+                    summary: cSummary
+                });
+            });
+        }
+
+        parsedData.concepts[item.code] = itemConcept;
+
+        const ch = parsedData.concepts[resolvedChapter];
+        if (!ch.decomposition) ch.decomposition = [];
+        const exists = ch.decomposition.some(d => d.code === item.code);
+        if (!exists) {
+            ch.decomposition.push({ code: item.code, factor: itemConcept.quantity || 1.0 });
+        }
+
+        if (typeof calculateAndDisplayTotal === 'function') calculateAndDisplayTotal();
+        if (typeof renderBudgetTree === 'function') renderBudgetTree();
+        else if (typeof renderTree === 'function') renderTree();
+
+        insertBtn.disabled = true;
+        insertBtn.innerHTML = `<span>✅ Insertada en ${resolvedChapter}</span>`;
+        insertBtn.style.background = '#16a34a';
+
+        if (typeof showToastMessage === 'function') {
+            showToastMessage(`✨ Partida ${item.code} insertada en ${resolvedChapter}`);
+        }
+    };
+
+    card.appendChild(header);
+    card.appendChild(summary);
+    if (desc.textContent) card.appendChild(desc);
+    card.appendChild(insertBtn);
+
+    return card;
+}
+
+function appendChatLoading(id) {
+    if (!geminiChatHistory) return;
+    const msgDiv = document.createElement('div');
+    msgDiv.id = id;
+    msgDiv.className = 'assistant-msg ai-msg';
+    msgDiv.innerHTML = `
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-bubble" style="display:flex; align-items:center; gap:8px; font-style:italic; color:var(--text-secondary);">
+            <div class="worker-loading-spinner" style="width:16px; height:16px; border-width:2px;"></div>
+            <span>Consultando con Gemini AI...</span>
+        </div>
+    `;
+    geminiChatHistory.appendChild(msgDiv);
+    geminiChatHistory.scrollTop = geminiChatHistory.scrollHeight;
+}
+
+function removeChatLoading(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+}

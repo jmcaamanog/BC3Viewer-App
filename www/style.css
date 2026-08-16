@@ -6961,3 +6961,141 @@ body.dark-theme .eco-table-section,
     color: #a78bfa;
 }
 
+/* ==========================================================================
+   Chat del Asistente IA ConTech
+   ========================================================================== */
+
+.assistant-msg {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    max-width: 92%;
+    animation: fadeInMsg 0.25s ease-out;
+}
+
+@keyframes fadeInMsg {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.assistant-msg.ai-msg {
+    align-self: flex-start;
+}
+
+.assistant-msg.user-msg {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.assistant-msg .msg-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+    background: rgba(139, 92, 246, 0.12);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.assistant-msg.user-msg .msg-avatar {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.assistant-msg .msg-bubble {
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 0.83rem;
+    line-height: 1.5;
+    background: var(--bg-hover, #f8fafc);
+    border: 1px solid var(--border-color, #e2e8f0);
+    color: var(--text-primary, #0f172a);
+    word-break: break-word;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .assistant-msg .msg-bubble {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+.assistant-msg.user-msg .msg-bubble {
+    background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 12px 12px 2px 12px;
+}
+
+/* Tarjeta interactiva de Partida generada en el Chat */
+.partida-action-card {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--bg-color, #ffffff);
+    border: 1px solid rgba(139, 92, 246, 0.35);
+    box-shadow: 0 2px 6px rgba(139, 92, 246, 0.08);
+}
+
+.dark-mode .partida-action-card {
+    background: #0f172a;
+    border-color: rgba(139, 92, 246, 0.5);
+}
+
+.partida-action-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.partida-action-code {
+    font-weight: 700;
+    font-family: monospace;
+    color: var(--accent, #8b5cf6);
+    font-size: 0.8rem;
+}
+
+.partida-action-price {
+    font-weight: 700;
+    color: #16a34a;
+    font-size: 0.85rem;
+}
+
+.dark-mode .partida-action-price {
+    color: #4ade80;
+}
+
+.partida-action-btn {
+    margin-top: 8px;
+    width: 100%;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.76rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.partida-action-btn:hover {
+    opacity: 0.95;
+    transform: translateY(-1px);
+}
+
+.partida-action-btn:disabled {
+    background: #94a3b8 !important;
+    cursor: not-allowed;
+    transform: none;
+}
+
+
