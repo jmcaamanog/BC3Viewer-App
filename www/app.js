@@ -14660,8 +14660,10 @@ function closeAssistantModal() {
 }
 
 const settingsAssistantBtn = document.getElementById('settingsAssistantBtn');
+const assistantConfigKeyBtn = document.getElementById('assistantConfigKeyBtn');
 if (openAssistantBtn) openAssistantBtn.addEventListener('click', () => openAssistantModal());
 if (settingsAssistantBtn) settingsAssistantBtn.addEventListener('click', () => openAssistantModal());
+if (assistantConfigKeyBtn) assistantConfigKeyBtn.addEventListener('click', () => openGeminiConfigModal());
 if (closeGeminiAssistantBtn) closeGeminiAssistantBtn.addEventListener('click', closeAssistantModal);
 
 if (geminiAssistantModal) {

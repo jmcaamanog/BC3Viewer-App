@@ -125,18 +125,12 @@
                                 style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer; color:var(--accent); font-weight:600;">Nuevo Presupuesto
                                 <span style="font-size:1rem;">✨</span></button>
                             <button type="button" id="settingsAssistantBtn"
-                                style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer; color:#8b5cf6; font-weight:600;">Asistente IA ConTech
-                                <span style="font-size:1rem;">🤖</span></button>
-                            <button type="button" id="geminiConfigBtn"
-                                style="display:flex; justify-content:space-between; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:left; padding:8px 12px; cursor:pointer; color:var(--text-primary);">
-                                <div style="display:flex; align-items:center; gap:6px;">
-                                    <span style="font-size:1rem;">🤖</span>
-                                    <span style="font-size:0.85rem; font-weight:500;">Gemini IA</span>
+                                style="display:flex; justify-content:space-between; align-items:center; width:100%; border:none; background:none; padding:8px 12px; cursor:pointer; color:var(--text-primary); gap:10px;">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span class="gemini-status-dot disconnected" id="geminiStatusDot"></span>
+                                    <span style="font-size:0.85rem; font-weight:600; color:#8b5cf6;">Asistente IA</span>
                                 </div>
-                                <span class="gemini-status-badge" id="geminiStatusBadge" style="display:inline-flex; align-items:center; gap:5px; font-size:0.68rem; padding:2px 7px; border-radius:12px; background:rgba(148,163,184,0.1); border:1px solid rgba(148,163,184,0.25);">
-                                    <span class="gemini-status-dot disconnected" id="geminiStatusDot" style="width:7px; height:7px; border-radius:50%; background:#94a3b8; display:inline-block;"></span>
-                                    <span id="geminiStatusText" style="color:var(--text-secondary);">Sin conectar</span>
-                                </span>
+                                <span style="font-size:1rem;">🤖</span>
                             </button>
                             <button type="button" id="cloudSyncBtn"
                                 style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Sincronización Cloud
@@ -1870,11 +1864,14 @@
                     <span style="font-size:1.4rem;">🤖</span>
                     <div>
                         <div style="display:flex; align-items:center; gap:8px;">
-                            <h3 style="margin:0; font-size:1.05rem;">Asistente IA ConTech</h3>
+                            <h3 style="margin:0; font-size:1.05rem;">Asistente IA</h3>
                             <span class="gemini-status-badge connected" id="assistantStatusBadge" style="font-size:0.65rem;">
                                 <span class="gemini-status-dot connected" id="assistantStatusDot"></span>
                                 <span id="assistantStatusText">Gemini 1.5 Flash</span>
                             </span>
+                            <button type="button" id="assistantConfigKeyBtn" class="gantt-action-btn" title="Configurar Clave API de Gemini" style="padding:2px 7px; font-size:0.68rem; margin-left:4px; display:inline-flex; align-items:center; gap:3px;">
+                                ⚙️ Clave API
+                            </button>
                         </div>
                         <div style="font-size:0.72rem; color:var(--text-secondary);" id="assistantContextInfo">
                             Presupuesto activo: Ninguno (Modo asesoramiento general)
