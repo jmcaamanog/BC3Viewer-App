@@ -2,7 +2,14 @@
 
 En este documento se detalla la evolución completa de la aplicación, incluyendo todas las revisiones y mejoras intermedias realizadas.
 
-### Versión 2.0.0 — 16/08/2026 (Actual)
+### Versión 2.1.0 — 16/08/2026 (Actual)
+* **☁️ Integración Oficial Google Drive Sync & OAuth 2.0:** Autenticación oficial con Google Identity Services y sincronización automática en la carpeta dedicada `/BC3Viewer/` de tu Google Drive personal a coste cero.
+* **🔐 Cifrado Militar E2E con IndexedDB:** Almacenamiento y cifrado local en origen (AES-256 GCM) sin saturación de memoria, cuotas de `localStorage` ni bloqueo del hilo principal.
+* **📈 Motor de Valor Ganado (EVM) y Curva S:** Cálculo en tiempo real de 8 KPIs estándar (BAC, PV, EV, AC, CPI, SPI, CV, EAC), deslizador interactivo de semana de corte, tabla de desviaciones por capítulos y exportación a informe Excel (.xlsx).
+* **🖱️ Desplazamiento Suave (Pan) en Gantt:** Soporte de arrastre libre horizontal y vertical en el cronograma interactivo.
+* **🧭 Enlace Directo a Drive:** Acceso con 1 clic a tu carpeta `/BC3Viewer/` en Google Drive directamente desde la ventana de sincronización.
+
+### Versión 2.0.0 — 16/08/2026
 * **📑 Sistema Multi-Presupuesto con Pestañas:** Pestañas superiores para gestionar varios presupuestos simultáneamente en memoria (`.budget-tab-bar`). Botón de nuevo presupuesto (`+`) con estilo punteado y guardado directo local en disco mediante File System Access API.
 * **☀️ Visualizador Sunburst Multinivel con Zoom:** Gráfico interactivo concéntrico con selector de 1 a 5 niveles de profundidad (Capítulos, Subcapítulos, Partidas, Descompuestos, Insumos básicos). Zoom dinámico por clic y ficha inferior de descompuestos con altura flexible y scroll vertical suave.
 * **🌊 Diagrama Sankey Interactivo:** Flujo visual de costes para entender la distribución porcentual e importes de los recursos y capítulos a lo largo del presupuesto de obra.
