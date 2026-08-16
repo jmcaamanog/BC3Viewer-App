@@ -2,7 +2,14 @@
 
 En este documento se detalla la evolución completa de la aplicación, incluyendo todas las revisiones y mejoras intermedias realizadas.
 
-### Versión 2.1.0 — 16/08/2026 (Actual)
+### Versión 2.2.0 — 16/08/2026 (Actual)
+* **🤖 Asistente IA Generativo (Google Gemini AI - BYOK 100% Gratis):** Creación inteligente de presupuestos completos desde cero en lenguaje natural con árbol de capítulos, partidas normalizadas FIEBDC-3, descripciones técnicas completas (`~T`), descomposición elemental (`~D`: mano de obra, maquinaria y materiales) y mediciones estimadas (`~M`).
+* **💬 Asistente IA ConTech Interactivo (Consultoría, Auditoría e Inserción en Vivo):** Chat conversacional integrado capaz de leer el presupuesto activo en tiempo real para resolver dudas técnicas, auditar partidas faltantes, analizar las unidades más costosas y generar partidas con inserción directa en capítulos mediante tarjetas interactivas.
+* **🟢 Indicador de Estado en Tiempo Real (Respiración Verde Esmeralda):** Indicador visual en el menú de Ajustes y en el chat con animación luminosa pulsante (`● Conectado` / `● Desconectado`).
+* **📖 Guía Visual de Conexión en 30s:** Asistente de configuración integrado con enlace directo a Google AI Studio, validación instantánea de clave y almacenamiento 100% privado en local (`localStorage`).
+* **📱 Optimización Responsive Móvil & Servidores Espejo OTA:** Corrección de scroll en doble eje en smartphones y arquitectura multi-mirror para actualizaciones transparentes Over-The-Air.
+
+### Versión 2.1.0 — 16/08/2026
 * **☁️ Integración Oficial Google Drive Sync & OAuth 2.0:** Autenticación oficial con Google Identity Services y sincronización automática en la carpeta dedicada `/BC3Viewer/` de tu Google Drive personal a coste cero.
 * **🔐 Cifrado Militar E2E con IndexedDB:** Almacenamiento y cifrado local en origen (AES-256 GCM) sin saturación de memoria, cuotas de `localStorage` ni bloqueo del hilo principal.
 * **📈 Motor de Valor Ganado (EVM) y Curva S:** Cálculo en tiempo real de 8 KPIs estándar (BAC, PV, EV, AC, CPI, SPI, CV, EAC), deslizador interactivo de semana de corte, tabla de desviaciones por capítulos y exportación a informe Excel (.xlsx).
