@@ -74,7 +74,7 @@ Este documento recoge el inventario completo de mejoras técnicas, de experienci
 
 ## 🤖 5. Inteligencia Artificial Agéntica y Automatización ConTech (AI & Agents)
 
-- [ ] **Asistente Inteligente de Presupuestación Generativa con Gemini API (In-App)**
+- [x] **Asistente Inteligente de Presupuestación Generativa con Gemini API (In-App)**
   - *Descripción:* Integración dentro del *Creador de Presupuestos* de un asistente conversacional y generador estructurado basado en la API de Gemini (Gemini 1.5 Flash / Pro). Permite al usuario describir un proyecto, reforma o partida en lenguaje natural (ej. *"Reforma integral de baño de 6 m² con alicatado porcelánico, plato de ducha de resina e inodoro suspendido"*) y el motor de IA genera al vuelo la estructura de capítulos, partidas normalizadas con código FIEBDC-3, unidades, textos descriptivos (~T), descomposición de costes elementales (mano de obra, materiales, maquinaria) y líneas de medición estimadas (~M).
   - *Impacto:* Acelera drásticamente la creación de ofertas y presupuestos base desde cero, reduciendo horas de trabajo a segundos y funcionando con la clave de API gratuita del propio usuario sin costes de infraestructura centralizada.
 

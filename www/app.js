@@ -13738,6 +13738,7 @@ const wizardCreateBtn = document.getElementById('wizardCreateBtn');
 const wizardStep1 = document.getElementById('wizardStep1');
 const wizardStep2 = document.getElementById('wizardStep2');
 const wizardStep3 = document.getElementById('wizardStep3');
+const wizardStep3Gemini = document.getElementById('wizardStep3Gemini');
 
 const wizardStepBadge1 = document.getElementById('wizardStepBadge1');
 const wizardStepBadge2 = document.getElementById('wizardStepBadge2');
@@ -13754,6 +13755,7 @@ const wizardAreaInput = document.getElementById('wizardAreaInput');
 const wizardDemolitionSelect = document.getElementById('wizardDemolitionSelect');
 const wizardHvacSelect = document.getElementById('wizardHvacSelect');
 const wizardFinishSelect = document.getElementById('wizardFinishSelect');
+const wizardGeminiPrompt = document.getElementById('wizardGeminiPrompt');
 
 function openNewBudgetWizard() {
     if (!newBudgetWizardModal) return;
@@ -13764,9 +13766,10 @@ function openNewBudgetWizard() {
     if (wizardProjectLocation) wizardProjectLocation.value = "";
     if (wizardProjectDate) wizardProjectDate.value = new Date().toISOString().slice(0, 10);
 
-    // Seleccionar por defecto modo Smart
-    const smartRadio = document.querySelector('input[name="wizardMode"][value="smart"]');
-    if (smartRadio) smartRadio.checked = true;
+    // Seleccionar por defecto Gemini AI si tiene clave, o Smart si no
+    const hasKey = !!getGeminiApiKey();
+    const defaultRadio = document.querySelector(`input[name="wizardMode"][value="${hasKey ? 'gemini_ai' : 'smart'}"]`) || document.querySelector('input[name="wizardMode"]');
+    if (defaultRadio) defaultRadio.checked = true;
     if (wizardTemplateSelectContainer) wizardTemplateSelectContainer.style.display = 'none';
 
     setWizardStep(1);
@@ -13796,17 +13799,37 @@ function setWizardStep(step) {
         wizardStepBadge3.style.color = step >= 3 ? 'white' : 'var(--text-secondary)';
     }
 
+    // Obtener modo seleccionado
+    const selectedMode = document.querySelector('input[name="wizardMode"]:checked')?.value || 'gemini_ai';
+
     // Mostrar/ocultar paneles
     if (wizardStep1) wizardStep1.style.display = step === 1 ? 'flex' : 'none';
     if (wizardStep2) wizardStep2.style.display = step === 2 ? 'flex' : 'none';
-    if (wizardStep3) wizardStep3.style.display = step === 3 ? 'flex' : 'none';
 
-    // Obtener modo seleccionado
-    const selectedMode = document.querySelector('input[name="wizardMode"]:checked')?.value || 'smart';
+    if (step === 3) {
+        if (selectedMode === 'gemini_ai') {
+            if (wizardStep3) wizardStep3.style.display = 'none';
+            if (wizardStep3Gemini) {
+                wizardStep3Gemini.style.display = 'flex';
+                updateGeminiStatusUI();
+            }
+        } else if (selectedMode === 'smart') {
+            if (wizardStep3) wizardStep3.style.display = 'flex';
+            if (wizardStep3Gemini) wizardStep3Gemini.style.display = 'none';
+        } else {
+            if (wizardStep3) wizardStep3.style.display = 'none';
+            if (wizardStep3Gemini) wizardStep3Gemini.style.display = 'none';
+        }
+    } else {
+        if (wizardStep3) wizardStep3.style.display = 'none';
+        if (wizardStep3Gemini) wizardStep3Gemini.style.display = 'none';
+    }
 
     // Actualizar badge 3 según si aplica o no
     if (wizardStepBadge3) {
-        wizardStepBadge3.style.display = selectedMode === 'smart' ? 'block' : 'none';
+        const needsStep3 = selectedMode === 'smart' || selectedMode === 'gemini_ai';
+        wizardStepBadge3.style.display = needsStep3 ? 'block' : 'none';
+        wizardStepBadge3.textContent = selectedMode === 'gemini_ai' ? '✨ 3. Alcance con IA' : '🧙 3. Parámetros';
     }
 
     // Actualizar botones de navegación
@@ -13816,16 +13839,22 @@ function setWizardStep(step) {
         if (wizardNextBtn) wizardNextBtn.style.display = 'block';
         if (wizardCreateBtn) wizardCreateBtn.style.display = 'none';
     } else if (step === 2) {
-        if (selectedMode === 'smart') {
+        if (selectedMode === 'smart' || selectedMode === 'gemini_ai') {
             if (wizardNextBtn) wizardNextBtn.style.display = 'block';
             if (wizardCreateBtn) wizardCreateBtn.style.display = 'none';
         } else {
             if (wizardNextBtn) wizardNextBtn.style.display = 'none';
-            if (wizardCreateBtn) wizardCreateBtn.style.display = 'block';
+            if (wizardCreateBtn) {
+                wizardCreateBtn.style.display = 'block';
+                wizardCreateBtn.textContent = "🚀 Generar y Abrir Presupuesto";
+            }
         }
     } else if (step === 3) {
         if (wizardNextBtn) wizardNextBtn.style.display = 'none';
-        if (wizardCreateBtn) wizardCreateBtn.style.display = 'block';
+        if (wizardCreateBtn) {
+            wizardCreateBtn.style.display = 'block';
+            wizardCreateBtn.textContent = selectedMode === 'gemini_ai' ? "✨ Generar Presupuesto con IA" : "🚀 Generar y Abrir Presupuesto";
+        }
     }
 }
 
@@ -13851,8 +13880,8 @@ if (wizardNextBtn) {
             }
             setWizardStep(2);
         } else if (currentWizardStep === 2) {
-            const selectedMode = document.querySelector('input[name="wizardMode"]:checked')?.value || 'smart';
-            if (selectedMode === 'smart') {
+            const selectedMode = document.querySelector('input[name="wizardMode"]:checked')?.value || 'gemini_ai';
+            if (selectedMode === 'smart' || selectedMode === 'gemini_ai') {
                 setWizardStep(3);
             } else {
                 finishWizardAndCreateBudget();
@@ -13873,7 +13902,7 @@ if (wizardCreateBtn) {
     wizardCreateBtn.addEventListener('click', finishWizardAndCreateBudget);
 }
 
-function finishWizardAndCreateBudget() {
+async function finishWizardAndCreateBudget() {
     if (typeof window.BC3PriceBank === 'undefined') {
         alert("El módulo de base de precios (BC3PriceBank) no está disponible.");
         return;
@@ -13885,11 +13914,43 @@ function finishWizardAndCreateBudget() {
     const date = wizardProjectDate?.value || new Date().toISOString().slice(0, 10);
 
     const options = { title, client, location, date };
-    const selectedMode = document.querySelector('input[name="wizardMode"]:checked')?.value || 'smart';
+    const selectedMode = document.querySelector('input[name="wizardMode"]:checked')?.value || 'gemini_ai';
 
     let project = null;
 
-    if (selectedMode === 'blank') {
+    if (selectedMode === 'gemini_ai') {
+        const key = getGeminiApiKey();
+        if (!key) {
+            alert("Por favor conecta tu clave API de Google Gemini para usar la generación con IA.");
+            openGeminiConfigModal();
+            return;
+        }
+
+        const promptText = wizardGeminiPrompt?.value?.trim();
+        if (!promptText) {
+            alert("Por favor introduce una descripción de las obras a presupuestar.");
+            if (wizardGeminiPrompt) wizardGeminiPrompt.focus();
+            return;
+        }
+
+        // Desactivar temporalmente el botón mientras genera
+        if (wizardCreateBtn) {
+            wizardCreateBtn.disabled = true;
+            wizardCreateBtn.textContent = "⏳ Generando con IA...";
+        }
+
+        try {
+            project = await generateBudgetWithGemini(promptText, options);
+        } finally {
+            if (wizardCreateBtn) {
+                wizardCreateBtn.disabled = false;
+                wizardCreateBtn.textContent = "✨ Generar Presupuesto con IA";
+            }
+        }
+
+        if (!project) return;
+
+    } else if (selectedMode === 'blank') {
         project = window.BC3PriceBank.createBlankProject(options);
     } else if (selectedMode === 'template') {
         const tType = wizardTemplateType?.value || 'reforma_piso';
@@ -13935,6 +13996,390 @@ if (newBudgetWizardModal) {
         if (e.target === newBudgetWizardModal) closeNewBudgetWizard();
     });
 }
+
+// Chips de ejemplos de prompts de Gemini
+document.querySelectorAll('.gemini-chip-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const promptText = btn.getAttribute('data-prompt');
+        if (wizardGeminiPrompt && promptText) {
+            wizardGeminiPrompt.value = promptText;
+            wizardGeminiPrompt.focus();
+        }
+    });
+});
+
+
+// ==========================================================================
+// 🤖 MÓDULO GOOGLE GEMINI AI (BYOK - Bring Your Own Key)
+// Presupuestación Generativa & Asistente ConTech
+// ==========================================================================
+
+const GEMINI_API_STORAGE_KEY = 'bc3_gemini_api_key';
+const GEMINI_MODEL = 'gemini-1.5-flash';
+
+const geminiConfigModal = document.getElementById('geminiConfigModal');
+const geminiConfigBtn = document.getElementById('geminiConfigBtn');
+const closeGeminiConfigBtn = document.getElementById('closeGeminiConfigBtn');
+const closeGeminiConfigFooterBtn = document.getElementById('closeGeminiConfigFooterBtn');
+const wizardOpenGeminiConfigBtn = document.getElementById('wizardOpenGeminiConfigBtn');
+const geminiApiKeyInput = document.getElementById('geminiApiKeyInput');
+const toggleGeminiKeyVisibilityBtn = document.getElementById('toggleGeminiKeyVisibilityBtn');
+const saveAndTestGeminiKeyBtn = document.getElementById('saveAndTestGeminiKeyBtn');
+const saveGeminiBtnText = document.getElementById('saveGeminiBtnText');
+const removeGeminiKeyBtn = document.getElementById('removeGeminiKeyBtn');
+const geminiKeyValidationMsg = document.getElementById('geminiKeyValidationMsg');
+
+function getGeminiApiKey() {
+    try {
+        return (localStorage.getItem(GEMINI_API_STORAGE_KEY) || '').trim();
+    } catch (e) {
+        return '';
+    }
+}
+
+function setGeminiApiKey(key) {
+    try {
+        localStorage.setItem(GEMINI_API_STORAGE_KEY, (key || '').trim());
+        updateGeminiStatusUI();
+    } catch (e) {
+        console.error("Error guardando clave Gemini", e);
+    }
+}
+
+function removeGeminiApiKey() {
+    try {
+        localStorage.removeItem(GEMINI_API_STORAGE_KEY);
+        if (geminiApiKeyInput) geminiApiKeyInput.value = '';
+        updateGeminiStatusUI();
+    } catch (e) {
+        console.error("Error eliminando clave Gemini", e);
+    }
+}
+
+async function validateGeminiApiKey(key) {
+    const cleanKey = (key || '').trim();
+    if (!cleanKey) return { success: false, error: 'Por favor introduce una clave de API válida.' };
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${cleanKey}`;
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: 'Responde estrictamente con la palabra OK si esta petición funciona correctamente.' }] }],
+                generationConfig: { maxOutputTokens: 10 }
+            }),
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            let errorMsg = `Error HTTP ${response.status}`;
+            try {
+                const errData = await response.json();
+                if (errData?.error?.message) errorMsg = errData.error.message;
+            } catch (e) {}
+            return { success: false, error: errorMsg };
+        }
+
+        const data = await response.json();
+        if (data?.candidates && data.candidates.length > 0) {
+            return { success: true };
+        }
+        return { success: false, error: 'Respuesta inesperada del servidor de Google.' };
+    } catch (err) {
+        return { success: false, error: err.name === 'AbortError' ? 'Tiempo de espera agotado al conectar con Google AI Studio.' : (err.message || 'Error de conexión con Google AI.') };
+    }
+}
+
+function updateGeminiStatusUI() {
+    const key = getGeminiApiKey();
+    const isConnected = !!key;
+
+    // Badges en el menú de Ajustes
+    const statusDot = document.getElementById('geminiStatusDot');
+    const statusText = document.getElementById('geminiStatusText');
+    const statusBadge = document.getElementById('geminiStatusBadge');
+
+    if (statusDot) {
+        statusDot.className = `gemini-status-dot ${isConnected ? 'connected' : 'disconnected'}`;
+    }
+    if (statusText) {
+        statusText.textContent = isConnected ? 'Conectado' : 'Sin conectar';
+        statusText.style.color = isConnected ? '#16a34a' : 'var(--text-secondary)';
+    }
+    if (statusBadge) {
+        if (isConnected) statusBadge.classList.add('connected');
+        else statusBadge.classList.remove('connected');
+    }
+
+    // Modal de configuración de Gemini
+    const modalDot = document.getElementById('geminiModalStatusDot');
+    const modalTitle = document.getElementById('geminiModalStatusTitle');
+    const modalSubtitle = document.getElementById('geminiModalStatusSubtitle');
+    const removeBtn = document.getElementById('removeGeminiKeyBtn');
+    const keyInput = document.getElementById('geminiApiKeyInput');
+
+    if (modalDot) modalDot.className = `gemini-status-dot ${isConnected ? 'connected' : 'disconnected'}`;
+    if (modalTitle) {
+        modalTitle.textContent = isConnected ? '● Gemini IA Conectado' : 'Sin conectar';
+        modalTitle.style.color = isConnected ? '#16a34a' : 'var(--text-primary)';
+    }
+    if (modalSubtitle) {
+        modalSubtitle.textContent = isConnected ? 'Clave de API activa y lista para presupuestación con IA.' : 'Introduce tu clave API gratuita para activar la IA.';
+    }
+    if (removeBtn) removeBtn.style.display = isConnected ? 'inline-block' : 'none';
+    if (keyInput && isConnected && !keyInput.value) {
+        keyInput.value = key;
+    }
+
+    // Wizard Step 3 de Gemini
+    const noKeyAlert = document.getElementById('wizardGeminiNoKeyAlert');
+    const promptContainer = document.getElementById('wizardGeminiPromptContainer');
+    if (noKeyAlert && promptContainer) {
+        if (isConnected) {
+            noKeyAlert.style.display = 'none';
+            promptContainer.style.display = 'flex';
+        } else {
+            noKeyAlert.style.display = 'flex';
+            promptContainer.style.display = 'none';
+        }
+    }
+}
+
+function openGeminiConfigModal() {
+    if (!geminiConfigModal) return;
+    const key = getGeminiApiKey();
+    if (geminiApiKeyInput) geminiApiKeyInput.value = key;
+    if (geminiKeyValidationMsg) {
+        geminiKeyValidationMsg.style.display = 'none';
+        geminiKeyValidationMsg.textContent = '';
+    }
+    updateGeminiStatusUI();
+    geminiConfigModal.style.display = 'flex';
+}
+
+function closeGeminiConfigModal() {
+    if (geminiConfigModal) geminiConfigModal.style.display = 'none';
+}
+
+if (geminiConfigBtn) geminiConfigBtn.addEventListener('click', openGeminiConfigModal);
+if (closeGeminiConfigBtn) closeGeminiConfigBtn.addEventListener('click', closeGeminiConfigModal);
+if (closeGeminiConfigFooterBtn) closeGeminiConfigFooterBtn.addEventListener('click', closeGeminiConfigModal);
+if (wizardOpenGeminiConfigBtn) wizardOpenGeminiConfigBtn.addEventListener('click', openGeminiConfigModal);
+
+if (geminiConfigModal) {
+    geminiConfigModal.addEventListener('click', (e) => {
+        if (e.target === geminiConfigModal) closeGeminiConfigModal();
+    });
+}
+
+if (toggleGeminiKeyVisibilityBtn && geminiApiKeyInput) {
+    toggleGeminiKeyVisibilityBtn.addEventListener('click', () => {
+        const isPass = geminiApiKeyInput.type === 'password';
+        geminiApiKeyInput.type = isPass ? 'text' : 'password';
+        toggleGeminiKeyVisibilityBtn.textContent = isPass ? '🔒' : '👁️';
+    });
+}
+
+if (saveAndTestGeminiKeyBtn && geminiApiKeyInput) {
+    saveAndTestGeminiKeyBtn.addEventListener('click', async () => {
+        const key = geminiApiKeyInput.value.trim();
+        if (!key) {
+            if (geminiKeyValidationMsg) {
+                geminiKeyValidationMsg.style.display = 'block';
+                geminiKeyValidationMsg.style.color = '#ef4444';
+                geminiKeyValidationMsg.textContent = '❌ Por favor introduce tu clave de API.';
+            }
+            geminiApiKeyInput.focus();
+            return;
+        }
+
+        saveAndTestGeminiKeyBtn.disabled = true;
+        if (saveGeminiBtnText) saveGeminiBtnText.textContent = "Verificando con Google...";
+        if (geminiKeyValidationMsg) {
+            geminiKeyValidationMsg.style.display = 'block';
+            geminiKeyValidationMsg.style.color = 'var(--accent, #3b82f6)';
+            geminiKeyValidationMsg.textContent = '🔄 Conectando con Google AI Studio...';
+        }
+
+        const result = await validateGeminiApiKey(key);
+
+        saveAndTestGeminiKeyBtn.disabled = false;
+        if (saveGeminiBtnText) saveGeminiBtnText.textContent = "Probar y Conectar Clave";
+
+        if (result.success) {
+            setGeminiApiKey(key);
+            if (geminiKeyValidationMsg) {
+                geminiKeyValidationMsg.style.display = 'block';
+                geminiKeyValidationMsg.style.color = '#16a34a';
+                geminiKeyValidationMsg.textContent = '✅ ¡Clave validada y conectada correctamente!';
+            }
+            if (typeof showToastMessage === 'function') {
+                showToastMessage("🤖 Google Gemini AI conectado exitosamente.");
+            }
+        } else {
+            if (geminiKeyValidationMsg) {
+                geminiKeyValidationMsg.style.display = 'block';
+                geminiKeyValidationMsg.style.color = '#ef4444';
+                geminiKeyValidationMsg.textContent = `❌ Fallo de validación: ${result.error}`;
+            }
+        }
+    });
+}
+
+if (removeGeminiKeyBtn) {
+    removeGeminiKeyBtn.addEventListener('click', () => {
+        if (confirm("¿Deseas desconectar y eliminar tu clave de Gemini de este dispositivo?")) {
+            removeGeminiApiKey();
+            if (geminiKeyValidationMsg) {
+                geminiKeyValidationMsg.style.display = 'block';
+                geminiKeyValidationMsg.style.color = 'var(--text-secondary)';
+                geminiKeyValidationMsg.textContent = 'Clave eliminada.';
+            }
+        }
+    });
+}
+
+// Generador de presupuesto estructurado con Gemini
+async function generateBudgetWithGemini(userPrompt, options) {
+    const apiKey = getGeminiApiKey();
+    if (!apiKey) {
+        alert("Necesitas conectar tu clave API de Google Gemini en Ajustes para generar presupuestos con IA.");
+        openGeminiConfigModal();
+        return null;
+    }
+
+    const cleanPrompt = (userPrompt || "").trim();
+    if (!cleanPrompt) {
+        alert("Por favor, describe las unidades de obra o el proyecto que deseas presupuestar.");
+        return null;
+    }
+
+    const systemInstruction = `Eres un Arquitecto Técnico y Director de Ejecución de Obras senior en España, experto en presupuestación, bases de precios de construcción (FIEBDC-3 / BC3, Preoc, CYPE, IVE) y mediciones.
+Tu tarea es generar un presupuesto de construcción completo, realista, profesional y estructurado a partir de la descripción del usuario.
+
+REGLAS OBLIGATORIAS:
+1. Responde ÚNICAMENTE con un objeto JSON válido que cumpla estrictamente este formato:
+{
+  "title": "Título del proyecto",
+  "chapters": [
+    {
+      "code": "CAP01##",
+      "summary": "NOMBRE DEL CAPÍTULO EN MAYÚSCULAS",
+      "items": [
+        {
+          "code": "DEM010",
+          "unit": "m2",
+          "summary": "Resumen conciso de la partida en una línea",
+          "description": "Texto técnico descriptivo completo de la unidad de obra con especificaciones de ejecución.",
+          "price": 14.50,
+          "quantity": 25.00,
+          "components": [
+            { "code": "MO_PEON", "type": "MO", "summary": "Peón ordinario de construcción", "unit": "h", "qty": 0.40, "price": 21.50 },
+            { "code": "MQ_HERR", "type": "MQ", "summary": "Herramientas y medios auxiliares", "unit": "%", "qty": 1.00, "price": 2.50 }
+          ],
+          "measurements": [
+            { "comment": "Zona principal", "units": 1, "length": 5.0, "width": 5.0, "height": 1, "total": 25.0 }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+2. Cada partida DEBE tener:
+   - "code": código alfanumérico corto (ej. DEM010, ALB020, REV010, CAR010, INS010).
+   - "unit": unidad de medida estándar en minúsculas (m2, m3, m, ud, kg, t, pa, h).
+   - "summary": título claro y profesional.
+   - "description": pliego técnico de la unidad.
+   - "price": precio unitario en euros (€) con valores de mercado actuales en España.
+   - "quantity": medición total calculada según el alcance solicitado.
+   - "components": desglose en mano de obra (type="MO"), maquinaria (type="MQ") y materiales (type="MT").
+   - "measurements": líneas de medición con desglose de dimensiones estimadas si procede.
+3. No incluyas explicaciones en texto ni bloques markdown adicionales, únicamente el JSON puro.`;
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+
+    const loadingOverlay = document.getElementById('wizardGeminiLoading');
+    if (loadingOverlay) loadingOverlay.style.display = 'flex';
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [
+                    {
+                        parts: [
+                            { text: `Genera el presupuesto en formato JSON para el siguiente proyecto:\nTítulo: ${options.title}\nCliente: ${options.client}\nUbicación: ${options.location}\nDescripción del alcance: ${cleanPrompt}` }
+                        ]
+                    }
+                ],
+                systemInstruction: {
+                    parts: [{ text: systemInstruction }]
+                },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    temperature: 0.2
+                }
+            }),
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            let errMsg = `Error HTTP ${response.status}`;
+            try {
+                const errJson = await response.json();
+                if (errJson?.error?.message) errMsg = errJson.error.message;
+            } catch (e) {}
+            throw new Error(errMsg);
+        }
+
+        const data = await response.json();
+        const candidate = data.candidates?.[0];
+        const contentText = candidate?.content?.parts?.[0]?.text;
+
+        if (!contentText) {
+            throw new Error("La IA no devolvió contenido estructurado.");
+        }
+
+        let parsedJson;
+        try {
+            parsedJson = JSON.parse(contentText);
+        } catch (jsonErr) {
+            const jsonMatch = contentText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                parsedJson = JSON.parse(jsonMatch[0]);
+            } else {
+                throw new Error("No se pudo interpretar la respuesta JSON de la IA.");
+            }
+        }
+
+        if (!window.BC3PriceBank || typeof window.BC3PriceBank.createProjectFromGeminiJson !== 'function') {
+            throw new Error("El módulo BC3PriceBank no está disponible.");
+        }
+
+        const project = window.BC3PriceBank.createProjectFromGeminiJson(parsedJson, options);
+        return project;
+    } catch (err) {
+        console.error("Error en generateBudgetWithGemini", err);
+        alert(`❌ Error al generar el presupuesto con IA: ${err.message || err}`);
+        return null;
+    } finally {
+        if (loadingOverlay) loadingOverlay.style.display = 'none';
+    }
+}
+
+// Inicializar estado de Gemini al cargar
+updateGeminiStatusUI();
 
 
 // ── MÓDULO DE CATÁLOGO Y BASE DE PRECIOS CONTECH ──

@@ -856,6 +856,139 @@
         },
 
         /**
+         * Genera un proyecto BC3 a partir del JSON estructurado devuelto por Google Gemini AI
+         */
+        createProjectFromGeminiJson: function (data, options) {
+            const project = this.createBlankProject(options);
+            const root = project.concepts["OBRA#"];
+            root.summary = data.title || options.title || "Presupuesto Generado con IA";
+
+            if (!data.chapters || !Array.isArray(data.chapters)) {
+                return project;
+            }
+
+            let rootPrice = 0;
+
+            data.chapters.forEach((chData, chIdx) => {
+                let chCode = chData.code || `CAP${String(chIdx + 1).padStart(2, '0')}##`;
+                if (!chCode.endsWith('#')) {
+                    chCode = chCode + '##';
+                }
+                const chSummary = (chData.summary || chData.name || `Capítulo ${chIdx + 1}`).toUpperCase();
+
+                const chConcept = {
+                    code: chCode,
+                    unit: "",
+                    summary: chSummary,
+                    price: 0,
+                    quantity: 1,
+                    type: 0,
+                    children: [],
+                    decomposition: [],
+                    measurements: []
+                };
+
+                let chTotal = 0;
+
+                if (chData.items && Array.isArray(chData.items)) {
+                    chData.items.forEach((item, itemIdx) => {
+                        const itemCode = item.code || `PAR_${String(chIdx + 1).padStart(2, '0')}${String(itemIdx + 1).padStart(2, '0')}`;
+                        const itemPrice = parseFloat(item.price) || 0;
+                        const itemQty = parseFloat(item.quantity) || 1.0;
+                        const itemUnit = item.unit || "ud";
+                        const itemSummary = item.summary || item.title || "Unidad de obra";
+                        const itemDesc = item.description || item.text || itemSummary;
+
+                        const decomp = [];
+                        if (item.components && Array.isArray(item.components)) {
+                            item.components.forEach((comp, cIdx) => {
+                                let cCode = comp.code || `COMP_${cIdx + 1}`;
+                                let cType = 0;
+                                const cTypeStr = (comp.type || "").toUpperCase();
+                                if (cTypeStr === 'MO' || cCode.startsWith('MO')) { 
+                                    cType = 1; 
+                                    if (!cCode.startsWith('MO')) cCode = 'MO_' + cCode; 
+                                } else if (cTypeStr === 'MQ' || cCode.startsWith('MQ')) { 
+                                    cType = 2; 
+                                    if (!cCode.startsWith('MQ')) cCode = 'MQ_' + cCode; 
+                                } else if (cTypeStr === 'MT' || cCode.startsWith('MT')) { 
+                                    cType = 3; 
+                                    if (!cCode.startsWith('MT')) cCode = 'MT_' + cCode; 
+                                }
+
+                                const cFactor = parseFloat(comp.qty || comp.factor) || 1.0;
+                                const cPrice = parseFloat(comp.price) || 0;
+                                const cUnit = comp.unit || (cType === 1 ? 'h' : (cType === 2 ? 'h' : 'ud'));
+                                const cSummary = comp.summary || comp.name || "Elemento descompuesto";
+
+                                if (!project.concepts[cCode]) {
+                                    project.concepts[cCode] = {
+                                        code: cCode,
+                                        unit: cUnit,
+                                        summary: cSummary,
+                                        price: cPrice,
+                                        quantity: 1,
+                                        type: cType,
+                                        children: [],
+                                        decomposition: [],
+                                        measurements: []
+                                    };
+                                }
+
+                                decomp.push({
+                                    code: cCode,
+                                    factor: cFactor,
+                                    unit: cUnit,
+                                    price: cPrice,
+                                    summary: cSummary
+                                });
+                            });
+                        }
+
+                        const measurements = [];
+                        if (item.measurements && Array.isArray(item.measurements)) {
+                            item.measurements.forEach(m => {
+                                measurements.push({
+                                    comment: m.comment || "",
+                                    units: parseFloat(m.units) || 1,
+                                    length: parseFloat(m.length) || 0,
+                                    width: parseFloat(m.width) || 0,
+                                    height: parseFloat(m.height) || 0,
+                                    total: parseFloat(m.total) || ((parseFloat(m.units) || 1) * (parseFloat(m.length) || 1) * (parseFloat(m.width) || 1) * (parseFloat(m.height) || 1))
+                                });
+                            });
+                        }
+
+                        const itemConcept = {
+                            code: itemCode,
+                            unit: itemUnit,
+                            summary: itemSummary,
+                            price: itemPrice,
+                            quantity: itemQty,
+                            type: 0,
+                            description: itemDesc,
+                            children: [],
+                            decomposition: decomp,
+                            measurements: measurements
+                        };
+
+                        project.concepts[itemCode] = itemConcept;
+                        chConcept.decomposition.push({ code: itemCode, factor: itemQty });
+                        chTotal += itemQty * itemPrice;
+                    });
+                }
+
+                chConcept.price = chTotal;
+                project.concepts[chCode] = chConcept;
+                root.decomposition.push({ code: chCode, factor: 1.0 });
+                rootPrice += chTotal;
+            });
+
+            root.price = rootPrice;
+            return this.normalizeProject(project, options);
+        },
+
+        /**
          * Busca partidas en la base de precios por texto libre o categoría
          */
         searchItems: function (query, categoryCode) {
