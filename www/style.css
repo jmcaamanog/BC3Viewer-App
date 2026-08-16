@@ -4684,8 +4684,6 @@ body.dark-theme .update-notify-content {
     transform: scale(0.97) !important;
 }
 
-}
-
 @media screen and (max-width: 768px) {
     /* Ocultar texto del título en móvil para ganar espacio */
     .gantt-title-text {
