@@ -21,13 +21,13 @@
     <div class="app-container">
         <header class="main-header">
             <div class="header-top-row">
-                <!-- Fila 1 (Superior): Logo + Valores Presupuesto (Izq) y Paleta ⌘K + Ajustes ⚙️ (Der) -->
+                <!-- Fila 1 (Superior): Logo + Valores Presupuesto (Izq) y Acciones de Obra (Der) -->
                 <div class="header-primary-row">
                     <div class="left-header-section">
                         <div class="logo">
                             <a href="https://github.com/jmcaamanog/BC3Viewer-App" target="_blank" rel="noopener noreferrer"
                                 style="display: block;">
-                                <img src="assets/icon.png" alt="BC3 Viewer" style="height: 38px; width: 38px; max-height: 38px; max-width: 38px; object-fit: contain; display: block;">
+                                <img src="assets/icon.png" alt="BC3 Viewer" style="height: 36px; width: 36px; max-height: 36px; max-width: 36px; object-fit: contain; display: block;">
                             </a>
                         </div>
                         <!-- Contenedor PEM, BI & PEC Widget -->
@@ -55,7 +55,60 @@
                         </div>
                     </div>
 
-                    <!-- Botones del extremo derecho (Fila 1): Paleta de Comandos y Menú Ajustes -->
+                    <!-- Botones de Acción de Obra (Fila 1 Derecha) -->
+                    <div class="header-action-group" id="headerActionGroup" style="display:none; align-items:center; gap:6px; flex-shrink:0;">
+                        <button type="button" id="openAssistantBtn" class="header-icon-btn" title="Asesor IA (jmcaamanog)" style="color:var(--text-primary); display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border:1px solid rgba(56,189,248,0.4); height:30px; border-radius:8px; background:var(--bg-hover); cursor:pointer;">
+                            <img src="img/jmcaamanog.png" class="jm-avatar-icon" alt="jmcaamanog" style="width:20px; height:20px;" />
+                            <span class="hide-on-mobile" style="font-size:0.75rem; font-weight:600;">Asesor IA</span>
+                        </button>
+                        
+                        <button type="button" id="saveBtn" class="header-icon-btn save-header-btn" title="Guardar Presupuesto (.bc3) (Ctrl+S)">
+                            💾
+                        </button>
+                        
+                        <div class="dropdown" id="exportDropdown">
+                            <button type="button" class="header-icon-btn export-header-btn dropdown-toggle" title="Exportar e Importar">
+                                <span>📤</span><span style="font-size: 0.6rem; margin-left: 2px;">▾</span>
+                            </button>
+                            <div class="dropdown-content export-dropdown-menu" style="min-width: 240px; right: 0; left: auto; z-index: 10000;">
+                                <!-- Bloque 1: Exportar -->
+                                <div style="padding: 6px 14px; font-size: 0.68rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-color); background: var(--bg-hover); text-align: left;">
+                                    📤 Exportar
+                                </div>
+                                <button type="button" id="exportPdfBtn" class="export-menu-item export-pdf-item">
+                                    <span class="menu-icon">📄</span><span class="btn-text">PDF (.pdf)</span>
+                                </button>
+                                <button type="button" id="exportExcelBtn" class="export-menu-item export-excel-item">
+                                    <span class="menu-icon">📊</span><span class="btn-text">EXCEL (.xlsx)</span>
+                                </button>
+                                <button type="button" id="exportBc3Btn" class="export-menu-item export-bc3-item">
+                                    <span class="menu-icon">💾</span><span class="btn-text">FIEBDC-3 (.bc3)</span>
+                                </button>
+
+                                <!-- Bloque 2: Importar -->
+                                <div style="padding: 6px 14px; font-size: 0.68rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); background: var(--bg-hover); margin-top: 2px; text-align: left;">
+                                    📥 Importar
+                                </div>
+                                <button type="button" id="openImportExcelBtn" class="export-menu-item import-excel-item">
+                                    <span class="menu-icon">📊</span><span class="btn-text">EXCEL (.xlsx)</span>
+                                </button>
+                                <button type="button" id="openImportCsvBtn" class="export-menu-item import-csv-item">
+                                    <span class="menu-icon">📄</span><span class="btn-text">CSV (.csv)</span>
+                                </button>
+                                <button type="button" id="openImportBc3Btn" class="export-menu-item import-bc3-item">
+                                    <span class="menu-icon">📂</span><span class="btn-text">FIEBDC-3 (.bc3)</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Botón de salir (X roja) -->
+                        <button type="button" id="closeBudgetBtn" class="close-budget-btn" title="Cerrar Presupuesto"
+                            style="display:none;">✕</button>
+                    </div>
+                </div>
+
+                <!-- Fila 2 (Inferior): Justificada a la derecha con Paleta de Comandos y Menú Ajustes -->
+                <div class="header-secondary-row" style="display: flex; justify-content: flex-end; align-items: center; width: 100%;">
                     <div class="right-controls" style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
                         <button type="button" class="cmd-palette-toggle-btn" id="cmdPaletteBtn" aria-label="Paleta de Comandos (Ctrl+K)"
                             title="Paleta de Comandos (Ctrl+K)">
@@ -65,7 +118,7 @@
                             <button type="button" class="settings-toggle-btn" id="settingsBtn" aria-label="Ajustes"
                                 title="Ajustes">⚙️</button>
                             <div class="dropdown-content dropdown-content-right"
-                                style="right: 0; left: auto; min-width: 200px; width: max-content; max-width: 90vw; max-height: 80vh; overflow-y: auto;">
+                                style="right: 0; left: auto; min-width: 200px; width: max-content; max-width: 90vw; max-height: 80vh; overflow-y: auto; z-index: 10000;">
                                 <!-- Archivo cargado (oculto del menú, solo uso interno) -->
                                 <label for="bc3file" id="dropdownFileLabel"
                                     style="display:none !important; width:0; height:0; overflow:hidden; padding:0; margin:0; border:none; position:absolute;">
@@ -75,98 +128,45 @@
 
                                 <!-- Cabecera de Usuario Personalizada (Google OAuth / Local) -->
                                 <div id="settingsUserHeader" style="padding: 10px 12px; border-bottom: 1px solid var(--border-color); background: rgba(59, 130, 246, 0.06); display: flex; align-items: center; gap: 9px; margin-bottom: 4px;">
-                                    <div id="settingsUserAvatar" style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
-                                        <span id="settingsUserAvatarText">👤</span>
+                                    <div id="settingsUserAvatar" style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #0284c7, #2563eb); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; flex-shrink: 0; overflow: hidden;">
+                                        👤
                                     </div>
-                                    <div style="flex: 1; min-width: 0; text-align: left;">
-                                        <div id="settingsUserName" style="font-weight: 600; font-size: 0.82rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                            Usuario Local
-                                        </div>
-                                        <div id="settingsUserStatus" style="font-size: 0.68rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                            Modo Offline Seguro
-                                        </div>
+                                    <div style="display: flex; flex-direction: column; overflow: hidden; max-width: 170px;">
+                                        <span id="settingsUserName" style="font-size: 0.8rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¡Hola! 👋</span>
+                                        <span id="settingsUserEmail" style="font-size: 0.68rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Modo Local / Offline</span>
                                     </div>
                                 </div>
 
-                                <div class="dropdown-header">Ajustes Generales</div>
-                                <button type="button" class="dropdown-item" id="openSettingsAssistantBtn">
-                                    <span class="item-text">Asesor IA</span>
-                                    <span class="item-icon"><img src="img/jmcaamanog.png" class="jm-avatar-icon" alt="jmcaamanog" style="width: 24px; height: 24px;" /></span>
+                                <button type="button" id="newBudgetMenuBtn"
+                                    style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer; color:var(--accent); font-weight:600;">Nuevo Presupuesto
+                                    <span style="font-size:1rem;">✨</span></button>
+                                <button type="button" id="settingsAssistantBtn"
+                                    style="display:flex; justify-content:space-between; align-items:center; width:100%; border:none; background:none; padding:8px 12px; cursor:pointer; color:var(--text-primary); gap:10px;">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <span class="gemini-status-dot disconnected" id="geminiStatusDot"></span>
+                                        <span style="font-size:0.85rem; font-weight:600; color:#38bdf8;">Asesor IA</span>
+                                    </div>
+                                    <img src="img/jmcaamanog.png" class="jm-avatar-icon" alt="jmcaamanog" />
                                 </button>
-                                <button type="button" class="dropdown-item" id="openDriveSyncBtn">
-                                    <span class="item-text">Sincronización Cloud</span>
-                                    <span class="item-icon">☁️</span>
-                                </button>
-                                <button type="button" class="dropdown-item" id="themeToggleBtn">
-                                    <span class="item-text" id="themeToggleText">Modo Claro</span>
-                                    <span class="item-icon">🌙</span>
-                                </button>
-                                <button type="button" class="dropdown-item" id="toggleHeaderBtn">
-                                    <span class="item-text" id="toggleHeaderText">Ocultar Cabecera</span>
-                                    <span class="item-icon">🔼</span>
-                                </button>
-                                <button type="button" class="dropdown-item" id="openAuditBtn">
-                                    <span class="item-text">Registro de Cambios</span>
-                                    <span class="item-icon">📋</span>
-                                </button>
-                                <button type="button" class="dropdown-item" id="openHelpBtn">
-                                    <span class="item-text">Información</span>
-                                    <span class="item-icon">ℹ️</span>
-                                </button>
+                                <button type="button" id="cloudSyncBtn"
+                                    style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Sincronización Cloud
+                                    <span style="font-size:1rem;">☁️</span></button>
+                                <button type="button" id="auditLogBtn"
+                                    style="display:none; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Auditoría
+                                    <span style="font-size:1rem;">📜</span></button>
+                                <button type="button" id="themeToggle"
+                                    style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Tema
+                                    Visual <span id="themeToggleIcon" style="font-size:1rem;">🌙</span></button>
+                                <button type="button" id="infoBtn"
+                                    style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer; color:var(--text-primary);">Información
+                                    <span style="font-size:1rem;">ℹ️</span></button>
+                                <hr style="border:none; border-top:1px solid var(--border-color); margin:4px 0;">
+                                <button type="button" id="aboutMeBtn"
+                                    style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer; color:var(--text-primary);">Sobre mí
+                                    <span style="font-size:1rem;">👨‍💻</span></button>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Fila 2 (Inferior): Botones de Acción de Obra (Asesor IA, Guardar, Exportar/Importar, Cerrar Presupuesto) -->
-                <div class="header-action-group" id="headerActionGroup" style="display:none; align-items:center; gap:6px; flex-wrap:wrap;">
-                    <button type="button" id="openAssistantBtn" class="header-icon-btn" title="Asesor IA (jmcaamanog)" style="color:var(--text-primary); display:inline-flex; align-items:center; gap:6px; padding:2px 10px; border:1px solid rgba(56,189,248,0.4); height:30px; border-radius:8px; background:var(--bg-hover); cursor:pointer;">
-                        <img src="img/jmcaamanog.png" class="jm-avatar-icon" alt="jmcaamanog" style="width:20px; height:20px;" />
-                        <span style="font-size:0.75rem; font-weight:600;">Asesor IA</span>
-                    </button>
-                    
-                    <button type="button" id="saveBtn" class="header-icon-btn save-header-btn" title="Guardar Presupuesto (.bc3) (Ctrl+S)">
-                        💾 <span class="hide-on-mobile" style="font-size:0.75rem; font-weight:600; margin-left:2px;">Guardar</span>
-                    </button>
-                    
-                    <div class="dropdown" id="exportDropdown">
-                        <button type="button" class="header-icon-btn export-header-btn dropdown-toggle" title="Exportar e Importar">
-                            <span>📤</span><span class="hide-on-mobile" style="font-size:0.75rem; font-weight:600; margin-left:2px;">Exportar</span><span style="font-size: 0.6rem; margin-left: 2px;">▾</span>
-                        </button>
-                        <div class="dropdown-content export-dropdown-menu" style="min-width: 240px; left: 0; right: auto;">
-                            <!-- Bloque 1: Exportar -->
-                            <div style="padding: 6px 14px; font-size: 0.68rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-color); background: var(--bg-hover); text-align: left;">
-                                📤 Exportar
-                            </div>
-                            <button type="button" id="exportPdfBtn" class="export-menu-item export-pdf-item">
-                                <span class="menu-icon">📄</span><span class="btn-text">PDF (.pdf)</span>
-                            </button>
-                            <button type="button" id="exportExcelBtn" class="export-menu-item export-excel-item">
-                                <span class="menu-icon">📊</span><span class="btn-text">EXCEL (.xlsx)</span>
-                            </button>
-                            <button type="button" id="exportBc3Btn" class="export-menu-item export-bc3-item">
-                                <span class="menu-icon">💾</span><span class="btn-text">FIEBDC-3 (.bc3)</span>
-                            </button>
-
-                            <!-- Bloque 2: Importar -->
-                            <div style="padding: 6px 14px; font-size: 0.68rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); background: var(--bg-hover); margin-top: 2px; text-align: left;">
-                                📥 Importar
-                            </div>
-                            <button type="button" id="openImportExcelBtn" class="export-menu-item import-excel-item">
-                                <span class="menu-icon">📊</span><span class="btn-text">EXCEL (.xlsx)</span>
-                            </button>
-                            <button type="button" id="openImportCsvBtn" class="export-menu-item import-csv-item">
-                                <span class="menu-icon">📄</span><span class="btn-text">CSV (.csv)</span>
-                            </button>
-                            <button type="button" id="openImportBc3Btn" class="export-menu-item import-bc3-item">
-                                <span class="menu-icon">📂</span><span class="btn-text">FIEBDC-3 (.bc3)</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Botón de salir (X roja) -->
-                    <button type="button" id="closeBudgetBtn" class="close-budget-btn" title="Cerrar Presupuesto"
-                        style="display:none;">✕</button>
                 </div>
             </div>
 
