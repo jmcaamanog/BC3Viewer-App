@@ -9775,10 +9775,38 @@ function logOta(message, error = null) {
     logs.push(logMsg);
     if (logs.length > 50) logs.shift();
     localStorage.setItem('ota_logs', JSON.stringify(logs));
+    renderOtaLogs();
+}
+
+function renderOtaLogs() {
+    const otaLogsContainer = document.getElementById('otaLogsContainer');
+    if (otaLogsContainer) {
+        try {
+            const logs = JSON.parse(localStorage.getItem('ota_logs') || '[]');
+            otaLogsContainer.textContent = logs.length > 0 ? logs.join('\n') : 'No hay registros disponibles.';
+        } catch (e) {
+            otaLogsContainer.textContent = 'Error al leer registros.';
+        }
+    }
 }
 
 async function initializeUpdater() {
     logOta("Iniciando actualizador OTA...");
+    renderOtaLogs();
+
+    // Hook listeners para interfaz manual en modal de información
+    const manualBtn = document.getElementById('manualCheckUpdateBtn');
+    if (manualBtn) {
+        manualBtn.onclick = () => checkForUpdates(true);
+    }
+    const clearBtn = document.getElementById('clearOtaLogsBtn');
+    if (clearBtn) {
+        clearBtn.onclick = () => {
+            localStorage.removeItem('ota_logs');
+            renderOtaLogs();
+        };
+    }
+
     if (!window.Capacitor) {
         logOta("Capacitor no disponible (entorno web estándar)");
         return;
@@ -9809,7 +9837,7 @@ async function initializeUpdater() {
 async function checkForUpdates(isManual = false) {
     const statusDiv = document.getElementById('manualUpdateStatus');
     const updateStatus = (text, isError = false) => {
-        if (isManual && statusDiv) {
+        if (statusDiv) {
             statusDiv.textContent = text;
             statusDiv.style.color = isError ? 'var(--danger, #ef4444)' : 'var(--accent, #0284c7)';
         }
@@ -9829,76 +9857,117 @@ async function checkForUpdates(isManual = false) {
         }
     }
 
-    const updateUrl = "https://jmcaamanog.github.io/BC3Viewer-App/update.json";
-    logOta(`Buscando actualizaciones en: ${updateUrl}`);
+    const updateUrls = [
+        "https://jmcaamanog.github.io/BC3Viewer-App/update.json",
+        "https://raw.githubusercontent.com/jmcaamanog/BC3Viewer-App/main/update.json"
+    ];
 
-    try {
-        // Petición silenciosa con timeout de 10 segundos
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+    let updateInfo = null;
+    let fetchError = null;
 
-        const response = await fetch(updateUrl, {
-            signal: controller.signal,
-            cache: 'no-store'
-        });
-        clearTimeout(timeoutId);
+    for (const uUrl of updateUrls) {
+        try {
+            logOta(`Consultando update.json en: ${uUrl}`);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-        logOta(`Respuesta del servidor: HTTP ${response.status}`);
-        if (!response.ok) {
-            logOta(`Fallo en respuesta HTTP: ${response.statusText}`);
-            updateStatus(`Error de servidor: ${response.statusText}`, true);
-            return;
-        }
+            const response = await fetch(uUrl, {
+                signal: controller.signal,
+                cache: 'no-store'
+            });
+            clearTimeout(timeoutId);
 
-        const updateInfo = await response.json();
-        logOta(`Parsed update.json: servidor=${updateInfo.version}, local=${APP_VERSION}`);
-
-        if (updateInfo.version && updateInfo.version !== APP_VERSION) {
-            if (isWindowsTauri) {
-                logOta(`Nueva versión detectada para Windows: V${updateInfo.version}`);
-                updateStatus(`Nueva versión V${updateInfo.version} disponible.`, false);
-                
-                // Si es consulta manual (o automática proactiva en Windows), preguntar
-                const confirmDownload = confirm(`Hay una nueva versión de BC3 Viewer disponible (V${updateInfo.version}).\n¿Deseas descargar el instalador de Windows para actualizar la aplicación?`);
-                if (confirmDownload) {
-                    window.open("https://github.com/jmcaamanog/BC3Viewer-App/raw/main/PROGRAMAS/BC3_Viewer_Windows_Installer.exe", "_blank");
-                    updateStatus(`Descargando instalador de Windows...`, false);
-                }
+            if (response.ok) {
+                updateInfo = await response.json();
+                logOta(`Respuesta correcta de ${uUrl}: versión=${updateInfo.version}`);
+                break;
             } else {
-                if (updateInfo.url) {
-                    logOta(`Nueva versión detectada: V${updateInfo.version}. Iniciando descarga de: ${updateInfo.url}`);
-                    updateStatus(`Nueva versión V${updateInfo.version} encontrada. Descargando...`);
+                logOta(`HTTP ${response.status} en ${uUrl}`);
+            }
+        } catch (e) {
+            fetchError = e;
+            logOta(`Fallo al consultar ${uUrl}`, e);
+        }
+    }
 
-                    const { CapacitorUpdater } = window.Capacitor.Plugins;
-                    // Descargar el nuevo zip de actualización en segundo plano
-                    const downloadResult = await CapacitorUpdater.download({
-                        url: updateInfo.url,
-                        version: updateInfo.version
-                    });
-                    logOta(`Descarga finalizada. Guardando bundle versión ${updateInfo.version}...`);
-                    updateStatus(`Instalando versión V${updateInfo.version}...`);
+    if (!updateInfo) {
+        updateStatus(`Fallo de conexión al buscar versión (${fetchError?.message || 'Error de red'})`, true);
+        return;
+    }
 
-                    // Instalar/Establecer el nuevo bundle como la versión activa
-                    await CapacitorUpdater.set(downloadResult);
-                    logOta(`Nueva versión establecida correctamente.`);
-                    updateStatus(`¡Actualizado a V${updateInfo.version}!`, false);
+    logOta(`Parsed update.json: servidor=${updateInfo.version}, local=${APP_VERSION}`);
 
-                    if (isManual || confirm(`✨ ¡Nueva versión V${updateInfo.version} instalada!\n¿Deseas reiniciar la aplicación ahora para aplicar los cambios?`)) {
-                        if (typeof CapacitorUpdater.reload === 'function') {
-                            await CapacitorUpdater.reload();
-                        }
-                    } else {
-                        showToastMessage(`✨ Aplicación actualizada a la versión V${updateInfo.version}. Se aplicará en el próximo reinicio.`);
-                    }
-                }
+    if (updateInfo.version && updateInfo.version !== APP_VERSION) {
+        if (isWindowsTauri) {
+            logOta(`Nueva versión detectada para Windows: V${updateInfo.version}`);
+            updateStatus(`Nueva versión V${updateInfo.version} disponible.`, false);
+            
+            // Si es consulta manual (o automática proactiva en Windows), preguntar
+            const confirmDownload = confirm(`Hay una nueva versión de BC3 Viewer disponible (V${updateInfo.version}).\n¿Deseas descargar el instalador de Windows para actualizar la aplicación?`);
+            if (confirmDownload) {
+                window.open("https://github.com/jmcaamanog/BC3Viewer-App/raw/main/PROGRAMAS/BC3_Viewer_Windows_Installer.exe", "_blank");
+                updateStatus(`Descargando instalador de Windows...`, false);
             }
         } else {
-            logOta(`No se requiere actualizar (las versiones coinciden)`);
-            updateStatus(`Ya tienes la versión más reciente (V${APP_VERSION}).`);
+            const { CapacitorUpdater } = window.Capacitor.Plugins;
+            logOta(`Nueva versión detectada: V${updateInfo.version}. Iniciando descarga...`);
+            updateStatus(`Nueva versión V${updateInfo.version} encontrada. Descargando...`);
+
+            const downloadUrls = [
+                updateInfo.url,
+                "https://raw.githubusercontent.com/jmcaamanog/BC3Viewer-App/main/dist.zip",
+                "https://jmcaamanog.github.io/BC3Viewer-App/dist.zip"
+            ].filter(Boolean);
+
+            let downloadResult = null;
+            let downloadError = null;
+
+            for (const dlUrl of downloadUrls) {
+                try {
+                    logOta(`Descargando paquete OTA desde: ${dlUrl}`);
+                    downloadResult = await CapacitorUpdater.download({
+                        url: dlUrl,
+                        version: updateInfo.version
+                    });
+                    if (downloadResult) {
+                        logOta(`Descarga exitosa desde ${dlUrl}`);
+                        break;
+                    }
+                } catch (dlErr) {
+                    downloadError = dlErr;
+                    logOta(`Fallo al descargar desde ${dlUrl}`, dlErr);
+                }
+            }
+
+            if (!downloadResult) {
+                updateStatus(`Error en descarga OTA: ${downloadError?.message || 'No se pudo obtener el archivo'}`, true);
+                return;
+            }
+
+            try {
+                logOta(`Descarga finalizada. Instalando versión ${updateInfo.version}...`);
+                updateStatus(`Instalando versión V${updateInfo.version}...`);
+
+                // Instalar/Establecer el nuevo bundle como la versión activa
+                await CapacitorUpdater.set(downloadResult);
+                logOta(`Nueva versión establecida correctamente.`);
+                updateStatus(`¡Actualizado a V${updateInfo.version}!`, false);
+
+                if (isManual || confirm(`✨ ¡Nueva versión V${updateInfo.version} instalada!\n¿Deseas reiniciar la aplicación ahora para aplicar los cambios?`)) {
+                    if (typeof CapacitorUpdater.reload === 'function') {
+                        await CapacitorUpdater.reload();
+                    }
+                } else {
+                    showToastMessage(`✨ Aplicación actualizada a la versión V${updateInfo.version}. Se aplicará en el próximo reinicio.`);
+                }
+            } catch (setErr) {
+                logOta(`Error al aplicar el paquete OTA`, setErr);
+                updateStatus(`Error al instalar: ${setErr.message || setErr}`, true);
+            }
         }
-    } catch (err) {
-        logOta("Error durante el chequeo/descarga de la actualización", err);
-        updateStatus(`Fallo en la descarga. Revisa el registro.`, true);
+    } else {
+        logOta(`No se requiere actualizar (las versiones coinciden: V${APP_VERSION})`);
+        updateStatus(`Ya tienes la versión más reciente (V${APP_VERSION}).`, false);
     }
 }
 
