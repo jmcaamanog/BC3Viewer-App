@@ -5853,11 +5853,71 @@ function rebuildGanttDOM() {
         }
     }, 0);
 
-    // Sincronizar scroll vertical entre columnas
-    leftCol.addEventListener('scroll', () => { rightCol.scrollTop = leftCol.scrollTop; });
+    // Sincronizar scroll vertical bidireccional entre columna de tareas y cronograma
+    let isSyncingLeft = false;
+    let isSyncingRight = false;
+
+    leftCol.addEventListener('scroll', () => {
+        if (!isSyncingLeft) {
+            isSyncingRight = true;
+            rightCol.scrollTop = leftCol.scrollTop;
+        }
+        isSyncingLeft = false;
+    });
+
+    rightCol.addEventListener('scroll', () => {
+        if (!isSyncingRight) {
+            isSyncingLeft = true;
+            leftCol.scrollTop = rightCol.scrollTop;
+        }
+        isSyncingRight = false;
+    });
+
+    // Paneo y arrastre libre del cronograma con el ratón (Drag-to-pan)
+    initGanttTimelinePan(rightCol, leftCol);
 
     // Actualizar el zoom previo para la siguiente reconstrucción
     ganttPrevColPx = GANTT_COL_PX;
+}
+
+// ---- Arrastrar cronograma con el ratón para desplazarse libremente (Pan) ----
+function initGanttTimelinePan(rightCol, leftCol) {
+    let isPanning = false;
+    let startX = 0;
+    let startY = 0;
+    let scrollLeftStart = 0;
+    let scrollTopStart = 0;
+
+    rightCol.addEventListener('mousedown', (e) => {
+        // Ignorar si se pulsa sobre una barra de tarea, resize handle, toggle, botón o input
+        if (e.target.closest('.gantt-bar, .gantt-col-resize-handle, .gantt-toggle, button, input, select')) return;
+        if (e.button !== 0) return; // Solo botón izquierdo del ratón
+
+        isPanning = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        scrollLeftStart = rightCol.scrollLeft;
+        scrollTopStart = rightCol.scrollTop;
+        rightCol.style.cursor = 'grabbing';
+        document.body.style.userSelect = 'none';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isPanning) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        rightCol.scrollLeft = scrollLeftStart - dx;
+        rightCol.scrollTop = scrollTopStart - dy;
+        if (leftCol) leftCol.scrollTop = rightCol.scrollTop;
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (isPanning) {
+            isPanning = false;
+            rightCol.style.cursor = '';
+            document.body.style.userSelect = '';
+        }
+    });
 }
 
 // Calcular coordenadas izquierda y ancho de barra según el zoom y la escala activa delegando al motor
@@ -6462,7 +6522,7 @@ function initEVMModule() {
             const ganttSec = document.getElementById('ganttViewSection');
             const evmSec = document.getElementById('evmViewSection');
             const ganttCtrl = document.getElementById('ganttControlsGroup');
-            if (ganttSec) ganttSec.style.display = 'block';
+            if (ganttSec) ganttSec.style.display = 'flex';
             if (evmSec) evmSec.style.display = 'none';
             if (ganttCtrl) ganttCtrl.style.display = 'flex';
             rebuildGanttDOM();

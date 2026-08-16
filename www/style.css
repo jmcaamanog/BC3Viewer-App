@@ -1617,12 +1617,21 @@ body.dark-theme .export-menu-item.import-bc3-item { color: #a78bfa !important; }
 }
 .gantt-close-btn:hover { background: rgba(255,255,255,0.25); }
 
-/* Contenedor principal del Gantt */
+/* Sección y Contenedor principal del Gantt */
+#ganttViewSection {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+    width: 100%;
+}
 .gantt-container {
     flex: 1;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    min-height: 0;
 }
 .gantt-table-wrap {
     display: flex;
