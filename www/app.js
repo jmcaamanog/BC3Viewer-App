@@ -1,4 +1,4 @@
-const APP_VERSION = '2.1.0'; // Versión actual de la aplicación (Single Source of Truth)
+const APP_VERSION = '2.2.1'; // Versión actual de la aplicación (Single Source of Truth)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // Sincronizador centralizado y automático de versión en toda la interfaz
@@ -9953,12 +9953,14 @@ async function checkForUpdates(isManual = false) {
                 logOta(`Nueva versión establecida correctamente.`);
                 updateStatus(`¡Actualizado a V${updateInfo.version}!`, false);
 
-                if (isManual || confirm(`✨ ¡Nueva versión V${updateInfo.version} instalada!\n¿Deseas reiniciar la aplicación ahora para aplicar los cambios?`)) {
-                    if (typeof CapacitorUpdater.reload === 'function') {
-                        await CapacitorUpdater.reload();
+                if (isManual) {
+                    if (confirm(`✨ ¡Nueva versión V${updateInfo.version} instalada!\n¿Deseas reiniciar la aplicación ahora para aplicar los cambios?`)) {
+                        if (typeof CapacitorUpdater.reload === 'function') {
+                            await CapacitorUpdater.reload();
+                        }
                     }
                 } else {
-                    showToastMessage(`✨ Aplicación actualizada a la versión V${updateInfo.version}. Se aplicará en el próximo reinicio.`);
+                    showToastMessage(`✨ Aplicación actualizada a la versión V${updateInfo.version}. Se aplicará en el próximo inicio.`);
                 }
             } catch (setErr) {
                 logOta(`Error al aplicar el paquete OTA`, setErr);
