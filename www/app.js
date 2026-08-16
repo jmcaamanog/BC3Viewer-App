@@ -13305,11 +13305,54 @@ async function syncFilesFromGoogleDrive() {
     }
 }
 
+function getLoggedUserProfile() {
+    try {
+        const name = (localStorage.getItem('bc3_cloud_user_name') || '').trim();
+        const email = (localStorage.getItem('bc3_cloud_user_account') || '').trim();
+        const picture = (localStorage.getItem('bc3_cloud_user_picture') || '').trim();
+        let firstName = '';
+        if (name) {
+            firstName = name.split(' ')[0];
+        } else if (email) {
+            const rawNick = email.split('@')[0];
+            firstName = rawNick.charAt(0).toUpperCase() + rawNick.slice(1);
+        }
+        return { name, firstName, email, picture, isLogged: Boolean(email) };
+    } catch (e) {
+        return { name: '', firstName: '', email: '', picture: '', isLogged: false };
+    }
+}
+
+function updateSettingsUserHeaderUI() {
+    const user = getLoggedUserProfile();
+    const nameEl = document.getElementById('settingsUserName');
+    const emailEl = document.getElementById('settingsUserEmail');
+    const avatarEl = document.getElementById('settingsUserAvatar');
+
+    if (nameEl && emailEl && avatarEl) {
+        if (user.isLogged) {
+            nameEl.textContent = user.name ? `¡Hola, ${user.firstName}! 👋` : `¡Hola! 👋`;
+            emailEl.textContent = user.email;
+            if (user.picture) {
+                avatarEl.innerHTML = `<img src="${user.picture}" alt="${user.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+            } else {
+                avatarEl.textContent = (user.firstName ? user.firstName.charAt(0).toUpperCase() : '👤');
+            }
+        } else {
+            nameEl.textContent = '¡Hola! 👋';
+            emailEl.textContent = 'Modo Local / Offline';
+            avatarEl.textContent = '👤';
+        }
+    }
+}
+
 function updateCloudAccountUI() {
     const userAccount = localStorage.getItem('bc3_cloud_user_account');
     const userName = localStorage.getItem('bc3_cloud_user_name');
     const autoSync = localStorage.getItem('bc3_cloud_autosync') !== 'false';
     const folderId = localStorage.getItem('bc3_gdrive_folder_id');
+
+    updateSettingsUserHeaderUI();
 
     if (cloudAutoSyncToggle) cloudAutoSyncToggle.checked = autoSync;
 
@@ -14656,6 +14699,21 @@ function openAssistantModal(targetChapterCode = null) {
         }
     }
 
+    // Personalizar saludo inicial con el nombre del usuario si la conversación está empezando
+    const userProfile = getLoggedUserProfile();
+    const userGreeting = userProfile.firstName ? `¡Hola, ${userProfile.firstName}! 👋` : `¡Hola! 👋`;
+    if (geminiChatHistory && assistantChatMessages.length === 0) {
+        const firstBubble = geminiChatHistory.querySelector('.assistant-msg.ai-msg .msg-bubble');
+        if (firstBubble) {
+            firstBubble.innerHTML = `
+                <div style="font-weight: 700; margin-bottom: 4px; color: #38bdf8;">${userGreeting} Soy tu Asistente IA ConTech.</div>
+                <div style="font-size: 0.84rem; line-height: 1.55;">
+                    Puedo auditar tu presupuesto, resolver dudas técnicas sobre unidades de obra o redactar y añadir nuevas partidas directamente a tus capítulos.
+                </div>
+            `;
+        }
+    }
+
     geminiAssistantModal.style.display = 'flex';
     if (geminiChatInput) geminiChatInput.focus();
 }
@@ -14682,12 +14740,14 @@ if (geminiAssistantModal) {
 if (clearAssistantChatBtn && geminiChatHistory) {
     clearAssistantChatBtn.addEventListener('click', () => {
         assistantChatMessages = [];
+        const u = getLoggedUserProfile();
+        const g = u.firstName ? `¡Hola de nuevo, ${u.firstName}! 👋` : `¡Hola! 👋`;
         geminiChatHistory.innerHTML = `
             <div class="assistant-msg ai-msg">
                 <div class="msg-avatar">🤖</div>
                 <div class="msg-bubble">
-                    <div style="font-weight: 700; margin-bottom: 4px; color: var(--accent, #8b5cf6);">Conversación reiniciada.</div>
-                    <div style="font-size: 0.82rem; line-height: 1.5; color: var(--text-primary);">
+                    <div style="font-weight: 700; margin-bottom: 4px; color: #38bdf8;">${g} Conversación reiniciada.</div>
+                    <div style="font-size: 0.84rem; line-height: 1.55;">
                         ¿En qué más te puedo ayudar sobre este presupuesto?
                     </div>
                 </div>
@@ -14764,10 +14824,12 @@ ${chaptersList.join('\n')}`;
     }
 
     const selectedTargetChapter = assistantTargetChapterSelect?.value || 'auto';
+    const user = getLoggedUserProfile();
+    const userIdentPrompt = user.name || user.firstName ? `El usuario se llama "${user.name || user.firstName}". Puedes dirigirte a él por su nombre de pila de forma cercana y profesional cuando sea oportuno.\n` : '';
 
     const systemPrompt = `Eres el "Asistente IA ConTech", un Arquitecto Técnico y Director de Obra experto en normativa, control de costes y estándar FIEBDC-3 / BC3 en España.
 Tienes acceso al presupuesto que el usuario tiene abierto en pantalla.
-
+${userIdentPrompt}
 CONTEXTO DEL PRESUPUESTO ACTUAL:
 ${budgetContext}
 
@@ -15021,4 +15083,9 @@ function appendChatLoading(id) {
 function removeChatLoading(id) {
     const el = document.getElementById(id);
     if (el) el.remove();
+}
+
+// Inicializar perfil en Ajustes
+if (typeof updateSettingsUserHeaderUI === 'function') {
+    updateSettingsUserHeaderUI();
 }
