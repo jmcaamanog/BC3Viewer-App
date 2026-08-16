@@ -13048,7 +13048,7 @@ async function getOrCreateDriveFolder(token, folderName = 'BC3_Viewer_Sync') {
 }
 
 async function uploadFileToGoogleDriveAPI(token, folderId, fileName, cipherObj, rawSize, totalPEM) {
-    const boundary = '-------314159265358979323846';
+    const boundary = 'bc3_boundary_' + Date.now();
     const delimiter = "\r\n--" + boundary + "\r\n";
     const close_delim = "\r\n--" + boundary + "--";
 
@@ -13065,31 +13065,48 @@ async function uploadFileToGoogleDriveAPI(token, folderId, fileName, cipherObj, 
         }
     };
 
-    const payload = JSON.stringify(cipherObj);
-    const multipartRequestBody =
-        delimiter +
-        'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
-        JSON.stringify(metadata) +
-        delimiter +
-        'Content-Type: application/json\r\n\r\n' +
-        payload +
-        close_delim;
+    const metadataBlob = new Blob([JSON.stringify(metadata)], { type: 'application/json; charset=UTF-8' });
+    const payloadBlob = new Blob([JSON.stringify(cipherObj)], { type: 'application/json; charset=UTF-8' });
 
-    const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': `multipart/related; boundary=${boundary}`
-        },
-        body: multipartRequestBody
-    });
+    // Blob compuesto multipart nativo (sin conversiones pesadas en memoria)
+    const multipartBody = new Blob([
+        delimiter,
+        'Content-Type: application/json; charset=UTF-8\r\n\r\n',
+        metadataBlob,
+        delimiter,
+        'Content-Type: application/json\r\n\r\n',
+        payloadBlob,
+        close_delim
+    ], { type: `multipart/related; boundary=${boundary}` });
 
-    if (!response.ok) {
-        const errJson = await response.json().catch(() => ({}));
-        throw new Error(errJson.error ? errJson.error.message : `HTTP ${response.status} en Google Drive`);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos máx
+
+    try {
+        const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: multipartBody,
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            const errJson = await response.json().catch(() => ({}));
+            throw new Error(errJson.error ? errJson.error.message : `HTTP ${response.status} en Google Drive`);
+        }
+
+        return await response.json();
+    } catch (fetchErr) {
+        clearTimeout(timeoutId);
+        if (fetchErr.name === 'AbortError') {
+            throw new Error("Tiempo de espera agotado al conectar con Google Drive.");
+        }
+        throw fetchErr;
     }
-
-    return await response.json();
 }
 
 async function syncFilesFromGoogleDrive() {
@@ -13219,11 +13236,17 @@ function generateBasicBC3FromData(data) {
 }
 
 async function uploadActiveBudgetToCloud() {
+    if (isUploadingCloud) return;
     if (!parsedData || !parsedData.concepts) {
         alert("Primero debes abrir o tener cargado un archivo de presupuesto (.bc3).");
         return;
     }
 
+    isUploadingCloud = true;
+    if (uploadCurrentToCloudBtn) {
+        uploadCurrentToCloudBtn.disabled = true;
+        uploadCurrentToCloudBtn.innerHTML = `⏳ Subiendo...`;
+    }
     if (cloudSyncStatusText) cloudSyncStatusText.textContent = `⏳ Serializando y cifrando con AES-256...`;
 
     try {
@@ -13309,6 +13332,12 @@ async function uploadActiveBudgetToCloud() {
         console.error("Error al subir a la nube:", err);
         if (cloudSyncStatusText) cloudSyncStatusText.textContent = `❌ Error: ${err.message}`;
         alert("Error al sincronizar con la nube: " + err.message);
+    } finally {
+        isUploadingCloud = false;
+        if (uploadCurrentToCloudBtn) {
+            uploadCurrentToCloudBtn.disabled = false;
+            uploadCurrentToCloudBtn.innerHTML = `⬆️ Subir Actual`;
+        }
     }
 }
 
