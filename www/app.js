@@ -14701,14 +14701,15 @@ function openAssistantModal(targetChapterCode = null) {
 
     // Personalizar saludo inicial con el nombre del usuario si la conversación está empezando
     const userProfile = getLoggedUserProfile();
-    const userGreeting = userProfile.firstName ? `¡Hola, ${userProfile.firstName}! 👋` : `¡Hola! 👋`;
+    const greetingName = userProfile.firstName ? `, ${userProfile.firstName}` : '';
     if (geminiChatHistory && assistantChatMessages.length === 0) {
         const firstBubble = geminiChatHistory.querySelector('.assistant-msg.ai-msg .msg-bubble');
         if (firstBubble) {
             firstBubble.innerHTML = `
-                <div style="font-weight: 700; margin-bottom: 4px; color: #38bdf8;">${userGreeting} Soy jmcaamanog, tu asesor de IA de la herramienta.</div>
+                <div style="font-weight: 700; margin-bottom: 6px; color: #38bdf8; font-size: 0.9rem;">¡Hola${greetingName}! 👋 ¡Soy jmcaamanog! ¡Jose me puso aquí como tu asistente de IA! 🚀</div>
                 <div style="font-size: 0.84rem; line-height: 1.55;">
-                    Puedo ayudarte a auditar tu presupuesto, resolver dudas técnicas sobre unidades de obra o redactar y añadir nuevas partidas directamente a tus capítulos.
+                    Puedo crear, editar y auditar tu presupuesto. Resolviendo dudas técnicas sobre unidades de obra, redactar y añadir nuevas partidas directamente a tus capítulos.<br><br>
+                    <strong>¿Qué necesitas?</strong>
                 </div>
             `;
         }
@@ -14745,10 +14746,10 @@ if (clearAssistantChatBtn && geminiChatHistory) {
         geminiChatHistory.innerHTML = `
             <div class="assistant-msg ai-msg">
                 <div class="msg-avatar">
-                    <img src="img/Yo_icono.png" alt="jmcaamanog" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />
+                    <img src="img/jmcaamanog.png" alt="jmcaamanog" />
                 </div>
                 <div class="msg-bubble">
-                    <div style="font-weight: 700; margin-bottom: 4px; color: #38bdf8;">${g} Conversación reiniciada.</div>
+                    <div style="font-weight: 700; margin-bottom: 6px; color: #38bdf8; font-size: 0.9rem;">${g} ¡Soy jmcaamanog! Conversación reiniciada. 🚀</div>
                     <div style="font-size: 0.84rem; line-height: 1.55;">
                         ¿En qué más te puedo ayudar sobre este presupuesto?
                     </div>
@@ -14829,8 +14830,8 @@ ${chaptersList.join('\n')}`;
     const user = getLoggedUserProfile();
     const userIdentPrompt = user.name || user.firstName ? `El usuario se llama "${user.name || user.firstName}". Puedes dirigirte a él por su nombre de pila de forma cercana y profesional cuando sea oportuno.\n` : '';
 
-    const systemPrompt = `Eres "jmcaamanog", el Asesor de IA oficial de la herramienta BC3 Viewer (un Arquitecto Técnico y BIM Manager senior de Galicia, experto en presupuestación, normativa de edificación, control de costes y estándar FIEBDC-3 / BC3 en España).
-Te presentas y actúas siempre como el asesor de IA oficial de la herramienta (jmcaamanog).
+    const systemPrompt = `Eres "jmcaamanog", el Asistente de IA oficial de la herramienta BC3 Viewer (Jose te programó y te puso aquí como el asistente de IA experto de la aplicación, siendo Arquitecto Técnico y BIM Manager).
+Te presentas siempre como "jmcaamanog", con un tono profesional pero cercano y con chispa simpática.
 ${userIdentPrompt}
 CONTEXTO DEL PRESUPUESTO ACTUAL:
 ${budgetContext}
@@ -14903,7 +14904,7 @@ function appendChatMessage(role, rawContent) {
             avatar.textContent = user.firstName ? user.firstName.charAt(0).toUpperCase() : '👤';
         }
     } else {
-        avatar.innerHTML = `<img src="img/Yo_icono.png" alt="jmcaamanog" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+        avatar.innerHTML = `<img src="img/jmcaamanog.png" alt="jmcaamanog" />`;
     }
 
     const bubble = document.createElement('div');
@@ -15083,7 +15084,7 @@ function appendChatLoading(id) {
     msgDiv.className = 'assistant-msg ai-msg';
     msgDiv.innerHTML = `
         <div class="msg-avatar">
-            <img src="img/Yo_icono.png" alt="jmcaamanog" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />
+            <img src="img/jmcaamanog.png" alt="jmcaamanog" />
         </div>
         <div class="msg-bubble" style="display:flex; align-items:center; gap:8px; font-style:italic; color:var(--text-secondary);">
             <div class="worker-loading-spinner" style="width:16px; height:16px; border-width:2px;"></div>
