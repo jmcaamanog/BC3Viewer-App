@@ -21,7 +21,7 @@
     <div class="app-container">
         <header class="main-header">
             <div class="header-top-row">
-                <!-- Fila 1 (Superior): Logo + Valores Presupuesto (Izq) y Acciones de Obra (Der) -->
+                <!-- Fila 1 (Superior): Logo + Valores Presupuesto (Izq) y Botón Cerrar ✕ (Der) -->
                 <div class="header-primary-row">
                     <div class="left-header-section">
                         <div class="logo">
@@ -55,20 +55,28 @@
                         </div>
                     </div>
 
-                    <!-- Botones de Acción de Obra (Fila 1 Derecha) -->
-                    <div class="header-action-group" id="headerActionGroup" style="display:none; align-items:center; gap:6px; flex-shrink:0;">
-                        <button type="button" id="openAssistantBtn" class="header-icon-btn" title="Asesor IA (jmcaamanog)" style="color:var(--text-primary); display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border:1px solid rgba(56,189,248,0.4); height:30px; border-radius:8px; background:var(--bg-hover); cursor:pointer;">
-                            <img src="img/jmcaamanog.png" class="jm-avatar-icon" alt="jmcaamanog" style="width:20px; height:20px;" />
-                            <span class="hide-on-mobile" style="font-size:0.75rem; font-weight:600;">Asesor IA</span>
-                        </button>
-                        
+                    <!-- Botón de salir (X roja) en Fila 1 a la derecha -->
+                    <button type="button" id="closeBudgetBtn" class="close-budget-btn" title="Cerrar Presupuesto"
+                        style="display:none;">✕</button>
+                </div>
+
+                <!-- Fila 2 (Inferior): Justificada a la derecha con [ Asesor IA ] [ Guardar ] [ Exportar ] [ ⌘K ] [ ⚙️ ] -->
+                <div class="header-secondary-row" style="display: flex; justify-content: flex-end; align-items: center; width: 100%; gap: 6px;">
+                    <!-- 1. Botón Asesor IA -->
+                    <button type="button" id="openAssistantBtn" class="header-icon-btn" title="Asesor IA (jmcaamanog)" style="color:var(--text-primary); display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border:1px solid rgba(56,189,248,0.4); height:30px; border-radius:8px; background:var(--bg-hover); cursor:pointer;">
+                        <img src="img/jmcaamanog.png" class="jm-avatar-icon" alt="jmcaamanog" style="width:20px; height:20px;" />
+                        <span class="hide-on-mobile" style="font-size:0.75rem; font-weight:600;">Asesor IA</span>
+                    </button>
+
+                    <!-- 2. Guardar y 3. Exportar (Acciones de Presupuesto) -->
+                    <div class="header-action-group" id="headerActionGroup" style="display:none; align-items:center; gap:6px;">
                         <button type="button" id="saveBtn" class="header-icon-btn save-header-btn" title="Guardar Presupuesto (.bc3) (Ctrl+S)">
-                            💾
+                            💾 <span class="hide-on-mobile" style="font-size:0.75rem; font-weight:600; margin-left:2px;">Guardar</span>
                         </button>
                         
                         <div class="dropdown" id="exportDropdown">
                             <button type="button" class="header-icon-btn export-header-btn dropdown-toggle" title="Exportar e Importar">
-                                <span>📤</span><span style="font-size: 0.6rem; margin-left: 2px;">▾</span>
+                                <span>📤</span><span class="hide-on-mobile" style="font-size:0.75rem; font-weight:600; margin-left:2px;">Exportar</span><span style="font-size: 0.6rem; margin-left: 2px;">▾</span>
                             </button>
                             <div class="dropdown-content export-dropdown-menu" style="min-width: 240px; right: 0; left: auto; z-index: 10000;">
                                 <!-- Bloque 1: Exportar -->
@@ -100,25 +108,20 @@
                                 </button>
                             </div>
                         </div>
-
-                        <!-- Botón de salir (X roja) -->
-                        <button type="button" id="closeBudgetBtn" class="close-budget-btn" title="Cerrar Presupuesto"
-                            style="display:none;">✕</button>
                     </div>
-                </div>
 
-                <!-- Fila 2 (Inferior): Justificada a la derecha con Paleta de Comandos y Menú Ajustes -->
-                <div class="header-secondary-row" style="display: flex; justify-content: flex-end; align-items: center; width: 100%;">
-                    <div class="right-controls" style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
-                        <button type="button" class="cmd-palette-toggle-btn" id="cmdPaletteBtn" aria-label="Paleta de Comandos (Ctrl+K)"
-                            title="Paleta de Comandos (Ctrl+K)">
-                            <span class="cmd-palette-btn-icon">⌘K</span>
-                        </button>
-                        <div class="dropdown" id="settingsDropdown">
-                            <button type="button" class="settings-toggle-btn" id="settingsBtn" aria-label="Ajustes"
-                                title="Ajustes">⚙️</button>
-                            <div class="dropdown-content dropdown-content-right"
-                                style="right: 0; left: auto; min-width: 200px; width: max-content; max-width: 90vw; max-height: 80vh; overflow-y: auto; z-index: 10000;">
+                    <!-- 4. Paleta de Comandos -->
+                    <button type="button" class="cmd-palette-toggle-btn" id="cmdPaletteBtn" aria-label="Paleta de Comandos (Ctrl+K)"
+                        title="Paleta de Comandos (Ctrl+K)">
+                        <span class="cmd-palette-btn-icon">⌘K</span>
+                    </button>
+
+                    <!-- 5. Menú Ajustes -->
+                    <div class="dropdown" id="settingsDropdown">
+                        <button type="button" class="settings-toggle-btn" id="settingsBtn" aria-label="Ajustes"
+                            title="Ajustes">⚙️</button>
+                        <div class="dropdown-content dropdown-content-right"
+                            style="right: 0; left: auto; min-width: 200px; width: max-content; max-width: 90vw; max-height: 80vh; overflow-y: auto; z-index: 10000;">
                                 <!-- Archivo cargado (oculto del menú, solo uso interno) -->
                                 <label for="bc3file" id="dropdownFileLabel"
                                     style="display:none !important; width:0; height:0; overflow:hidden; padding:0; margin:0; border:none; position:absolute;">
@@ -168,7 +171,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
             <!-- Barra Multi-Presupuesto por Pestañas (Multi-Tab) -->
             <div class="budget-tab-bar" id="budgetTabBar" style="display:none;">
