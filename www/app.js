@@ -12819,10 +12819,27 @@ function getOrCreateDeviceMasterKey() {
 
 // ── Cifrado E2E con Web Crypto API (AES-GCM 256 bits + PBKDF2) ──
 
+function bufferToBase64Async(buf) {
+    return new Promise((resolve) => {
+        const blob = new Blob([buf]);
+        const reader = new FileReader();
+        reader.onload = () => {
+            const dataUrl = reader.result;
+            const base64 = dataUrl.split(',')[1] || '';
+            resolve(base64);
+        };
+        reader.readAsDataURL(blob);
+    });
+}
+
+async function base64ToBufferAsync(b64) {
+    const res = await fetch('data:application/octet-stream;base64,' + b64);
+    return await res.arrayBuffer();
+}
+
 async function encryptDataE2E(plainText, secretKey = getOrCreateDeviceMasterKey()) {
     const enc = new TextEncoder();
     const rawData = enc.encode(plainText);
-
     const salt = window.crypto.getRandomValues(new Uint8Array(16));
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
 
@@ -12853,37 +12870,28 @@ async function encryptDataE2E(plainText, secretKey = getOrCreateDeviceMasterKey(
         rawData
     );
 
-    function bufferToBase64(buf) {
-        const bytes = new Uint8Array(buf);
-        let binary = '';
-        const chunkSize = 0x8000; // 32768 bytes por bloque para evitar desbordamiento del call stack
-        for (let i = 0; i < bytes.length; i += chunkSize) {
-            binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
-        }
-        return btoa(binary);
-    }
+    const [saltB64, ivB64, cipherB64] = await Promise.all([
+        bufferToBase64Async(salt),
+        bufferToBase64Async(iv),
+        bufferToBase64Async(encrypted)
+    ]);
 
     return {
         v: 1,
-        salt: bufferToBase64(salt),
-        iv: bufferToBase64(iv),
-        ciphertext: bufferToBase64(encrypted),
+        salt: saltB64,
+        iv: ivB64,
+        ciphertext: cipherB64,
         timestamp: new Date().toISOString()
     };
 }
 
 async function decryptDataE2E(cipherObj, secretKey = getOrCreateDeviceMasterKey()) {
-    function base64ToBuffer(b64) {
-        const bin = atob(b64);
-        const bytes = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-        return bytes.buffer;
-    }
-
     const enc = new TextEncoder();
-    const salt = base64ToBuffer(cipherObj.salt);
-    const iv = base64ToBuffer(cipherObj.iv);
-    const data = base64ToBuffer(cipherObj.ciphertext);
+    const [salt, iv, data] = await Promise.all([
+        base64ToBufferAsync(cipherObj.salt),
+        base64ToBufferAsync(cipherObj.iv),
+        base64ToBufferAsync(cipherObj.ciphertext)
+    ]);
 
     const keyMaterial = await window.crypto.subtle.importKey(
         'raw',
@@ -12915,7 +12923,70 @@ async function decryptDataE2E(cipherObj, secretKey = getOrCreateDeviceMasterKey(
     return new TextDecoder().decode(decrypted);
 }
 
-// ── Almacén y Gestión de Bóveda Cloud Vault ──
+// ── Almacén y Gestión de Bóveda Cloud Vault (IndexedDB + Metadatos Ligeros) ──
+
+const VAULT_DB_NAME = 'BC3_Cloud_Vault_DB';
+const VAULT_STORE = 'vault_ciphers';
+
+function getVaultDB() {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open(VAULT_DB_NAME, 1);
+        req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(VAULT_STORE)) {
+                db.createObjectStore(VAULT_STORE, { keyPath: 'id' });
+            }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+async function saveCipherToVaultDB(id, cipherObj) {
+    try {
+        const db = await getVaultDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(VAULT_STORE, 'readwrite');
+            const store = tx.objectStore(VAULT_STORE);
+            store.put({ id, cipher: cipherObj });
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (e) {
+        console.warn("Aviso al persistir en IndexedDB:", e);
+    }
+}
+
+async function getCipherFromVaultDB(id) {
+    try {
+        const db = await getVaultDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(VAULT_STORE, 'readonly');
+            const store = tx.objectStore(VAULT_STORE);
+            const req = store.get(id);
+            req.onsuccess = () => resolve(req.result ? req.result.cipher : null);
+            req.onerror = () => reject(req.error);
+        });
+    } catch (e) {
+        console.warn("Aviso al leer de IndexedDB:", e);
+        return null;
+    }
+}
+
+async function deleteCipherFromVaultDB(id) {
+    try {
+        const db = await getVaultDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(VAULT_STORE, 'readwrite');
+            const store = tx.objectStore(VAULT_STORE);
+            store.delete(id);
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (e) {
+        console.warn("Aviso al eliminar de IndexedDB:", e);
+    }
+}
 
 function getCloudVaultFiles() {
     try {
@@ -12927,7 +12998,22 @@ function getCloudVaultFiles() {
 }
 
 function saveCloudVaultFiles(files) {
-    localStorage.setItem('bc3_cloud_vault_files', JSON.stringify(files));
+    try {
+        // Guardar solo metadatos ligeros en localStorage para evitar exceder la cuota
+        const cleanFiles = files.map(f => ({
+            id: f.id,
+            driveId: f.driveId || null,
+            fileName: f.fileName,
+            lastModified: f.lastModified,
+            sizeBytes: f.sizeBytes,
+            sizeKb: f.sizeKb,
+            totalPEM: f.totalPEM,
+            isDrive: !!f.isDrive
+        }));
+        localStorage.setItem('bc3_cloud_vault_files', JSON.stringify(cleanFiles));
+    } catch (e) {
+        console.warn("Aviso al guardar metadatos en localStorage:", e);
+    }
 }
 
 function openCloudSyncModal() {
@@ -12935,6 +13021,12 @@ function openCloudSyncModal() {
         cloudSyncModal.style.display = 'flex';
         updateCloudAccountUI();
         renderCloudFilesTable();
+    }
+}
+
+function closeCloudSyncModal() {
+    if (cloudSyncModal) {
+        cloudSyncModal.style.display = 'none';
     }
 }
 
@@ -13047,6 +13139,8 @@ async function getOrCreateDriveFolder(token, folderName = 'BC3_Viewer_Sync') {
     return null;
 }
 
+let isUploadingCloud = false;
+
 async function uploadFileToGoogleDriveAPI(token, folderId, fileName, cipherObj, rawSize, totalPEM) {
     const boundary = 'bc3_boundary_' + Date.now();
     const delimiter = "\r\n--" + boundary + "\r\n";
@@ -13068,7 +13162,6 @@ async function uploadFileToGoogleDriveAPI(token, folderId, fileName, cipherObj, 
     const metadataBlob = new Blob([JSON.stringify(metadata)], { type: 'application/json; charset=UTF-8' });
     const payloadBlob = new Blob([JSON.stringify(cipherObj)], { type: 'application/json; charset=UTF-8' });
 
-    // Blob compuesto multipart nativo (sin conversiones pesadas en memoria)
     const multipartBody = new Blob([
         delimiter,
         'Content-Type: application/json; charset=UTF-8\r\n\r\n',
@@ -13080,7 +13173,7 @@ async function uploadFileToGoogleDriveAPI(token, folderId, fileName, cipherObj, 
     ], { type: `multipart/related; boundary=${boundary}` });
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos máx
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     try {
         const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
@@ -13132,7 +13225,7 @@ async function syncFilesFromGoogleDrive() {
                     totalPEM: f.appProperties && f.appProperties.totalPEM ? parseFloat(f.appProperties.totalPEM) : null,
                     isDrive: true
                 }));
-                // Mezclar con la caché local
+                // Mezclar con la lista local existente
                 const localFiles = getCloudVaultFiles().filter(lf => !cloudFiles.some(cf => cf.fileName.toLowerCase() === lf.fileName.toLowerCase()));
                 saveCloudVaultFiles([...cloudFiles, ...localFiles]);
                 renderCloudFilesTable();
@@ -13178,14 +13271,12 @@ function updateCloudAccountUI() {
 }
 
 function connectGoogleAccount() {
-    // 1. Intentar inicio de sesión oficial con Google Identity Services
     const gisReady = initGoogleIdentity();
     if (gisReady && googleTokenClient) {
         googleTokenClient.requestAccessToken({ prompt: 'consent' });
         return;
     }
 
-    // 2. Si aún no está cargado el SDK o se usa en entorno local sin Client ID público, permitir vinculación de cuenta
     const currentAccount = localStorage.getItem('bc3_cloud_user_account') || '';
     const defaultEmail = currentAccount || (parsedData && parsedData.properties && parsedData.properties.owner ? `${parsedData.properties.owner.toLowerCase().replace(/\s+/g, '')}@gmail.com` : 'usuario@gmail.com');
     const email = prompt("Introduce tu cuenta de Google para activar la bóveda de sincronización cifrada:", defaultEmail);
@@ -13247,13 +13338,14 @@ async function uploadActiveBudgetToCloud() {
         uploadCurrentToCloudBtn.disabled = true;
         uploadCurrentToCloudBtn.innerHTML = `⏳ Subiendo...`;
     }
-    if (cloudSyncStatusText) cloudSyncStatusText.textContent = `⏳ Serializando y cifrando con AES-256...`;
+    if (cloudSyncStatusText) cloudSyncStatusText.textContent = `⏳ Serializando presupuesto...`;
+
+    // Dejar respirar al hilo del navegador para pintar el estado
+    await new Promise(r => setTimeout(r, 40));
 
     try {
-        // Serializar el presupuesto actual a texto BC3 FIEBDC-3
         let bc3Content = "";
 
-        // 1. Intentar con el motor BC3Writer
         if (typeof BC3Writer !== 'undefined') {
             try {
                 const writer = new BC3Writer();
@@ -13263,7 +13355,6 @@ async function uploadActiveBudgetToCloud() {
             }
         }
 
-        // 2. Si no se generó, usar el texto original o el texto de la pestaña activa
         if (!bc3Content || bc3Content.trim().length === 0) {
             if (originalFileText && originalFileText.trim().length > 0) {
                 bc3Content = originalFileText;
@@ -13275,7 +13366,6 @@ async function uploadActiveBudgetToCloud() {
             }
         }
 
-        // 3. Generador de respaldo estructurado
         if (!bc3Content || bc3Content.trim().length === 0) {
             bc3Content = generateBasicBC3FromData(parsedData);
         }
@@ -13284,12 +13374,14 @@ async function uploadActiveBudgetToCloud() {
             throw new Error("No se pudo generar el contenido del archivo BC3.");
         }
 
+        if (cloudSyncStatusText) cloudSyncStatusText.textContent = `⏳ Cifrando con AES-256 GCM...`;
+        await new Promise(r => setTimeout(r, 40));
+
         const cipherObj = await encryptDataE2E(bc3Content);
         const fileName = currentFileName || `Presupuesto_${new Date().toISOString().slice(0, 10)}.bc3`;
         const totalPEM = typeof calculateTotalBudget === 'function' ? calculateTotalBudget() : 0;
 
         let driveFileId = null;
-        // 4. Si hay sesión activa en Google Drive, subir directamente por API a la carpeta /BC3_Viewer_Sync/
         if (googleAccessToken) {
             if (cloudSyncStatusText) cloudSyncStatusText.textContent = `⏳ Subiendo a tu Google Drive...`;
             const folderId = googleDriveFolderId || await getOrCreateDriveFolder(googleAccessToken);
@@ -13299,19 +13391,23 @@ async function uploadActiveBudgetToCloud() {
             }
         }
 
-        // 5. Guardar en la bóveda local sincronizada
+        const fileId = driveFileId || ('cloud_' + Date.now());
+        // Si no está en Google Drive, guardar en IndexedDB seguro
+        if (!driveFileId) {
+            await saveCipherToVaultDB(fileId, cipherObj);
+        }
+
         const files = getCloudVaultFiles();
         const existingIdx = files.findIndex(f => f.fileName.toLowerCase() === fileName.toLowerCase());
 
         const fileRecord = {
-            id: driveFileId || (existingIdx >= 0 ? files[existingIdx].id : 'cloud_' + Date.now()),
+            id: fileId,
             driveId: driveFileId,
             fileName: fileName,
             lastModified: new Date().toLocaleString('es-ES'),
             sizeBytes: bc3Content.length,
             sizeKb: (bc3Content.length / 1024).toFixed(1),
             totalPEM: totalPEM,
-            cipher: cipherObj,
             isDrive: !!driveFileId
         };
 
@@ -13418,18 +13514,21 @@ async function openCloudFileInViewer(idx) {
     if (!file) return;
 
     try {
-        if (cloudSyncStatusText) cloudSyncStatusText.textContent = `⏳ Descifrando y cargando ${file.fileName}...`;
+        if (cloudSyncStatusText) cloudSyncStatusText.textContent = `⏳ Descargando y descifrando ${file.fileName}...`;
         showWorkerLoader("Descifrando y cargando desde la nube...", file.fileName);
         
-        let cipherData = file.cipher;
-        // Si proviene de Google Drive y no está en caché local, descargarlo
-        if (!cipherData && file.driveId && googleAccessToken) {
+        let cipherData = null;
+        if (file.driveId && googleAccessToken) {
             const fetchResp = await fetch(`https://www.googleapis.com/drive/v3/files/${file.driveId}?alt=media`, {
                 headers: { 'Authorization': `Bearer ${googleAccessToken}` }
             });
             if (fetchResp.ok) {
                 cipherData = await fetchResp.json();
             }
+        }
+
+        if (!cipherData) {
+            cipherData = await getCipherFromVaultDB(file.id);
         }
 
         if (!cipherData) {
@@ -13460,8 +13559,8 @@ async function downloadCloudFile(idx) {
     if (!file) return;
 
     try {
-        let cipherData = file.cipher;
-        if (!cipherData && file.driveId && googleAccessToken) {
+        let cipherData = null;
+        if (file.driveId && googleAccessToken) {
             const fetchResp = await fetch(`https://www.googleapis.com/drive/v3/files/${file.driveId}?alt=media`, {
                 headers: { 'Authorization': `Bearer ${googleAccessToken}` }
             });
@@ -13469,6 +13568,12 @@ async function downloadCloudFile(idx) {
                 cipherData = await fetchResp.json();
             }
         }
+
+        if (!cipherData) {
+            cipherData = await getCipherFromVaultDB(file.id);
+        }
+
+        if (!cipherData) throw new Error("No se encontraron datos para descargar.");
 
         const plainText = await decryptDataE2E(cipherData);
         const blob = new Blob([plainText], { type: 'text/plain;charset=windows-1252' });
@@ -13501,6 +13606,7 @@ async function deleteCloudFile(idx) {
                 console.warn("Aviso al borrar de Google Drive:", e);
             }
         }
+        await deleteCipherFromVaultDB(file.id);
         files.splice(idx, 1);
         saveCloudVaultFiles(files);
         renderCloudFilesTable();
