@@ -52,12 +52,8 @@
                         <div id="stats" style="font-size: 0.68rem; color: #888; margin-top: 2px;"></div>
                     </div>
 
-                    <!-- Botones de Acción Rápida: Guardar, Asistente IA y Exportar/Importar -->
+                    <!-- Botones de Acción Rápida: Guardar y Exportar/Importar -->
                     <div class="header-action-group" id="headerActionGroup" style="display:none; align-items:center; gap:6px;">
-                        <button type="button" id="openAssistantBtn" class="header-icon-btn" title="Asesor IA (jmcaamanog)" style="color:var(--text-primary); display:flex; align-items:center; gap:6px; padding:0 10px; border-color:rgba(56,189,248,0.4);">
-                            <img src="img/jmcaamanog.png" class="jm-avatar-icon" alt="jmcaamanog" />
-                            <span class="hide-on-mobile" style="font-size:0.75rem; font-weight:600;">Asesor IA</span>
-                        </button>
                         <button type="button" id="saveBtn" class="header-icon-btn save-header-btn" title="Guardar Presupuesto (.bc3) (Ctrl+S)">
                             💾
                         </button>
@@ -103,8 +99,12 @@
                         style="display:none;">✕</button>
                 </div>
 
-                <!-- Botones del extremo derecho: Paleta de Comandos y Menú Ajustes -->
+                <!-- Botones del extremo derecho: Asesor IA, Paleta de Comandos y Menú Ajustes -->
                 <div class="right-controls" style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" id="openAssistantBtn" class="header-icon-btn" title="Asesor IA (jmcaamanog)" style="color:var(--text-primary); display:flex; align-items:center; gap:6px; padding:2px 10px; border:1px solid rgba(56,189,248,0.4); height:32px; border-radius:8px; background:var(--bg-hover); cursor:pointer;">
+                        <img src="img/jmcaamanog.png" class="jm-avatar-icon" alt="jmcaamanog" style="width:24px; height:24px;" />
+                        <span class="hide-on-mobile" style="font-size:0.75rem; font-weight:600;">Asesor IA</span>
+                    </button>
                     <button type="button" class="cmd-palette-toggle-btn" id="cmdPaletteBtn" aria-label="Paleta de Comandos (Ctrl+K)"
                         title="Paleta de Comandos (Ctrl+K)">
                         <span class="cmd-palette-btn-icon">⌘K</span>
