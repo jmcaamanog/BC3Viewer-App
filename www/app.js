@@ -13334,7 +13334,7 @@ function updateSettingsUserHeaderUI() {
             nameEl.textContent = user.name ? `¡Hola, ${user.firstName}! 👋` : `¡Hola! 👋`;
             emailEl.textContent = user.email;
             if (user.picture) {
-                avatarEl.innerHTML = `<img src="${user.picture}" alt="${user.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+                avatarEl.innerHTML = `<img src="${user.picture}" alt="${user.name || 'Perfil'}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" referrerpolicy="no-referrer" onerror="this.style.display='none'; this.parentElement.textContent='${user.firstName ? user.firstName.charAt(0).toUpperCase() : '👤'}';" />`;
             } else {
                 avatarEl.textContent = (user.firstName ? user.firstName.charAt(0).toUpperCase() : '👤');
             }
@@ -14899,7 +14899,7 @@ function appendChatMessage(role, rawContent) {
     if (role === 'user') {
         const user = getLoggedUserProfile();
         if (user.picture) {
-            avatar.innerHTML = `<img src="${user.picture}" alt="Usuario" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+            avatar.innerHTML = `<img src="${user.picture}" alt="Usuario" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" referrerpolicy="no-referrer" onerror="this.style.display='none'; this.parentElement.textContent='${user.firstName ? user.firstName.charAt(0).toUpperCase() : '👤'}';" />`;
         } else {
             avatar.textContent = user.firstName ? user.firstName.charAt(0).toUpperCase() : '👤';
         }
