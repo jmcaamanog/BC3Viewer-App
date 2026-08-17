@@ -7,7 +7,7 @@ function sendAssistantQuickQuery(btnOrQuery) {
 }
 window.sendAssistantQuickQuery = sendAssistantQuickQuery;
 
-const APP_VERSION = '2.2.9'; // Versión actual de la aplicación (Single Source of Truth)
+const APP_VERSION = '2.3.0'; // Versión actual de la aplicación (Single Source of Truth)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // Sincronizador centralizado y automático de versión en toda la interfaz
@@ -15156,6 +15156,137 @@ function appendChatMessage(role, rawContent) {
     chatHist.appendChild(msgDiv);
     chatHist.scrollTop = chatHist.scrollHeight;
 }
+
+function createPartidaActionCard(item) {
+    const card = document.createElement('div');
+    card.className = 'partida-action-card';
+
+    const header = document.createElement('div');
+    header.className = 'partida-action-header';
+
+    const codeSpan = document.createElement('span');
+    codeSpan.className = 'partida-action-code';
+    codeSpan.textContent = `${item.code || 'NUEVA'} · ${item.unit || 'ud'}`;
+
+    const priceSpan = document.createElement('span');
+    priceSpan.className = 'partida-action-price';
+    priceSpan.textContent = `${(parseFloat(item.price) || 0).toFixed(2)} €/${item.unit || 'ud'}`;
+
+    header.appendChild(codeSpan);
+    header.appendChild(priceSpan);
+
+    const summary = document.createElement('div');
+    summary.style.fontWeight = '600';
+    summary.style.fontSize = '0.8rem';
+    summary.style.marginBottom = '4px';
+    summary.textContent = item.summary || 'Partida sin título';
+
+    const desc = document.createElement('div');
+    desc.style.fontSize = '0.72rem';
+    desc.style.color = 'var(--text-secondary)';
+    desc.style.lineHeight = '1.4';
+    desc.textContent = (item.description || '').slice(0, 140) + ((item.description || '').length > 140 ? '...' : '');
+
+    const insertBtn = document.createElement('button');
+    insertBtn.className = 'partida-action-btn';
+    insertBtn.innerHTML = `<span>➕ Insertar en el Presupuesto</span>`;
+
+    insertBtn.addEventListener('click', () => {
+        if (!parsedData || !parsedData.concepts) {
+            alert("No hay un presupuesto abierto en memoria donde insertar la partida.");
+            return;
+        }
+
+        let targetCh = assistantTargetChapterSelect?.value;
+        if (!targetCh || targetCh === 'auto') {
+            targetCh = item.targetChapter;
+        }
+
+        const resolvedChapter = resolveOrCreateChapter(targetCh);
+        if (!resolvedChapter) {
+            alert("No se pudo localizar ni crear un capítulo adecuado para insertar la partida.");
+            return;
+        }
+
+        const itemConcept = {
+            code: item.code || `PAR_${Date.now().toString().slice(-4)}`,
+            unit: item.unit || 'ud',
+            summary: item.summary || 'Partida generada por IA',
+            description: item.description || '',
+            price: parseFloat(item.price) || 0,
+            quantity: parseFloat(item.quantity) || 1.0,
+            type: 0,
+            children: [],
+            decomposition: [],
+            measurements: [
+                { comment: "Medición estimada", units: 1, length: parseFloat(item.quantity) || 1.0, width: 1, height: 1, total: parseFloat(item.quantity) || 1.0 }
+            ]
+        };
+
+        if (item.components && Array.isArray(item.components)) {
+            item.components.forEach((comp, idx) => {
+                let cCode = comp.code || `COMP_${idx + 1}`;
+                let cType = 0;
+                const cTypeStr = (comp.type || "").toUpperCase();
+                if (cTypeStr === 'MO' || cCode.startsWith('MO')) { cType = 1; if (!cCode.startsWith('MO')) cCode = 'MO_' + cCode; }
+                else if (cTypeStr === 'MQ' || cCode.startsWith('MQ')) { cType = 2; if (!cCode.startsWith('MQ')) cCode = 'MQ_' + cCode; }
+                else if (cTypeStr === 'MT' || cCode.startsWith('MT')) { cType = 3; if (!cCode.startsWith('MT')) cCode = 'MT_' + cCode; }
+
+                const cFactor = parseFloat(comp.qty || comp.factor) || 1.0;
+                const cPrice = parseFloat(comp.price) || 0;
+                const cUnit = comp.unit || (cType === 1 ? 'h' : (cType === 2 ? 'h' : 'ud'));
+                const cSummary = comp.summary || "Elemento descompuesto";
+
+                if (!parsedData.concepts[cCode]) {
+                    parsedData.concepts[cCode] = {
+                        code: cCode,
+                        unit: cUnit,
+                        summary: cSummary,
+                        price: cPrice,
+                        quantity: 1,
+                        type: cType,
+                        children: [],
+                        decomposition: [],
+                        measurements: []
+                    };
+                }
+
+                itemConcept.decomposition.push({
+                    code: cCode,
+                    factor: cFactor,
+                    unit: cUnit,
+                    price: cPrice,
+                    summary: cSummary
+                });
+            });
+        }
+
+        parsedData.concepts[item.code] = itemConcept;
+
+        const ch = parsedData.concepts[resolvedChapter];
+        if (!ch.decomposition) ch.decomposition = [];
+        const exists = ch.decomposition.some(d => d.code === item.code);
+        if (!exists) {
+            ch.decomposition.push({ code: item.code, factor: itemConcept.quantity || 1.0 });
+        }
+
+        if (typeof calculateAndDisplayTotal === 'function') calculateAndDisplayTotal();
+        if (typeof renderBudgetTree === 'function') renderBudgetTree();
+        else if (typeof renderTree === 'function') renderTree();
+
+        insertBtn.disabled = true;
+        insertBtn.innerHTML = `<span>✅ Insertada en ${resolvedChapter}</span>`;
+        showAppToast(`Partida ${item.code} añadida con éxito a ${resolvedChapter}`, '✨');
+    });
+
+    card.appendChild(header);
+    card.appendChild(summary);
+    if (desc.textContent) card.appendChild(desc);
+    card.appendChild(insertBtn);
+
+    return card;
+}
+
 
 function appendChatLoading(id) {
     const chatHist = document.getElementById('geminiChatHistory');
