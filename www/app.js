@@ -1,4 +1,4 @@
-const APP_VERSION = '2.2.7'; // Versión actual de la aplicación (Single Source of Truth)
+const APP_VERSION = '2.2.8'; // Versión actual de la aplicación (Single Source of Truth)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // Sincronizador centralizado y automático de versión en toda la interfaz
@@ -14961,10 +14961,13 @@ if (clearAssistantChatBtn && geminiChatHistory) {
 
 // Chips de consultas rápidas en el Asistente
 document.querySelectorAll('.assistant-quick-chip').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         const query = btn.getAttribute('data-query');
         if (query) {
-            if (geminiChatInput) geminiChatInput.value = query;
+            const input = document.getElementById('geminiChatInput');
+            if (input) input.value = query;
             sendAssistantUserMessage();
         }
     });
