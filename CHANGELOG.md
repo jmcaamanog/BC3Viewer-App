@@ -2,6 +2,17 @@
 
 En este documento se detalla la evolución completa de la aplicación, incluyendo todas las revisiones y mejoras intermedias realizadas.
 
+### Versión 2.3.3 — 17/08/2026
+
+* **🎁 IA de Cortesía Gratis de Serie (Promoción Especial):** Integrada para todos los usuarios de serie sin necesidad de tarjeta ni registro obligatorio, con cuenta atrás en tiempo real hasta el 21 de Octubre de 2026.
+* **📊 Motor de Tablas Técnicas ConTech:** Renderizado visual completo de tablas Markdown para análisis comparativos de precios, rendimientos y desgloses de costes en tiempo real.
+* **⚡ Conexión Directa y Ultrarrápida con Gemini AI:** Integración optimizada con `gemini-3.5-flash` con tiempos de respuesta en menos de 1 segundo.
+* **👨‍💻 Asesor de IA Oficial ConTech (jmcaamanog):** Identidad, rigor técnico y avatar oficial del autor (`jmcaamanog.png`) integrado en el chat interactivo para auditoría técnica de presupuestos, detección de partidas faltantes y creación/inserción de descompuestos FIEBDC-3.
+* **💬 Interfaz en Azul Pizarra ConTech:** Burbujas de chat de alto contraste en azul marino (#111e38) y azul hielo (#e0f2fe).
+* **👤 Personalización de Usuario con Google Sign-In:** Saludo dinámico por nombre de pila y carga de foto de perfil con `referrerpolicy="no-referrer"`.
+* **📍 Acceso Rápido Superior Derecho:** Botón fijo siempre accesible ubicado junto a la Paleta de Comandos (Ctrl+K).
+* **☁️ Sincronización Google Drive E2E Oficial:** Respaldo cifrado (AES-256 GCM) a coste cero en la carpeta dedicada `/BC3Viewer/`.
+
 ### Versión 2.2.1 — 16/08/2026
 
 * **👨‍💻 Asesor de IA Oficial ConTech (jmcaamanog):** Identidad, rigor técnico y avatar oficial del autor (`jmcaamanog.png`) integrado en el chat interactivo para auditoría técnica de presupuestos, detección de partidas faltantes y creación de descompuestos con Google Gemini BYOK.
