@@ -1,4 +1,4 @@
-const APP_VERSION = '2.2.4'; // Versión actual de la aplicación (Single Source of Truth)
+const APP_VERSION = '2.2.5'; // Versión actual de la aplicación (Single Source of Truth)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // Sincronizador centralizado y automático de versión en toda la interfaz
@@ -14131,11 +14131,11 @@ function isUsingCourtesyKey() {
 function getCourtesyCountdown() {
     const now = Date.now();
     const diff = COURTESY_KEY_EXPIRY - now;
-    if (diff <= 0) return 'Promoción finalizada el 21 de Octubre de 2026';
+    if (diff <= 0) return 'Promoción finalizada';
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    return `${days} días, ${hours} h y ${mins} min restantes (Hasta el 21 de Octubre de 2026)`;
+    return `${days} días, ${hours} h y ${mins} min restantes`;
 }
 
 function getGeminiApiKey() {
@@ -14162,7 +14162,7 @@ function removeGeminiApiKey() {
         localStorage.removeItem(GEMINI_API_STORAGE_KEY);
         if (geminiApiKeyInput) {
             geminiApiKeyInput.value = '';
-            geminiApiKeyInput.placeholder = isUsingCourtesyKey() ? '•••••••••••••••••••••••••••••••• (Clave oficial de cortesía activa de serie)' : 'AIzaSy...';
+            geminiApiKeyInput.placeholder = isUsingCourtesyKey() ? '••••••••••••••••••••••••••••••••' : 'AIzaSy...';
         }
         updateGeminiStatusUI();
     } catch (e) {
@@ -14253,35 +14253,55 @@ function updateGeminiStatusUI() {
         countdownPill.textContent = usingCourtesy ? `⏱️ Cortesía: ${countdownText.split('(')[0].trim()}` : '🔑 Clave Privada Propia';
     }
 
-    // Modal de configuración de Gemini
+    // Modal de configuración de Gemini (Diseño en 3 filas independientes)
     const modalDot = document.getElementById('geminiModalStatusDot');
     const modalTitle = document.getElementById('geminiModalStatusTitle');
-    const modalSubtitle = document.getElementById('geminiModalStatusSubtitle');
+    const modalCourtesy = document.getElementById('geminiModalStatusCourtesy');
+    const modalCountdown = document.getElementById('geminiModalStatusCountdown');
     const removeBtn = document.getElementById('removeGeminiKeyBtn');
     const keyInput = document.getElementById('geminiApiKeyInput');
 
     if (modalDot) modalDot.className = `gemini-status-dot ${isConnected ? 'connected' : 'disconnected'}`;
-    if (modalTitle) {
-        if (usingCourtesy) {
+    
+    if (usingCourtesy) {
+        if (modalTitle) {
             modalTitle.textContent = '● Gemini IA Conectado (Clave de Cortesía)';
             modalTitle.style.color = '#38bdf8';
-        } else if (isConnected) {
+        }
+        if (modalCourtesy) {
+            modalCourtesy.style.display = 'block';
+            modalCourtesy.innerHTML = '🎁 <span style="font-weight:600; color:var(--text-primary);">Cortesía de jmcaamanog activa:</span> Disfruta de la IA gratis.';
+        }
+        if (modalCountdown) {
+            modalCountdown.style.display = 'block';
+            modalCountdown.textContent = `⏱️ ${getCourtesyCountdown()}`;
+        }
+    } else if (isConnected) {
+        if (modalTitle) {
             modalTitle.textContent = '● Gemini IA Conectado (Clave Propia)';
             modalTitle.style.color = '#16a34a';
-        } else {
+        }
+        if (modalCourtesy) {
+            modalCourtesy.style.display = 'block';
+            modalCourtesy.textContent = 'Tu clave personal de API está activa y lista para presupuestar.';
+        }
+        if (modalCountdown) {
+            modalCountdown.style.display = 'none';
+        }
+    } else {
+        if (modalTitle) {
             modalTitle.textContent = 'Sin conectar';
             modalTitle.style.color = 'var(--text-primary)';
         }
-    }
-    if (modalSubtitle) {
-        if (usingCourtesy) {
-            modalSubtitle.innerHTML = `<span style="color:#38bdf8; font-weight:600;">🎁 Cortesía de jmcaamanog activa:</span> Disfruta de la IA gratis. ⏱️ <strong>${getCourtesyCountdown()}</strong>.`;
-        } else if (isConnected) {
-            modalSubtitle.textContent = 'Tu clave personal de API está activa y lista para presupuestar.';
-        } else {
-            modalSubtitle.textContent = 'Introduce tu clave API gratuita de Google Gemini para activar la IA.';
+        if (modalCourtesy) {
+            modalCourtesy.style.display = 'block';
+            modalCourtesy.textContent = 'Introduce tu clave API gratuita de Google Gemini para activar la IA.';
+        }
+        if (modalCountdown) {
+            modalCountdown.style.display = 'none';
         }
     }
+
     if (removeBtn) {
         removeBtn.style.display = userKey ? 'inline-block' : 'none';
         removeBtn.textContent = '🗑️ Restablecer a Clave de Cortesía';
@@ -14292,7 +14312,7 @@ function updateGeminiStatusUI() {
             keyInput.placeholder = 'AIzaSy...';
         } else if (usingCourtesy) {
             keyInput.value = '';
-            keyInput.placeholder = '•••••••••••••••••••••••••••••••• (Clave de cortesía activa de serie)';
+            keyInput.placeholder = '••••••••••••••••••••••••••••••••';
         } else {
             keyInput.value = '';
             keyInput.placeholder = 'AIzaSy...';
@@ -14329,7 +14349,7 @@ function openGeminiConfigModal() {
                 input.placeholder = 'AIzaSy...';
             } else if (typeof isUsingCourtesyKey === 'function' && isUsingCourtesyKey()) {
                 input.value = '';
-                input.placeholder = '•••••••••••••••••••••••••••••••• (Clave de cortesía activa de serie)';
+                input.placeholder = '••••••••••••••••••••••••••••••••';
             } else {
                 input.value = '';
                 input.placeholder = 'AIzaSy...';
