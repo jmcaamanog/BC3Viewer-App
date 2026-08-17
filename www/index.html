@@ -63,7 +63,7 @@
                 <!-- Fila 2 (Inferior): Justificada a la derecha con [ Asesor IA ] [ Guardar ] [ Exportar ] [ ⌘K ] [ ⚙️ ] -->
                 <div class="header-secondary-row" style="display: flex; justify-content: flex-end; align-items: center; width: 100%; gap: 6px;">
                     <!-- 1. Botón Asesor IA -->
-                    <button type="button" id="openAssistantBtn" class="header-icon-btn" title="Asesor IA (jmcaamanog)" style="color:var(--text-primary); display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border:1px solid rgba(56,189,248,0.4); height:30px; border-radius:8px; background:var(--bg-hover); cursor:pointer;">
+                    <button type="button" id="openAssistantBtn" class="header-icon-btn" onclick="openAssistantModal()" title="Asesor IA (jmcaamanog)" style="color:var(--text-primary); display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border:1px solid rgba(56,189,248,0.4); height:30px; border-radius:8px; background:var(--bg-hover); cursor:pointer;">
                         <img src="img/jmcaamanog.png" class="jm-avatar-icon" alt="jmcaamanog" style="width:20px; height:20px;" />
                         <span class="hide-on-mobile" style="font-size:0.75rem; font-weight:600;">Asesor IA</span>
                     </button>
@@ -143,7 +143,7 @@
                                 <button type="button" id="newBudgetMenuBtn"
                                     style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer; color:var(--accent); font-weight:600;">Nuevo Presupuesto
                                     <span style="font-size:1rem;">✨</span></button>
-                                <button type="button" id="settingsAssistantBtn"
+                                <button type="button" id="settingsAssistantBtn" onclick="openAssistantModal()"
                                     style="display:flex; justify-content:space-between; align-items:center; width:100%; border:none; background:none; padding:8px 12px; cursor:pointer; color:var(--text-primary); gap:10px;">
                                     <div style="display:flex; align-items:center; gap:8px;">
                                         <span class="gemini-status-dot disconnected" id="geminiStatusDot"></span>
@@ -151,7 +151,7 @@
                                     </div>
                                     <img src="img/jmcaamanog.png" class="jm-avatar-icon" alt="jmcaamanog" />
                                 </button>
-                                <button type="button" id="cloudSyncBtn"
+                                <button type="button" id="cloudSyncBtn" onclick="openCloudSyncModal()"
                                     style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer;">Sincronización Cloud
                                     <span style="font-size:1rem;">☁️</span></button>
                                 <button type="button" id="auditLogBtn"

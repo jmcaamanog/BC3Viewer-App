@@ -13283,15 +13283,32 @@ async function uploadFileToGoogleDriveAPI(token, folderId, fileName, cipherObj, 
 }
 
 async function syncFilesFromGoogleDrive() {
-    if (!googleAccessToken) return;
+    if (!googleAccessToken) {
+        renderCloudFilesTable();
+        return;
+    }
     try {
         const folderId = googleDriveFolderId || await getOrCreateDriveFolder(googleAccessToken);
-        if (!folderId) return;
+        if (!folderId) {
+            renderCloudFilesTable();
+            return;
+        }
 
         const query = encodeURIComponent(`'${folderId}' in parents and trashed=false`);
         const resp = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,modifiedTime,size,appProperties,description)`, {
             headers: { 'Authorization': `Bearer ${googleAccessToken}` }
         });
+
+        if (resp.status === 401) {
+            // Token expirado, renovar silenciosamente
+            sessionStorage.removeItem('bc3_gdrive_access_token');
+            googleAccessToken = null;
+            const gisReady = initGoogleIdentity();
+            if (gisReady && googleTokenClient) {
+                googleTokenClient.requestAccessToken({ prompt: '' });
+            }
+            return;
+        }
 
         if (resp.ok) {
             const data = await resp.json();
@@ -13763,10 +13780,25 @@ if (cloudAutoSyncToggle) {
 }
 
 if (uploadCurrentToCloudBtn) uploadCurrentToCloudBtn.addEventListener('click', uploadActiveBudgetToCloud);
-if (refreshCloudListBtn) refreshCloudListBtn.addEventListener('click', async () => {
-    await syncFilesFromGoogleDrive();
-    renderCloudFilesTable();
-});
+if (refreshCloudListBtn) {
+    refreshCloudListBtn.addEventListener('click', async () => {
+        if (cloudSyncStatusText) cloudSyncStatusText.textContent = '⏳ Comprobando archivos en Google Drive...';
+        
+        if (!googleAccessToken) {
+            // Si no hay token de acceso a Drive activo, solicitar autorización a Google
+            const gisReady = initGoogleIdentity();
+            if (gisReady && googleTokenClient) {
+                if (cloudSyncStatusText) cloudSyncStatusText.textContent = '⏳ Solicitando acceso a Google Drive...';
+                googleTokenClient.requestAccessToken({ prompt: '' });
+                return;
+            }
+        }
+        
+        await syncFilesFromGoogleDrive();
+        renderCloudFilesTable();
+        if (cloudSyncStatusText) cloudSyncStatusText.textContent = '🟢 Lista de archivos actualizada desde la nube';
+    });
+}
 
 if (cloudSyncModal) {
     cloudSyncModal.addEventListener('click', (e) => {
@@ -15181,3 +15213,14 @@ function removeChatLoading(id) {
 if (typeof updateSettingsUserHeaderUI === 'function') {
     updateSettingsUserHeaderUI();
 }
+
+
+// Exponer funciones de modales globales para acceso directo
+window.openAssistantModal = openAssistantModal;
+window.closeAssistantModal = closeAssistantModal;
+window.openGeminiConfigModal = openGeminiConfigModal;
+window.closeGeminiConfigModal = closeGeminiConfigModal;
+window.openCloudSyncModal = openCloudSyncModal;
+window.closeCloudSyncModal = closeCloudSyncModal;
+window.syncFilesFromGoogleDrive = syncFilesFromGoogleDrive;
+window.connectGoogleAccount = connectGoogleAccount;
