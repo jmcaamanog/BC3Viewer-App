@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visualizador BC3 Premium</title>
-    <link rel="stylesheet" href="style.css?v=2.2.8">
+    <link rel="stylesheet" href="style.css?v=2.2.9">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 
@@ -1459,7 +1459,7 @@
                         <!-- Versión 2.2.1 -->
                         <div style="margin-bottom: 1rem; border-left: 3px solid #38bdf8; padding-left: 8px;">
                             <div style="display: flex; justify-content: space-between; font-weight: 700; color: #38bdf8;">
-                                <span>V2.2.8 (Actual)</span>
+                                <span>V2.2.9 (Actual)</span>
                                 <span>16/08/2026</span>
                             </div>
                             <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 4px;">Autor:
@@ -1964,16 +1964,16 @@
 
             <!-- Sugerencias rápidas (Chips) -->
             <div style="padding: 8px 18px; border-top: 1px solid var(--border-color); background: var(--bg-hover); display: flex; gap: 6px; overflow-x: auto; flex-wrap: nowrap;" class="hide-scrollbar">
-                <button type="button" class="gemini-chip-btn assistant-quick-chip" data-query="¿Falta alguna partida esencial según la estructura de este presupuesto?">
+                <button type="button" class="gemini-chip-btn assistant-quick-chip" onclick="window.sendAssistantQuickQuery(this)" data-query="¿Falta alguna partida esencial según la estructura de este presupuesto?">
                     🔍 ¿Falta alguna partida?
                 </button>
-                <button type="button" class="gemini-chip-btn assistant-quick-chip" data-query="Analiza las 3 partidas más costosas del presupuesto y sugiere posibles optimizaciones de precio.">
+                <button type="button" class="gemini-chip-btn assistant-quick-chip" onclick="window.sendAssistantQuickQuery(this)" data-query="Analiza las 3 partidas más costosas del presupuesto y sugiere posibles optimizaciones de precio.">
                     📊 3 partidas más caras
                 </button>
-                <button type="button" class="gemini-chip-btn assistant-quick-chip" data-query="Crea una partida descompuesta completa de tabiquería de cartón-yeso (pladur) con perfiles de 46mm y placa de 15mm.">
+                <button type="button" class="gemini-chip-btn assistant-quick-chip" onclick="window.sendAssistantQuickQuery(this)" data-query="Crea una partida descompuesta completa de tabiquería de cartón-yeso (pladur) con perfiles de 46mm y placa de 15mm.">
                     🔨 Crear partida de pladur
                 </button>
-                <button type="button" class="gemini-chip-btn assistant-quick-chip" data-query="Redacta un resumen ejecutivo de la obra para presentar al cliente con desglose por capítulos.">
+                <button type="button" class="gemini-chip-btn assistant-quick-chip" onclick="window.sendAssistantQuickQuery(this)" data-query="Redacta un resumen ejecutivo de la obra para presentar al cliente con desglose por capítulos.">
                     📄 Resumen ejecutivo
                 </button>
             </div>
@@ -2737,12 +2737,12 @@
     <script src="jspdf.plugin.autotable.min.js"></script>
     <script src="chart.min.js"></script>
     <script src="xlsx.full.min.js"></script>
-    <script src="BC3Parser.js?v=2.2.8"></script>
-    <script src="BC3GanttEngine.js?v=2.2.8"></script>
-    <script src="BC3PriceBank.js?v=2.2.8"></script>
-    <script src="BC3Writer.js?v=2.2.8"></script>
+    <script src="BC3Parser.js?v=2.2.9"></script>
+    <script src="BC3GanttEngine.js?v=2.2.9"></script>
+    <script src="BC3PriceBank.js?v=2.2.9"></script>
+    <script src="BC3Writer.js?v=2.2.9"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="app.js?v=2.2.8"></script>
+    <script src="app.js?v=2.2.9"></script>
 </body>
 
 </html>

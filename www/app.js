@@ -1,4 +1,13 @@
-const APP_VERSION = '2.2.8'; // Versión actual de la aplicación (Single Source of Truth)
+function sendAssistantQuickQuery(btnOrQuery) {
+    let query = typeof btnOrQuery === 'string' ? btnOrQuery : (btnOrQuery?.getAttribute?.('data-query') || btnOrQuery?.textContent?.trim() || '');
+    if (!query) return;
+    const input = document.getElementById('geminiChatInput');
+    if (input) input.value = query;
+    sendAssistantUserMessage();
+}
+window.sendAssistantQuickQuery = sendAssistantQuickQuery;
+
+const APP_VERSION = '2.2.9'; // Versión actual de la aplicación (Single Source of Truth)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // Sincronizador centralizado y automático de versión en toda la interfaz
@@ -14101,7 +14110,7 @@ document.querySelectorAll('.gemini-chip-btn').forEach(btn => {
 // ==========================================================================
 
 const GEMINI_API_STORAGE_KEY = 'bc3_gemini_api_key';
-const GEMINI_MODELS = ['gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+const GEMINI_MODELS = ['gemini-3.5-flash'];
 const GEMINI_MODEL = 'gemini-3.5-flash';
 
 // Clave oficial de cortesía comunitaria (Ofrecida por jmcaamanog)
@@ -14457,37 +14466,36 @@ if (removeGeminiKeyBtn) {
     });
 }
 
-async function callGeminiApi(apiKey, bodyPayload, timeoutMs = 45000) {
-    let lastError = null;
-    for (const model of GEMINI_MODELS) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bodyPayload),
-                signal: controller.signal
-            });
-            clearTimeout(timeoutId);
+async function callGeminiApi(apiKey, bodyPayload, timeoutMs = 25000) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bodyPayload),
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
 
-            if (response.ok) {
-                const data = await response.json();
-                return data;
-            } else {
-                let errMsg = `Error HTTP ${response.status}`;
-                try {
-                    const errData = await response.json();
-                    if (errData?.error?.message) errMsg = errData.error.message;
-                } catch (e) {}
-                lastError = new Error(errMsg);
-            }
-        } catch (e) {
-            lastError = e;
+        if (response.ok) {
+            return await response.json();
+        } else {
+            let errMsg = `Error HTTP ${response.status}`;
+            try {
+                const errData = await response.json();
+                if (errData?.error?.message) errMsg = errData.error.message;
+            } catch (e) {}
+            throw new Error(errMsg);
         }
+    } catch (e) {
+        clearTimeout(timeoutId);
+        if (e.name === 'AbortError') {
+            throw new Error("Tiempo de espera agotado al conectar con Google Gemini (25s).");
+        }
+        throw e;
     }
-    throw lastError || new Error("No se pudo conectar con ningún modelo activo de Gemini.");
 }
 
 // Generador de presupuesto estructurado con Gemini
@@ -15084,6 +15092,7 @@ INSTRUCCIONES CLAVE:
 
     } catch (err) {
         removeChatLoading(loadingId);
+        assistantChatMessages.pop();
         appendChatMessage('ai', `❌ Error al consultar con Gemini AI: ${err.message || err}`);
     }
 }
