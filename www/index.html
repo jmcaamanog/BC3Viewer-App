@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visualizador BC3 Premium</title>
-    <link rel="stylesheet" href="style.css?v=2.2.6">
+    <link rel="stylesheet" href="style.css?v=2.2.7">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 
@@ -1459,7 +1459,7 @@
                         <!-- Versión 2.2.1 -->
                         <div style="margin-bottom: 1rem; border-left: 3px solid #38bdf8; padding-left: 8px;">
                             <div style="display: flex; justify-content: space-between; font-weight: 700; color: #38bdf8;">
-                                <span>V2.2.6 (Actual)</span>
+                                <span>V2.2.7 (Actual)</span>
                                 <span>16/08/2026</span>
                             </div>
                             <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 4px;">Autor:
@@ -1980,9 +1980,9 @@
 
             <!-- Chat Input Footer -->
             <div style="padding: 10px 14px; border-top: 1px solid var(--border-color); background: var(--bg-color); display: flex; gap: 8px; align-items: center; width: 100%; box-sizing: border-box;">
-                <textarea id="geminiChatInput" rows="1" placeholder="Escribe tu consulta o pide crear una partida..." 
+                <textarea id="geminiChatInput" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();window.sendAssistantUserMessage();}" placeholder="Escribe tu consulta o pide crear una partida..." 
                     style="flex: 1; width: 100%; min-width: 0; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-hover); color: var(--text-primary); font-size: 0.88rem; resize: none; font-family: inherit; line-height: 1.4; max-height: 100px; height: 42px;"></textarea>
-                <button type="button" id="sendGeminiChatBtn" title="Enviar mensaje" aria-label="Enviar" style="width: 42px; min-width: 42px; max-width: 42px; height: 42px; padding: 0; margin: 0; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; background: linear-gradient(135deg, #8b5cf6, #3b82f6); border: none; cursor: pointer; color: white; box-shadow: 0 2px 8px rgba(139,92,246,0.35);">
+                <button type="button" id="sendGeminiChatBtn" onclick="window.sendAssistantUserMessage()" title="Enviar mensaje" aria-label="Enviar" style="width: 42px; min-width: 42px; max-width: 42px; height: 42px; padding: 0; margin: 0; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; background: linear-gradient(135deg, #8b5cf6, #3b82f6); border: none; cursor: pointer; color: white; box-shadow: 0 2px 8px rgba(139,92,246,0.35);">
                     🚀
                 </button>
             </div>
@@ -2737,12 +2737,12 @@
     <script src="jspdf.plugin.autotable.min.js"></script>
     <script src="chart.min.js"></script>
     <script src="xlsx.full.min.js"></script>
-    <script src="BC3Parser.js?v=2.2.6"></script>
-    <script src="BC3GanttEngine.js?v=2.2.6"></script>
-    <script src="BC3PriceBank.js?v=2.2.6"></script>
-    <script src="BC3Writer.js?v=2.2.6"></script>
+    <script src="BC3Parser.js?v=2.2.7"></script>
+    <script src="BC3GanttEngine.js?v=2.2.7"></script>
+    <script src="BC3PriceBank.js?v=2.2.7"></script>
+    <script src="BC3Writer.js?v=2.2.7"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="app.js?v=2.2.6"></script>
+    <script src="app.js?v=2.2.7"></script>
 </body>
 
 </html>

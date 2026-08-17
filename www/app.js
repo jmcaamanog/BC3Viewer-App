@@ -1,4 +1,4 @@
-const APP_VERSION = '2.2.6'; // Versión actual de la aplicación (Single Source of Truth)
+const APP_VERSION = '2.2.7'; // Versión actual de la aplicación (Single Source of Truth)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // Sincronizador centralizado y automático de versión en toda la interfaz
@@ -14101,7 +14101,7 @@ document.querySelectorAll('.gemini-chip-btn').forEach(btn => {
 // ==========================================================================
 
 const GEMINI_API_STORAGE_KEY = 'bc3_gemini_api_key';
-const GEMINI_MODELS = ['gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite', 'gemini-2.5-flash'];
+const GEMINI_MODELS = ['gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
 const GEMINI_MODEL = 'gemini-3.5-flash';
 
 // Clave oficial de cortesía comunitaria (Ofrecida por jmcaamanog)
@@ -14984,7 +14984,8 @@ if (geminiChatInput) {
 }
 
 async function sendAssistantUserMessage() {
-    const text = geminiChatInput?.value?.trim();
+    const input = document.getElementById('geminiChatInput');
+    const text = input ? input.value.trim() : '';
     if (!text) return;
 
     const apiKey = getGeminiApiKey();
@@ -14994,17 +14995,13 @@ async function sendAssistantUserMessage() {
         return;
     }
 
-    // Limpiar input
-    geminiChatInput.value = '';
+    if (input) input.value = '';
 
-    // Añadir mensaje del usuario al historial visual
     appendChatMessage('user', text);
 
-    // Indicador de "pensando..."
     const loadingId = 'ai-typing-' + Date.now();
     appendChatLoading(loadingId);
 
-    // Construir contexto resumido del presupuesto abierto
     let budgetContext = "No hay ningún archivo de presupuesto cargado actualmente en memoria.";
     if (typeof parsedData !== 'undefined' && parsedData?.concepts) {
         const root = parsedData.concepts["OBRA#"] || Object.values(parsedData.concepts).find(c => c.type === 'ROOT' || (c.code && c.code.endsWith('#')));
@@ -15018,17 +15015,19 @@ async function sendAssistantUserMessage() {
                 }
             });
         }
-        const pem = typeof calculateTotalPEM === 'function' ? calculateTotalPEM() : (root?.price || 0);
+        let pem = 0;
+        try { pem = typeof calculateTotalPEM === 'function' ? calculateTotalPEM() : (root?.price || 0); } catch(e) {}
         budgetContext = `PRESUPUESTO ACTIVO EN PANTALLA:
-Título: ${currentFileName || 'Presupuesto'}
+Título: ${typeof currentFileName !== 'undefined' ? currentFileName : 'Presupuesto'}
 PEM Total: ${pem} €
 Estructura de Capítulos:
 ${chaptersList.join('\n')}`;
     }
 
-    const selectedTargetChapter = assistantTargetChapterSelect?.value || 'auto';
-    const user = getLoggedUserProfile();
-    const userIdentPrompt = user.name || user.firstName ? `El usuario se llama "${user.name || user.firstName}". Puedes dirigirte a él por su nombre de pila de forma cercana y profesional cuando sea oportuno.\n` : '';
+    const chapterSelect = document.getElementById('assistantTargetChapterSelect');
+    const selectedTargetChapter = chapterSelect ? chapterSelect.value : 'auto';
+    const user = (typeof getLoggedUserProfile === 'function') ? getLoggedUserProfile() : {};
+    const userIdentPrompt = (user.name || user.firstName) ? `El usuario se llama "${user.name || user.firstName}". Puedes dirigirte a él por su nombre de pila de forma cercana y profesional cuando sea oportuno.\n` : '';
 
     const systemPrompt = `Eres "jmcaamanog", el Asistente de IA oficial de la herramienta BC3 Viewer (Jose te programó y te puso aquí como el asistente de IA experto de la aplicación, siendo Arquitecto Técnico y BIM Manager).
 Te presentas siempre como "jmcaamanog", con un tono profesional pero cercano y con chispa simpática.
@@ -15042,7 +15041,7 @@ INSTRUCCIONES CLAVE:
 1. Responde de forma clara, profesional, concisa y orientada a la ingeniería de edificación.
 2. Si el usuario te pide una CONSULTA, AUDITORÍA, REVISIÓN o REDACCIÓN DE MEMORIA: respóndele en lenguaje natural estructurado con viñetas y formato Markdown.
 3. Si el usuario te pide CREAR o AÑADIR UNA PARTIDA (o si una partida es la solución directa a lo que pide):
-   - Además de explicar brevemente la partida, INCLUYE AL FINAL UN BLOQUE JSON con la etiqueta exacta \`\`\`json_partida ... \`\`\` con el siguiente formato estricto:
+   - Además de explicar brevemente la partida, INCLUYE AL FINAL UN BLOQUE JSON con la etiqueta exacta \`\`\`json_partida ... \`\`\` con el formato:
 \`\`\`json_partida
 {
   "code": "ALB010",
@@ -15057,13 +15056,11 @@ INSTRUCCIONES CLAVE:
     { "code": "MT_LADR", "type": "MT", "summary": "Ladrillo cerámico hueco triple", "unit": "ud", "qty": 25, "price": 0.35 }
   ]
 }
-\`\`\`
-   - "targetChapter": Usa el código del capítulo donde mejor encaje (ej: CAP01##, CAP02##) o el que el usuario haya indicado.`;
+\`\`\``;
 
     assistantChatMessages.push({ role: "user", parts: [{ text }] });
 
     try {
-        // Enviar historial reciente (últimos 8 mensajes)
         const recentHistory = assistantChatMessages.slice(-8);
 
         const payload = {
@@ -15089,7 +15086,8 @@ INSTRUCCIONES CLAVE:
 }
 
 function appendChatMessage(role, rawContent) {
-    if (!geminiChatHistory) return;
+    const chatHist = document.getElementById('geminiChatHistory');
+    if (!chatHist) return;
 
     const msgDiv = document.createElement('div');
     msgDiv.className = `assistant-msg ${role === 'user' ? 'user-msg' : 'ai-msg'}`;
@@ -15097,7 +15095,7 @@ function appendChatMessage(role, rawContent) {
     const avatar = document.createElement('div');
     avatar.className = 'msg-avatar';
     if (role === 'user') {
-        const user = getLoggedUserProfile();
+        const user = (typeof getLoggedUserProfile === 'function') ? getLoggedUserProfile() : {};
         if (user.picture) {
             avatar.innerHTML = `<img src="${user.picture}" alt="Usuario" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" referrerpolicy="no-referrer" onerror="this.style.display='none'; this.parentElement.textContent='${user.firstName ? user.firstName.charAt(0).toUpperCase() : '👤'}';" />`;
         } else {
@@ -15116,11 +15114,11 @@ function appendChatMessage(role, rawContent) {
         let cleanText = rawContent;
         let partidaObj = null;
 
-        const partidaMatch = rawContent.match(/```json_partida\s*([\s\S]*?)\s*```/);
+        const partidaMatch = rawContent.match(/\`\`\`json_partida\s*([\s\S]*?)\s*\`\`\`/);
         if (partidaMatch) {
             try {
                 partidaObj = JSON.parse(partidaMatch[1]);
-                cleanText = rawContent.replace(/```json_partida\s*[\s\S]*?\s*```/, '').trim();
+                cleanText = rawContent.replace(/\`\`\`json_partida\s*[\s\S]*?\s*\`\`\`/, '').trim();
             } catch (e) {
                 console.warn("Error parseando json_partida", e);
             }
@@ -15129,7 +15127,7 @@ function appendChatMessage(role, rawContent) {
         let formattedHtml = cleanText
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/`([^`]+)`/g, '<code>$1</code>')
+            .replace(/\`([^\`]+)\`/g, '<code>$1</code>')
             .replace(/\n\n/g, '<br><br>')
             .replace(/\n- /g, '<br>• ');
 
@@ -15143,142 +15141,13 @@ function appendChatMessage(role, rawContent) {
 
     msgDiv.appendChild(avatar);
     msgDiv.appendChild(bubble);
-    geminiChatHistory.appendChild(msgDiv);
-    geminiChatHistory.scrollTop = geminiChatHistory.scrollHeight;
-}
-
-function createPartidaActionCard(item) {
-    const card = document.createElement('div');
-    card.className = 'partida-action-card';
-
-    const header = document.createElement('div');
-    header.className = 'partida-action-header';
-
-    const codeSpan = document.createElement('span');
-    codeSpan.className = 'partida-action-code';
-    codeSpan.textContent = `${item.code || 'NUEVA'} · ${item.unit || 'ud'}`;
-
-    const priceSpan = document.createElement('span');
-    priceSpan.className = 'partida-action-price';
-    priceSpan.textContent = `${(parseFloat(item.price) || 0).toFixed(2)} €/${item.unit || 'ud'}`;
-
-    header.appendChild(codeSpan);
-    header.appendChild(priceSpan);
-
-    const summary = document.createElement('div');
-    summary.style.fontWeight = '600';
-    summary.style.fontSize = '0.8rem';
-    summary.style.marginBottom = '4px';
-    summary.textContent = item.summary || 'Partida sin título';
-
-    const desc = document.createElement('div');
-    desc.style.fontSize = '0.72rem';
-    desc.style.color = 'var(--text-secondary)';
-    desc.style.lineHeight = '1.4';
-    desc.textContent = (item.description || '').slice(0, 140) + ((item.description || '').length > 140 ? '...' : '');
-
-    const insertBtn = document.createElement('button');
-    insertBtn.className = 'partida-action-btn';
-    insertBtn.innerHTML = `<span>➕ Insertar en el Presupuesto</span>`;
-
-    insertBtn.addEventListener('click', () => {
-        if (!parsedData || !parsedData.concepts) {
-            alert("No hay un presupuesto abierto en memoria donde insertar la partida.");
-            return;
-        }
-
-        let targetCh = assistantTargetChapterSelect?.value;
-        if (!targetCh || targetCh === 'auto') {
-            targetCh = item.targetChapter;
-        }
-
-        const resolvedChapter = resolveOrCreateChapter(targetCh);
-        if (!resolvedChapter) {
-            alert("No se pudo localizar ni crear un capítulo adecuado para insertar la partida.");
-            return;
-        }
-
-        const itemConcept = {
-            code: item.code || `PAR_${Date.now().toString().slice(-4)}`,
-            unit: item.unit || 'ud',
-            summary: item.summary || 'Partida generada por IA',
-            description: item.description || '',
-            price: parseFloat(item.price) || 0,
-            quantity: parseFloat(item.quantity) || 1.0,
-            type: 0,
-            children: [],
-            decomposition: [],
-            measurements: [
-                { comment: "Medición estimada", units: 1, length: parseFloat(item.quantity) || 1.0, width: 1, height: 1, total: parseFloat(item.quantity) || 1.0 }
-            ]
-        };
-
-        if (item.components && Array.isArray(item.components)) {
-            item.components.forEach((comp, idx) => {
-                let cCode = comp.code || `COMP_${idx + 1}`;
-                let cType = 0;
-                const cTypeStr = (comp.type || "").toUpperCase();
-                if (cTypeStr === 'MO' || cCode.startsWith('MO')) { cType = 1; if (!cCode.startsWith('MO')) cCode = 'MO_' + cCode; }
-                else if (cTypeStr === 'MQ' || cCode.startsWith('MQ')) { cType = 2; if (!cCode.startsWith('MQ')) cCode = 'MQ_' + cCode; }
-                else if (cTypeStr === 'MT' || cCode.startsWith('MT')) { cType = 3; if (!cCode.startsWith('MT')) cCode = 'MT_' + cCode; }
-
-                const cFactor = parseFloat(comp.qty || comp.factor) || 1.0;
-                const cPrice = parseFloat(comp.price) || 0;
-                const cUnit = comp.unit || (cType === 1 ? 'h' : (cType === 2 ? 'h' : 'ud'));
-                const cSummary = comp.summary || "Elemento descompuesto";
-
-                if (!parsedData.concepts[cCode]) {
-                    parsedData.concepts[cCode] = {
-                        code: cCode,
-                        unit: cUnit,
-                        summary: cSummary,
-                        price: cPrice,
-                        quantity: 1,
-                        type: cType,
-                        children: [],
-                        decomposition: [],
-                        measurements: []
-                    };
-                }
-
-                itemConcept.decomposition.push({
-                    code: cCode,
-                    factor: cFactor,
-                    unit: cUnit,
-                    price: cPrice,
-                    summary: cSummary
-                });
-            });
-        }
-
-        parsedData.concepts[item.code] = itemConcept;
-
-        const ch = parsedData.concepts[resolvedChapter];
-        if (!ch.decomposition) ch.decomposition = [];
-        const exists = ch.decomposition.some(d => d.code === item.code);
-        if (!exists) {
-            ch.decomposition.push({ code: item.code, factor: itemConcept.quantity || 1.0 });
-        }
-
-        if (typeof calculateAndDisplayTotal === 'function') calculateAndDisplayTotal();
-        if (typeof renderBudgetTree === 'function') renderBudgetTree();
-        else if (typeof renderTree === 'function') renderTree();
-
-        insertBtn.disabled = true;
-        insertBtn.innerHTML = `<span>✅ Insertada en ${resolvedChapter}</span>`;
-        showAppToast(`Partida ${item.code} añadida con éxito a ${resolvedChapter}`, '✨');
-    });
-
-    card.appendChild(header);
-    card.appendChild(summary);
-    if (desc.textContent) card.appendChild(desc);
-    card.appendChild(insertBtn);
-
-    return card;
+    chatHist.appendChild(msgDiv);
+    chatHist.scrollTop = chatHist.scrollHeight;
 }
 
 function appendChatLoading(id) {
-    if (!geminiChatHistory) return;
+    const chatHist = document.getElementById('geminiChatHistory');
+    if (!chatHist) return;
     const msgDiv = document.createElement('div');
     msgDiv.id = id;
     msgDiv.className = 'assistant-msg ai-msg';
@@ -15291,8 +15160,8 @@ function appendChatLoading(id) {
             <span>jmcaamanog está analizando...</span>
         </div>
     `;
-    geminiChatHistory.appendChild(msgDiv);
-    geminiChatHistory.scrollTop = geminiChatHistory.scrollHeight;
+    chatHist.appendChild(msgDiv);
+    chatHist.scrollTop = chatHist.scrollHeight;
 }
 
 function removeChatLoading(id) {
@@ -15315,3 +15184,5 @@ window.openCloudSyncModal = openCloudSyncModal;
 window.closeCloudSyncModal = closeCloudSyncModal;
 window.syncFilesFromGoogleDrive = syncFilesFromGoogleDrive;
 window.connectGoogleAccount = connectGoogleAccount;
+
+window.sendAssistantUserMessage = sendAssistantUserMessage;
