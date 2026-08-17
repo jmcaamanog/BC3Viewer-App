@@ -1,4 +1,4 @@
-const APP_VERSION = '2.2.3'; // Versión actual de la aplicación (Single Source of Truth)
+const APP_VERSION = '2.2.4'; // Versión actual de la aplicación (Single Source of Truth)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // Sincronizador centralizado y automático de versión en toda la interfaz
@@ -14240,6 +14240,17 @@ function updateGeminiStatusUI() {
     if (statusBadge) {
         if (isConnected) statusBadge.classList.add('connected');
         else statusBadge.classList.remove('connected');
+    }
+
+    // Actualizar Banner de Cuenta Atrás
+    const countdownDetail = document.getElementById('geminiCourtesyCountdownDetail');
+    const countdownPill = document.getElementById('assistantCountdownPill');
+    const countdownText = getCourtesyCountdown();
+    if (countdownDetail) {
+        countdownDetail.textContent = `⏱️ ${countdownText}`;
+    }
+    if (countdownPill) {
+        countdownPill.textContent = usingCourtesy ? `⏱️ Cortesía: ${countdownText.split('(')[0].trim()}` : '🔑 Clave Privada Propia';
     }
 
     // Modal de configuración de Gemini
