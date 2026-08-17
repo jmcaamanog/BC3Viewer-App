@@ -2,7 +2,8 @@
 
 En este documento se detalla la evolución completa de la aplicación, incluyendo todas las revisiones y mejoras intermedias realizadas.
 
-### Versión 2.2.1 — 16/08/2026 (Actual)
+### Versión 2.2.1 — 16/08/2026
+
 * **👨‍💻 Asesor de IA Oficial ConTech (jmcaamanog):** Identidad, rigor técnico y avatar oficial del autor (`jmcaamanog.png`) integrado en el chat interactivo para auditoría técnica de presupuestos, detección de partidas faltantes y creación de descompuestos con Google Gemini BYOK.
 * **💬 Interfaz en Azul Pizarra ConTech:** Burbujas de chat de alto contraste en azul marino (#111e38) y azul hielo (#e0f2fe).
 * **👤 Personalización de Usuario con Google Sign-In:** Saludo dinámico por nombre de pila y carga de foto de perfil con `referrerpolicy="no-referrer"`.

@@ -1,4 +1,4 @@
-# 🌳 BC3 Viewer Multiplataforma (Windows & Android) — v2.2.1
+# 🌳 BC3 Viewer Multiplataforma (Windows & Android) — v2.2.2
 
 | 🏗️ Perfil & ConTech | 📈 Repositorio & Enlaces |
 | :--- | :--- |
@@ -14,7 +14,7 @@
 | 🌟 Recurso | 🚀 Acción / Enlace | 📝 Descripción |
 | :--- | :--- | :--- |
 | **Landing Page** | 👉 **[Visitar Presentación Web](https://jmcaamanog.github.io/BC3Viewer-App/landing.html)** | Web interactiva con galería de 32 capturas y descargas. |
-| **App Online** | 👉 **[Abrir App Web (v2.2.1)](https://jmcaamanog.github.io/BC3Viewer-App/www/index.html)** | Utiliza la versión en la nube directo en tu navegador. |
+| **App Online** | 👉 **[Abrir App Web (v2.2.2)](https://jmcaamanog.github.io/BC3Viewer-App/www/index.html)** | Utiliza la versión en la nube directo en tu navegador. |
 | **Web Personal** | 🌐 **[jmcaamanog.pages.dev](https://jmcaamanog.pages.dev/)** | Portfolio profesional y proyectos ConTech del autor. |
 | **Capturas Windows** | 💻 **[Ver Galería Windows (V2.0)](./CAPTURAS/V2.0/WINDOWS_V2.0)** | Capturas de pantalla de la interfaz de escritorio Premium. |
 | **Capturas Android** | 📱 **[Ver Galería Android (V1.5)](./CAPTURAS/V1.5/ANDROID_V1.5)** | Capturas de pantalla de la app en móvil/tableta. |
@@ -28,11 +28,11 @@
 >     *   [Descargar Instalador .exe (NSIS)](https://github.com/jmcaamanog/BC3Viewer-App/releases/download/v2.0.0/BC3_Viewer_Windows_Installer.exe) *(Ultra ligero ~3 MB)*
 >     *   [Descargar Paquete .msi (WiX)](https://github.com/jmcaamanog/BC3Viewer-App/releases/download/v2.0.0/BC3_Viewer_Windows_Installer.msi) *(Corporativo ~3.6 MB)*
 > *   **📱 Android Móvil:**
->     *   [Descargar Aplicación .apk (v2.2.1)](https://github.com/jmcaamanog/BC3Viewer-App/releases/download/v2.2.1/BC3Viewer-App.apk) *(Soporte offline ~26 MB)*
+>     *   [Descargar Aplicación .apk (v2.2.2)](https://github.com/jmcaamanog/BC3Viewer-App/releases/download/v2.2.2/BC3Viewer-App.apk) *(Soporte offline ~26 MB)*
 > *   **📁 Archivo de Prueba:**
 >     *   [Descargar Presupuesto de Ejemplo (.bc3)](https://github.com/jmcaamanog/BC3Viewer-App/tree/main/PROGRAMAS/BC3%20EJEMPLO)
 >
-> 🔑 **Contraseña de Acceso (Versión 2.2.1):** `1234`
+> 🔑 **Contraseña de Acceso (Versión 2.2.2):** `1234`
 
 ---
 
@@ -48,7 +48,7 @@ Comprometido con el software libre y el empoderamiento tecnológico en el sector
 
 ---
 
-## 🌟 Características Principales (FIEBDC-3 Premium v2.2.1)
+## 🌟 Características Principales (FIEBDC-3 Premium v2.2.2)
 
 | Módulo | Icono | Funcionalidades Destacadas |
 | :--- | :---: | :--- |
@@ -73,7 +73,7 @@ Comprometido con el software libre y el empoderamiento tecnológico en el sector
 
 > 📋 **[Ver Historial de Versiones Completo (CHANGELOG.md)](./CHANGELOG.md)**
 
-### 📅 16/08/2026 — Versión 2.2.1 (Actual)
+### 📅 16/08/2026 — Versión 2.2.2 (Actual)
 * **👨‍💻 Asesor de IA Oficial ConTech (jmcaamanog):** Identidad, rigor técnico y avatar oficial del autor (`jmcaamanog.png`) integrado en el chat interactivo para auditoría técnica de presupuestos, detección de partidas faltantes y creación de descompuestos con Google Gemini BYOK.
 * **💬 Interfaz en Azul Pizarra ConTech:** Burbujas de chat de alto contraste en azul marino (#111e38) y azul hielo (#e0f2fe).
 * **👤 Personalización de Usuario con Google Sign-In:** Saludo dinámico por nombre de pila y carga de foto de perfil con `referrerpolicy="no-referrer"`.
