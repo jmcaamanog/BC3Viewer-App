@@ -7,7 +7,7 @@ function sendAssistantQuickQuery(btnOrQuery) {
 }
 window.sendAssistantQuickQuery = sendAssistantQuickQuery;
 
-const APP_VERSION = '2.3.2'; // Versión actual de la aplicación (Single Source of Truth)
+const APP_VERSION = '2.3.3'; // Versión actual de la aplicación (Single Source of Truth)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // Sincronizador centralizado y automático de versión en toda la interfaz
@@ -15067,6 +15067,7 @@ CAPÍTULO SELECCIONADO POR EL USUARIO PARA INSERCIÓN: ${selectedTargetChapter}
 INSTRUCCIONES CLAVE:
 1. Responde de forma clara, profesional, concisa y orientada a la ingeniería de edificación.
 2. Si el usuario te pide una CONSULTA, AUDITORÍA, REVISIÓN o REDACCIÓN DE MEMORIA: respóndele en lenguaje natural estructurado con viñetas y formato Markdown.
+3. TABLAS TÉCNICAS Y COMPARATIVAS: Cuando compares precios, opciones, rendimientos o desgloses de costes, UTILIZA SIEMPRE TABLAS MARKDOWN ESTÁNDAR con cabeceras claras (| Concepto | Opción 1 | Opción 2 | Diferencia | Explicación |) y separadores (| :--- | :--- | :--- | :--- | :--- |) para que la herramienta las renderice con diseño ConTech interactivo.
 3. Si el usuario te pide CREAR o AÑADIR UNA PARTIDA (o si una partida es la solución directa a lo que pide):
    - Además de explicar brevemente la partida, INCLUYE AL FINAL UN BLOQUE JSON con la etiqueta exacta \`\`\`json_partida ... \`\`\` con el formato:
 \`\`\`json_partida
@@ -15115,6 +15116,111 @@ INSTRUCCIONES CLAVE:
     }
 }
 
+// ==========================================================================
+// 📐 FORMATEADOR AVANZADO DE MARKDOWN Y TABLAS CONTECH PARA ASESOR IA
+// ==========================================================================
+
+function formatMarkdownToHtml(markdown) {
+    if (!markdown) return '';
+    let html = markdown;
+
+    // 1. Extraer bloques de código delimitados con ```
+    const codeBlocks = [];
+    html = html.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (match, lang, code) => {
+        const id = `___CODEBLOCK_${codeBlocks.length}___`;
+        codeBlocks.push(`<pre class="code-block language-${lang}"><code>${escapeHtml(code.trim())}</code></pre>`);
+        return id;
+    });
+
+    // 2. Procesar Tablas de Markdown
+    html = html.replace(/(?:(?:^|\n)\|[^\n]+\|\r?\n(?:\|[ \t]*:?[-]+:?[ \t]*)+\|\r?\n(?:\|[^\n]+\|\r?\n?)+)/g, (tableMatch) => {
+        const lines = tableMatch.trim().split('\n').map(l => l.trim()).filter(l => l.startsWith('|') && l.endsWith('|'));
+        if (lines.length < 2) return tableMatch;
+
+        const headerLine = lines[0];
+        const separatorLine = lines[1];
+        const bodyLines = lines.slice(2);
+
+        const headers = headerLine.slice(1, -1).split('|').map(h => h.trim());
+        
+        // Alineaciones (:---, :---:, ---:)
+        const aligns = separatorLine.slice(1, -1).split('|').map(s => {
+            const trimmed = s.trim();
+            if (trimmed.startsWith(':') && trimmed.endsWith(':')) return 'center';
+            if (trimmed.endsWith(':')) return 'right';
+            return 'left';
+        });
+
+        let tableHtml = '<div class="contech-table-wrapper"><table class="contech-table"><thead><tr>';
+        headers.forEach((h, i) => {
+            const align = aligns[i] || 'left';
+            tableHtml += `<th style="text-align:${align}">${formatInlineMarkdown(h)}</th>`;
+        });
+        tableHtml += '</tr></thead><tbody>';
+
+        bodyLines.forEach(rowLine => {
+            const cells = rowLine.slice(1, -1).split('|').map(c => c.trim());
+            tableHtml += '<tr>';
+            cells.forEach((c, i) => {
+                const align = aligns[i] || 'left';
+                tableHtml += `<td style="text-align:${align}">${formatInlineMarkdown(c)}</td>`;
+            });
+            tableHtml += '</tr>';
+        });
+
+        tableHtml += '</tbody></table></div>';
+        return '\n' + tableHtml + '\n';
+    });
+
+    // 3. Encabezados
+    html = html.replace(/^### (.*$)/gim, '<h4 class="contech-heading-4">$1</h4>');
+    html = html.replace(/^## (.*$)/gim, '<h3 class="contech-heading-3">$1</h3>');
+    html = html.replace(/^# (.*$)/gim, '<h3 class="contech-heading-3">$1</h3>');
+
+    // 4. Separadores horizontales
+    html = html.replace(/^---$/gim, '<hr class="contech-hr" />');
+
+    // 5. Citas / Blockquotes
+    html = html.replace(/^\> (.*$)/gim, '<blockquote class="contech-blockquote">$1</blockquote>');
+
+    // 6. Listas numeradas y viñetas
+    html = html.replace(/^\s*[-*]\s+(.*$)/gim, '• $1<br>');
+    html = html.replace(/^\s*(\d+)\.\s+(.*$)/gim, '<strong>$1.</strong> $2<br>');
+
+    // 7. Enlaces, Negritas, Cursivas, Código en línea
+    html = formatInlineMarkdown(html);
+
+    // 8. Párrafos y saltos de línea (respetando tablas y encabezados)
+    html = html.replace(/\n\n+/g, '<br><br>');
+    html = html.replace(/\n/g, '<br>');
+
+    // 9. Restaurar bloques de código
+    codeBlocks.forEach((block, idx) => {
+        html = html.replace(`___CODEBLOCK_${idx}___`, block);
+    });
+
+    return html;
+}
+
+function formatInlineMarkdown(text) {
+    if (!text) return '';
+    return text
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="contech-link">$1 ↗</a>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code class="contech-inline-code">$1</code>')
+        .replace(/\$m\^2\$/g, 'm²')
+        .replace(/m\^2/g, 'm²')
+        .replace(/m\^3/g, 'm³');
+}
+
+function escapeHtml(str) {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
 function appendChatMessage(role, rawContent) {
     const chatHist = document.getElementById('geminiChatHistory');
     if (!chatHist) return;
@@ -15154,14 +15260,7 @@ function appendChatMessage(role, rawContent) {
             }
         }
 
-        let formattedHtml = cleanText
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/\`([^\`]+)\`/g, '<code>$1</code>')
-            .replace(/\n\n/g, '<br><br>')
-            .replace(/\n- /g, '<br>• ');
-
-        bubble.innerHTML = formattedHtml;
+        bubble.innerHTML = formatMarkdownToHtml(cleanText);
 
         if (partidaObj && partidaObj.code) {
             const card = createPartidaActionCard(partidaObj);
