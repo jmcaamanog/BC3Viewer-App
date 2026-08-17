@@ -1,6 +1,6 @@
 {
   "name": "bc3-viewer-app",
-  "version": "2.2.5",
+  "version": "2.2.6",
   "description": "Visualizador y Editor Premium de Presupuestos BC3 (Multiplataforma)",
   "main": "www/index.html",
   "workspaces": [
