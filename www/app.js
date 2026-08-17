@@ -7,7 +7,7 @@ function sendAssistantQuickQuery(btnOrQuery) {
 }
 window.sendAssistantQuickQuery = sendAssistantQuickQuery;
 
-const APP_VERSION = '2.3.1'; // Versión actual de la aplicación (Single Source of Truth)
+const APP_VERSION = '2.3.2'; // Versión actual de la aplicación (Single Source of Truth)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // Sincronizador centralizado y automático de versión en toda la interfaz
@@ -14995,23 +14995,7 @@ if (clearAssistantChatBtn && geminiChatHistory) {
     });
 }
 
-// Chips de consultas rápidas en el Asistente
-document.querySelectorAll('.assistant-quick-chip').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const query = btn.getAttribute('data-query');
-        if (query) {
-            const input = document.getElementById('geminiChatInput');
-            if (input) input.value = query;
-            sendAssistantUserMessage();
-        }
-    });
-});
-
-if (sendGeminiChatBtn) {
-    sendGeminiChatBtn.addEventListener('click', sendAssistantUserMessage);
-}
+// Chips de consultas rápidas y botón de envío gestionados de forma única
 
 if (geminiChatInput) {
     geminiChatInput.addEventListener('keydown', (e) => {
@@ -15022,10 +15006,14 @@ if (geminiChatInput) {
     });
 }
 
+let isSendingAssistantMessage = false;
+
 async function sendAssistantUserMessage() {
+    if (isSendingAssistantMessage) return;
     const input = document.getElementById('geminiChatInput');
     const text = input ? input.value.trim() : '';
     if (!text) return;
+    isSendingAssistantMessage = true;
 
     const apiKey = getGeminiApiKey();
     if (!apiKey) {
@@ -15122,6 +15110,8 @@ INSTRUCCIONES CLAVE:
         removeChatLoading(loadingId);
         assistantChatMessages.pop();
         appendChatMessage('ai', `❌ Error al consultar con Gemini AI: ${err.message || err}`);
+    } finally {
+        isSendingAssistantMessage = false;
     }
 }
 
