@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visualizador BC3 Premium</title>
-    <link rel="stylesheet" href="style.css?v=2.2.2">
+    <link rel="stylesheet" href="style.css?v=2.2.3">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 
@@ -63,7 +63,7 @@
                 <!-- Fila 2 (Inferior): Justificada a la derecha con [ Asesor IA ] [ Guardar ] [ Exportar ] [ ⌘K ] [ ⚙️ ] -->
                 <div class="header-secondary-row" style="display: flex; justify-content: flex-end; align-items: center; width: 100%; gap: 6px;">
                     <!-- 1. Botón Asesor IA -->
-                    <button type="button" id="openAssistantBtn" class="header-icon-btn" onclick="openAssistantModal()" title="Asesor IA (jmcaamanog)" style="color:var(--text-primary); display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border:1px solid rgba(56,189,248,0.4); height:30px; border-radius:8px; background:var(--bg-hover); cursor:pointer;">
+                    <button type="button" id="openAssistantBtn" class="header-icon-btn" onclick="window.openAssistantModal()" onclick="openAssistantModal()" title="Asesor IA (jmcaamanog)" style="color:var(--text-primary); display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border:1px solid rgba(56,189,248,0.4); height:30px; border-radius:8px; background:var(--bg-hover); cursor:pointer;">
                         <img src="img/jmcaamanog.png" class="jm-avatar-icon" alt="jmcaamanog" style="width:20px; height:20px;" />
                         <span class="hide-on-mobile" style="font-size:0.75rem; font-weight:600;">Asesor IA</span>
                     </button>
@@ -143,7 +143,7 @@
                                 <button type="button" id="newBudgetMenuBtn"
                                     style="display:flex; justify-content:flex-end; align-items:center; gap:8px; width:100%; border:none; background:none; text-align:right; padding:8px 12px; cursor:pointer; color:var(--accent); font-weight:600;">Nuevo Presupuesto
                                     <span style="font-size:1rem;">✨</span></button>
-                                <button type="button" id="settingsAssistantBtn" onclick="openAssistantModal()"
+                                <button type="button" id="settingsAssistantBtn" onclick="window.openAssistantModal()" onclick="openAssistantModal()"
                                     style="display:flex; justify-content:space-between; align-items:center; width:100%; border:none; background:none; padding:8px 12px; cursor:pointer; color:var(--text-primary); gap:10px;">
                                     <div style="display:flex; align-items:center; gap:8px;">
                                         <span class="gemini-status-dot disconnected" id="geminiStatusDot"></span>
@@ -1459,7 +1459,7 @@
                         <!-- Versión 2.2.1 -->
                         <div style="margin-bottom: 1rem; border-left: 3px solid #38bdf8; padding-left: 8px;">
                             <div style="display: flex; justify-content: space-between; font-weight: 700; color: #38bdf8;">
-                                <span>V2.2.2 (Actual)</span>
+                                <span>V2.2.3 (Actual)</span>
                                 <span>16/08/2026</span>
                             </div>
                             <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 4px;">Autor:
@@ -1924,13 +1924,13 @@
                     </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:6px; flex-shrink: 0;">
-                    <button type="button" id="assistantConfigKeyBtn" class="gantt-action-btn" title="Configurar Clave API de Gemini" style="padding:6px 10px; font-size:0.9rem; display:inline-flex; align-items:center; justify-content:center; border-radius:6px; background:var(--bg-color); border:1px solid var(--border-color); cursor:pointer;">
+                    <button type="button" id="assistantConfigKeyBtn" onclick="window.openGeminiConfigModal()" class="gantt-action-btn" title="Configurar Clave API de Gemini" style="padding:6px 10px; font-size:0.9rem; display:inline-flex; align-items:center; justify-content:center; border-radius:6px; background:var(--bg-color); border:1px solid var(--border-color); cursor:pointer;">
                         ⚙️
                     </button>
                     <button type="button" id="clearAssistantChatBtn" class="gantt-action-btn" title="Limpiar conversación" style="padding:6px 10px; font-size:0.9rem; display:inline-flex; align-items:center; justify-content:center; border-radius:6px; background:var(--bg-color); border:1px solid var(--border-color); cursor:pointer;">
                         🧹
                     </button>
-                    <button type="button" class="close-btn" id="closeGeminiAssistantBtn" title="Cerrar">✕</button>
+                    <button type="button" class="close-btn" id="closeGeminiAssistantBtn" onclick="window.closeAssistantModal()" title="Cerrar">✕</button>
                 </div>
             </div>
 
@@ -2000,7 +2000,7 @@
                         <span style="font-size:0.72rem; color:var(--text-secondary);">Presupuestación y redacción generativa ConTech (100% Gratis)</span>
                     </div>
                 </div>
-                <button type="button" class="close-btn" id="closeGeminiConfigBtn" title="Cerrar">✕</button>
+                <button type="button" class="close-btn" id="closeGeminiConfigBtn" onclick="window.closeGeminiConfigModal()" title="Cerrar">✕</button>
             </div>
             <div class="modal-body" style="padding: 20px; display:flex; flex-direction:column; gap:16px; overflow-y:auto;">
                 
@@ -2082,7 +2082,7 @@
 
             </div>
             <div class="modal-footer" style="padding: 10px 16px; border-top: 1px solid var(--border-color); display:flex; justify-content:flex-end;">
-                <button type="button" id="closeGeminiConfigFooterBtn" class="process-btn" style="padding: 6px 18px; margin:0;">Cerrar</button>
+                <button type="button" id="closeGeminiConfigFooterBtn" onclick="window.closeGeminiConfigModal()" class="process-btn" style="padding: 6px 18px; margin:0;">Cerrar</button>
             </div>
         </div>
     </div>
@@ -2733,12 +2733,12 @@
     <script src="jspdf.plugin.autotable.min.js"></script>
     <script src="chart.min.js"></script>
     <script src="xlsx.full.min.js"></script>
-    <script src="BC3Parser.js?v=2.2.2"></script>
-    <script src="BC3GanttEngine.js?v=2.2.2"></script>
-    <script src="BC3PriceBank.js?v=2.2.2"></script>
-    <script src="BC3Writer.js?v=2.2.2"></script>
+    <script src="BC3Parser.js?v=2.2.3"></script>
+    <script src="BC3GanttEngine.js?v=2.2.3"></script>
+    <script src="BC3PriceBank.js?v=2.2.3"></script>
+    <script src="BC3Writer.js?v=2.2.3"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="app.js?v=2.2.2"></script>
+    <script src="app.js?v=2.2.3"></script>
 </body>
 
 </html>

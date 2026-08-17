@@ -1,4 +1,4 @@
-const APP_VERSION = '2.2.2'; // Versión actual de la aplicación (Single Source of Truth)
+const APP_VERSION = '2.2.3'; // Versión actual de la aplicación (Single Source of Truth)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // Sincronizador centralizado y automático de versión en toda la interfaz
@@ -14303,15 +14303,45 @@ function updateGeminiStatusUI() {
 }
 
 function openGeminiConfigModal() {
-    if (!geminiConfigModal) return;
-    const key = getGeminiApiKey();
-    if (geminiApiKeyInput) geminiApiKeyInput.value = key;
-    if (geminiKeyValidationMsg) {
-        geminiKeyValidationMsg.style.display = 'none';
-        geminiKeyValidationMsg.textContent = '';
+    try {
+        const modal = document.getElementById('geminiConfigModal');
+        if (!modal) {
+            console.error("No se encontró el elemento #geminiConfigModal en el DOM");
+            return;
+        }
+
+        const userKey = (localStorage.getItem(GEMINI_API_STORAGE_KEY) || '').trim();
+        const input = document.getElementById('geminiApiKeyInput');
+        if (input) {
+            if (userKey) {
+                input.value = userKey;
+                input.placeholder = 'AIzaSy...';
+            } else if (typeof isUsingCourtesyKey === 'function' && isUsingCourtesyKey()) {
+                input.value = '';
+                input.placeholder = '•••••••••••••••••••••••••••••••• (Clave de cortesía activa de serie)';
+            } else {
+                input.value = '';
+                input.placeholder = 'AIzaSy...';
+            }
+        }
+
+        const msg = document.getElementById('geminiKeyValidationMsg');
+        if (msg) {
+            msg.style.display = 'none';
+            msg.textContent = '';
+        }
+
+        try {
+            if (typeof updateGeminiStatusUI === 'function') {
+                updateGeminiStatusUI();
+            }
+        } catch(e) {}
+
+        modal.style.display = 'flex';
+        document.body.classList.add('modal-open');
+    } catch (err) {
+        console.error("Error al abrir Configuración Gemini:", err);
     }
-    updateGeminiStatusUI();
-    geminiConfigModal.style.display = 'flex';
 }
 
 function closeGeminiConfigModal() {
@@ -14758,71 +14788,101 @@ const assistantContextInfo = document.getElementById('assistantContextInfo');
 let assistantChatMessages = [];
 
 function openAssistantModal(targetChapterCode = null) {
-    if (!geminiAssistantModal) return;
+    try {
+        const modal = document.getElementById('geminiAssistantModal');
+        if (!modal) {
+            console.error("No se encontró el elemento #geminiAssistantModal en el DOM");
+            return;
+        }
 
-    // Verificar si hay clave configurada
-    const key = getGeminiApiKey();
-    if (!key) {
-        alert("Para utilizar el Asistente IA necesitas conectar primero tu clave gratuita de Google Gemini en Ajustes.");
-        openGeminiConfigModal();
-        return;
-    }
+        // 1. Mostrar el modal inmediatamente
+        modal.style.display = 'flex';
+        document.body.classList.add('modal-open');
+        const fab = document.getElementById('expandHeaderBtn');
+        if (fab) fab.style.display = 'none';
 
-    // Poblar selector de capítulos del presupuesto activo
-    if (assistantTargetChapterSelect) {
-        assistantTargetChapterSelect.innerHTML = '<option value="auto">✨ Detección Automática por IA</option>';
-        if (typeof parsedData !== 'undefined' && parsedData?.concepts) {
-            const root = parsedData.concepts["OBRA#"] || Object.values(parsedData.concepts).find(c => c.type === 'ROOT' || (c.code && c.code.endsWith('#')));
-            if (root && root.decomposition) {
-                root.decomposition.forEach(d => {
-                    const ch = parsedData.concepts[d.code];
-                    if (ch) {
-                        const opt = document.createElement('option');
-                        opt.value = ch.code;
-                        opt.textContent = `${ch.code} - ${ch.summary || 'Capítulo'}`;
-                        if (targetChapterCode && ch.code === targetChapterCode) {
-                            opt.selected = true;
-                        }
-                        assistantTargetChapterSelect.appendChild(opt);
-                    }
-                });
+        // 2. Actualizar UI de estado de Gemini
+        try {
+            if (typeof updateGeminiStatusUI === 'function') {
+                updateGeminiStatusUI();
             }
+        } catch (e) {
+            console.warn("Aviso al actualizar status UI:", e);
         }
-    }
 
-    // Actualizar texto de contexto del presupuesto
-    if (assistantContextInfo) {
-        if (typeof parsedData !== 'undefined' && parsedData?.concepts) {
-            const numConcepts = Object.keys(parsedData.concepts).length;
-            const pem = (typeof calculateTotalPEM === 'function' ? calculateTotalPEM() : (parsedData.concepts["OBRA#"]?.price || 0));
-            const formattedPem = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(pem);
-            assistantContextInfo.textContent = `Presupuesto activo: ${currentFileName || 'Presupuesto'} | PEM: ${formattedPem} (${numConcepts} conceptos)`;
-        } else {
-            assistantContextInfo.textContent = 'Presupuesto activo: Ninguno (Modo asesoramiento general)';
+        // 3. Poblar selector de capítulos del presupuesto activo
+        try {
+            const chapterSelect = document.getElementById('assistantTargetChapterSelect');
+            if (chapterSelect) {
+                chapterSelect.innerHTML = '<option value="auto">✨ Detección Automática por IA</option>';
+                if (typeof parsedData !== 'undefined' && parsedData?.concepts) {
+                    const root = parsedData.concepts["OBRA#"] || Object.values(parsedData.concepts).find(c => c.type === 'ROOT' || (c.code && c.code.endsWith('#')));
+                    if (root && root.decomposition) {
+                        root.decomposition.forEach(d => {
+                            const ch = parsedData.concepts[d.code];
+                            if (ch) {
+                                const opt = document.createElement('option');
+                                opt.value = ch.code;
+                                opt.textContent = `${ch.code} - ${ch.summary || 'Capítulo'}`;
+                                if (targetChapterCode && ch.code === targetChapterCode) {
+                                    opt.selected = true;
+                                }
+                                chapterSelect.appendChild(opt);
+                            }
+                        });
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn("Aviso al poblar capítulos:", e);
         }
-    }
 
-    // Personalizar saludo inicial con el nombre del usuario si la conversación está empezando
-    const userProfile = getLoggedUserProfile();
-    const greetingName = userProfile.firstName ? `, ${userProfile.firstName}` : '';
-    if (geminiChatHistory && assistantChatMessages.length === 0) {
-        const firstBubble = geminiChatHistory.querySelector('.assistant-msg.ai-msg .msg-bubble');
-        if (firstBubble) {
-            firstBubble.innerHTML = `
-                <div style="font-weight: 700; margin-bottom: 6px; color: #38bdf8; font-size: 0.9rem;">¡Hola${greetingName}! 👋 ¡Soy jmcaamanog! ¡Jose me puso aquí como tu asistente de IA! 🚀</div>
-                <div style="font-size: 0.84rem; line-height: 1.55;">
-                    Puedo crear, editar y auditar tu presupuesto. Resolviendo dudas técnicas sobre unidades de obra, redactar y añadir nuevas partidas directamente a tus capítulos.<br><br>
-                    <strong>¿Qué necesitas?</strong>
-                </div>
-            `;
+        // 4. Actualizar texto de contexto del presupuesto
+        try {
+            const ctxInfo = document.getElementById('assistantContextInfo');
+            if (ctxInfo) {
+                if (typeof parsedData !== 'undefined' && parsedData?.concepts) {
+                    const numConcepts = Object.keys(parsedData.concepts).length;
+                    let pem = 0;
+                    try {
+                        pem = typeof calculateTotalPEM === 'function' ? calculateTotalPEM() : (parsedData.concepts["OBRA#"]?.price || 0);
+                    } catch(e) {}
+                    const formattedPem = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(pem || 0);
+                    ctxInfo.textContent = `Presupuesto activo: ${typeof currentFileName !== 'undefined' ? currentFileName : 'Presupuesto'} | PEM: ${formattedPem} (${numConcepts} conceptos)`;
+                } else {
+                    ctxInfo.textContent = 'Presupuesto activo: Ninguno (Modo asesoramiento general)';
+                }
+            }
+        } catch (e) {
+            console.warn("Aviso al actualizar contexto:", e);
         }
-    }
 
-    document.body.classList.add('modal-open');
-    const fab = document.getElementById('expandHeaderBtn');
-    if (fab) fab.style.display = 'none';
-    geminiAssistantModal.style.display = 'flex';
-    if (geminiChatInput) geminiChatInput.focus();
+        // 5. Personalizar saludo con el nombre de usuario
+        try {
+            const chatHist = document.getElementById('geminiChatHistory');
+            const userProfile = (typeof getLoggedUserProfile === 'function') ? getLoggedUserProfile() : { firstName: '' };
+            const greetingName = userProfile.firstName ? `, ${userProfile.firstName}` : '';
+            if (chatHist && (!assistantChatMessages || assistantChatMessages.length === 0)) {
+                const firstBubble = chatHist.querySelector('.assistant-msg.ai-msg .msg-bubble');
+                if (firstBubble) {
+                    firstBubble.innerHTML = `
+                        <div style="font-weight: 700; margin-bottom: 6px; color: #38bdf8; font-size: 0.9rem;">¡Hola${greetingName}! 👋 ¡Soy jmcaamanog! ¡Jose me puso aquí como tu asistente de IA! 🚀</div>
+                        <div style="font-size: 0.84rem; line-height: 1.55;">
+                            Puedo crear, editar y auditar tu presupuesto. Resolviendo dudas técnicas sobre unidades de obra, redactar y añadir nuevas partidas directamente a tus capítulos.<br><br>
+                            <strong>¿Qué necesitas?</strong>
+                        </div>
+                    `;
+                }
+            }
+        } catch (e) {
+            console.warn("Aviso al personalizar saludo:", e);
+        }
+
+        const input = document.getElementById('geminiChatInput');
+        if (input) input.focus();
+    } catch (err) {
+        console.error("Error al abrir Asesor IA:", err);
+    }
 }
 
 function closeAssistantModal() {
