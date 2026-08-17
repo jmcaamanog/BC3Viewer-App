@@ -7,7 +7,7 @@ function sendAssistantQuickQuery(btnOrQuery) {
 }
 window.sendAssistantQuickQuery = sendAssistantQuickQuery;
 
-const APP_VERSION = '2.3.0'; // Versión actual de la aplicación (Single Source of Truth)
+const APP_VERSION = '2.3.1'; // Versión actual de la aplicación (Single Source of Truth)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // Sincronizador centralizado y automático de versión en toda la interfaz
@@ -9759,6 +9759,7 @@ if (expandHeaderBtn && mainHeader) {
 
 // Lógica para alternar la barra de filtros en móviles
 const toggleFilterBarBtn = document.getElementById('toggleFilterBarBtn');
+const filterBar = document.querySelector('.filter-bar') || document.getElementById('filterBar');
 if (toggleFilterBarBtn && filterBar) {
     toggleFilterBarBtn.addEventListener('click', () => {
         const isVisible = filterBar.classList.toggle('visible');
@@ -14128,29 +14129,27 @@ function getCourtesyApiKey() {
     }
 }
 
+function isValidCustomKey(key) {
+    if (!key || typeof key !== 'string') return false;
+    const clean = key.trim();
+    if (clean.includes('•') || clean.includes('...')) return false;
+    return clean.length >= 20;
+}
+
 function isUsingCourtesyKey() {
     try {
         const userKey = (localStorage.getItem(GEMINI_API_STORAGE_KEY) || '').trim();
-        return !userKey && !!getCourtesyApiKey();
+        if (isValidCustomKey(userKey)) return false;
+        return !!getCourtesyApiKey();
     } catch (e) {
         return !!getCourtesyApiKey();
     }
 }
 
-function getCourtesyCountdown() {
-    const now = Date.now();
-    const diff = COURTESY_KEY_EXPIRY - now;
-    if (diff <= 0) return 'Promoción finalizada';
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    return `${days} días, ${hours} h y ${mins} min restantes`;
-}
-
 function getGeminiApiKey() {
     try {
         const userKey = (localStorage.getItem(GEMINI_API_STORAGE_KEY) || '').trim();
-        if (userKey) return userKey;
+        if (isValidCustomKey(userKey)) return userKey;
         return getCourtesyApiKey();
     } catch (e) {
         return getCourtesyApiKey();
@@ -14221,6 +14220,17 @@ async function validateGeminiApiKey(key) {
     }
 
     return { success: false, error: lastError };
+}
+
+function getCourtesyCountdown() {
+    const expiryDate = new Date('2026-10-21T23:59:59');
+    const now = new Date();
+    const diffMs = expiryDate - now;
+    if (diffMs <= 0) return 'Expirada';
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    return `${days} días, ${hours} h y ${minutes} min restantes`;
 }
 
 function updateGeminiStatusUI() {
@@ -14384,8 +14394,26 @@ function openGeminiConfigModal() {
     }
 }
 
+const geminiConfigModal = document.getElementById('geminiConfigModal');
+const geminiConfigBtn = document.getElementById('geminiConfigBtn');
+const closeGeminiConfigBtn = document.getElementById('closeGeminiConfigBtn');
+const closeGeminiConfigFooterBtn = document.getElementById('closeGeminiConfigFooterBtn');
+const wizardOpenGeminiConfigBtn = document.getElementById('wizardOpenGeminiConfigBtn');
+const toggleGeminiKeyVisibilityBtn = document.getElementById('toggleGeminiKeyVisibilityBtn');
+const saveAndTestGeminiKeyBtn = document.getElementById('saveAndTestGeminiKeyBtn');
+const saveGeminiBtnText = document.getElementById('saveGeminiBtnText');
+const removeGeminiKeyBtn = document.getElementById('removeGeminiKeyBtn');
+const geminiApiKeyInput = document.getElementById('geminiApiKeyInput');
+const geminiKeyValidationMsg = document.getElementById('geminiKeyValidationMsg');
+
 function closeGeminiConfigModal() {
-    if (geminiConfigModal) geminiConfigModal.style.display = 'none';
+    const modal = document.getElementById('geminiConfigModal');
+    if (modal) modal.style.display = 'none';
+    const assistantModal = document.getElementById('geminiAssistantModal');
+    const assistantOpen = assistantModal && assistantModal.style.display && assistantModal.style.display !== 'none';
+    if (!assistantOpen) {
+        document.body.classList.remove('modal-open');
+    }
 }
 
 if (geminiConfigBtn) geminiConfigBtn.addEventListener('click', openGeminiConfigModal);
