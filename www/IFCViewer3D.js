@@ -122,9 +122,14 @@
         /**
          * Carga y renderiza el modelo IFC desde un ArrayBuffer
          */
-        loadModel: function (arrayBuffer, ifcData, fileName) {
+        loadModel: async function (arrayBuffer, ifcData, fileName) {
             if (!this.init('visor3dCanvasContainer')) {
                 console.error("IFCViewer3D: No se pudo inicializar el canvas antes de cargar.");
+                return;
+            }
+
+            if (!arrayBuffer) {
+                console.warn("IFCViewer3D: arrayBuffer no proporcionado.");
                 return;
             }
 
@@ -148,43 +153,80 @@
             // Rellenar selector de plantas
             this._populateStoreysDropdown(ifcData);
 
-            // Mostrar spinner de carga 3D
+            // Mostrar badge de carga 3D con indicador de estado
             const loadingBadge = document.getElementById('v3dLoadingBadge');
-            if (loadingBadge) loadingBadge.style.display = 'flex';
+            const loadingText = loadingBadge ? loadingBadge.querySelector('span') : null;
+            if (loadingBadge) {
+                loadingBadge.style.display = 'flex';
+                if (loadingText) loadingText.textContent = 'Procesando geometría 3D del modelo...';
+            }
 
             // Limpiar modelo anterior si existe
             if (this.ifcModel) {
-                this.scene.remove(this.ifcModel);
+                try {
+                    this.scene.remove(this.ifcModel);
+                    if (this.ifcModel.geometry) this.ifcModel.geometry.dispose();
+                } catch (e) { }
                 this.ifcModel = null;
             }
             this.resetHighlight();
 
-            // Parsear geometría con ifcLoader
-            setTimeout(() => {
-                try {
-                    const uint8 = new Uint8Array(arrayBuffer);
-                    this.ifcLoader.parse(uint8, (model) => {
-                        this.ifcModel = model;
-                        this.scene.add(model);
-
-                        if (loadingBadge) loadingBadge.style.display = 'none';
-
-                        // Centrar cámara en el modelo
-                        this.fitToView();
-                        console.log("IFCViewer3D: Geometría 3D del modelo cargada correctamente.");
-                    });
-                } catch (err) {
-                    if (loadingBadge) loadingBadge.style.display = 'none';
-                    console.error("IFCViewer3D: Error parseando geometría:", err);
-                    alert("Error visualizando geometría 3D: " + err.message);
+            // Configurar Web-IFC para máxima velocidad (Fast Booleans y omitir espacios vacíos)
+            try {
+                if (this.ifcLoader && this.ifcLoader.ifcManager) {
+                    await this.ifcLoader.ifcManager.setWasmPath('./');
+                    if (this.ifcLoader.ifcManager.applyWebIfcConfig) {
+                        this.ifcLoader.ifcManager.applyWebIfcConfig({
+                            USE_FAST_BOOLS: true
+                        });
+                    }
+                    if (this.ifcLoader.ifcManager.setupOptionalCategories) {
+                        // Omitir cajas invisibles de espacios (IfcSpace: 3856911033) y huecos (3588315303)
+                        this.ifcLoader.ifcManager.setupOptionalCategories({
+                            3856911033: false,
+                            3588315303: false
+                        });
+                    }
+                    if (this.ifcLoader.ifcManager.setOnProgress) {
+                        this.ifcLoader.ifcManager.setOnProgress((event) => {
+                            if (loadingText && event && event.total) {
+                                const pct = Math.min(99, Math.round((event.loaded / event.total) * 100));
+                                loadingText.textContent = `Generando mallas 3D (${pct}%)...`;
+                            }
+                        });
+                    }
                 }
-            }, 50);
+            } catch (cfgErr) {
+                console.warn("IFCViewer3D: Configuración previa:", cfgErr);
+            }
+
+            // Ejecución asíncrona real
+            try {
+                const uint8 = arrayBuffer instanceof Uint8Array ? arrayBuffer : new Uint8Array(arrayBuffer);
+                console.log(`IFCViewer3D: Parseando buffer (${(uint8.byteLength / 1024 / 1024).toFixed(2)} MB)...`);
+                
+                const t0 = performance.now();
+                // AWAIT DIRECTO: ifcLoader.parse es async y devuelve el modelo THREE.Mesh
+                const model = await this.ifcLoader.parse(uint8);
+                const tElapsed = ((performance.now() - t0) / 1000).toFixed(2);
+                console.log(`IFCViewer3D: Modelo 3D generado con éxito en ${tElapsed}s.`);
+
+                this.ifcModel = model;
+                this.scene.add(model);
+
+                if (loadingBadge) loadingBadge.style.display = 'none';
+
+                // Centrar cámara en el modelo
+                this.fitToView();
+            } catch (err) {
+                if (loadingBadge) loadingBadge.style.display = 'none';
+                console.error("IFCViewer3D: Error parseando geometría:", err);
+                alert("Error generando geometría 3D: " + (err.message || err));
+            }
         },
 
         /**
-         * Centra la cámara orbital en el modelo completo (Fit to View)
-         */
-        fitToView: function () {
+         * fitToView: function () {
             if (!this.ifcModel || !this.camera || !this.controls) return;
 
             const THREE = window.THREE;
