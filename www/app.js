@@ -344,6 +344,158 @@ async function readAndParseBC3File(file) {
 }
 
 // =============================================================================
+// 🏗️ MÓDULO BIM 5D: PROCESAMIENTO DE MODELOS IFC Y GENERADOR BC3
+// =============================================================================
+let currentIfcData = null;
+let currentIfcFile = null;
+
+async function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("Error leyendo el archivo IFC"));
+        reader.onload = (e) => {
+            const buffer = e.target.result;
+            try {
+                const utf8Decoder = new TextDecoder('utf-8', { fatal: false });
+                resolve(utf8Decoder.decode(buffer));
+            } catch (err) {
+                const isoDecoder = new TextDecoder('iso-8859-1');
+                resolve(isoDecoder.decode(buffer));
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+}
+
+async function handleIfcFile(file) {
+    if (typeof IFCParser === 'undefined') {
+        alert("El motor IFCParser no está disponible.");
+        return;
+    }
+
+    showWorkerLoader("Leyendo y analizando modelo BIM (IFC)...", file.name);
+    try {
+        const text = await readFileAsText(file);
+        
+        currentIfcFile = file;
+        currentIfcData = IFCParser.parse(text, (prog, msg) => {
+            const subtext = document.getElementById('workerLoadingSubtext');
+            if (subtext) subtext.textContent = `${msg} (${prog}%)`;
+        });
+
+        hideWorkerLoader();
+        openIfcWizardModal(currentIfcData, file.name);
+    } catch (err) {
+        hideWorkerLoader();
+        console.error("Error procesando modelo IFC:", err);
+        alert("Error al procesar el modelo IFC: " + (err.message || err));
+    }
+}
+
+function openIfcWizardModal(ifcData, fileName) {
+    const modal = document.getElementById('ifcWizardModal');
+    if (!modal) return;
+
+    // Subtítulo
+    const subtitle = document.getElementById('ifcModalSubtitle');
+    if (subtitle) subtitle.textContent = `Modelo: ${fileName} · Esquema: ${ifcData.header.schema || 'IFC'}`;
+
+    // Métricas
+    const elElem = document.getElementById('ifcMetricElements');
+    if (elElem) elElem.textContent = ifcData.stats.totalElements.toLocaleString('es-ES');
+
+    const elStoreys = document.getElementById('ifcMetricStoreys');
+    if (elStoreys) {
+        const storeyNames = ifcData.storeys.map(s => s.name).join(', ');
+        elStoreys.textContent = `${ifcData.stats.storeysCount} plant.${storeyNames ? ' (' + storeyNames + ')' : ''}`;
+    }
+
+    const elArea = document.getElementById('ifcMetricArea');
+    if (elArea) elArea.textContent = `${ifcData.stats.totalAreaM2.toLocaleString('es-ES')} m²`;
+
+    const elVol = document.getElementById('ifcMetricVolume');
+    if (elVol) elVol.textContent = `${ifcData.stats.totalVolumeM3.toLocaleString('es-ES')} m³`;
+
+    const elBadge = document.getElementById('ifcSchemaBadge');
+    if (elBadge) elBadge.textContent = `${ifcData.header.schema || 'IFC'} · ${ifcData.stats.parseTimeSec}s`;
+
+    // Rellenar tabla
+    const tbody = document.getElementById('ifcSummaryTableBody');
+    if (tbody) {
+        tbody.innerHTML = '';
+        if (!ifcData.summaryByCategory || ifcData.summaryByCategory.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="padding:16px; text-align:center; color:var(--text-secondary);">No se encontraron elementos constructivos cuantificables en el modelo.</td></tr>';
+        } else {
+            ifcData.summaryByCategory.forEach(cat => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid var(--border-color)';
+                
+                const typesCount = Object.keys(cat.types || {}).length;
+                const formattedQty = typeof cat.totalQuantity === 'number' ? cat.totalQuantity.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : cat.totalQuantity;
+
+                tr.innerHTML = `
+                    <td style="padding: 8px 12px; text-align:center; font-size:1.1rem;">${cat.icon}</td>
+                    <td style="padding: 8px 12px; font-weight:600; color:var(--text-primary);">${cat.category}</td>
+                    <td style="padding: 8px 12px; color:var(--text-secondary);">${cat.count} elem. (${typesCount} tipos)</td>
+                    <td style="padding: 8px 12px; text-align:right; font-weight:700; color:var(--accent, #3b82f6);">${formattedQty}</td>
+                    <td style="padding: 8px 12px; text-align:center;"><span style="font-size:0.75rem; font-weight:600; background:var(--bg-hover); padding:2px 6px; border-radius:4px;">${cat.unit}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    }
+
+    modal.style.display = 'flex';
+}
+
+function closeIfcWizardModal() {
+    const modal = document.getElementById('ifcWizardModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function initIfcWizardEvents() {
+    const closeBtn = document.getElementById('closeIfcWizardBtn');
+    if (closeBtn) closeBtn.addEventListener('click', closeIfcWizardModal);
+
+    const cancelBtn = document.getElementById('ifcCancelBtn');
+    if (cancelBtn) cancelBtn.addEventListener('click', closeIfcWizardModal);
+
+    const generateBtn = document.getElementById('ifcGenerateBc3Btn');
+    if (generateBtn) {
+        generateBtn.addEventListener('click', () => {
+            if (!currentIfcData) return;
+            if (typeof IFC2BC3Engine === 'undefined') {
+                alert("El motor de generación IFC2BC3Engine no está cargado.");
+                return;
+            }
+
+            try {
+                showWorkerLoader("Confeccionando presupuesto FIEBDC-3 y líneas de medición...", currentIfcFile ? currentIfcFile.name : "Modelo IFC");
+                
+                setTimeout(() => {
+                    try {
+                        const bc3Output = IFC2BC3Engine.generateBC3(currentIfcData);
+                        closeIfcWizardModal();
+                        hideWorkerLoader();
+
+                        const bc3Name = (currentIfcFile ? currentIfcFile.name : 'Modelo').replace(/\.ifc$/i, '.bc3');
+                        createBudgetTab(bc3Output.data, bc3Name, bc3Output.rawText);
+                    } catch (innerErr) {
+                        hideWorkerLoader();
+                        console.error("Error generando BC3:", innerErr);
+                        alert("Error generando archivo BC3: " + innerErr.message);
+                    }
+                }, 50);
+            } catch (err) {
+                hideWorkerLoader();
+                console.error("Error iniciando generación:", err);
+                alert("Error al iniciar generación: " + err.message);
+            }
+        });
+    }
+}
+
+// =============================================================================
 // SISTEMA MULTI-PRESUPUESTO POR PESTAÑAS (MULTI-TAB)
 // =============================================================================
 
@@ -730,6 +882,10 @@ if (bc3MultiFileInput) {
         const files = Array.from(this.files);
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
+            if (file.name.toLowerCase().endsWith('.ifc')) {
+                await handleIfcFile(file);
+                continue;
+            }
             try {
                 const result = await readAndParseBC3File(file);
                 if (result.success) {
@@ -768,6 +924,10 @@ if (uploadForm) {
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 currentFileName = file.name;
+                if (file.name.toLowerCase().endsWith('.ifc')) {
+                    await handleIfcFile(file);
+                    continue;
+                }
                 const result = await readAndParseBC3File(file);
 
                 if (result.success) {
@@ -3730,9 +3890,12 @@ if (dragOverlay) {
 
         const files = e.dataTransfer.files;
         if (files && files.length > 0) {
-            const fileList = Array.from(files).filter(f => f.name.toLowerCase().endsWith('.bc3'));
+            const fileList = Array.from(files).filter(f => {
+                const n = f.name.toLowerCase();
+                return n.endsWith('.bc3') || n.endsWith('.ifc');
+            });
             if (fileList.length === 0) {
-                alert('Por favor, selecciona o arrastra archivos con extensión .bc3');
+                alert('Por favor, selecciona o arrastra archivos con extensión .bc3 o .ifc');
                 return;
             }
 
@@ -3752,6 +3915,10 @@ if (dragOverlay) {
                     const dropdownFileName = document.getElementById('dropdownFileName');
                     if (dropdownFileName) dropdownFileName.textContent = currentFileName;
 
+                    if (file.name.toLowerCase().endsWith('.ifc')) {
+                        await handleIfcFile(file);
+                        continue;
+                    }
                     const result = await readAndParseBC3File(file);
                     if (result.success) {
                         createBudgetTab(result.data, file.name, result.rawText || result.data.original_text);
@@ -15446,3 +15613,12 @@ window.syncFilesFromGoogleDrive = syncFilesFromGoogleDrive;
 window.connectGoogleAccount = connectGoogleAccount;
 
 window.sendAssistantUserMessage = sendAssistantUserMessage;
+
+// Inicializar listeners del asistente BIM 5D
+if (typeof document !== "undefined") {
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initIfcWizardEvents);
+    } else {
+        initIfcWizardEvents();
+    }
+}

@@ -307,3 +307,7 @@ class BC3Parser {
     }
 }
 
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = BC3Parser;
+}
+

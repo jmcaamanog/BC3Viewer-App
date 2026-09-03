@@ -185,14 +185,14 @@
             <div class="upload-area" style="width: 100%;">
                 <form id="uploadForm">
                     <!-- Inputs ocultos para carga múltiple, Excel y CSV -->
-                    <input type="file" id="bc3MultiFileInput" accept=".bc3" multiple hidden>
+                    <input type="file" id="bc3MultiFileInput" accept=".bc3, .ifc" multiple hidden>
                     <input type="file" id="importExcelFileInput" accept=".xlsx, .xls" hidden>
                     <input type="file" id="importCsvFileInput" accept=".csv, .txt" hidden>
                     <!-- Grupo 1: Carga y Procesado (Oculto al inicio, se muestra al cargar un presupuesto) -->
                     <div class="control-container" id="uploadGroup" style="display:none;">
                         <label for="bc3file" class="upload-btn">
-                            <span id="fileName"><span class="btn-text">SELECCIONAR ARCHIVO .BC3</span></span>
-                            <input type="file" id="bc3file" name="bc3file" accept=".bc3" hidden>
+                            <span id="fileName"><span class="btn-text">SELECCIONAR ARCHIVO .BC3 / .IFC</span></span>
+                            <input type="file" id="bc3file" name="bc3file" accept=".bc3, .ifc" hidden>
                         </label>
                     </div>
 
@@ -429,7 +429,7 @@
 
                             <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: 100%;">
                                 <label for="bc3file" class="welcome-load-btn" style="flex: 1; min-width: 200px; max-width: 280px; text-align: center; margin: 0;">
-                                    📂 CARGAR ARCHIVO .BC3
+                                    📂 CARGAR ARCHIVO .BC3 / .IFC
                                 </label>
 
                                 <button type="button" id="welcomeNewBudgetBtn" class="welcome-load-btn" style="flex: 1; min-width: 200px; max-width: 280px; text-align: center; margin: 0; background: var(--accent, #3b82f6); border-color: var(--accent, #3b82f6); color: white;">
@@ -2731,6 +2731,91 @@
     </div>
 
     <!-- Indicador de Procesamiento Asíncrono / Web Worker -->
+    
+    <!-- Modal Asistente BIM 5D (IFC a Presupuesto BC3) -->
+    <div id="ifcWizardModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width: 880px; width: 95%;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding: 14px 20px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size: 1.6rem;">🏗️</span>
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.15rem; color: var(--accent, #3b82f6); display:flex; align-items:center; gap:8px;">
+                            <span>Asistente BIM 5D: Importación de Modelo IFC</span>
+                            <span style="font-size: 0.72rem; font-weight: 700; background: linear-gradient(135deg, #3b82f6, #06b6d4); color: white; padding: 2px 8px; border-radius: 12px;">IFC ➔ BC3</span>
+                        </h3>
+                        <span id="ifcModalSubtitle" style="font-size: 0.78rem; color: var(--text-secondary);">Extracción de cubicaciones y mediciones para confección de presupuesto</span>
+                    </div>
+                </div>
+                <button type="button" id="closeIfcWizardBtn" class="close-btn" style="border:none; background:none; font-size:1.4rem; cursor:pointer; color:var(--text-secondary);">&times;</button>
+            </div>
+
+            <div class="modal-body" style="padding: 16px 20px; max-height: calc(85vh - 140px); overflow-y: auto;">
+                <!-- Tarjetas de Métricas Resumen -->
+                <div class="ifc-metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 16px;">
+                    <div class="ifc-metric-card" style="background: var(--bg-hover); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px; text-align: center;">
+                        <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; display: block;">Total Elementos</span>
+                        <strong id="ifcMetricElements" style="font-size: 1.25rem; color: var(--text-primary);">0</strong>
+                    </div>
+                    <div class="ifc-metric-card" style="background: var(--bg-hover); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px; text-align: center;">
+                        <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; display: block;">Plantas / Niveles</span>
+                        <strong id="ifcMetricStoreys" style="font-size: 1.25rem; color: var(--accent, #3b82f6);">0</strong>
+                    </div>
+                    <div class="ifc-metric-card" style="background: var(--bg-hover); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px; text-align: center;">
+                        <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; display: block;">Superficie Muros</span>
+                        <strong id="ifcMetricArea" style="font-size: 1.25rem; color: #10b981;">0 m²</strong>
+                    </div>
+                    <div class="ifc-metric-card" style="background: var(--bg-hover); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px; text-align: center;">
+                        <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; display: block;">Volumen Estructura</span>
+                        <strong id="ifcMetricVolume" style="font-size: 1.25rem; color: #f59e0b;">0 m³</strong>
+                    </div>
+                </div>
+
+                <!-- Desglose de Partidas Detectadas -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+                    <h4 style="margin: 0; font-size: 0.88rem; color: var(--text-primary); font-weight: 600;">
+                        📋 Desglose de Partidas Detectadas en el Modelo
+                    </h4>
+                    <span id="ifcSchemaBadge" style="font-size: 0.72rem; padding: 2px 8px; background: rgba(59, 130, 246, 0.1); color: var(--accent, #3b82f6); border-radius: 4px; font-weight: 600;">IFC</span>
+                </div>
+
+                <!-- Tabla de Elementos y Mediciones -->
+                <div style="border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; background: var(--bg-color);">
+                    <div style="max-height: 280px; overflow-y: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+                            <thead style="position: sticky; top: 0; background: var(--bg-hover); border-bottom: 1px solid var(--border-color); z-index: 1;">
+                                <tr style="color: var(--text-secondary); text-align: left;">
+                                    <th style="padding: 8px 12px; width: 40px; text-align:center;">Icon</th>
+                                    <th style="padding: 8px 12px;">Categoría Constructiva</th>
+                                    <th style="padding: 8px 12px;">Elementos / Tipos</th>
+                                    <th style="padding: 8px 12px; text-align:right;">Medición Total</th>
+                                    <th style="padding: 8px 12px; width: 60px; text-align:center;">Unidad</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ifcSummaryTableBody">
+                                <!-- Filas dinámicas -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div style="margin-top: 12px; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.2rem;">💡</span>
+                    <span style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4;">
+                        Al generar el presupuesto, cada elemento del modelo IFC creará una línea de medición detallada (<strong>~M</strong>) con su planta y código de identificación (<strong>GlobalId</strong>) para auditoría completa.
+                    </span>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="padding: 12px 20px; border-top: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                <button type="button" id="ifcCancelBtn" class="tool-btn" style="padding: 6px 14px; margin: 0;">Cancelar</button>
+                <button type="button" id="ifcGenerateBc3Btn" class="process-btn" style="padding: 8px 18px; margin: 0; background: linear-gradient(135deg, #2563eb, #0284c7); color:white; font-weight:600; display:flex; align-items:center; gap:8px;">
+                    <span>⚡</span>
+                    <span>Generar Presupuesto BC3 y Abrir</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="workerLoadingOverlay" class="worker-loading-overlay" style="display:none;">
         <div class="worker-loading-card">
             <div class="worker-loading-spinner"></div>
@@ -2747,6 +2832,8 @@
     <script src="BC3GanttEngine.js?v=2.3.3"></script>
     <script src="BC3PriceBank.js?v=2.3.3"></script>
     <script src="BC3Writer.js?v=2.3.3"></script>
+    <script src="IFCParser.js?v=2.3.3"></script>
+    <script src="IFC2BC3Engine.js?v=2.3.3"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="app.js?v=2.3.3"></script>
 </body>
