@@ -203,6 +203,8 @@
                                     class="btn-text">PRESUPUESTO</span></button>
                             <button type="button" id="pricesBtn" class="nav-tab">🏷️ <span
                                     class="btn-text">PRECIOS</span></button>
+                            <button type="button" id="visor3dBtn" class="nav-tab" style="display:none;">📐 <span
+                                    class="btn-text">VISOR 3D</span></button>
                         </div>
 
                         <!-- Botón Coeficientes entre PRECIOS y DASHBOARD -->
@@ -650,6 +652,52 @@
             </div>
 
             <!-- Banco de Precios Unitarios View -->
+            
+            <!-- Visor 3D Interactivo del Modelo IFC View -->
+            <div class="visor3d-panel" id="visor3dPanel" style="display:none;">
+                <div class="visor3d-toolbar" id="visor3dToolbar">
+                    <div class="visor3d-toolbar-left">
+                        <span class="visor3d-title">📐 Modelo BIM 3D</span>
+                        <span class="visor3d-model-name" id="visor3dModelName">Modelo IFC</span>
+                    </div>
+
+                    <div class="visor3d-toolbar-center">
+                        <button type="button" id="v3dFitBtn" class="v3d-tool-btn" title="Centrar Cámara (Fit to View)">
+                            <span>🏠</span> <span>Centrar</span>
+                        </button>
+
+                        <button type="button" id="v3dXrayBtn" class="v3d-tool-btn" title="Modo Rayos X / Transparencia">
+                            <span>👁️</span> <span>Rayos X</span>
+                        </button>
+
+                        <div class="v3d-dropdown-container">
+                            <select id="v3dStoreySelect" class="v3d-select" title="Filtrar por Planta">
+                                <option value="all">🏢 Todas las Plantas</option>
+                            </select>
+                        </div>
+
+                        <button type="button" id="v3dSplitBtn" class="v3d-tool-btn" title="Modo Vista Dividida (Presupuesto + 3D)">
+                            <span>🔀</span> <span>Vista Dividida</span>
+                        </button>
+                    </div>
+
+                    <div class="visor3d-toolbar-right">
+                        <span id="v3dSelectedLabel" class="v3d-selected-info">Ningún elemento seleccionado</span>
+                        <button type="button" id="v3dFullscreenBtn" class="v3d-tool-btn" title="Pantalla Completa">
+                            <span>⛶</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="visor3d-canvas-container" id="visor3dCanvasContainer">
+                    <!-- WebGL Canvas inyectado por IFCViewer3D.js -->
+                    <div id="v3dLoadingBadge" class="v3d-loading-badge" style="display:none;">
+                        <div class="worker-loading-spinner" style="width: 24px; height: 24px;"></div>
+                        <span>Cargando geometría 3D del modelo...</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="prices-panel" id="pricesPanel" style="display:none;">
                 <div class="prices-header-box">
                     <h2>Banco de Precios Unitarios</h2>
@@ -2834,6 +2882,8 @@
     <script src="BC3Writer.js?v=2.3.3"></script>
     <script src="IFCParser.js?v=2.3.3"></script>
     <script src="IFC2BC3Engine.js?v=2.3.3"></script>
+    <script src="IFCViewer3D.bundle.js?v=2.3.3"></script>
+    <script src="IFCViewer3D.js?v=2.3.3"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="app.js?v=2.3.3"></script>
 </body>

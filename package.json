@@ -13,7 +13,10 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.5.0",
-    "vitest": "^4.1.10"
+    "three": "^0.154.0",
+    "vitest": "^4.1.10",
+    "web-ifc": "^0.0.39",
+    "web-ifc-three": "^0.0.126"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",

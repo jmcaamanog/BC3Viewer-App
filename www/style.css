@@ -7457,3 +7457,171 @@ body.dark-theme .partida-action-card,
         transform: scale(1);
     }
 }
+
+
+/* =============================================================================
+   📐 MÓDULO BIM 3D: VISOR 3D INTERACTIVO CON THREE.JS Y GLASSMORPHISM
+   ============================================================================= */
+.visor3d-panel {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: calc(100vh - 125px);
+    min-height: 550px;
+    background: #0b1120;
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.visor3d-toolbar {
+    position: absolute;
+    top: 12px;
+    left: 14px;
+    right: 14px;
+    z-index: 20;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 8px;
+    padding: 8px 14px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.visor3d-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.visor3d-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #38bdf8;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.visor3d-model-name {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    background: rgba(30, 41, 59, 0.8);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    max-width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.visor3d-toolbar-center {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.v3d-tool-btn {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    color: #f1f5f9;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+
+.v3d-tool-btn:hover {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: #38bdf8;
+    color: #38bdf8;
+    transform: translateY(-1px);
+}
+
+.v3d-tool-btn.active {
+    background: #0284c7;
+    border-color: #38bdf8;
+    color: white;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+}
+
+.v3d-select {
+    background: rgba(30, 41, 59, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    color: #f1f5f9;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    outline: none;
+    cursor: pointer;
+}
+
+.v3d-select:focus {
+    border-color: #38bdf8;
+}
+
+.visor3d-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.v3d-selected-info {
+    font-size: 0.75rem;
+    color: #cbd5e1;
+    background: rgba(2, 132, 199, 0.15);
+    padding: 3px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    max-width: 260px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.visor3d-canvas-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.visor3d-canvas-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+    outline: none;
+    display: block;
+}
+
+.v3d-loading-badge {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 12px;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #f1f5f9;
+    z-index: 30;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7);
+    font-size: 0.88rem;
+    font-weight: 500;
+}

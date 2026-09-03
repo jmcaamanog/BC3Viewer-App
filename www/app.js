@@ -333,6 +333,10 @@ async function readAndParseBC3File(file) {
                 }
 
                 hideWorkerLoader();
+                const v3dBtnEl = document.getElementById('visor3dBtn');
+                if (v3dBtnEl && !file.name.toLowerCase().endsWith('.ifc')) {
+                    v3dBtnEl.style.display = 'none';
+                }
                 resolve({ success: true, data: result });
             } catch (err) {
                 hideWorkerLoader();
@@ -349,12 +353,15 @@ async function readAndParseBC3File(file) {
 let currentIfcData = null;
 let currentIfcFile = null;
 
+let currentIfcBuffer = null;
+
 async function readFileAsText(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onerror = () => reject(new Error("Error leyendo el archivo IFC"));
         reader.onload = (e) => {
             const buffer = e.target.result;
+            currentIfcBuffer = buffer;
             try {
                 const utf8Decoder = new TextDecoder('utf-8', { fatal: false });
                 resolve(utf8Decoder.decode(buffer));
@@ -479,7 +486,15 @@ function initIfcWizardEvents() {
                         hideWorkerLoader();
 
                         const bc3Name = (currentIfcFile ? currentIfcFile.name : 'Modelo').replace(/\.ifc$/i, '.bc3');
-                        createBudgetTab(bc3Output.data, bc3Name, bc3Output.rawText);
+                        const newTab = createBudgetTab(bc3Output.data, bc3Name, bc3Output.rawText);
+                        if (newTab) {
+                            newTab.isFromIfc = true;
+                            newTab.ifcData = currentIfcData;
+                            newTab.ifcBuffer = currentIfcBuffer;
+                            newTab.ifcFileName = currentIfcFile ? currentIfcFile.name : 'Modelo IFC';
+                        }
+                        const v3dBtn = document.getElementById('visor3dBtn');
+                        if (v3dBtn) v3dBtn.style.display = 'inline-flex';
                     } catch (innerErr) {
                         hideWorkerLoader();
                         console.error("Error generando BC3:", innerErr);
@@ -585,6 +600,21 @@ function switchBudgetTab(tabId) {
     }
     window.certifications = targetTab.certifications || {};
 
+    // Controlar visibilidad del botón 📐 VISOR 3D (solo en pestañas IFC)
+    const v3dBtnEl = document.getElementById('visor3dBtn');
+    if (v3dBtnEl) {
+        if (targetTab.isFromIfc) {
+            v3dBtnEl.style.display = 'inline-flex';
+        } else {
+            v3dBtnEl.style.display = 'none';
+            const v3dPanelEl = document.getElementById('visor3dPanel');
+            if (v3dPanelEl && v3dPanelEl.style.display !== 'none') {
+                const presBtn = document.getElementById('presupuestoBtn');
+                if (presBtn) presBtn.click();
+            }
+        }
+    }
+
     // Actualizar nombres en la interfaz
     const fileNameEl = document.getElementById('fileName');
     if (fileNameEl) fileNameEl.textContent = currentFileName;
@@ -662,6 +692,8 @@ function switchBudgetTab(tabId) {
         if (treePanel) treePanel.style.display = 'flex';
         if (detailsPanel) detailsPanel.style.display = 'flex';
         if (pricesPanel) pricesPanel.style.display = 'none';
+        const v3dPanel = document.getElementById('visor3dPanel');
+        if (v3dPanel) v3dPanel.style.display = 'none';
 
         const presupuestoBtn = document.getElementById('presupuestoBtn');
         if (presupuestoBtn) {
@@ -2515,6 +2547,27 @@ function createMeasurementTable(measurements, concept = null) {
 
     measurements.forEach((m, idx) => {
         const tr = document.createElement('tr');
+        if (m.label && m.label.includes('[ID:')) {
+            const idMatch = m.label.match(/\[ID:\s*([^\]]+)\]/);
+            if (idMatch && idMatch[1]) {
+                const targetGlobalId = idMatch[1].trim();
+                tr.style.cursor = 'pointer';
+                tr.title = 'Hacer clic para resaltar en el Visor 3D';
+                tr.addEventListener('click', (ev) => {
+                    if (ev.target.tagName === 'INPUT' || ev.target.tagName === 'BUTTON') return;
+                    if (typeof IFCViewer3D !== 'undefined') {
+                        IFCViewer3D.highlightElement(targetGlobalId);
+                        const vPanel = document.getElementById('visor3dPanel');
+                        if (vPanel && vPanel.style.display === 'none') {
+                            const v3dBtn = document.getElementById('visor3dBtn');
+                            if (v3dBtn && v3dBtn.style.display !== 'none') {
+                                v3dBtn.click();
+                            }
+                        }
+                    }
+                });
+            }
+        }
 
         const evalU = evaluateMeasurementExpression(m.units);
         const evalL = evaluateMeasurementExpression(m.l);
@@ -7581,6 +7634,8 @@ if (pricesBtn && pricesPanel) {
         // Ocultar Dashboard
         if (treePanel) treePanel.style.display = 'none';
         if (detailsPanel) detailsPanel.style.display = 'none';
+        const v3dPanelP = document.getElementById('visor3dPanel');
+        if (v3dPanelP) v3dPanelP.style.display = 'none';
         // Mostrar Precios
         pricesPanel.style.display = 'flex';
 
@@ -15620,5 +15675,112 @@ if (typeof document !== "undefined") {
         document.addEventListener("DOMContentLoaded", initIfcWizardEvents);
     } else {
         initIfcWizardEvents();
+    }
+}
+
+// =============================================================================
+// NAVEGACIÓN Y EVENTOS DEL VISOR 3D BIM
+// =============================================================================
+const visor3dBtn = document.getElementById('visor3dBtn');
+const visor3dPanel = document.getElementById('visor3dPanel');
+
+if (visor3dBtn && visor3dPanel) {
+    visor3dBtn.addEventListener('click', () => {
+        // Ocultar vistas de árbol, detalles y precios
+        if (treePanel) treePanel.style.display = 'none';
+        if (detailsPanel) detailsPanel.style.display = 'none';
+        if (pricesPanel) pricesPanel.style.display = 'none';
+
+        // Mostrar panel 3D
+        visor3dPanel.style.display = 'flex';
+
+        // Marcar botón activo
+        document.querySelectorAll('.control-container button').forEach(b => b.classList.remove('active'));
+        visor3dBtn.classList.add('active');
+
+        // Cargar modelo si no se ha cargado todavía
+        const currentTab = budgetTabs.find(t => t.id === activeTabId);
+        const bufferToLoad = (currentTab && currentTab.ifcBuffer) || currentIfcBuffer;
+        const dataToLoad = (currentTab && currentTab.ifcData) || currentIfcData;
+        const nameToLoad = (currentTab && (currentTab.ifcFileName || currentTab.fileName)) || currentFileName;
+
+        if (bufferToLoad && typeof IFCViewer3D !== 'undefined') {
+            if (!IFCViewer3D.ifcModel) {
+                IFCViewer3D.loadModel(bufferToLoad, dataToLoad, nameToLoad);
+            }
+        }
+
+        if (typeof IFCViewer3D !== 'undefined') {
+            setTimeout(() => IFCViewer3D.onResize(), 60);
+        }
+    });
+}
+
+function initVisor3dControls() {
+    const fitBtn = document.getElementById('v3dFitBtn');
+    if (fitBtn) fitBtn.addEventListener('click', () => {
+        if (typeof IFCViewer3D !== 'undefined') IFCViewer3D.fitToView();
+    });
+
+    const xrayBtn = document.getElementById('v3dXrayBtn');
+    if (xrayBtn) xrayBtn.addEventListener('click', () => {
+        if (typeof IFCViewer3D !== 'undefined') IFCViewer3D.toggleXRay();
+    });
+
+    const storeySelect = document.getElementById('v3dStoreySelect');
+    if (storeySelect) storeySelect.addEventListener('change', function () {
+        if (typeof IFCViewer3D !== 'undefined') IFCViewer3D.filterByStorey(this.value);
+    });
+
+    const splitBtn = document.getElementById('v3dSplitBtn');
+    if (splitBtn) splitBtn.addEventListener('click', () => {
+        if (typeof IFCViewer3D !== 'undefined') IFCViewer3D.toggleSplitView();
+    });
+
+    const fsBtn = document.getElementById('v3dFullscreenBtn');
+    if (fsBtn) fsBtn.addEventListener('click', () => {
+        const panel = document.getElementById('visor3dPanel');
+        if (!panel) return;
+        if (!document.fullscreenElement) {
+            panel.requestFullscreen().catch(err => console.warn(err));
+        } else {
+            document.exitFullscreen();
+        }
+    });
+
+    // Callback de selección 3D -> Presupuesto
+    if (typeof IFCViewer3D !== 'undefined') {
+        IFCViewer3D.onElementClickedCallback = (elemObj, id) => {
+            if (!elemObj) return;
+            const targetId = elemObj.globalId;
+            if (!targetId || !parsedData || !parsedData.concepts) return;
+
+            for (const code in parsedData.concepts) {
+                const c = parsedData.concepts[code];
+                if (c.measurements && c.measurements.length > 0) {
+                    const match = c.measurements.find(m => m.label && m.label.includes(targetId));
+                    if (match) {
+                        const label = document.getElementById('v3dSelectedLabel');
+                        if (label) label.textContent = `📌 ${c.code}: ${c.summary}`;
+                        
+                        // Si estamos en Split-View, seleccionar y enfocar la fila en el árbol
+                        const row = document.querySelector(`.tree-node-container[data-code="${c.code}"]`);
+                        if (row) {
+                            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            row.classList.add('selected');
+                        }
+                        break;
+                    }
+                }
+            }
+        };
+    }
+}
+
+if (typeof document !== "undefined") {
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initVisor3dControls);
+    } else {
+        initVisor3dControls();
     }
 }
