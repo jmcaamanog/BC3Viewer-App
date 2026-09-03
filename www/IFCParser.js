@@ -31,7 +31,13 @@
             'IFCRAILING': { category: 'Cerrajería y Barandillas', icon: '🛡️', defaultUnit: 'm', priority: 7 },
             'IFCSPACE': { category: 'Espacios y Zonas', icon: '📦', defaultUnit: 'm2', priority: 8 },
             'IFCPIPESEGMENT': { category: 'Instalaciones (Tuberías)', icon: '🚰', defaultUnit: 'm', priority: 9 },
-            'IFCDUCTSEGMENT': { category: 'Instalaciones (Conductos)', icon: '💨', defaultUnit: 'm', priority: 9 }
+            'IFCDUCTSEGMENT': { category: 'Instalaciones (Conductos)', icon: '💨', defaultUnit: 'm', priority: 9 },
+            'IFCFURNISHINGELEMENT': { category: 'Mobiliario y Equipamiento', icon: '🛋️', defaultUnit: 'ud', priority: 8 },
+            'IFCFURNITURE': { category: 'Mobiliario y Equipamiento', icon: '🛋️', defaultUnit: 'ud', priority: 8 },
+            'IFCFLOWTERMINAL': { category: 'Aparatos Sanitarios y Fontanería', icon: '🚿', defaultUnit: 'ud', priority: 8 },
+            'IFCPLATE': { category: 'Vidrios y Paneles', icon: '🪟', defaultUnit: 'm2', priority: 5 },
+            'IFCBUILDINGELEMENTPROXY': { category: 'Elementos Constructivos Varios', icon: '📦', defaultUnit: 'ud', priority: 9 },
+            'IFCSITE': { category: 'Parcela y Urbanización', icon: '🌳', defaultUnit: 'm2', priority: 0 }
         },
 
         /**

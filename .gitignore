@@ -17,5 +17,6 @@ ios/
 # NPM local config with tokens
 .npmrc
 NOTAS/
+scratch/
 
 

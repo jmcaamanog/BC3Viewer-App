@@ -17,6 +17,7 @@
         ifcLoader: null,
         ifcModel: null,
         highlightSubset: null,
+        categorySubsets: {},
         currentBuffer: null,
         currentIfcData: null,
         activeClippingPlane: null,
@@ -25,6 +26,161 @@
         globalIdToElementMap: {},
         selectedElement: null,
         onElementClickedCallback: null,
+        _categoriesMenuInitialized: false,
+
+        /**
+         * Paleta ConTech de Tonos Azules Arquitectónicos y Estructurales
+         * Todos los elementos constructivos adoptan tonalidades armónicas de la gama azul/cian.
+         */
+        CONTECH_BLUE_PALETTE: {
+            'Muros y Cerramientos': {
+                color: 0x2563eb,        // Azul Real ConTech (#2563eb)
+                name: 'Muros y Cerramientos',
+                icon: '🧱',
+                hex: '#2563eb'
+            },
+            'Forjados y Pavimentos': {
+                color: 0x1e3a8a,        // Azul Marino Profundo (#1e3a8a)
+                name: 'Forjados y Pavimentos',
+                icon: '📐',
+                hex: '#1e3a8a'
+            },
+            'Estructura (Pilares)': {
+                color: 0x0ea5e9,        // Azul Eléctrico (#0ea5e9)
+                name: 'Pilares',
+                icon: '🏛️',
+                hex: '#0ea5e9'
+            },
+            'Estructura (Vigas)': {
+                color: 0x3b82f6,        // Azul Cobalto (#3b82f6)
+                name: 'Vigas',
+                icon: '🏗️',
+                hex: '#3b82f6'
+            },
+            'Estructura Auxiliar': {
+                color: 0x60a5fa,        // Azul Acero (#60a5fa)
+                name: 'Estructura Auxiliar',
+                icon: '🔩',
+                hex: '#60a5fa'
+            },
+            'Carpintería Exterior (Ventanas)': {
+                color: 0x38bdf8,        // Cian Cristalino (#38bdf8)
+                name: 'Ventanas',
+                icon: '🪟',
+                transparent: true,
+                opacity: 0.42,
+                hex: '#38bdf8'
+            },
+            'Vidrios y Paneles': {
+                color: 0x7dd3fc,        // Cian Cielo (#7dd3fc)
+                name: 'Vidrios y Paneles',
+                icon: '🪟',
+                transparent: true,
+                opacity: 0.38,
+                hex: '#7dd3fc'
+            },
+            'Carpintería Interior (Puertas)': {
+                color: 0x0284c7,        // Azul Cerúleo (#0284c7)
+                name: 'Puertas',
+                icon: '🚪',
+                hex: '#0284c7'
+            },
+            'Cubiertas': {
+                color: 0x172554,        // Azul Noche Ultra (#172554)
+                name: 'Cubiertas',
+                icon: '🏠',
+                hex: '#172554'
+            },
+            'Escaleras': {
+                color: 0x1d4ed8,        // Azul Zafiro (#1d4ed8)
+                name: 'Escaleras',
+                icon: '🪜',
+                hex: '#1d4ed8'
+            },
+            'Tramos de Escalera': {
+                color: 0x1d4ed8,        // Azul Zafiro (#1d4ed8)
+                name: 'Tramos de Escalera',
+                icon: '🪜',
+                hex: '#1d4ed8'
+            },
+            'Cerrajería y Barandillas': {
+                color: 0x22d3ee,        // Cian Neón Metálico (#22d3ee)
+                name: 'Barandillas y Cerrajería',
+                icon: '🛡️',
+                hex: '#22d3ee'
+            },
+            'Mobiliario y Equipamiento': {
+                color: 0x475569,        // Azul Pizarra (#475569)
+                name: 'Mobiliario',
+                icon: '🛋️',
+                hex: '#475569'
+            },
+            'Aparatos Sanitarios y Fontanería': {
+                color: 0x06b6d4,        // Turquesa ConTech (#06b6d4)
+                name: 'Sanitarios y Fontanería',
+                icon: '🚿',
+                hex: '#06b6d4'
+            },
+            'Instalaciones (Tuberías)': {
+                color: 0x0891b2,        // Cian Petróleo (#0891b2)
+                name: 'Tuberías',
+                icon: '🚰',
+                hex: '#0891b2'
+            },
+            'Instalaciones (Conductos)': {
+                color: 0x0e7490,        // Azul Océano (#0e7490)
+                name: 'Conductos',
+                icon: '💨',
+                hex: '#0e7490'
+            },
+            'Cimentaciones': {
+                color: 0x0f172a,        // Azul Abisal (#0f172a)
+                name: 'Cimentaciones',
+                icon: '⚓',
+                hex: '#0f172a'
+            },
+            'Revestimientos y Techos': {
+                color: 0x334155,        // Azul Ceniza (#334155)
+                name: 'Revestimientos',
+                icon: '🎨',
+                hex: '#334155'
+            },
+            'Parcela y Urbanización': {
+                color: 0x155e75,        // Azul Verdoso (#155e75)
+                name: 'Parcela / Urbanización',
+                icon: '🌳',
+                hex: '#155e75'
+            },
+            'Elementos Constructivos Varios': {
+                color: 0x1e40af,        // Azul ConTech (#1e40af)
+                name: 'Elementos Varios',
+                icon: '📦',
+                hex: '#1e40af'
+            },
+            'default': {
+                color: 0x1e40af,        // Azul ConTech (#1e40af)
+                name: 'Otros Elementos',
+                icon: '📐',
+                hex: '#1e40af'
+            }
+        },
+
+        /**
+         * Obtiene la configuración de color de la paleta ConTech para una categoría
+         */
+        _getPaletteConfig: function (catName) {
+            if (!catName) return this.CONTECH_BLUE_PALETTE['default'];
+            if (this.CONTECH_BLUE_PALETTE[catName]) return this.CONTECH_BLUE_PALETTE[catName];
+
+            const lower = catName.toLowerCase();
+            for (const key in this.CONTECH_BLUE_PALETTE) {
+                if (key === 'default') continue;
+                if (lower.includes(key.toLowerCase()) || key.toLowerCase().includes(lower)) {
+                    return this.CONTECH_BLUE_PALETTE[key];
+                }
+            }
+            return this.CONTECH_BLUE_PALETTE['default'];
+        },
 
         /**
          * Inicializa la escena Three.js, cámara, renderer, luces y controles
@@ -104,9 +260,10 @@
                 this.ifcLoader.ifcManager.setWasmPath('./');
             }
 
-            // 8. Eventos de Raycasting y Tarjeta HUD
+            // 8. Eventos de Raycasting, Tarjeta HUD y Menú de Elementos
             this._setupRaycasting();
             this._setupHudEvents();
+            this._setupCategoriesMenuUI();
 
             // 9. Redimensionamiento y bucle de renderizado
             window.addEventListener('resize', () => this.onResize());
@@ -170,7 +327,7 @@
                 if (loadingText) loadingText.textContent = 'Procesando geometría 3D del modelo...';
             }
 
-            // Limpiar modelo anterior si existe
+            // Limpiar modelo y subsets anteriores si existen
             if (this.ifcModel) {
                 try {
                     this.scene.remove(this.ifcModel);
@@ -178,6 +335,7 @@
                 } catch (e) { }
                 this.ifcModel = null;
             }
+            this._clearCategorySubsets();
             this.resetHighlight();
             this.hideElementCard();
             this.applyClippingPlane(null);
@@ -219,10 +377,19 @@
                 const t0 = performance.now();
                 const model = await this.ifcLoader.parse(uint8);
                 const tElapsed = ((performance.now() - t0) / 1000).toFixed(2);
-                console.log(`IFCViewer3D: Modelo 3D generado con éxito en ${tElapsed}s.`);
+                console.log(`IFCViewer3D: Modelo 3D base generado con éxito en ${tElapsed}s.`);
 
                 this.ifcModel = model;
+                // El modelo base se mantiene en la escena pero con visible=false para que rendericen los subsets en tonos azules
+                this.ifcModel.visible = false;
                 this.scene.add(model);
+
+                // Construir los subsets por categoría con la paleta ConTech en tonos azules
+                if (loadingText) loadingText.textContent = 'Aplicando paleta ConTech azul y capas de elementos...';
+                await this._buildCategorySubsets(ifcData);
+
+                // Poblar y sincronizar el menú selector de elementos
+                this._populateCategoriesDropdown();
 
                 if (loadingBadge) loadingBadge.style.display = 'none';
 
@@ -239,10 +406,24 @@
          * Centra la cámara orbital para encuadrar todo el modelo
          */
         fitToView: function () {
-            if (!this.ifcModel || !this.camera || !this.controls) return;
+            if (!this.camera || !this.controls) return;
 
             const THREE = window.THREE;
-            const box = new THREE.Box3().setFromObject(this.ifcModel);
+            const box = new THREE.Box3();
+
+            // Calcular encuadre a partir de las mallas activas visibles
+            const activeMeshes = Object.values(this.categorySubsets)
+                .filter(sub => sub && sub.mesh && sub.mesh.visible)
+                .map(sub => sub.mesh);
+
+            if (activeMeshes.length > 0) {
+                activeMeshes.forEach(mesh => box.expandByObject(mesh));
+            } else if (this.ifcModel) {
+                box.setFromObject(this.ifcModel);
+            } else {
+                return;
+            }
+
             const center = box.getCenter(new THREE.Vector3());
             const size = box.getSize(new THREE.Vector3());
 
@@ -284,12 +465,15 @@
             const THREE = window.THREE;
             const planes = this.activeClippingPlane ? [this.activeClippingPlane] : [];
             const highlightMat = new THREE.MeshLambertMaterial({
-                color: 0x06b6d4, // Cian neón ConTech
+                color: 0x00f0ff,        // Cian neón eléctrico de alto contraste
+                emissive: 0x0284c7,     // Brillo radiante ConTech
+                emissiveIntensity: 0.65,
                 transparent: true,
-                opacity: 0.85,
+                opacity: 0.92,
                 depthTest: true,
                 clippingPlanes: planes,
-                clipShadows: true
+                clipShadows: true,
+                side: THREE.DoubleSide
             });
 
             try {
@@ -783,9 +967,8 @@
          * Aplica un plano de corte horizontal para eliminar plantas superiores
          */
         applyClippingPlane: function (cutHeight) {
-            if (!this.ifcModel) return;
-
             const THREE = window.THREE;
+            if (!this.renderer) return;
             this.renderer.localClippingEnabled = true;
 
             let planes = [];
@@ -798,15 +981,30 @@
             }
 
             const setMat = (m) => {
+                if (!m) return;
                 m.clippingPlanes = planes;
                 m.clipShadows = true;
                 m.needsUpdate = true;
             };
 
-            if (Array.isArray(this.ifcModel.material)) {
-                this.ifcModel.material.forEach(setMat);
-            } else if (this.ifcModel.material) {
-                setMat(this.ifcModel.material);
+            // Aplicar a cada subset por categoría en tonos azules
+            Object.values(this.categorySubsets).forEach(sub => {
+                if (sub && sub.mesh && sub.mesh.material) {
+                    if (Array.isArray(sub.mesh.material)) {
+                        sub.mesh.material.forEach(setMat);
+                    } else {
+                        setMat(sub.mesh.material);
+                    }
+                }
+            });
+
+            // Aplicar también al modelo base por seguridad
+            if (this.ifcModel && this.ifcModel.material) {
+                if (Array.isArray(this.ifcModel.material)) {
+                    this.ifcModel.material.forEach(setMat);
+                } else {
+                    setMat(this.ifcModel.material);
+                }
             }
 
             // Si hay un subset resaltado activo, aplicarle también el plano de corte
@@ -873,23 +1071,30 @@
          * Alterna el modo Rayos X (transparencia) para ver a través de los muros
          */
         toggleXRay: function () {
-            if (!this.ifcModel) return;
             this.isXRay = !this.isXRay;
 
-            const mat = this.ifcModel.material;
-            const updateMat = (m) => {
+            const updateMat = (m, defOpacity, defTransparent) => {
+                if (!m) return;
                 if (this.isXRay) {
                     m.transparent = true;
-                    m.opacity = 0.35;
+                    m.opacity = (defOpacity !== undefined ? defOpacity : 1.0) * 0.35;
                 } else {
-                    m.transparent = false;
-                    m.opacity = 1.0;
+                    m.transparent = Boolean(defTransparent);
+                    m.opacity = defOpacity !== undefined ? defOpacity : 1.0;
                 }
                 m.needsUpdate = true;
             };
 
-            if (Array.isArray(mat)) mat.forEach(updateMat);
-            else if (mat) updateMat(mat);
+            // Alternar transparencia en todos los subsets de categoría
+            Object.values(this.categorySubsets).forEach(sub => {
+                if (sub && sub.mesh && sub.mesh.material) {
+                    if (Array.isArray(sub.mesh.material)) {
+                        sub.mesh.material.forEach(m => updateMat(m, sub.defaultOpacity, sub.defaultTransparent));
+                    } else {
+                        updateMat(sub.mesh.material, sub.defaultOpacity, sub.defaultTransparent);
+                    }
+                }
+            });
 
             const btn = document.getElementById('v3dXrayBtn');
             if (btn) {
@@ -942,8 +1147,17 @@
 
                 raycaster.setFromCamera(mouse, this.camera);
 
-                // Intersectar EXCLUSIVAMENTE el modelo IFC (ignorar suelo grid y luces)
-                const intersects = raycaster.intersectObject(this.ifcModel, true);
+                // Intersectar los subsets de categorías visibles (ignorar suelo grid, luces y categorías ocultas)
+                const activeMeshes = Object.values(this.categorySubsets)
+                    .filter(sub => sub && sub.mesh && sub.mesh.visible)
+                    .map(sub => sub.mesh);
+
+                let intersects = [];
+                if (activeMeshes.length > 0) {
+                    intersects = raycaster.intersectObjects(activeMeshes, false);
+                } else if (this.ifcModel && this.ifcModel.visible) {
+                    intersects = raycaster.intersectObject(this.ifcModel, true);
+                }
 
                 // Si no hay intersección (clic en el fondo/espacio vacío): DESELECCIONAR
                 if (intersects.length === 0) {
@@ -1045,6 +1259,356 @@
                 try { return String.fromCharCode(parseInt(hex, 16)); } catch (e) { return match; }
             });
             return decoded.replace(/\\S\\(.)/g, '$1');
+        },
+
+        /**
+         * Construye los subsets por categoría aplicando la paleta ConTech en tonos azules
+         */
+        _buildCategorySubsets: async function (ifcData) {
+            this._clearCategorySubsets();
+
+            if (!this.ifcModel || !this.ifcLoader || !this.ifcLoader.ifcManager) return;
+
+            const THREE = window.THREE;
+            const modelID = this.ifcModel.modelID;
+            const planes = this.activeClippingPlane ? [this.activeClippingPlane] : [];
+
+            // 1. Agrupar elementos constructivos por categoría
+            const categoriesMap = {};
+            const allCategorizedIds = new Set();
+
+            if (ifcData && ifcData.elements && ifcData.elements.length > 0) {
+                ifcData.elements.forEach(elem => {
+                    const catName = elem.category || 'Elementos Constructivos Varios';
+                    if (!categoriesMap[catName]) {
+                        const palCfg = this._getPaletteConfig(catName);
+                        categoriesMap[catName] = {
+                            key: catName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase(),
+                            name: catName,
+                            icon: elem.icon || palCfg.icon,
+                            hex: palCfg.hex,
+                            cfg: palCfg,
+                            ids: []
+                        };
+                    }
+                    const eid = parseInt(elem.expressId || elem.id, 10);
+                    if (!isNaN(eid)) {
+                        categoriesMap[catName].ids.push(eid);
+                        allCategorizedIds.add(eid);
+                    }
+                });
+            }
+
+            // 2. Crear subset para cada categoría con su material azul específico
+            for (const catName in categoriesMap) {
+                const catInfo = categoriesMap[catName];
+                if (catInfo.ids.length === 0) continue;
+
+                const cfg = catInfo.cfg;
+                const mat = new THREE.MeshLambertMaterial({
+                    color: cfg.color,
+                    transparent: Boolean(cfg.transparent),
+                    opacity: cfg.opacity !== undefined ? cfg.opacity : 1.0,
+                    depthTest: true,
+                    clippingPlanes: planes,
+                    clipShadows: true,
+                    side: THREE.DoubleSide
+                });
+
+                try {
+                    const subset = this.ifcLoader.ifcManager.createSubset({
+                        modelID: modelID,
+                        ids: catInfo.ids,
+                        scene: this.scene,
+                        material: mat,
+                        removePrevious: true,
+                        customID: `cat_${catInfo.key}`
+                    });
+
+                    if (subset) {
+                        if (subset.parent !== this.scene) {
+                            this.scene.add(subset);
+                        }
+                        this.categorySubsets[catInfo.key] = {
+                            key: catInfo.key,
+                            name: catInfo.name,
+                            icon: catInfo.icon,
+                            hex: catInfo.hex,
+                            color: cfg.color,
+                            ids: catInfo.ids,
+                            mesh: subset,
+                            material: mat,
+                            defaultOpacity: cfg.opacity !== undefined ? cfg.opacity : 1.0,
+                            defaultTransparent: Boolean(cfg.transparent),
+                            visible: true,
+                            count: catInfo.ids.length
+                        };
+                    }
+                } catch (subErr) {
+                    console.warn(`IFCViewer3D: Error creando subset para categoría ${catName}:`, subErr);
+                }
+            }
+
+            // 3. Detectar elementos residuales que tengan geometría en el modelo pero no estén en ifcData.elements
+            try {
+                if (this.ifcLoader.ifcManager.subsets && this.ifcLoader.ifcManager.subsets.items) {
+                    if (!this.ifcLoader.ifcManager.subsets.items.map[modelID]) {
+                        this.ifcLoader.ifcManager.subsets.items.generateGeometryIndexMap(modelID);
+                    }
+                    const allGeomMap = this.ifcLoader.ifcManager.subsets.items.map[modelID]?.map;
+                    if (allGeomMap) {
+                        const leftoverIds = [];
+                        for (const idStr of allGeomMap.keys()) {
+                            const idNum = parseInt(idStr, 10);
+                            if (!isNaN(idNum) && !allCategorizedIds.has(idNum)) {
+                                leftoverIds.push(idNum);
+                            }
+                        }
+                        if (leftoverIds.length > 0) {
+                            const defCfg = this.CONTECH_BLUE_PALETTE['default'];
+                            const defMat = new THREE.MeshLambertMaterial({
+                                color: defCfg.color,
+                                transparent: false,
+                                opacity: 1.0,
+                                depthTest: true,
+                                clippingPlanes: planes,
+                                clipShadows: true,
+                                side: THREE.DoubleSide
+                            });
+                            const defSubset = this.ifcLoader.ifcManager.createSubset({
+                                modelID: modelID,
+                                ids: leftoverIds,
+                                scene: this.scene,
+                                material: defMat,
+                                removePrevious: true,
+                                customID: 'cat_leftover_constructive'
+                            });
+                            if (defSubset) {
+                                if (defSubset.parent !== this.scene) {
+                                    this.scene.add(defSubset);
+                                }
+                                this.categorySubsets['__otros__'] = {
+                                    key: '__otros__',
+                                    name: 'Otros Elementos',
+                                    icon: '📦',
+                                    hex: defCfg.hex,
+                                    color: defCfg.color,
+                                    ids: leftoverIds,
+                                    mesh: defSubset,
+                                    material: defMat,
+                                    defaultOpacity: 1.0,
+                                    defaultTransparent: false,
+                                    visible: true,
+                                    count: leftoverIds.length
+                                };
+                            }
+                        }
+                    }
+                }
+            } catch (resErr) {
+                console.warn("IFCViewer3D: Verificación de elementos residuales:", resErr);
+            }
+
+            // 4. Fallback de seguridad: si no se generó ningún subset, mostrar el modelo base en azul
+            if (Object.keys(this.categorySubsets).length === 0) {
+                console.warn("IFCViewer3D: No se generaron subsets por categoría. Activando modelo base con material azul arquitectónico.");
+                this.ifcModel.visible = true;
+                const fallbackMat = new THREE.MeshLambertMaterial({
+                    color: 0x2563eb,
+                    clippingPlanes: planes,
+                    side: THREE.DoubleSide
+                });
+                this.ifcModel.material = fallbackMat;
+            }
+        },
+
+        /**
+         * Limpia todos los subsets de categoría de la escena
+         */
+        _clearCategorySubsets: function () {
+            if (!this.categorySubsets) {
+                this.categorySubsets = {};
+                return;
+            }
+            Object.values(this.categorySubsets).forEach(sub => {
+                if (sub && sub.mesh) {
+                    try {
+                        if (this.scene) this.scene.remove(sub.mesh);
+                        if (sub.mesh.geometry) sub.mesh.geometry.dispose();
+                        if (sub.mesh.material) {
+                            if (Array.isArray(sub.mesh.material)) {
+                                sub.mesh.material.forEach(m => m.dispose());
+                            } else {
+                                sub.mesh.material.dispose();
+                            }
+                        }
+                    } catch (e) { }
+                }
+            });
+            this.categorySubsets = {};
+        },
+
+        /**
+         * Rellena el menú desplegable con las categorías de elementos presentes en el modelo
+         */
+        _populateCategoriesDropdown: function () {
+            const listContainer = document.getElementById('v3dCategoriesList');
+            if (!listContainer) return;
+
+            listContainer.innerHTML = '';
+            const cats = Object.values(this.categorySubsets);
+
+            if (cats.length === 0) {
+                listContainer.innerHTML = '<div style="text-align:center; padding:12px; color:#94a3b8; font-size:0.75rem;">Sin elementos identificados</div>';
+                return;
+            }
+
+            cats.forEach(cat => {
+                const row = document.createElement('label');
+                row.className = 'v3d-cat-item';
+                row.setAttribute('for', `v3dCatChk_${cat.key}`);
+
+                row.innerHTML = `
+                    <input type="checkbox" id="v3dCatChk_${cat.key}" class="v3d-cat-checkbox" ${cat.visible ? 'checked' : ''} />
+                    <span class="v3d-cat-swatch" style="background-color: ${cat.hex};"></span>
+                    <span class="v3d-cat-icon">${cat.icon}</span>
+                    <span class="v3d-cat-name" title="${cat.name}">${cat.name}</span>
+                    <span class="v3d-cat-count">${cat.count}</span>
+                `;
+
+                const chk = row.querySelector('.v3d-cat-checkbox');
+                if (chk) {
+                    chk.addEventListener('change', (e) => {
+                        e.stopPropagation();
+                        this.setCategoryVisibility(cat.key, chk.checked);
+                    });
+                }
+
+                listContainer.appendChild(row);
+            });
+
+            this._updateCategoriesBadge();
+        },
+
+        /**
+         * Configura los eventos del menú flotante de selección de categorías
+         */
+        _setupCategoriesMenuUI: function () {
+            if (this._categoriesMenuInitialized) return;
+            this._categoriesMenuInitialized = true;
+
+            const toggleBtn = document.getElementById('v3dCategoriesToggleBtn');
+            const menu = document.getElementById('v3dCategoriesMenu');
+            const selectAllBtn = document.getElementById('v3dCatSelectAll');
+            const deselectAllBtn = document.getElementById('v3dCatDeselectAll');
+
+            if (toggleBtn && menu) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isClosed = menu.style.display === 'none';
+                    if (isClosed) {
+                        menu.style.display = 'flex';
+                        toggleBtn.classList.add('menu-open');
+                    } else {
+                        menu.style.display = 'none';
+                        toggleBtn.classList.remove('menu-open');
+                    }
+                });
+
+                menu.addEventListener('pointerdown', (e) => e.stopPropagation());
+                menu.addEventListener('click', (e) => e.stopPropagation());
+
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('#v3dCategoriesMenu') && !e.target.closest('#v3dCategoriesToggleBtn')) {
+                        if (menu.style.display !== 'none') {
+                            menu.style.display = 'none';
+                            toggleBtn.classList.remove('menu-open');
+                        }
+                    }
+                });
+            }
+
+            if (selectAllBtn) {
+                selectAllBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.setAllCategoriesVisibility(true);
+                });
+            }
+
+            if (deselectAllBtn) {
+                deselectAllBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.setAllCategoriesVisibility(false);
+                });
+            }
+        },
+
+        /**
+         * Alterna la visibilidad de una categoría específica
+         */
+        setCategoryVisibility: function (catKey, visible) {
+            const cat = this.categorySubsets[catKey];
+            if (!cat || !cat.mesh) return;
+
+            const isVis = Boolean(visible);
+            cat.visible = isVis;
+            cat.mesh.visible = isVis;
+
+            const chk = document.getElementById(`v3dCatChk_${catKey}`);
+            if (chk && chk.checked !== isVis) {
+                chk.checked = isVis;
+            }
+
+            // Si el elemento seleccionado pertenece a esta categoría y se ocultó, deseleccionar
+            if (!isVis && this.selectedExpressId && cat.ids.includes(this.selectedExpressId)) {
+                this.resetHighlight();
+            }
+
+            this._updateCategoriesBadge();
+        },
+
+        /**
+         * Muestra u oculta todas las categorías simultáneamente
+         */
+        setAllCategoriesVisibility: function (visible) {
+            const isVis = Boolean(visible);
+            Object.keys(this.categorySubsets).forEach(k => {
+                const cat = this.categorySubsets[k];
+                if (cat && cat.mesh) {
+                    cat.visible = isVis;
+                    cat.mesh.visible = isVis;
+                }
+                const chk = document.getElementById(`v3dCatChk_${k}`);
+                if (chk) chk.checked = isVis;
+            });
+
+            if (!isVis) {
+                this.resetHighlight();
+            }
+
+            this._updateCategoriesBadge();
+        },
+
+        /**
+         * Actualiza el badge de conteo de categorías visibles (ej. 8/8) y el texto del botón
+         */
+        _updateCategoriesBadge: function () {
+            const badge = document.getElementById('v3dCatCounterBadge');
+            const cats = Object.values(this.categorySubsets);
+            if (!badge || cats.length === 0) return;
+
+            const visibleCount = cats.filter(c => c.visible).length;
+            const totalCount = cats.length;
+            badge.textContent = `${visibleCount}/${totalCount}`;
+
+            const labelBtn = document.getElementById('v3dCategoriesBtnLabel');
+            if (labelBtn) {
+                if (visibleCount === totalCount) {
+                    labelBtn.textContent = 'Elementos';
+                } else {
+                    labelBtn.textContent = `Elementos (${visibleCount}/${totalCount})`;
+                }
+            }
         }
     };
 

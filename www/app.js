@@ -15745,6 +15745,10 @@ function initVisor3dControls() {
         }
     });
 
+    if (typeof IFCViewer3D !== 'undefined' && typeof IFCViewer3D._setupCategoriesMenuUI === 'function') {
+        IFCViewer3D._setupCategoriesMenuUI();
+    }
+
     // Callback de selección 3D -> Presupuesto
     if (typeof IFCViewer3D !== 'undefined') {
         IFCViewer3D.onElementClickedCallback = (elemObj, id) => {

@@ -675,6 +675,30 @@
                                 <option value="all">🏢 Edificio Completo (Todas las Plantas)</option>
                             </select>
                         </div>
+
+                        <!-- Selector de Elementos y Capas del Edificio (Paredes, Puertas, Ventanas, Suelos, Estructura...) -->
+                        <div class="v3d-dropdown-container" style="position: relative;">
+                            <button type="button" id="v3dCategoriesToggleBtn" class="v3d-tool-btn" title="Activar o desactivar elementos del edificio (Paredes, Suelos, Puertas, Ventanas...)">
+                                <span>🧱</span> <span id="v3dCategoriesBtnLabel">Elementos</span> <span class="v3d-caret">▾</span>
+                            </button>
+
+                            <!-- Menú flotante de selección de categorías -->
+                            <div id="v3dCategoriesMenu" class="v3d-categories-menu" style="display: none;">
+                                <div class="v3d-cat-header">
+                                    <div class="v3d-cat-title-row">
+                                        <span class="v3d-cat-title">🏗️ Elementos Visibles</span>
+                                        <span id="v3dCatCounterBadge" class="v3d-cat-counter">0/0</span>
+                                    </div>
+                                    <div class="v3d-cat-actions">
+                                        <button type="button" id="v3dCatSelectAll" class="v3d-cat-action-btn">Mostrar Todos</button>
+                                        <button type="button" id="v3dCatDeselectAll" class="v3d-cat-action-btn">Ocultar Todos</button>
+                                    </div>
+                                </div>
+                                <div id="v3dCategoriesList" class="v3d-categories-list">
+                                    <!-- Inyectado dinámicamente con checkboxes con conteo de elementos -->
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="visor3d-toolbar-right">
