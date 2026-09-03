@@ -692,17 +692,16 @@
                         <span>Cargando geometría 3D del modelo...</span>
                     </div>
 
-                    <!-- Badge de Autor ConTech Abajo a la Izquierda -->
-                    <a href="https://jmcaamanog.pages.dev/" target="_blank" rel="noopener" class="v3d-author-badge" id="v3dAuthorBadge" title="Desarrollado por Jose Manuel Caamaño González | Arquitecto Técnico & BIM Manager">
-                        <img src="img/jmcaamanog.png" class="v3d-author-avatar" alt="jmcaamanog" />
-                        <div class="v3d-author-info">
-                            <span class="v3d-author-name">Jose Manuel Caamaño</span>
-                            <span class="v3d-author-role">BIM Manager & ConTech ↗</span>
-                        </div>
+                    <!-- Avatar Oficial de Autor con Brillo Perimetral ConTech (Solo Imagen PNG) -->
+                    <a href="https://jmcaamanog.pages.dev/" target="_blank" rel="noopener" class="v3d-author-badge" id="v3dAuthorBadge" title="Jose Manuel Caamaño González | Arquitecto Técnico & BIM Manager">
+                        <img src="img/jmcaamanog.png" class="v3d-author-avatar" alt="Jose Manuel Caamaño González" />
                     </a>
 
-                    <!-- Panel Lateral Deslizante de Propiedades y Atributos BIM (Slide-over a la derecha) -->
+                    <!-- Panel Lateral Deslizante de Propiedades y Atributos BIM (Slide-over a la derecha con ancho redimensionable) -->
                     <aside id="v3dElementSidebar" class="v3d-element-sidebar" style="display:none;">
+                        <!-- Tirador para redimensionar el ancho del panel arrastrando -->
+                        <div id="v3dSidebarResizer" class="v3d-sidebar-resizer" title="Arrastra para redimensionar el ancho del panel lateral"></div>
+
                         <div class="v3d-sidebar-header">
                             <div class="v3d-sidebar-title-group">
                                 <span class="v3d-sidebar-icon" id="v3dCardIcon">🧱</span>
@@ -714,65 +713,103 @@
                             <button type="button" id="v3dCardClose" class="v3d-sidebar-close" title="Cerrar panel y deseleccionar">✕</button>
                         </div>
 
-                        <!-- Acceso Directo a Presupuesto FIEBDC-3 -->
-                        <div class="v3d-budget-callout" id="v3dBudgetCallout">
-                            <div class="v3d-budget-callout-header">
-                                <span class="v3d-budget-callout-tag">🌳 Presupuesto FIEBDC-3</span>
-                                <span class="v3d-budget-price" id="v3dBudgetPrice">- €</span>
-                            </div>
-                            <div class="v3d-budget-concept-title" id="v3dCardBudget">Buscando partida vinculada...</div>
-                            <button type="button" id="v3dCardGoToBudget" class="v3d-btn-budget-action">
-                                <span>🌳</span> <span>Ver en Árbol de Presupuesto</span> <span>➔</span>
-                            </button>
-                        </div>
-
                         <!-- Buscador de propiedades rápido -->
                         <div class="v3d-props-filter-box">
                             <input type="text" id="v3dPropsSearch" placeholder="🔍 Filtrar propiedades o valores..." autocomplete="off">
                         </div>
 
+                        <!-- Barra de utilidades para desplegar/replegar todos los bloques -->
+                        <div class="v3d-sections-toolbar">
+                            <span class="v3d-sections-toolbar-label">Bloques de datos:</span>
+                            <div class="v3d-sections-toolbar-btns">
+                                <button type="button" id="v3dExpandAllBtn" class="v3d-btn-toggle-all" title="Desplegar todos los bloques">▾ Desplegar todo</button>
+                                <button type="button" id="v3dCollapseAllBtn" class="v3d-btn-toggle-all" title="Replegar todos los bloques">▸ Replegar todo</button>
+                            </div>
+                        </div>
+
                         <!-- Contenedor scrollable con barra vertical -->
                         <div class="v3d-sidebar-body" id="v3dSidebarBody">
-                            <!-- Tabla de Identificación y Ubicación -->
-                            <div class="v3d-props-section">
-                                <div class="v3d-props-section-header">
-                                    <span>📍</span> <span>Identificación y Ubicación</span>
+                            <!-- Bloque 1: Acceso Directo a Presupuesto FIEBDC-3 -->
+                            <div class="v3d-props-section is-collapsed" id="v3dSectionBudget">
+                                <div class="v3d-props-section-header" data-toggle="v3dSectionBudget">
+                                    <div class="v3d-section-header-left">
+                                        <span class="v3d-collapse-arrow">▶</span>
+                                        <span class="v3d-section-icon">🌳</span>
+                                        <span class="v3d-section-title">Presupuesto FIEBDC-3</span>
+                                    </div>
+                                    <span class="v3d-sidebar-badge budget-badge" id="v3dBudgetPrice">- €</span>
                                 </div>
-                                <table class="v3d-props-table" id="v3dTableId">
-                                    <tbody>
-                                        <tr><td class="prop-key">Nombre</td><td class="prop-val" id="propValName">-</td></tr>
-                                        <tr><td class="prop-key">Tipo IFC</td><td class="prop-val mono" id="propValIfcType">-</td></tr>
-                                        <tr><td class="prop-key">Familia / Tipo</td><td class="prop-val" id="propValType">-</td></tr>
-                                        <tr><td class="prop-key">Nivel / Planta</td><td class="prop-val" id="propValStorey">-</td></tr>
-                                        <tr><td class="prop-key">GlobalId (GUID)</td><td class="prop-val mono copyable" id="v3dCardId" title="Clic para copiar">-</td></tr>
-                                        <tr><td class="prop-key">ID Express (STEP)</td><td class="prop-val mono" id="propValExpressId">-</td></tr>
-                                        <tr><td class="prop-key">Tag / Revit ID</td><td class="prop-val mono" id="propValTag">-</td></tr>
-                                    </tbody>
-                                </table>
+                                <div class="v3d-props-section-body">
+                                    <div class="v3d-budget-callout-inner" id="v3dBudgetCallout">
+                                        <div class="v3d-budget-concept-title" id="v3dCardBudget">Buscando partida vinculada...</div>
+                                        <button type="button" id="v3dCardGoToBudget" class="v3d-btn-budget-action">
+                                            <span>🌳</span> <span>Ver en Árbol de Presupuesto</span> <span>➔</span>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
-                            <!-- Tabla de Mediciones y Dimensiones -->
-                            <div class="v3d-props-section">
-                                <div class="v3d-props-section-header">
-                                    <span>📐</span> <span>Mediciones y Dimensiones</span>
+                            <!-- Bloque 2: Tabla de Identificación y Ubicación -->
+                            <div class="v3d-props-section is-collapsed" id="v3dSectionIdentity">
+                                <div class="v3d-props-section-header" data-toggle="v3dSectionIdentity">
+                                    <div class="v3d-section-header-left">
+                                        <span class="v3d-collapse-arrow">▶</span>
+                                        <span class="v3d-section-icon">📍</span>
+                                        <span class="v3d-section-title">Identificación y Ubicación</span>
+                                    </div>
+                                    <span class="v3d-sidebar-badge" id="v3dBadgeIfcType">IFC</span>
                                 </div>
-                                <table class="v3d-props-table" id="v3dTableQty">
-                                    <tbody id="v3dTableQtyBody">
-                                        <tr><td class="prop-key">Medición Principal</td><td class="prop-val highlight" id="v3dCardQty">-</td></tr>
-                                    </tbody>
-                                </table>
+                                <div class="v3d-props-section-body">
+                                    <table class="v3d-props-table" id="v3dTableId">
+                                        <tbody>
+                                            <tr><td class="prop-key">Nombre</td><td class="prop-val" id="propValName">-</td></tr>
+                                            <tr><td class="prop-key">Tipo IFC</td><td class="prop-val mono" id="propValIfcType">-</td></tr>
+                                            <tr><td class="prop-key">Familia / Tipo</td><td class="prop-val" id="propValType">-</td></tr>
+                                            <tr><td class="prop-key">Nivel / Planta</td><td class="prop-val" id="propValStorey">-</td></tr>
+                                            <tr><td class="prop-key">GlobalId (GUID)</td><td class="prop-val mono copyable" id="v3dCardId" title="Clic para copiar">-</td></tr>
+                                            <tr><td class="prop-key">ID Express (STEP)</td><td class="prop-val mono" id="propValExpressId">-</td></tr>
+                                            <tr><td class="prop-key">Tag / Revit ID</td><td class="prop-val mono" id="propValTag">-</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
 
-                            <!-- Tabla de Propiedades Extendidas / Psets -->
-                            <div class="v3d-props-section" id="v3dPsetsSection">
-                                <div class="v3d-props-section-header">
-                                    <span>⚙️</span> <span>Propiedades y Parámetros BIM</span>
+                            <!-- Bloque 3: Tabla de Mediciones y Dimensiones -->
+                            <div class="v3d-props-section is-collapsed" id="v3dSectionQuantities">
+                                <div class="v3d-props-section-header" data-toggle="v3dSectionQuantities">
+                                    <div class="v3d-section-header-left">
+                                        <span class="v3d-collapse-arrow">▶</span>
+                                        <span class="v3d-section-icon">📐</span>
+                                        <span class="v3d-section-title">Mediciones y Dimensiones</span>
+                                    </div>
+                                    <span class="v3d-sidebar-badge highlight" id="v3dBadgeQty">-</span>
                                 </div>
-                                <table class="v3d-props-table" id="v3dTablePsets">
-                                    <tbody id="v3dTablePsetsBody">
-                                        <!-- Inyectado dinámicamente -->
-                                    </tbody>
-                                </table>
+                                <div class="v3d-props-section-body">
+                                    <table class="v3d-props-table" id="v3dTableQty">
+                                        <tbody id="v3dTableQtyBody">
+                                            <tr><td class="prop-key">Medición Principal</td><td class="prop-val highlight" id="v3dCardQty">-</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Bloque 4: Tabla de Propiedades Extendidas / Psets -->
+                            <div class="v3d-props-section is-collapsed" id="v3dPsetsSection">
+                                <div class="v3d-props-section-header" data-toggle="v3dPsetsSection">
+                                    <div class="v3d-section-header-left">
+                                        <span class="v3d-collapse-arrow">▶</span>
+                                        <span class="v3d-section-icon">⚙️</span>
+                                        <span class="v3d-section-title">Propiedades y Parámetros BIM</span>
+                                    </div>
+                                    <span class="v3d-sidebar-badge" id="v3dBadgePsetsCount">0</span>
+                                </div>
+                                <div class="v3d-props-section-body">
+                                    <table class="v3d-props-table" id="v3dTablePsets">
+                                        <tbody id="v3dTablePsetsBody">
+                                            <!-- Inyectado dinámicamente -->
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
 

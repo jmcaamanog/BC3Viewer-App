@@ -407,6 +407,17 @@
                 else iconEl.textContent = '📐';
             }
 
+            // Limpiar filtro de búsqueda anterior
+            const searchInput = document.getElementById('v3dPropsSearch');
+            if (searchInput) {
+                searchInput.value = '';
+                const allRows = document.querySelectorAll('.v3d-props-table tbody tr');
+                allRows.forEach(row => { row.style.display = ''; });
+            }
+
+            // Cada bloque de datos empieza replegado como solicita el usuario
+            document.querySelectorAll('.v3d-props-section').forEach(sec => sec.classList.add('is-collapsed'));
+
             // 1. Tabla de Identificación y Ubicación
             const pName = document.getElementById('propValName');
             const pIfcType = document.getElementById('propValIfcType');
@@ -415,20 +426,26 @@
             const pId = document.getElementById('v3dCardId');
             const pExp = document.getElementById('propValExpressId');
             const pTag = document.getElementById('propValTag');
+            const badgeIfcType = document.getElementById('v3dBadgeIfcType');
 
+            const ifcTypeStr = elemObj ? (elemObj.ifcType || 'IFC') : 'IFC';
             if (pName) pName.textContent = name;
-            if (pIfcType) pIfcType.textContent = elemObj ? (elemObj.ifcType || 'IFC') : 'IFC';
+            if (pIfcType) pIfcType.textContent = ifcTypeStr;
             if (pType) pType.textContent = elemObj ? (elemObj.typeName || elemObj.category || '-') : '-';
             if (pStorey) pStorey.textContent = storey;
             if (pId) pId.textContent = globalId;
             if (pExp) pExp.textContent = '#' + expressId;
             if (pTag) pTag.textContent = (elemObj && elemObj.tag) ? elemObj.tag : '-';
+            if (badgeIfcType) badgeIfcType.textContent = ifcTypeStr;
 
             // 2. Tabla de Mediciones y Dimensiones
             const qtyBody = document.getElementById('v3dTableQtyBody');
+            const badgeQty = document.getElementById('v3dBadgeQty');
+            const mainQtyStr = (elemObj && elemObj.quantity) ? `${elemObj.quantity} ${elemObj.unit || ''}` : '-';
+            if (badgeQty) badgeQty.textContent = mainQtyStr;
+
             if (qtyBody) {
                 let rowsHtml = '';
-                const mainQtyStr = (elemObj && elemObj.quantity) ? `${elemObj.quantity} ${elemObj.unit || ''}` : '-';
                 rowsHtml += `<tr><td class="prop-key">Medición Principal</td><td class="prop-val highlight">${mainQtyStr}</td></tr>`;
 
                 if (elemObj && elemObj.allQuantities) {
@@ -484,7 +501,8 @@
 
             if (elemObj && elemObj.budgetConcept) {
                 const bc = elemObj.budgetConcept;
-                if (budgetPrice) budgetPrice.textContent = `${parseFloat(bc.price || 0).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`;
+                const formattedPrice = `${parseFloat(bc.price || 0).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`;
+                if (budgetPrice) budgetPrice.textContent = formattedPrice;
                 if (budgetTitle) budgetTitle.textContent = `${bc.code}: ${bc.summary}`;
             } else if (elemObj && elemObj.category) {
                 if (budgetPrice) budgetPrice.textContent = '- €';
@@ -497,6 +515,8 @@
             // 4. Consulta Asíncrona de Parámetros y Property Sets BIM
             const psetsBody = document.getElementById('v3dTablePsetsBody');
             const psetsSec = document.getElementById('v3dPsetsSection');
+            const badgePsets = document.getElementById('v3dBadgePsetsCount');
+
             if (psetsBody && psetsSec) {
                 psetsBody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:#94a3b8; padding:8px;">Consultando parámetros BIM...</td></tr>';
                 psetsSec.style.display = 'block';
@@ -507,10 +527,12 @@
                             const psets = await this.ifcLoader.ifcManager.getPropertySets(this.ifcModel.modelID, expressId, true);
                             if (psets && psets.length > 0) {
                                 let psetRows = '';
+                                let propCount = 0;
                                 psets.forEach(ps => {
                                     const psName = ps.Name ? (ps.Name.value || ps.Name) : 'Propiedades';
                                     if (ps.HasProperties && Array.isArray(ps.HasProperties)) {
                                         ps.HasProperties.forEach(prop => {
+                                            propCount++;
                                             const propKey = prop.Name ? (prop.Name.value || prop.Name) : 'Propiedad';
                                             let propVal = '-';
                                             if (prop.NominalValue) {
@@ -521,8 +543,10 @@
                                     }
                                 });
                                 psetsBody.innerHTML = psetRows || '<tr><td colspan="2" style="text-align:center; color:#94a3b8; padding:8px;">Sin propiedades adicionales</td></tr>';
+                                if (badgePsets) badgePsets.textContent = `${propCount} params`;
                             } else {
                                 psetsBody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:#94a3b8; padding:8px;">Sin propiedades adicionales</td></tr>';
+                                if (badgePsets) badgePsets.textContent = '0';
                             }
                         } else {
                             psetsSec.style.display = 'none';
@@ -550,6 +574,94 @@
          * Configura eventos del panel lateral HUD y acciones de integración
          */
         _setupHudEvents: function () {
+            const sidebar = document.getElementById('v3dElementSidebar');
+            if (sidebar) {
+                sidebar.addEventListener('pointerdown', (e) => {
+                    if (!e.target.closest('#v3dSidebarResizer')) {
+                        e.stopPropagation();
+                    }
+                });
+            }
+
+            // Tirador para redimensionar el ancho del panel lateral arrastrando
+            const resizer = document.getElementById('v3dSidebarResizer');
+            if (resizer && sidebar) {
+                let isResizing = false;
+                let startX = 0;
+                let startWidth = 0;
+
+                resizer.onpointerdown = (e) => {
+                    isResizing = true;
+                    startX = e.clientX;
+                    startWidth = sidebar.getBoundingClientRect().width;
+                    document.body.style.cursor = 'col-resize';
+                    document.body.style.userSelect = 'none';
+                    resizer.classList.add('resizing');
+                    resizer.setPointerCapture(e.pointerId);
+                    e.preventDefault();
+                };
+
+                resizer.onpointermove = (e) => {
+                    if (!isResizing) return;
+                    const delta = startX - e.clientX;
+                    const minW = 320;
+                    const maxW = Math.min(window.innerWidth * 0.92, 920);
+                    const newW = Math.max(minW, Math.min(maxW, startWidth + delta));
+                    sidebar.style.width = `${newW}px`;
+                };
+
+                const stopResizing = (e) => {
+                    if (isResizing) {
+                        isResizing = false;
+                        document.body.style.cursor = '';
+                        document.body.style.userSelect = '';
+                        resizer.classList.remove('resizing');
+                        try { resizer.releasePointerCapture(e.pointerId); } catch (err) { }
+                        const finalW = parseInt(sidebar.style.width, 10);
+                        if (!isNaN(finalW)) {
+                            localStorage.setItem('v3d_sidebar_width', finalW);
+                        }
+                    }
+                };
+
+                resizer.onpointerup = stopResizing;
+                resizer.onpointercancel = stopResizing;
+
+                // Restaurar ancho guardado en localStorage
+                const savedWidth = localStorage.getItem('v3d_sidebar_width');
+                if (savedWidth) {
+                    const sw = parseInt(savedWidth, 10);
+                    if (!isNaN(sw) && sw >= 320 && sw <= window.innerWidth * 0.92) {
+                        sidebar.style.width = `${sw}px`;
+                    }
+                }
+            }
+
+            // Alternar colapsado/desplegado de cada bloque al hacer clic en su cabecera
+            document.querySelectorAll('.v3d-props-section-header').forEach(header => {
+                header.onclick = function () {
+                    const section = this.closest('.v3d-props-section');
+                    if (section) {
+                        section.classList.toggle('is-collapsed');
+                    }
+                };
+            });
+
+            // Botones de desplegar y replegar todo
+            const expandAllBtn = document.getElementById('v3dExpandAllBtn');
+            if (expandAllBtn) {
+                expandAllBtn.onclick = () => {
+                    document.querySelectorAll('.v3d-props-section').forEach(sec => sec.classList.remove('is-collapsed'));
+                };
+            }
+
+            const collapseAllBtn = document.getElementById('v3dCollapseAllBtn');
+            if (collapseAllBtn) {
+                collapseAllBtn.onclick = () => {
+                    document.querySelectorAll('.v3d-props-section').forEach(sec => sec.classList.add('is-collapsed'));
+                };
+            }
+
             // Cerrar y deseleccionar
             const closeBtn = document.getElementById('v3dCardClose');
             if (closeBtn) {
@@ -596,6 +708,15 @@
                             row.style.display = text.includes(q) ? '' : 'none';
                         }
                     });
+                    // Si el usuario está buscando, desplegar automáticamente las secciones con resultados
+                    if (q) {
+                        document.querySelectorAll('.v3d-props-section').forEach(sec => {
+                            const visibleRows = sec.querySelectorAll('.v3d-props-table tbody tr:not([style*="display: none"])');
+                            if (visibleRows.length > 0) {
+                                sec.classList.remove('is-collapsed');
+                            }
+                        });
+                    }
                 };
             }
 

@@ -7625,68 +7625,46 @@ body.dark-theme .partida-action-card,
     font-size: 0.88rem;
     font-weight: 500;
 }
-
 /* =============================================================================
-/* =============================================================================
-   BADGE DE AUTOR CONTECH (ABAJO A LA IZQUIERDA EN VISOR 3D)
+   AVATAR DE AUTOR CON BRILLO PERIMETRAL (SOLO IMAGEN PNG)
    ============================================================================= */
 .v3d-author-badge {
     position: absolute;
-    bottom: 18px;
-    left: 18px;
-    z-index: 25;
-    display: flex;
+    bottom: 20px;
+    left: 20px;
+    z-index: 30;
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
-    background: rgba(15, 23, 42, 0.82);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(56, 189, 248, 0.35);
-    border-radius: 30px;
-    padding: 6px 14px 6px 8px;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
     text-decoration: none;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     cursor: pointer;
+    outline: none;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .v3d-author-badge:hover {
-    border-color: #38bdf8;
-    background: rgba(15, 23, 42, 0.95);
-    transform: translateY(-2px);
-    box-shadow: 0 12px 30px rgba(56, 189, 248, 0.35);
+    transform: scale(1.12);
 }
 
 .v3d-author-avatar {
-    width: 34px;
-    height: 34px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
-    object-fit: contain;
-    border: 1.5px solid #38bdf8;
-    box-shadow: 0 0 10px rgba(56, 189, 248, 0.45);
-    flex-shrink: 0;
+    object-fit: cover;
+    border: 2px solid #38bdf8;
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.75), 0 0 32px rgba(14, 165, 233, 0.45);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: block;
 }
 
-.v3d-author-info {
-    display: flex;
-    flex-direction: column;
-    text-align: left;
-    line-height: 1.25;
-}
-
-.v3d-author-name {
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: #f8fafc;
-    letter-spacing: 0.2px;
-    white-space: nowrap;
-}
-
-.v3d-author-role {
-    font-size: 0.68rem;
-    font-weight: 500;
-    color: #38bdf8;
-    white-space: nowrap;
+.v3d-author-badge:hover .v3d-author-avatar {
+    border-color: #67e8f9;
+    box-shadow: 0 0 24px rgba(56, 189, 248, 0.95), 0 0 48px rgba(56, 189, 248, 0.65);
 }
 
 /* =============================================================================
@@ -7697,16 +7675,20 @@ body.dark-theme .partida-action-card,
     top: 0;
     right: 0;
     bottom: 0;
-    width: 410px;
-    max-width: calc(100vw - 20px);
+    height: 100%;
+    width: 440px;
+    min-width: 320px;
+    max-width: min(920px, 92vw);
     z-index: 35;
-    background: rgba(15, 23, 42, 0.95);
+    background: rgba(15, 23, 42, 0.96);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-left: 1px solid rgba(56, 189, 248, 0.35);
     box-shadow: -14px 0 40px rgba(0, 0, 0, 0.75);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    box-sizing: border-box;
     animation: v3dSidebarSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -7719,6 +7701,25 @@ body.dark-theme .partida-action-card,
         transform: translateX(0);
         opacity: 1;
     }
+}
+
+/* Tirador lateral para redimensionar el ancho del panel */
+.v3d-sidebar-resizer {
+    position: absolute;
+    top: 0;
+    left: -4px;
+    bottom: 0;
+    width: 8px;
+    cursor: col-resize;
+    z-index: 40;
+    background: transparent;
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.v3d-sidebar-resizer:hover,
+.v3d-sidebar-resizer.resizing {
+    background: rgba(56, 189, 248, 0.6);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
 }
 
 .v3d-sidebar-header {
@@ -7753,12 +7754,13 @@ body.dark-theme .partida-action-card,
 
 .v3d-sidebar-title {
     margin: 0;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     font-weight: 700;
     color: #f8fafc;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
 }
 
 .v3d-sidebar-badge {
@@ -7766,10 +7768,24 @@ body.dark-theme .partida-action-card,
     font-weight: 600;
     color: #38bdf8;
     background: rgba(56, 189, 248, 0.12);
-    padding: 1px 8px;
+    padding: 2px 8px;
     border-radius: 12px;
     align-self: flex-start;
     border: 1px solid rgba(56, 189, 248, 0.25);
+    white-space: nowrap;
+}
+
+.v3d-sidebar-badge.budget-badge {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.3);
+    font-family: monospace;
+}
+
+.v3d-sidebar-badge.highlight {
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.3);
+    background: rgba(16, 185, 129, 0.1);
 }
 
 .v3d-sidebar-close {
@@ -7789,73 +7805,9 @@ body.dark-theme .partida-action-card,
     background: rgba(244, 63, 94, 0.15);
 }
 
-/* Callout de Presupuesto */
-.v3d-budget-callout {
-    margin: 12px 16px 0 16px;
-    padding: 12px 14px;
-    background: linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(30, 58, 138, 0.25));
-    border: 1px solid rgba(6, 182, 212, 0.35);
-    border-radius: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex-shrink: 0;
-}
-
-.v3d-budget-callout-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.v3d-budget-callout-tag {
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #38bdf8;
-}
-
-.v3d-budget-price {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #10b981;
-    font-family: monospace;
-}
-
-.v3d-budget-concept-title {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #f1f5f9;
-    line-height: 1.35;
-    word-break: break-word;
-}
-
-.v3d-btn-budget-action {
-    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-    border: 1px solid rgba(56, 189, 248, 0.4);
-    color: #ffffff;
-    font-weight: 600;
-    font-size: 0.78rem;
-    padding: 7px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    transition: all 0.2s ease;
-    margin-top: 2px;
-}
-
-.v3d-btn-budget-action:hover {
-    background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
-    box-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
-    transform: translateY(-1px);
-}
-
-/* Buscador de propiedades */
+/* Buscador de propiedades rápido */
 .v3d-props-filter-box {
-    padding: 10px 16px 4px 16px;
+    padding: 10px 16px 6px 16px;
     flex-shrink: 0;
 }
 
@@ -7877,63 +7829,214 @@ body.dark-theme .partida-action-card,
     box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
 }
 
-/* Cuerpo Scrollable con Tablas */
-.v3d-sidebar-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px 16px 16px 16px;
+/* Barra de utilidades para desplegar/replegar todos los bloques */
+.v3d-sections-toolbar {
     display: flex;
-    flex-direction: column;
-    gap: 14px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 16px 8px 16px;
+    flex-shrink: 0;
 }
 
-/* Barra de desplazamiento ConTech */
-.v3d-sidebar-body::-webkit-scrollbar {
-    width: 6px;
-}
-
-.v3d-sidebar-body::-webkit-scrollbar-track {
-    background: rgba(15, 23, 42, 0.5);
-}
-
-.v3d-sidebar-body::-webkit-scrollbar-thumb {
-    background: rgba(56, 189, 248, 0.35);
-    border-radius: 4px;
-}
-
-.v3d-sidebar-body::-webkit-scrollbar-thumb:hover {
-    background: #38bdf8;
-}
-
-.v3d-props-section {
-    background: rgba(30, 41, 59, 0.45);
-    border: 1px solid rgba(148, 163, 184, 0.12);
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.v3d-props-section-header {
-    background: rgba(30, 41, 59, 0.7);
-    padding: 7px 12px;
-    font-size: 0.74rem;
-    font-weight: 700;
+.v3d-sections-toolbar-label {
+    font-size: 0.7rem;
+    font-weight: 600;
     color: #94a3b8;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+.v3d-sections-toolbar-btns {
     display: flex;
-    align-items: center;
     gap: 6px;
+}
+
+.v3d-btn-toggle-all {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    color: #38bdf8;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.v3d-btn-toggle-all:hover {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: #38bdf8;
+    color: #ffffff;
+}
+
+/* Cuerpo Scrollable con Tablas y Slicer Derecho Ultra-Visible */
+.v3d-sidebar-body {
+    flex: 1 1 0px;
+    min-height: 0;
+    overflow-y: scroll !important;
+    overflow-x: hidden;
+    padding: 8px 10px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: #38bdf8 rgba(15, 23, 42, 0.85);
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+}
+
+/* Slicer / Barra de desplazamiento ConTech Ultra-Visible */
+.v3d-sidebar-body::-webkit-scrollbar {
+    width: 10px !important;
+    display: block !important;
+}
+
+.v3d-sidebar-body::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.85) !important;
+    border-left: 1px solid rgba(56, 189, 248, 0.25) !important;
+    border-radius: 6px !important;
+    margin: 4px 0 !important;
+}
+
+.v3d-sidebar-body::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #0284c7 0%, #38bdf8 100%) !important;
+    border-radius: 6px !important;
+    border: 2px solid rgba(15, 23, 42, 0.85) !important;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.6) !important;
+}
+
+.v3d-sidebar-body::-webkit-scrollbar-thumb:hover {
+    background: #67e8f9 !important;
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.95) !important;
+}
+
+/* =============================================================================
+   BLOQUES / SECCIONES COLAPSABLES
+   ============================================================================= */
+.v3d-props-section {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0 !important; /* CRÍTICO: Impide que flexbox encoja o mutile los bloques */
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.v3d-props-section:hover {
+    border-color: rgba(56, 189, 248, 0.35);
+}
+
+.v3d-props-section-header {
+    background: rgba(30, 41, 59, 0.85);
+    padding: 9px 12px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease, color 0.15s ease;
+    gap: 10px;
     border-bottom: 1px solid rgba(148, 163, 184, 0.12);
 }
 
+.v3d-props-section-header:hover {
+    background: rgba(51, 65, 85, 0.9);
+    color: #38bdf8;
+}
+
+.v3d-section-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    overflow: hidden;
+}
+
+.v3d-collapse-arrow {
+    display: inline-block;
+    font-size: 0.72rem;
+    color: #38bdf8;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: rotate(90deg); /* Desplegado = hacia abajo */
+    width: 12px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.v3d-props-section.is-collapsed .v3d-collapse-arrow {
+    transform: rotate(0deg); /* Replegado = hacia la derecha */
+}
+
+.v3d-props-section.is-collapsed .v3d-props-section-body {
+    display: none;
+}
+
+.v3d-props-section-body {
+    padding: 0;
+    background: rgba(15, 23, 42, 0.45);
+    flex-shrink: 0 !important;
+}
+
+/* Callout de Presupuesto */
+.v3d-budget-callout-inner {
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0 !important;
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(30, 58, 138, 0.2));
+}
+
+.v3d-budget-concept-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    line-height: 1.4;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.v3d-btn-budget-action {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 7px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+    margin-top: 2px;
+    flex-shrink: 0 !important;
+}
+
+.v3d-btn-budget-action:hover {
+    background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
+    transform: translateY(-1px);
+}
+
+/* =============================================================================
+   TABLAS DE PROPIEDADES (LEGIBILIDAD ÓPTIMA, SIN TRUNCAMIENTO)
+   ============================================================================= */
 .v3d-props-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.76rem;
+    table-layout: auto;
+    flex-shrink: 0 !important;
 }
 
 .v3d-props-table tr {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     transition: background-color 0.12s;
 }
 
@@ -7946,27 +8049,33 @@ body.dark-theme .partida-action-card,
 }
 
 .v3d-props-table .prop-key {
-    padding: 6px 10px;
+    padding: 8px 12px;
     color: #94a3b8;
     font-weight: 500;
-    width: 44%;
-    vertical-align: middle;
+    width: 40%;
+    vertical-align: top;
+    white-space: normal;
     word-break: break-word;
+    overflow-wrap: anywhere;
+    line-height: 1.4;
 }
 
 .v3d-props-table .prop-val {
-    padding: 6px 10px;
+    padding: 8px 12px;
     color: #f1f5f9;
     font-weight: 600;
-    width: 56%;
-    vertical-align: middle;
+    width: 60%;
+    vertical-align: top;
+    white-space: normal;
     word-break: break-word;
-    text-align: right;
+    overflow-wrap: anywhere;
+    line-height: 1.4;
+    text-align: left;
 }
 
 .v3d-props-table .prop-val.mono {
     font-family: monospace;
-    font-size: 0.72rem;
+    font-size: 0.74rem;
     color: #38bdf8;
 }
 
@@ -8010,4 +8119,5 @@ body.dark-theme .partida-action-card,
     border-color: #f43f5e;
     color: #ffffff;
 }
+
 
