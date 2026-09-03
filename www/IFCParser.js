@@ -328,12 +328,22 @@
             for (const id in entities) {
                 const ent = entities[id];
                 if (ent.type === 'IFCBUILDINGSTOREY') {
-                    const name = ent.params[2] || `Planta #${id}`;
-                    const elevation = parseFloat(ent.params[8]) || 0;
+                    const rawName = ent.params[2] || `Planta #${id}`;
+                    const name = this._decodeStepString(rawName);
+                    
+                    let elevation = 0;
+                    for (let i = ent.params.length - 1; i >= 0; i--) {
+                        const val = parseFloat(ent.params[i]);
+                        if (!isNaN(val)) {
+                            elevation = val;
+                            break;
+                        }
+                    }
+
                     storeys[id] = {
                         id: id,
                         name: name,
-                        elevation: elevation
+                        elevation: Math.round(elevation * 100) / 100
                     };
                 }
             }

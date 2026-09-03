@@ -672,17 +672,13 @@
 
                         <div class="v3d-dropdown-container">
                             <select id="v3dStoreySelect" class="v3d-select" title="Filtrar por Planta">
-                                <option value="all">🏢 Todas las Plantas</option>
+                                <option value="all">🏢 Edificio Completo (Todas las Plantas)</option>
                             </select>
                         </div>
-
-                        <button type="button" id="v3dSplitBtn" class="v3d-tool-btn" title="Modo Vista Dividida (Presupuesto + 3D)">
-                            <span>🔀</span> <span>Vista Dividida</span>
-                        </button>
                     </div>
 
                     <div class="visor3d-toolbar-right">
-                        <span id="v3dSelectedLabel" class="v3d-selected-info">Ningún elemento seleccionado</span>
+                        <span id="v3dSelectedLabel" class="v3d-selected-info">Haz clic en un elemento para inspeccionarlo</span>
                         <button type="button" id="v3dFullscreenBtn" class="v3d-tool-btn" title="Pantalla Completa">
                             <span>⛶</span>
                         </button>
@@ -695,6 +691,97 @@
                         <div class="worker-loading-spinner" style="width: 24px; height: 24px;"></div>
                         <span>Cargando geometría 3D del modelo...</span>
                     </div>
+
+                    <!-- Badge de Autor ConTech Abajo a la Izquierda -->
+                    <a href="https://jmcaamanog.pages.dev/" target="_blank" rel="noopener" class="v3d-author-badge" id="v3dAuthorBadge" title="Desarrollado por Jose Manuel Caamaño González | Arquitecto Técnico & BIM Manager">
+                        <img src="img/jmcaamanog.png" class="v3d-author-avatar" alt="jmcaamanog" />
+                        <div class="v3d-author-info">
+                            <span class="v3d-author-name">Jose Manuel Caamaño</span>
+                            <span class="v3d-author-role">BIM Manager & ConTech ↗</span>
+                        </div>
+                    </a>
+
+                    <!-- Panel Lateral Deslizante de Propiedades y Atributos BIM (Slide-over a la derecha) -->
+                    <aside id="v3dElementSidebar" class="v3d-element-sidebar" style="display:none;">
+                        <div class="v3d-sidebar-header">
+                            <div class="v3d-sidebar-title-group">
+                                <span class="v3d-sidebar-icon" id="v3dCardIcon">🧱</span>
+                                <div class="v3d-sidebar-titles">
+                                    <h3 id="v3dCardName" class="v3d-sidebar-title">Elemento BIM</h3>
+                                    <span id="v3dCardStorey" class="v3d-sidebar-badge">Planta</span>
+                                </div>
+                            </div>
+                            <button type="button" id="v3dCardClose" class="v3d-sidebar-close" title="Cerrar panel y deseleccionar">✕</button>
+                        </div>
+
+                        <!-- Acceso Directo a Presupuesto FIEBDC-3 -->
+                        <div class="v3d-budget-callout" id="v3dBudgetCallout">
+                            <div class="v3d-budget-callout-header">
+                                <span class="v3d-budget-callout-tag">🌳 Presupuesto FIEBDC-3</span>
+                                <span class="v3d-budget-price" id="v3dBudgetPrice">- €</span>
+                            </div>
+                            <div class="v3d-budget-concept-title" id="v3dCardBudget">Buscando partida vinculada...</div>
+                            <button type="button" id="v3dCardGoToBudget" class="v3d-btn-budget-action">
+                                <span>🌳</span> <span>Ver en Árbol de Presupuesto</span> <span>➔</span>
+                            </button>
+                        </div>
+
+                        <!-- Buscador de propiedades rápido -->
+                        <div class="v3d-props-filter-box">
+                            <input type="text" id="v3dPropsSearch" placeholder="🔍 Filtrar propiedades o valores..." autocomplete="off">
+                        </div>
+
+                        <!-- Contenedor scrollable con barra vertical -->
+                        <div class="v3d-sidebar-body" id="v3dSidebarBody">
+                            <!-- Tabla de Identificación y Ubicación -->
+                            <div class="v3d-props-section">
+                                <div class="v3d-props-section-header">
+                                    <span>📍</span> <span>Identificación y Ubicación</span>
+                                </div>
+                                <table class="v3d-props-table" id="v3dTableId">
+                                    <tbody>
+                                        <tr><td class="prop-key">Nombre</td><td class="prop-val" id="propValName">-</td></tr>
+                                        <tr><td class="prop-key">Tipo IFC</td><td class="prop-val mono" id="propValIfcType">-</td></tr>
+                                        <tr><td class="prop-key">Familia / Tipo</td><td class="prop-val" id="propValType">-</td></tr>
+                                        <tr><td class="prop-key">Nivel / Planta</td><td class="prop-val" id="propValStorey">-</td></tr>
+                                        <tr><td class="prop-key">GlobalId (GUID)</td><td class="prop-val mono copyable" id="v3dCardId" title="Clic para copiar">-</td></tr>
+                                        <tr><td class="prop-key">ID Express (STEP)</td><td class="prop-val mono" id="propValExpressId">-</td></tr>
+                                        <tr><td class="prop-key">Tag / Revit ID</td><td class="prop-val mono" id="propValTag">-</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Tabla de Mediciones y Dimensiones -->
+                            <div class="v3d-props-section">
+                                <div class="v3d-props-section-header">
+                                    <span>📐</span> <span>Mediciones y Dimensiones</span>
+                                </div>
+                                <table class="v3d-props-table" id="v3dTableQty">
+                                    <tbody id="v3dTableQtyBody">
+                                        <tr><td class="prop-key">Medición Principal</td><td class="prop-val highlight" id="v3dCardQty">-</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Tabla de Propiedades Extendidas / Psets -->
+                            <div class="v3d-props-section" id="v3dPsetsSection">
+                                <div class="v3d-props-section-header">
+                                    <span>⚙️</span> <span>Propiedades y Parámetros BIM</span>
+                                </div>
+                                <table class="v3d-props-table" id="v3dTablePsets">
+                                    <tbody id="v3dTablePsetsBody">
+                                        <!-- Inyectado dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="v3d-sidebar-footer">
+                            <button type="button" id="v3dDeselectBtn" class="v3d-btn-deselect">
+                                <span>✕ Deseleccionar Elemento</span>
+                            </button>
+                        </div>
+                    </aside>
                 </div>
             </div>
 

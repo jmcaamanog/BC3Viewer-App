@@ -1,71 +1,76 @@
 /**
- * IFCViewer3D.js - Visor BIM 3D Nativo con Three.js y web-ifc para BC3Viewer-App
- * Proporciona renderizado WebGL en tiempo real, órbita 3D, selección de elementos,
- * filtrado por plantas, modo Rayos X y vinculación bidireccional con el presupuesto FIEBDC-3.
- * Autor: Jose Manuel Caamaño González (jmcaamanog)
+ * =============================================================================
+ * IFCViewer3D.js - Controlador Principal del Visor 3D WebGL (Three.js + web-ifc)
+ * BC3Viewer-App - BIM 5D & 3D Interactive ConTech Module
+ * =============================================================================
  */
 
-(function (global) {
+(function (window) {
     'use strict';
 
     const IFCViewer3D = {
+        container: null,
         scene: null,
         camera: null,
         renderer: null,
         controls: null,
         ifcLoader: null,
         ifcModel: null,
-        container: null,
+        highlightSubset: null,
         currentBuffer: null,
         currentIfcData: null,
-        highlightSubset: null,
+        activeClippingPlane: null,
         isXRay: false,
-        isSplitView: false,
-        onElementClickedCallback: null,
         expressIdToElementMap: {},
         globalIdToElementMap: {},
+        selectedElement: null,
+        onElementClickedCallback: null,
 
         /**
-         * Inicializa la escena 3D, luces, cámara y controles en el contenedor especificado
+         * Inicializa la escena Three.js, cámara, renderer, luces y controles
          */
         init: function (containerId) {
-            this.container = document.getElementById(containerId);
-            if (!this.container) {
-                console.error("IFCViewer3D: No se encontró el contenedor:", containerId);
+            const container = document.getElementById(containerId);
+            if (!container) {
+                console.error("IFCViewer3D: Contenedor no encontrado:", containerId);
                 return false;
             }
 
-            if (this.renderer) {
-                // Ya inicializado
+            if (this.renderer && this.container === container) {
                 this.onResize();
                 return true;
             }
+
+            this.container = container;
+            // Eliminar solo canvas previos sin alterar elementos DOM fijos (badge de autor, sidebar, loading)
+            const oldCanvases = this.container.querySelectorAll('canvas');
+            oldCanvases.forEach(c => c.remove());
 
             const THREE = window.THREE;
             const OrbitControls = window.OrbitControls;
             const IFCLoader = window.IFCLoader;
 
             if (!THREE || !OrbitControls || !IFCLoader) {
-                console.warn("IFCViewer3D: Librerías 3D aún no cargadas en window.");
+                console.error("IFCViewer3D: Three.js, OrbitControls o IFCLoader no disponibles en window.");
                 return false;
             }
 
-            const width = this.container.clientWidth || 800;
-            const height = this.container.clientHeight || 600;
-
             // 1. Escena
             this.scene = new THREE.Scene();
-            this.scene.background = new THREE.Color(0x0f172a); // Fondo oscuro ConTech slate-900
+            this.scene.background = new THREE.Color(0x0a0f1d);
 
             // 2. Cámara
+            const width = this.container.clientWidth || 800;
+            const height = this.container.clientHeight || 600;
             this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-            this.camera.position.set(20, 20, 20);
+            this.camera.position.set(25, 20, 30);
 
-            // 3. Renderer WebGL
-            this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+            // 3. Renderer con soporte nativo de planos de corte (Local Clipping)
+            this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
             this.renderer.setSize(width, height);
             this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            this.renderer.shadowMap.enabled = false; // Optimización de rendimiento
+            this.renderer.localClippingEnabled = true;
+            this.renderer.shadowMap.enabled = false;
             this.container.appendChild(this.renderer.domElement);
 
             // 4. Controles orbitales
@@ -73,54 +78,57 @@
             this.controls.enableDamping = true;
             this.controls.dampingFactor = 0.08;
             this.controls.screenSpacePanning = true;
+            this.controls.minDistance = 1;
+            this.controls.maxDistance = 400;
 
-            // 5. Iluminación arquitectónica
+            // 5. Iluminación arquitectónica ConTech
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
             this.scene.add(ambientLight);
 
-            const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.65);
-            dirLight1.position.set(25, 40, 25);
+            const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.85);
+            dirLight1.position.set(40, 60, 30);
             this.scene.add(dirLight1);
 
-            const dirLight2 = new THREE.DirectionalLight(0x93c5fd, 0.35);
-            dirLight2.position.set(-25, -20, -25);
+            const dirLight2 = new THREE.DirectionalLight(0x90cdf4, 0.35);
+            dirLight2.position.set(-30, -20, -30);
             this.scene.add(dirLight2);
 
-            // 6. Rejilla de suelo de referencia ConTech
-            const gridHelper = new THREE.GridHelper(60, 60, 0x38bdf8, 0x1e293b);
-            gridHelper.position.y = -0.01;
-            this.scene.add(gridHelper);
+            // 6. Suelo y Rejilla espacial
+            const grid = new THREE.GridHelper(80, 80, 0x0ea5e9, 0x1e293b);
+            grid.position.y = -0.01;
+            this.scene.add(grid);
 
-            // 7. Cargador IFCLoader
+            // 7. Instanciar IFCLoader
             this.ifcLoader = new IFCLoader();
-            this.ifcLoader.ifcManager.setWasmPath('./');
-
-            // 8. Eventos de Raycasting para selección con ratón o táctil
-            this._setupRaycasting();
-
-            // 9. ResizeObserver para ajustar tamaño automáticamente
-            if (window.ResizeObserver) {
-                const ro = new ResizeObserver(() => this.onResize());
-                ro.observe(this.container);
+            if (this.ifcLoader.ifcManager) {
+                this.ifcLoader.ifcManager.setWasmPath('./');
             }
+
+            // 8. Eventos de Raycasting y Tarjeta HUD
+            this._setupRaycasting();
+            this._setupHudEvents();
+
+            // 9. Redimensionamiento y bucle de renderizado
             window.addEventListener('resize', () => this.onResize());
+            this._animate();
 
-            // 10. Bucle de renderizado
-            const animate = () => {
-                requestAnimationFrame(animate);
-                if (this.controls) this.controls.update();
-                if (this.renderer && this.scene && this.camera) {
-                    this.renderer.render(this.scene, this.camera);
-                }
-            };
-            animate();
-
-            console.log("IFCViewer3D: Motor 3D inicializado con éxito.");
+            console.log("IFCViewer3D: Motor WebGL inicializado con éxito.");
             return true;
         },
 
         /**
-         * Carga y renderiza el modelo IFC desde un ArrayBuffer
+         * Bucle de animación
+         */
+        _animate: function () {
+            requestAnimationFrame(() => this._animate());
+            if (this.controls) this.controls.update();
+            if (this.renderer && this.scene && this.camera) {
+                this.renderer.render(this.scene, this.camera);
+            }
+        },
+
+        /**
+         * Carga y renderiza el modelo IFC desde un ArrayBuffer de forma asíncrona y ultra-rápida
          */
         loadModel: async function (arrayBuffer, ifcData, fileName) {
             if (!this.init('visor3dCanvasContainer')) {
@@ -142,6 +150,7 @@
             if (ifcData && ifcData.elements) {
                 ifcData.elements.forEach(elem => {
                     this.expressIdToElementMap[elem.id] = elem;
+                    this.expressIdToElementMap[String(elem.id)] = elem;
                     if (elem.globalId) this.globalIdToElementMap[elem.globalId] = elem;
                 });
             }
@@ -150,10 +159,10 @@
             const modelLabel = document.getElementById('visor3dModelName');
             if (modelLabel) modelLabel.textContent = fileName || (ifcData && ifcData.header ? ifcData.header.fileName : 'Modelo IFC');
 
-            // Rellenar selector de plantas
+            // Rellenar selector de plantas con cotas reales
             this._populateStoreysDropdown(ifcData);
 
-            // Mostrar badge de carga 3D con indicador de estado
+            // Mostrar badge de carga
             const loadingBadge = document.getElementById('v3dLoadingBadge');
             const loadingText = loadingBadge ? loadingBadge.querySelector('span') : null;
             if (loadingBadge) {
@@ -170,6 +179,8 @@
                 this.ifcModel = null;
             }
             this.resetHighlight();
+            this.hideElementCard();
+            this.applyClippingPlane(null);
 
             // Configurar Web-IFC para máxima velocidad (Fast Booleans y omitir espacios vacíos)
             try {
@@ -204,9 +215,8 @@
             try {
                 const uint8 = arrayBuffer instanceof Uint8Array ? arrayBuffer : new Uint8Array(arrayBuffer);
                 console.log(`IFCViewer3D: Parseando buffer (${(uint8.byteLength / 1024 / 1024).toFixed(2)} MB)...`);
-                
+
                 const t0 = performance.now();
-                // AWAIT DIRECTO: ifcLoader.parse es async y devuelve el modelo THREE.Mesh
                 const model = await this.ifcLoader.parse(uint8);
                 const tElapsed = ((performance.now() - t0) / 1000).toFixed(2);
                 console.log(`IFCViewer3D: Modelo 3D generado con éxito en ${tElapsed}s.`);
@@ -226,7 +236,9 @@
         },
 
         /**
-         * fitToView: function () {
+         * Centra la cámara orbital para encuadrar todo el modelo
+         */
+        fitToView: function () {
             if (!this.ifcModel || !this.camera || !this.controls) return;
 
             const THREE = window.THREE;
@@ -236,9 +248,10 @@
 
             const maxDim = Math.max(size.x, size.y, size.z);
             const fov = this.camera.fov * (Math.PI / 180);
-            let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.5;
+            let cameraDist = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.5;
+            if (isNaN(cameraDist) || cameraDist < 5) cameraDist = 25;
 
-            this.camera.position.set(center.x + cameraZ * 0.7, center.y + cameraZ * 0.5, center.z + cameraZ * 0.7);
+            this.camera.position.set(center.x + cameraDist * 0.7, center.y + cameraDist * 0.5, center.z + cameraDist * 0.7);
             this.camera.lookAt(center);
             this.controls.target.copy(center);
             this.controls.update();
@@ -247,30 +260,36 @@
         /**
          * Resalta un elemento en color cian brillante por su GlobalId o ExpressID
          */
-        highlightElement: function (idOrGlobalId, focusCamera = true) {
+        highlightElement: function (idOrGlobalId, focusCamera = false) {
             if (!this.ifcModel) return;
+
+            // 1. Deseleccionar y limpiar primero cualquier elemento previamente resaltado
+            this.resetHighlight();
 
             let expressId = null;
             let elementObj = null;
 
-            if (this.globalIdToElementMap[idOrGlobalId]) {
+            if (this.globalIdToElementMap && this.globalIdToElementMap[idOrGlobalId]) {
                 elementObj = this.globalIdToElementMap[idOrGlobalId];
-                expressId = parseInt(elementObj.id);
-            } else if (this.expressIdToElementMap[idOrGlobalId]) {
+                expressId = parseInt(elementObj.id || elementObj.expressId, 10);
+            } else if (this.expressIdToElementMap && this.expressIdToElementMap[idOrGlobalId]) {
                 elementObj = this.expressIdToElementMap[idOrGlobalId];
-                expressId = parseInt(idOrGlobalId);
+                expressId = parseInt(elementObj.id || elementObj.expressId || idOrGlobalId, 10);
             } else {
-                expressId = parseInt(idOrGlobalId);
+                expressId = parseInt(idOrGlobalId, 10);
             }
 
             if (isNaN(expressId)) return;
 
             const THREE = window.THREE;
+            const planes = this.activeClippingPlane ? [this.activeClippingPlane] : [];
             const highlightMat = new THREE.MeshLambertMaterial({
                 color: 0x06b6d4, // Cian neón ConTech
                 transparent: true,
                 opacity: 0.85,
-                depthTest: true
+                depthTest: true,
+                clippingPlanes: planes,
+                clipShadows: true
             });
 
             try {
@@ -283,10 +302,20 @@
                     customID: 'active-selection-subset'
                 });
 
-                // Actualizar etiqueta informativa
+                if (this.highlightSubset) {
+                    this.highlightSubset.name = 'active-selection-subset';
+                    this.highlightSubset.isSelectionSubset = true;
+                }
+
+                this.selectedExpressId = expressId;
+                this.selectedElement = elementObj || { id: String(expressId), name: `Elemento #${expressId}` };
+
+                // Actualizar etiqueta en barra superior
                 const label = document.getElementById('v3dSelectedLabel');
-                if (label && elementObj) {
-                    label.textContent = `🎯 ${elementObj.name} (${elementObj.storey || 'BIM'}) [ID: ${elementObj.globalId || expressId}]`;
+                if (label) {
+                    const name = elementObj ? elementObj.name : `Elemento #${expressId}`;
+                    const storey = elementObj && elementObj.storey ? ` (${elementObj.storey})` : '';
+                    label.textContent = `🎯 ${name}${storey}`;
                 }
 
                 if (focusCamera && this.highlightSubset) {
@@ -303,17 +332,420 @@
         },
 
         /**
-         * Quita cualquier elemento resaltado
+         * Quita cualquier elemento resaltado y deselecciona completamente
          */
         resetHighlight: function () {
-            if (this.highlightSubset && this.ifcModel) {
+            if (this.highlightSubset) {
                 try {
-                    this.ifcLoader.ifcManager.removeSubset(this.ifcModel.modelID, undefined, 'active-selection-subset');
+                    if (this.ifcModel && this.ifcLoader && this.ifcLoader.ifcManager) {
+                        this.ifcLoader.ifcManager.removeSubset(this.ifcModel.modelID, this.scene, 'active-selection-subset');
+                    }
+                } catch (e) { }
+                try {
+                    this.scene.remove(this.highlightSubset);
+                    if (this.highlightSubset.geometry) this.highlightSubset.geometry.dispose();
+                    if (this.highlightSubset.material) {
+                        if (Array.isArray(this.highlightSubset.material)) {
+                            this.highlightSubset.material.forEach(m => m.dispose());
+                        } else {
+                            this.highlightSubset.material.dispose();
+                        }
+                    }
                 } catch (e) { }
                 this.highlightSubset = null;
             }
+
+            // Limpieza exhaustiva de cualquier malla huérfana de selección
+            if (this.scene && this.scene.children) {
+                for (let i = this.scene.children.length - 1; i >= 0; i--) {
+                    const child = this.scene.children[i];
+                    if (child && (child.name === 'active-selection-subset' || child.isSelectionSubset)) {
+                        this.scene.remove(child);
+                    }
+                }
+            }
+
+            this.selectedExpressId = null;
+            this.selectedElement = null;
+            this.hideElementCard();
+
             const label = document.getElementById('v3dSelectedLabel');
-            if (label) label.textContent = 'Ningún elemento seleccionado';
+            if (label) label.textContent = 'Haz clic en un elemento para inspeccionarlo';
+        },
+
+        /**
+         * Muestra el panel lateral deslizable con todos los atributos y propiedades del elemento
+         */
+        showElementCard: function (elemObj, expressId) {
+            const sidebar = document.getElementById('v3dElementSidebar');
+            if (!sidebar) return;
+
+            this.selectedElement = elemObj || { id: String(expressId), name: `Elemento #${expressId}` };
+            this.selectedExpressId = parseInt(expressId, 10);
+
+            const nameEl = document.getElementById('v3dCardName');
+            const storeyEl = document.getElementById('v3dCardStorey');
+            const iconEl = document.getElementById('v3dCardIcon');
+
+            const name = elemObj ? (elemObj.name || `Elemento #${expressId}`) : `Elemento #${expressId}`;
+            const storey = elemObj ? (elemObj.storey || 'Sin Planta Asignada') : 'Modelo BIM 3D';
+            const globalId = elemObj ? (elemObj.globalId || String(expressId)) : String(expressId);
+
+            if (nameEl) nameEl.textContent = name;
+            if (storeyEl) storeyEl.textContent = storey;
+
+            // Icono representativo por tipo
+            if (iconEl) {
+                const lower = (name + ' ' + (elemObj ? (elemObj.ifcType || elemObj.category || '') : '')).toLowerCase();
+                if (lower.includes('wall') || lower.includes('muro') || lower.includes('tabique')) iconEl.textContent = '🧱';
+                else if (lower.includes('slab') || lower.includes('forjado') || lower.includes('suelo') || lower.includes('losa')) iconEl.textContent = '🔲';
+                else if (lower.includes('column') || lower.includes('pilar')) iconEl.textContent = '🏛️';
+                else if (lower.includes('beam') || lower.includes('viga')) iconEl.textContent = '📏';
+                else if (lower.includes('window') || lower.includes('ventana')) iconEl.textContent = '🪟';
+                else if (lower.includes('door') || lower.includes('puerta')) iconEl.textContent = '🚪';
+                else if (lower.includes('roof') || lower.includes('cubierta')) iconEl.textContent = '🏠';
+                else iconEl.textContent = '📐';
+            }
+
+            // 1. Tabla de Identificación y Ubicación
+            const pName = document.getElementById('propValName');
+            const pIfcType = document.getElementById('propValIfcType');
+            const pType = document.getElementById('propValType');
+            const pStorey = document.getElementById('propValStorey');
+            const pId = document.getElementById('v3dCardId');
+            const pExp = document.getElementById('propValExpressId');
+            const pTag = document.getElementById('propValTag');
+
+            if (pName) pName.textContent = name;
+            if (pIfcType) pIfcType.textContent = elemObj ? (elemObj.ifcType || 'IFC') : 'IFC';
+            if (pType) pType.textContent = elemObj ? (elemObj.typeName || elemObj.category || '-') : '-';
+            if (pStorey) pStorey.textContent = storey;
+            if (pId) pId.textContent = globalId;
+            if (pExp) pExp.textContent = '#' + expressId;
+            if (pTag) pTag.textContent = (elemObj && elemObj.tag) ? elemObj.tag : '-';
+
+            // 2. Tabla de Mediciones y Dimensiones
+            const qtyBody = document.getElementById('v3dTableQtyBody');
+            if (qtyBody) {
+                let rowsHtml = '';
+                const mainQtyStr = (elemObj && elemObj.quantity) ? `${elemObj.quantity} ${elemObj.unit || ''}` : '-';
+                rowsHtml += `<tr><td class="prop-key">Medición Principal</td><td class="prop-val highlight">${mainQtyStr}</td></tr>`;
+
+                if (elemObj && elemObj.allQuantities) {
+                    const q = elemObj.allQuantities;
+                    const labels = {
+                        netSideArea: 'Área Lateral Neta (m²)',
+                        netArea: 'Área Neta (m²)',
+                        grossSideArea: 'Área Lateral Bruta (m²)',
+                        grossArea: 'Área Bruta (m²)',
+                        netVolume: 'Volumen Neto (m³)',
+                        grossVolume: 'Volumen Bruto (m³)',
+                        volume: 'Volumen (m³)',
+                        length: 'Longitud (m)',
+                        height: 'Altura (m)',
+                        width: 'Anchura / Espesor (m)',
+                        perimeter: 'Perímetro (m)',
+                        count: 'Número de Unidades'
+                    };
+
+                    for (const k in q) {
+                        const val = q[k];
+                        if (val !== undefined && val !== null && !isNaN(val) && val !== 0) {
+                            const lbl = labels[k] || k;
+                            rowsHtml += `<tr><td class="prop-key">${lbl}</td><td class="prop-val mono">${val}</td></tr>`;
+                        }
+                    }
+                }
+                qtyBody.innerHTML = rowsHtml;
+            }
+
+            // 3. Tarjeta de Integración con Presupuesto FIEBDC-3
+            const budgetPrice = document.getElementById('v3dBudgetPrice');
+            const budgetTitle = document.getElementById('v3dCardBudget');
+
+            // Buscar si no tiene aún el budgetConcept asociado
+            if (elemObj && !elemObj.budgetConcept && window.parsedData && window.parsedData.concepts) {
+                const targetGid = elemObj.globalId;
+                for (const code in window.parsedData.concepts) {
+                    const c = window.parsedData.concepts[code];
+                    if (c.measurements && c.measurements.length > 0) {
+                        const m = c.measurements.find(it => it.label && it.label.includes(targetGid));
+                        if (m) {
+                            elemObj.budgetConcept = {
+                                code: c.code,
+                                summary: c.summary,
+                                price: c.price
+                            };
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (elemObj && elemObj.budgetConcept) {
+                const bc = elemObj.budgetConcept;
+                if (budgetPrice) budgetPrice.textContent = `${parseFloat(bc.price || 0).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}`;
+                if (budgetTitle) budgetTitle.textContent = `${bc.code}: ${bc.summary}`;
+            } else if (elemObj && elemObj.category) {
+                if (budgetPrice) budgetPrice.textContent = '- €';
+                if (budgetTitle) budgetTitle.textContent = `Categoría: ${elemObj.category} (Medición en presupuesto)`;
+            } else {
+                if (budgetPrice) budgetPrice.textContent = '- €';
+                if (budgetTitle) budgetTitle.textContent = `Trazable por ID [${globalId}] en medición (~M)`;
+            }
+
+            // 4. Consulta Asíncrona de Parámetros y Property Sets BIM
+            const psetsBody = document.getElementById('v3dTablePsetsBody');
+            const psetsSec = document.getElementById('v3dPsetsSection');
+            if (psetsBody && psetsSec) {
+                psetsBody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:#94a3b8; padding:8px;">Consultando parámetros BIM...</td></tr>';
+                psetsSec.style.display = 'block';
+
+                (async () => {
+                    try {
+                        if (this.ifcLoader && this.ifcLoader.ifcManager && this.ifcLoader.ifcManager.getPropertySets) {
+                            const psets = await this.ifcLoader.ifcManager.getPropertySets(this.ifcModel.modelID, expressId, true);
+                            if (psets && psets.length > 0) {
+                                let psetRows = '';
+                                psets.forEach(ps => {
+                                    const psName = ps.Name ? (ps.Name.value || ps.Name) : 'Propiedades';
+                                    if (ps.HasProperties && Array.isArray(ps.HasProperties)) {
+                                        ps.HasProperties.forEach(prop => {
+                                            const propKey = prop.Name ? (prop.Name.value || prop.Name) : 'Propiedad';
+                                            let propVal = '-';
+                                            if (prop.NominalValue) {
+                                                propVal = prop.NominalValue.value !== undefined ? prop.NominalValue.value : prop.NominalValue;
+                                            }
+                                            psetRows += `<tr><td class="prop-key">${psName} · ${propKey}</td><td class="prop-val">${propVal}</td></tr>`;
+                                        });
+                                    }
+                                });
+                                psetsBody.innerHTML = psetRows || '<tr><td colspan="2" style="text-align:center; color:#94a3b8; padding:8px;">Sin propiedades adicionales</td></tr>';
+                            } else {
+                                psetsBody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:#94a3b8; padding:8px;">Sin propiedades adicionales</td></tr>';
+                            }
+                        } else {
+                            psetsSec.style.display = 'none';
+                        }
+                    } catch (err) {
+                        psetsSec.style.display = 'none';
+                    }
+                })();
+            }
+
+            sidebar.style.display = 'flex';
+        },
+
+        /**
+         * Oculta el panel lateral deslizable
+         */
+        hideElementCard: function () {
+            const sidebar = document.getElementById('v3dElementSidebar');
+            if (sidebar) sidebar.style.display = 'none';
+            this.selectedElement = null;
+            this.selectedExpressId = null;
+        },
+
+        /**
+         * Configura eventos del panel lateral HUD y acciones de integración
+         */
+        _setupHudEvents: function () {
+            // Cerrar y deseleccionar
+            const closeBtn = document.getElementById('v3dCardClose');
+            if (closeBtn) {
+                closeBtn.onclick = () => {
+                    this.resetHighlight();
+                };
+            }
+
+            const deselectBtn = document.getElementById('v3dDeselectBtn');
+            if (deselectBtn) {
+                deselectBtn.onclick = () => {
+                    this.resetHighlight();
+                };
+            }
+
+            // Botón para ir al Presupuesto FIEBDC-3
+            const goToBudgetBtn = document.getElementById('v3dCardGoToBudget');
+            if (goToBudgetBtn) {
+                goToBudgetBtn.onclick = () => {
+                    if (!this.selectedElement) return;
+
+                    // Cambiar a la vista de Presupuesto
+                    const presBtn = document.getElementById('presupuestoBtn');
+                    if (presBtn) presBtn.click();
+
+                    // Buscar y resaltar la partida en el árbol
+                    setTimeout(() => {
+                        this._findAndHighlightInTree(this.selectedElement);
+                    }, 120);
+                };
+            }
+
+            // Buscador / Filtro de propiedades en tiempo real
+            const searchInput = document.getElementById('v3dPropsSearch');
+            if (searchInput) {
+                searchInput.oninput = function () {
+                    const q = this.value.trim().toLowerCase();
+                    const allRows = document.querySelectorAll('.v3d-props-table tbody tr');
+                    allRows.forEach(row => {
+                        if (!q) {
+                            row.style.display = '';
+                        } else {
+                            const text = row.textContent.toLowerCase();
+                            row.style.display = text.includes(q) ? '' : 'none';
+                        }
+                    });
+                };
+            }
+
+            // Copiar GlobalId (GUID) al portapapeles al hacer clic
+            const guidVal = document.getElementById('v3dCardId');
+            if (guidVal) {
+                guidVal.onclick = function () {
+                    const text = this.textContent;
+                    if (text && text !== '-') {
+                        navigator.clipboard.writeText(text).then(() => {
+                            const prev = this.textContent;
+                            this.textContent = '¡Copiado! ✓';
+                            setTimeout(() => { this.textContent = prev; }, 1500);
+                        }).catch(e => console.warn(e));
+                    }
+                };
+            }
+        },
+
+        /**
+         * Busca la partida correspondiente en el árbol de presupuesto y navega hasta ella
+         */
+        _findAndHighlightInTree: function (elemObj) {
+            if (!elemObj) return;
+
+            // Si ya tiene el código de partida identificado, usar showDetails directamente
+            if (elemObj.budgetConcept && elemObj.budgetConcept.code) {
+                if (typeof window.showDetails === 'function') {
+                    window.showDetails(elemObj.budgetConcept.code);
+                }
+            }
+
+            const searchStr = elemObj.globalId || elemObj.id;
+            const treeRows = document.querySelectorAll('.tree-row, tr[data-concept-code], .tree-item');
+
+            let matchedRow = null;
+
+            // 1. Buscar fila que contenga el GlobalId o ID en sus comentarios o textos
+            for (let i = 0; i < treeRows.length; i++) {
+                if (treeRows[i].textContent.includes(searchStr)) {
+                    matchedRow = treeRows[i];
+                    break;
+                }
+            }
+
+            // 2. Si no se encontró por ID directo, buscar por el nombre de la categoría
+            if (!matchedRow && elemObj.category) {
+                for (let i = 0; i < treeRows.length; i++) {
+                    if (treeRows[i].textContent.includes(elemObj.category)) {
+                        matchedRow = treeRows[i];
+                        break;
+                    }
+                }
+            }
+
+            if (matchedRow) {
+                matchedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                matchedRow.classList.add('row-highlight');
+                setTimeout(() => matchedRow.classList.remove('row-highlight'), 3000);
+            }
+        },
+
+        /**
+         * Aplica un plano de corte horizontal para eliminar plantas superiores
+         */
+        applyClippingPlane: function (cutHeight) {
+            if (!this.ifcModel) return;
+
+            const THREE = window.THREE;
+            this.renderer.localClippingEnabled = true;
+
+            let planes = [];
+            if (cutHeight !== null && cutHeight !== undefined && !isNaN(cutHeight)) {
+                // Normal (0, -1, 0) con constante cutHeight elimina todo donde Y > cutHeight
+                this.activeClippingPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), cutHeight);
+                planes = [this.activeClippingPlane];
+            } else {
+                this.activeClippingPlane = null;
+            }
+
+            const setMat = (m) => {
+                m.clippingPlanes = planes;
+                m.clipShadows = true;
+                m.needsUpdate = true;
+            };
+
+            if (Array.isArray(this.ifcModel.material)) {
+                this.ifcModel.material.forEach(setMat);
+            } else if (this.ifcModel.material) {
+                setMat(this.ifcModel.material);
+            }
+
+            // Si hay un subset resaltado activo, aplicarle también el plano de corte
+            if (this.highlightSubset && this.highlightSubset.material) {
+                if (Array.isArray(this.highlightSubset.material)) {
+                    this.highlightSubset.material.forEach(setMat);
+                } else {
+                    setMat(this.highlightSubset.material);
+                }
+            }
+        },
+
+        /**
+         * Filtra la visualización por planta realizando el corte en el punto intermedio exacto
+         * entre el nivel seleccionado y el inmediatamente superior.
+         */
+        filterByStorey: function (storeyName) {
+            if (!this.ifcModel || !this.currentIfcData) return;
+
+            if (storeyName === 'all' || !storeyName) {
+                // Mostrar todo el edificio
+                this.applyClippingPlane(null);
+                this.fitToView();
+                return;
+            }
+
+            const rawStoreys = (this.currentIfcData && this.currentIfcData.storeys) || [];
+            // Filtrar y ordenar plantas ascendentemente por cota para garantizar orden físico real
+            const sortedStoreys = [...rawStoreys]
+                .filter(s => s && s.elevation !== undefined && !isNaN(s.elevation))
+                .sort((a, b) => a.elevation - b.elevation);
+
+            const selectedIdx = sortedStoreys.findIndex(s => s.name === storeyName);
+
+            if (selectedIdx === -1) {
+                console.warn("IFCViewer3D: Planta no encontrada en lista ordenada:", storeyName);
+                return;
+            }
+
+            const currentStorey = sortedStoreys[selectedIdx];
+            const nextStorey = sortedStoreys[selectedIdx + 1];
+
+            // CÁLCULO DEL PUNTO INTERMEDIO EXACTO:
+            // (Cota nivel seleccionado + Cota nivel superior) / 2
+            let cutY = null;
+            if (nextStorey && nextStorey.elevation !== undefined && !isNaN(nextStorey.elevation)) {
+                cutY = (currentStorey.elevation + nextStorey.elevation) / 2.0;
+                console.log(`IFCViewer3D: Corte calculado en el punto intermedio exacto: (${currentStorey.elevation}m + ${nextStorey.elevation}m) / 2 = ${cutY.toFixed(3)}m`);
+            } else {
+                // Si es la última planta superior (o cubierta), estimar con la altura de planta promedio
+                let delta = 3.0;
+                if (selectedIdx > 0 && sortedStoreys[selectedIdx - 1]) {
+                    delta = currentStorey.elevation - sortedStoreys[selectedIdx - 1].elevation;
+                    if (delta <= 0 || isNaN(delta)) delta = 3.0;
+                }
+                cutY = currentStorey.elevation + (delta / 2.0);
+                console.log(`IFCViewer3D: Corte calculado en planta superior: ${currentStorey.elevation}m + (${delta}/2)m = ${cutY.toFixed(3)}m`);
+            }
+
+            this.applyClippingPlane(cutY);
         },
 
         /**
@@ -346,77 +778,6 @@
         },
 
         /**
-         * Filtra la visualización por planta
-         */
-        filterByStorey: function (storeyName) {
-            if (!this.ifcModel || !this.currentIfcData) return;
-
-            if (storeyName === 'all') {
-                // Mostrar todo
-                this.ifcLoader.ifcManager.removeSubset(this.ifcModel.modelID, undefined, 'storey-filter-subset');
-                this.ifcModel.visible = true;
-                this.fitToView();
-                return;
-            }
-
-            // Filtrar IDs de elementos que pertenecen a esta planta
-            const matchingElems = this.currentIfcData.elements.filter(e => e.storey === storeyName);
-            const ids = matchingElems.map(e => parseInt(e.id)).filter(id => !isNaN(id));
-
-            if (ids.length === 0) return;
-
-            try {
-                // Ocultar modelo completo y mostrar sólo el subconjunto de esta planta
-                this.ifcModel.visible = false;
-                this.ifcLoader.ifcManager.createSubset({
-                    modelID: this.ifcModel.modelID,
-                    ids: ids,
-                    scene: this.scene,
-                    removePrevious: true,
-                    customID: 'storey-filter-subset'
-                });
-                this.fitToView();
-            } catch (e) {
-                console.warn("IFCViewer3D: Error filtrando por planta:", e);
-                this.ifcModel.visible = true;
-            }
-        },
-
-        /**
-         * Alterna el modo Vista Dividida (Split-View Presupuesto + 3D)
-         */
-        toggleSplitView: function () {
-            this.isSplitView = !this.isSplitView;
-            const treePanel = document.getElementById('treePanel');
-            const detailsPanel = document.getElementById('detailsPanel');
-            const visorPanel = document.getElementById('visor3dPanel');
-            const splitBtn = document.getElementById('v3dSplitBtn');
-
-            if (this.isSplitView) {
-                if (treePanel) {
-                    treePanel.style.display = 'flex';
-                    treePanel.style.width = '35%';
-                }
-                if (detailsPanel) detailsPanel.style.display = 'none';
-                if (visorPanel) {
-                    visorPanel.style.display = 'flex';
-                    visorPanel.style.width = '65%';
-                }
-                if (splitBtn) splitBtn.classList.add('active');
-            } else {
-                if (treePanel) treePanel.style.display = 'none';
-                if (detailsPanel) detailsPanel.style.display = 'none';
-                if (visorPanel) {
-                    visorPanel.style.display = 'flex';
-                    visorPanel.style.width = '100%';
-                }
-                if (splitBtn) splitBtn.classList.remove('active');
-            }
-
-            setTimeout(() => this.onResize(), 50);
-        },
-
-        /**
          * Reajusta el tamaño del canvas al contenedor
          */
         onResize: function () {
@@ -431,65 +792,141 @@
         },
 
         /**
-         * Configura el detector de clics sobre la geometría 3D
+         * Configura el detector de clics sobre la geometría 3D con deselección al pulsar en fondo o elemento activo
          */
         _setupRaycasting: function () {
             const THREE = window.THREE;
             const raycaster = new THREE.Raycaster();
             const mouse = new THREE.Vector2();
 
+            let pointerDownPos = { x: 0, y: 0 };
+
             this.renderer.domElement.addEventListener('pointerdown', (e) => {
-                if (e.button !== 0) return; // Sólo botón primario / toque
+                pointerDownPos.x = e.clientX;
+                pointerDownPos.y = e.clientY;
+            });
+
+            this.renderer.domElement.addEventListener('pointerup', async (e) => {
+                if (e.button !== 0) return; // Sólo botón primario / toque táctil
+
+                // Si el usuario arrastró el ratón más de 6px, fue una órbita o paneo, no un clic de selección
+                const dist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+                if (dist > 6) return;
+
+                if (!this.ifcModel) return;
 
                 const rect = this.renderer.domElement.getBoundingClientRect();
                 mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
                 mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
                 raycaster.setFromCamera(mouse, this.camera);
-                const intersects = raycaster.intersectObjects(this.scene.children, true);
 
-                if (intersects.length > 0) {
-                    for (let i = 0; i < intersects.length; i++) {
-                        const hit = intersects[i];
-                        if (hit.object === this.ifcModel || (hit.object.geometry && hit.faceIndex !== undefined)) {
-                            try {
-                                const id = this.ifcLoader.ifcManager.getExpressId(hit.object.geometry, hit.faceIndex);
-                                if (id !== undefined && id !== null) {
-                                    const elemObj = this.expressIdToElementMap[id];
-                                    this.highlightElement(id, false);
+                // Intersectar EXCLUSIVAMENTE el modelo IFC (ignorar suelo grid y luces)
+                const intersects = raycaster.intersectObject(this.ifcModel, true);
 
-                                    if (typeof this.onElementClickedCallback === 'function') {
-                                        this.onElementClickedCallback(elemObj, id);
-                                    }
-                                    break;
-                                }
-                            } catch (err) { }
+                // Si no hay intersección (clic en el fondo/espacio vacío): DESELECCIONAR
+                if (intersects.length === 0) {
+                    this.resetHighlight();
+                    return;
+                }
+
+                const hit = intersects[0];
+                if (!hit.object || !hit.object.geometry || hit.faceIndex === undefined) return;
+
+                let id = null;
+                try {
+                    id = this.ifcLoader.ifcManager.getExpressId(hit.object.geometry, hit.faceIndex);
+                } catch (err) {
+                    console.warn("IFCViewer3D: Error obteniendo expressId:", err);
+                }
+
+                if (id === null || id === undefined) return;
+
+                // Si el usuario hace clic sobre el elemento que ya está seleccionado: DESELECCIONAR
+                if (this.selectedExpressId === id) {
+                    this.resetHighlight();
+                    return;
+                }
+
+                // 1. Resaltar en 3D en cian neón (limpiando cualquier selección anterior)
+                this.highlightElement(id, false);
+
+                // 2. Buscar elemento en mapas precargados
+                let elemObj = this.expressIdToElementMap[id] || this.expressIdToElementMap[String(id)];
+
+                // Si no está en el mapa, obtener propiedades directamente de Web-IFC
+                if (!elemObj && this.ifcLoader.ifcManager.getItemProperties) {
+                    try {
+                        const props = await this.ifcLoader.ifcManager.getItemProperties(this.ifcModel.modelID, id);
+                        if (props) {
+                            const gid = props.GlobalId ? props.GlobalId.value : null;
+                            const rawN = props.Name ? props.Name.value : `Elemento #${id}`;
+                            elemObj = {
+                                id: String(id),
+                                expressId: id,
+                                globalId: gid,
+                                name: this._decodeStepString(rawN),
+                                storey: 'Modelo 3D'
+                            };
                         }
-                    }
+                    } catch (e) { }
+                }
+
+                // 3. Mostrar el panel lateral de propiedades y atributos
+                this.showElementCard(elemObj, id);
+
+                // 4. Disparar callback de integración con presupuesto
+                if (typeof this.onElementClickedCallback === 'function') {
+                    this.onElementClickedCallback(elemObj, id);
                 }
             });
         },
 
+        /**
+         * Rellena el menú desplegable de plantas ordenadas por cota de menor a mayor
+         */
         _populateStoreysDropdown: function (ifcData) {
             const select = document.getElementById('v3dStoreySelect');
             if (!select) return;
 
-            select.innerHTML = '<option value="all">🏢 Todas las Plantas</option>';
-            if (ifcData && ifcData.storeys) {
-                ifcData.storeys.forEach(s => {
-                    const opt = document.createElement('option');
-                    opt.value = s.name;
-                    opt.textContent = `📍 ${s.name}`;
-                    select.appendChild(opt);
-                });
-            }
+            select.innerHTML = '<option value="all">🏢 Edificio Completo (Todas las Plantas)</option>';
+
+            if (!ifcData || !ifcData.storeys || ifcData.storeys.length === 0) return;
+
+            // Ordenar por cota de elevación de menor a mayor
+            const sortedStoreys = [...ifcData.storeys].sort((a, b) => (a.elevation || 0) - (b.elevation || 0));
+
+            sortedStoreys.forEach((s) => {
+                const opt = document.createElement('option');
+                opt.value = s.name;
+                const elevStr = s.elevation !== undefined ? ` [${s.elevation >= 0 ? '+' : ''}${s.elevation}m]` : '';
+                opt.textContent = `📍 Hasta ${s.name}${elevStr} (Cortar superiores)`;
+                select.appendChild(opt);
+            });
+        },
+
+        /**
+         * Decodifica secuencias ISO 10303-21 en texto legible
+         */
+        _decodeStepString: function (str) {
+            if (!str) return '';
+            let decoded = str.replace(/\\X2\\([0-9A-Fa-f]+)\\X0\\/g, (match, hex) => {
+                try {
+                    let result = '';
+                    for (let i = 0; i < hex.length; i += 4) {
+                        const code = parseInt(hex.substr(i, 4), 16);
+                        result += String.fromCharCode(code);
+                    }
+                    return result;
+                } catch (e) { return match; }
+            });
+            decoded = decoded.replace(/\\X\\([0-9A-Fa-f]{2})/g, (match, hex) => {
+                try { return String.fromCharCode(parseInt(hex, 16)); } catch (e) { return match; }
+            });
+            return decoded.replace(/\\S\\(.)/g, '$1');
         }
     };
 
-    if (typeof module !== 'undefined' && module.exports) {
-        module.exports = IFCViewer3D;
-    } else {
-        global.IFCViewer3D = IFCViewer3D;
-    }
+    window.IFCViewer3D = IFCViewer3D;
 
-})(typeof window !== 'undefined' ? window : this);
+})(window);

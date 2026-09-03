@@ -7651,10 +7651,12 @@ if (pricesBtn && pricesPanel) {
 const presupuestoBtn = document.getElementById('presupuestoBtn');
 if (presupuestoBtn) {
     presupuestoBtn.addEventListener('click', () => {
-        // Mostrar Dashboard (árbol y detalles) y ocultar Precios
+        // Mostrar Dashboard (árbol y detalles) y ocultar Precios y Visor 3D
         if (treePanel) treePanel.style.display = 'flex';
         if (detailsPanel) detailsPanel.style.display = 'flex';
         if (pricesPanel) pricesPanel.style.display = 'none';
+        const v3dPanelP = document.getElementById('visor3dPanel');
+        if (v3dPanelP) v3dPanelP.style.display = 'none';
 
         // Estilo de botones activos
         document.querySelectorAll('.control-container button').forEach(b => b.classList.remove('active'));
@@ -15732,11 +15734,6 @@ function initVisor3dControls() {
         if (typeof IFCViewer3D !== 'undefined') IFCViewer3D.filterByStorey(this.value);
     });
 
-    const splitBtn = document.getElementById('v3dSplitBtn');
-    if (splitBtn) splitBtn.addEventListener('click', () => {
-        if (typeof IFCViewer3D !== 'undefined') IFCViewer3D.toggleSplitView();
-    });
-
     const fsBtn = document.getElementById('v3dFullscreenBtn');
     if (fsBtn) fsBtn.addEventListener('click', () => {
         const panel = document.getElementById('visor3dPanel');
@@ -15760,15 +15757,21 @@ function initVisor3dControls() {
                 if (c.measurements && c.measurements.length > 0) {
                     const match = c.measurements.find(m => m.label && m.label.includes(targetId));
                     if (match) {
-                        const label = document.getElementById('v3dSelectedLabel');
-                        if (label) label.textContent = `📌 ${c.code}: ${c.summary}`;
-                        
-                        // Si estamos en Split-View, seleccionar y enfocar la fila en el árbol
-                        const row = document.querySelector(`.tree-node-container[data-code="${c.code}"]`);
-                        if (row) {
-                            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            row.classList.add('selected');
+                        elemObj.budgetConcept = {
+                            code: c.code,
+                            price: c.price,
+                            summary: c.summary
+                        };
+                        const budgetEl = document.getElementById('v3dCardBudget');
+                        if (budgetEl) {
+                            budgetEl.textContent = `${c.code}: ${c.summary}`;
                         }
+                        const budgetPrice = document.getElementById('v3dBudgetPrice');
+                        if (budgetPrice) {
+                            budgetPrice.textContent = parseFloat(c.price || 0).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+                        }
+                        const label = document.getElementById('v3dSelectedLabel');
+                        if (label) label.textContent = `🎯 ${c.code}: ${c.summary}`;
                         break;
                     }
                 }
