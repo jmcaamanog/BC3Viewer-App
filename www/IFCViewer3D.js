@@ -29,157 +29,244 @@
         _categoriesMenuInitialized: false,
 
         /**
-         * Paleta ConTech de Tonos Azules Arquitectónicos y Estructurales
-         * Todos los elementos constructivos adoptan tonalidades armónicas de la gama azul/cian.
+         * Configuración Oficial de Estilo Blueprint ConTech
+         * - Geometría base: Azul único y uniforme más claro que el fondo oscuro (#0a0f1d).
+         * - Aristas: Líneas blancas nítidas con THREE.EdgesGeometry.
+         * - Vértices: Puntitos blancos circulares ligeramente más gruesos que las líneas.
+         */
+        BLUEPRINT_CONFIG: {
+            bodyColor: 0x1d4ed8,        // Azul Blueprint ConTech (#1d4ed8)
+            bodyHex: '#1d4ed8',
+            lineColor: 0xffffff,        // Líneas de aristas en blanco técnico puro
+            lineOpacity: 0.92,
+            vertexColor: 0xffffff,      // Vértices en puntito blanco destacado
+            vertexSize: 4.5,            // Ligeramente más grueso que la línea (4.5px en espacio pantalla)
+            edgesThreshold: 24          // Ángulo umbral de aristas para CAD limpio (24°)
+        },
+        _dotTexture: null,
+
+        /**
+         * Paleta ConTech de Elementos Constructivos
+         * Todos los elementos adoptan el tono azul Blueprint uniforme preservando su iconografía técnica.
          */
         CONTECH_BLUE_PALETTE: {
             'Muros y Cerramientos': {
-                color: 0x2563eb,        // Azul Real ConTech (#2563eb)
+                color: 0x1d4ed8,
                 name: 'Muros y Cerramientos',
                 icon: '🧱',
-                hex: '#2563eb'
+                hex: '#1d4ed8'
             },
             'Forjados y Pavimentos': {
-                color: 0x1e3a8a,        // Azul Marino Profundo (#1e3a8a)
+                color: 0x1d4ed8,
                 name: 'Forjados y Pavimentos',
                 icon: '📐',
-                hex: '#1e3a8a'
+                hex: '#1d4ed8'
             },
             'Estructura (Pilares)': {
-                color: 0x0ea5e9,        // Azul Eléctrico (#0ea5e9)
+                color: 0x1d4ed8,
                 name: 'Pilares',
                 icon: '🏛️',
-                hex: '#0ea5e9'
+                hex: '#1d4ed8'
             },
             'Estructura (Vigas)': {
-                color: 0x3b82f6,        // Azul Cobalto (#3b82f6)
+                color: 0x1d4ed8,
                 name: 'Vigas',
                 icon: '🏗️',
-                hex: '#3b82f6'
+                hex: '#1d4ed8'
             },
             'Estructura Auxiliar': {
-                color: 0x60a5fa,        // Azul Acero (#60a5fa)
+                color: 0x1d4ed8,
                 name: 'Estructura Auxiliar',
                 icon: '🔩',
-                hex: '#60a5fa'
+                hex: '#1d4ed8'
             },
             'Carpintería Exterior (Ventanas)': {
-                color: 0x38bdf8,        // Cian Cristalino (#38bdf8)
+                color: 0x1d4ed8,
                 name: 'Ventanas',
                 icon: '🪟',
-                transparent: true,
-                opacity: 0.42,
-                hex: '#38bdf8'
+                hex: '#1d4ed8'
             },
             'Vidrios y Paneles': {
-                color: 0x7dd3fc,        // Cian Cielo (#7dd3fc)
+                color: 0x1d4ed8,
                 name: 'Vidrios y Paneles',
                 icon: '🪟',
-                transparent: true,
-                opacity: 0.38,
-                hex: '#7dd3fc'
+                hex: '#1d4ed8'
             },
             'Carpintería Interior (Puertas)': {
-                color: 0x0284c7,        // Azul Cerúleo (#0284c7)
+                color: 0x1d4ed8,
                 name: 'Puertas',
                 icon: '🚪',
-                hex: '#0284c7'
+                hex: '#1d4ed8'
             },
             'Cubiertas': {
-                color: 0x172554,        // Azul Noche Ultra (#172554)
+                color: 0x1d4ed8,
                 name: 'Cubiertas',
                 icon: '🏠',
-                hex: '#172554'
+                hex: '#1d4ed8'
             },
             'Escaleras': {
-                color: 0x1d4ed8,        // Azul Zafiro (#1d4ed8)
+                color: 0x1d4ed8,
                 name: 'Escaleras',
                 icon: '🪜',
                 hex: '#1d4ed8'
             },
             'Tramos de Escalera': {
-                color: 0x1d4ed8,        // Azul Zafiro (#1d4ed8)
+                color: 0x1d4ed8,
                 name: 'Tramos de Escalera',
                 icon: '🪜',
                 hex: '#1d4ed8'
             },
             'Cerrajería y Barandillas': {
-                color: 0x22d3ee,        // Cian Neón Metálico (#22d3ee)
+                color: 0x1d4ed8,
                 name: 'Barandillas y Cerrajería',
                 icon: '🛡️',
-                hex: '#22d3ee'
+                hex: '#1d4ed8'
             },
             'Mobiliario y Equipamiento': {
-                color: 0x475569,        // Azul Pizarra (#475569)
+                color: 0x1d4ed8,
                 name: 'Mobiliario',
                 icon: '🛋️',
-                hex: '#475569'
+                hex: '#1d4ed8'
             },
             'Aparatos Sanitarios y Fontanería': {
-                color: 0x06b6d4,        // Turquesa ConTech (#06b6d4)
+                color: 0x1d4ed8,
                 name: 'Sanitarios y Fontanería',
                 icon: '🚿',
-                hex: '#06b6d4'
+                hex: '#1d4ed8'
             },
             'Instalaciones (Tuberías)': {
-                color: 0x0891b2,        // Cian Petróleo (#0891b2)
+                color: 0x1d4ed8,
                 name: 'Tuberías',
                 icon: '🚰',
-                hex: '#0891b2'
+                hex: '#1d4ed8'
             },
             'Instalaciones (Conductos)': {
-                color: 0x0e7490,        // Azul Océano (#0e7490)
+                color: 0x1d4ed8,
                 name: 'Conductos',
                 icon: '💨',
-                hex: '#0e7490'
+                hex: '#1d4ed8'
             },
             'Cimentaciones': {
-                color: 0x0f172a,        // Azul Abisal (#0f172a)
+                color: 0x1d4ed8,
                 name: 'Cimentaciones',
                 icon: '⚓',
-                hex: '#0f172a'
+                hex: '#1d4ed8'
             },
             'Revestimientos y Techos': {
-                color: 0x334155,        // Azul Ceniza (#334155)
+                color: 0x1d4ed8,
                 name: 'Revestimientos',
                 icon: '🎨',
-                hex: '#334155'
+                hex: '#1d4ed8'
             },
             'Parcela y Urbanización': {
-                color: 0x155e75,        // Azul Verdoso (#155e75)
+                color: 0x1d4ed8,
                 name: 'Parcela / Urbanización',
                 icon: '🌳',
-                hex: '#155e75'
+                hex: '#1d4ed8'
             },
             'Elementos Constructivos Varios': {
-                color: 0x1e40af,        // Azul ConTech (#1e40af)
+                color: 0x1d4ed8,
                 name: 'Elementos Varios',
                 icon: '📦',
-                hex: '#1e40af'
+                hex: '#1d4ed8'
             },
             'default': {
-                color: 0x1e40af,        // Azul ConTech (#1e40af)
+                color: 0x1d4ed8,
                 name: 'Otros Elementos',
                 icon: '📐',
-                hex: '#1e40af'
+                hex: '#1d4ed8'
             }
         },
 
         /**
-         * Obtiene la configuración de color de la paleta ConTech para una categoría
+         * Obtiene la configuración de color y metadatos de categoría para el estilo Blueprint
          */
         _getPaletteConfig: function (catName) {
-            if (!catName) return this.CONTECH_BLUE_PALETTE['default'];
-            if (this.CONTECH_BLUE_PALETTE[catName]) return this.CONTECH_BLUE_PALETTE[catName];
-
-            const lower = catName.toLowerCase();
-            for (const key in this.CONTECH_BLUE_PALETTE) {
-                if (key === 'default') continue;
-                if (lower.includes(key.toLowerCase()) || key.toLowerCase().includes(lower)) {
-                    return this.CONTECH_BLUE_PALETTE[key];
+            let base = this.CONTECH_BLUE_PALETTE['default'];
+            if (catName) {
+                if (this.CONTECH_BLUE_PALETTE[catName]) {
+                    base = this.CONTECH_BLUE_PALETTE[catName];
+                } else {
+                    const lower = catName.toLowerCase();
+                    for (const key in this.CONTECH_BLUE_PALETTE) {
+                        if (key === 'default') continue;
+                        if (lower.includes(key.toLowerCase()) || key.toLowerCase().includes(lower)) {
+                            base = this.CONTECH_BLUE_PALETTE[key];
+                            break;
+                        }
+                    }
                 }
             }
-            return this.CONTECH_BLUE_PALETTE['default'];
+            return {
+                name: base.name,
+                icon: base.icon,
+                color: this.BLUEPRINT_CONFIG.bodyColor,
+                hex: this.BLUEPRINT_CONFIG.bodyHex
+            };
+        },
+
+        /**
+         * Genera o reutiliza una textura circular para los vértices estilo blueprint
+         */
+        _getVertexDotTexture: function () {
+            if (this._dotTexture) return this._dotTexture;
+            try {
+                const THREE = window.THREE;
+                const canvas = document.createElement('canvas');
+                canvas.width = 32;
+                canvas.height = 32;
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, 32, 32);
+                ctx.beginPath();
+                ctx.arc(16, 16, 13, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+                this._dotTexture = new THREE.CanvasTexture(canvas);
+                return this._dotTexture;
+            } catch (e) {
+                return null;
+            }
+        },
+
+        /**
+         * Adjunta las aristas blancas (LineSegments) y los puntos de vértice blancos (Points)
+         * como hijos de la malla del subset para que sigan su visibilidad y transformaciones.
+         */
+        _attachBlueprintDecorations: function (mesh, planes = []) {
+            if (!mesh || !mesh.geometry) return;
+            const THREE = window.THREE;
+            try {
+                // 1. Aristas blancas limpias con EdgesGeometry
+                const edgesGeom = new THREE.EdgesGeometry(mesh.geometry, this.BLUEPRINT_CONFIG.edgesThreshold);
+                const lineMat = new THREE.LineBasicMaterial({
+                    color: this.BLUEPRINT_CONFIG.lineColor,
+                    transparent: true,
+                    opacity: this.BLUEPRINT_CONFIG.lineOpacity,
+                    clippingPlanes: planes,
+                    clipShadows: true
+                });
+                const edgesLine = new THREE.LineSegments(edgesGeom, lineMat);
+                edgesLine.name = 'blueprint-edges';
+                mesh.add(edgesLine);
+
+                // 2. Vértices como puntitos blancos circulares ligeramente más gruesos que la línea
+                const dotTex = this._getVertexDotTexture();
+                const pointsMat = new THREE.PointsMaterial({
+                    color: this.BLUEPRINT_CONFIG.vertexColor,
+                    size: this.BLUEPRINT_CONFIG.vertexSize,
+                    sizeAttenuation: false,
+                    map: dotTex || undefined,
+                    transparent: true,
+                    alphaTest: 0.35,
+                    clippingPlanes: planes,
+                    clipShadows: true
+                });
+                const vertexPoints = new THREE.Points(mesh.geometry, pointsMat);
+                vertexPoints.name = 'blueprint-points';
+                mesh.add(vertexPoints);
+            } catch (err) {
+                console.warn("IFCViewer3D: No se pudieron generar aristas/vértices blueprint:", err);
+            }
         },
 
         /**
@@ -384,8 +471,8 @@
                 this.ifcModel.visible = false;
                 this.scene.add(model);
 
-                // Construir los subsets por categoría con la paleta ConTech en tonos azules
-                if (loadingText) loadingText.textContent = 'Aplicando paleta ConTech azul y capas de elementos...';
+                // Construir los subsets por categoría con la estética Blueprint (azul uniforme, aristas blancas y vértices)
+                if (loadingText) loadingText.textContent = 'Generando visualización Blueprint (aristas y geometría)...';
                 await this._buildCategorySubsets(ifcData);
 
                 // Poblar y sincronizar el menú selector de elementos
@@ -468,6 +555,9 @@
                 color: 0x00f0ff,        // Cian neón eléctrico de alto contraste
                 emissive: 0x0284c7,     // Brillo radiante ConTech
                 emissiveIntensity: 0.65,
+                polygonOffset: true,
+                polygonOffsetFactor: -1, // Adelantar levemente para evitar z-fighting con la malla base
+                polygonOffsetUnits: -1,
                 transparent: true,
                 opacity: 0.92,
                 depthTest: true,
@@ -987,33 +1077,45 @@
                 m.needsUpdate = true;
             };
 
-            // Aplicar a cada subset por categoría en tonos azules
+            // Aplicar a cada subset por categoría y a todas sus aristas/vértices hijas
             Object.values(this.categorySubsets).forEach(sub => {
-                if (sub && sub.mesh && sub.mesh.material) {
-                    if (Array.isArray(sub.mesh.material)) {
-                        sub.mesh.material.forEach(setMat);
-                    } else {
-                        setMat(sub.mesh.material);
-                    }
+                if (sub && sub.mesh) {
+                    sub.mesh.traverse(child => {
+                        if (child && child.material) {
+                            if (Array.isArray(child.material)) {
+                                child.material.forEach(setMat);
+                            } else {
+                                setMat(child.material);
+                            }
+                        }
+                    });
                 }
             });
 
-            // Aplicar también al modelo base por seguridad
-            if (this.ifcModel && this.ifcModel.material) {
-                if (Array.isArray(this.ifcModel.material)) {
-                    this.ifcModel.material.forEach(setMat);
-                } else {
-                    setMat(this.ifcModel.material);
-                }
+            // Aplicar también al modelo base y sus hijos por seguridad
+            if (this.ifcModel) {
+                this.ifcModel.traverse(child => {
+                    if (child && child.material) {
+                        if (Array.isArray(child.material)) {
+                            child.material.forEach(setMat);
+                        } else {
+                            setMat(child.material);
+                        }
+                    }
+                });
             }
 
             // Si hay un subset resaltado activo, aplicarle también el plano de corte
-            if (this.highlightSubset && this.highlightSubset.material) {
-                if (Array.isArray(this.highlightSubset.material)) {
-                    this.highlightSubset.material.forEach(setMat);
-                } else {
-                    setMat(this.highlightSubset.material);
-                }
+            if (this.highlightSubset) {
+                this.highlightSubset.traverse(child => {
+                    if (child && child.material) {
+                        if (Array.isArray(child.material)) {
+                            child.material.forEach(setMat);
+                        } else {
+                            setMat(child.material);
+                        }
+                    }
+                });
             }
         },
 
@@ -1299,16 +1401,16 @@
                 });
             }
 
-            // 2. Crear subset para cada categoría con su material azul específico
+            // 2. Crear subset para cada categoría con su material azul uniforme y decoración blueprint
             for (const catName in categoriesMap) {
                 const catInfo = categoriesMap[catName];
                 if (catInfo.ids.length === 0) continue;
 
-                const cfg = catInfo.cfg;
                 const mat = new THREE.MeshLambertMaterial({
-                    color: cfg.color,
-                    transparent: Boolean(cfg.transparent),
-                    opacity: cfg.opacity !== undefined ? cfg.opacity : 1.0,
+                    color: this.BLUEPRINT_CONFIG.bodyColor,
+                    polygonOffset: true,
+                    polygonOffsetFactor: 1,
+                    polygonOffsetUnits: 1,
                     depthTest: true,
                     clippingPlanes: planes,
                     clipShadows: true,
@@ -1329,17 +1431,21 @@
                         if (subset.parent !== this.scene) {
                             this.scene.add(subset);
                         }
+
+                        // Añadir aristas blancas (LineSegments) y vértices en puntitos blancos (Points)
+                        this._attachBlueprintDecorations(subset, planes);
+
                         this.categorySubsets[catInfo.key] = {
                             key: catInfo.key,
                             name: catInfo.name,
                             icon: catInfo.icon,
-                            hex: catInfo.hex,
-                            color: cfg.color,
+                            hex: this.BLUEPRINT_CONFIG.bodyHex,
+                            color: this.BLUEPRINT_CONFIG.bodyColor,
                             ids: catInfo.ids,
                             mesh: subset,
                             material: mat,
-                            defaultOpacity: cfg.opacity !== undefined ? cfg.opacity : 1.0,
-                            defaultTransparent: Boolean(cfg.transparent),
+                            defaultOpacity: 1.0,
+                            defaultTransparent: false,
                             visible: true,
                             count: catInfo.ids.length
                         };
@@ -1365,11 +1471,11 @@
                             }
                         }
                         if (leftoverIds.length > 0) {
-                            const defCfg = this.CONTECH_BLUE_PALETTE['default'];
                             const defMat = new THREE.MeshLambertMaterial({
-                                color: defCfg.color,
-                                transparent: false,
-                                opacity: 1.0,
+                                color: this.BLUEPRINT_CONFIG.bodyColor,
+                                polygonOffset: true,
+                                polygonOffsetFactor: 1,
+                                polygonOffsetUnits: 1,
                                 depthTest: true,
                                 clippingPlanes: planes,
                                 clipShadows: true,
@@ -1387,12 +1493,13 @@
                                 if (defSubset.parent !== this.scene) {
                                     this.scene.add(defSubset);
                                 }
+                                this._attachBlueprintDecorations(defSubset, planes);
                                 this.categorySubsets['__otros__'] = {
                                     key: '__otros__',
                                     name: 'Otros Elementos',
                                     icon: '📦',
-                                    hex: defCfg.hex,
-                                    color: defCfg.color,
+                                    hex: this.BLUEPRINT_CONFIG.bodyHex,
+                                    color: this.BLUEPRINT_CONFIG.bodyColor,
                                     ids: leftoverIds,
                                     mesh: defSubset,
                                     material: defMat,
@@ -1409,21 +1516,26 @@
                 console.warn("IFCViewer3D: Verificación de elementos residuales:", resErr);
             }
 
-            // 4. Fallback de seguridad: si no se generó ningún subset, mostrar el modelo base en azul
+            // 4. Fallback de seguridad: si no se generó ningún subset, mostrar el modelo base en blueprint
             if (Object.keys(this.categorySubsets).length === 0) {
-                console.warn("IFCViewer3D: No se generaron subsets por categoría. Activando modelo base con material azul arquitectónico.");
+                console.warn("IFCViewer3D: No se generaron subsets por categoría. Activando modelo base con estilo Blueprint.");
                 this.ifcModel.visible = true;
                 const fallbackMat = new THREE.MeshLambertMaterial({
-                    color: 0x2563eb,
+                    color: this.BLUEPRINT_CONFIG.bodyColor,
+                    polygonOffset: true,
+                    polygonOffsetFactor: 1,
+                    polygonOffsetUnits: 1,
                     clippingPlanes: planes,
+                    clipShadows: true,
                     side: THREE.DoubleSide
                 });
                 this.ifcModel.material = fallbackMat;
+                this._attachBlueprintDecorations(this.ifcModel, planes);
             }
         },
 
         /**
-         * Limpia todos los subsets de categoría de la escena
+         * Limpia todos los subsets de categoría y sus decoraciones blueprint de la escena
          */
         _clearCategorySubsets: function () {
             if (!this.categorySubsets) {
@@ -1433,6 +1545,18 @@
             Object.values(this.categorySubsets).forEach(sub => {
                 if (sub && sub.mesh) {
                     try {
+                        sub.mesh.traverse(child => {
+                            if (child !== sub.mesh) {
+                                if (child.geometry) child.geometry.dispose();
+                                if (child.material) {
+                                    if (Array.isArray(child.material)) {
+                                        child.material.forEach(m => m.dispose());
+                                    } else {
+                                        child.material.dispose();
+                                    }
+                                }
+                            }
+                        });
                         if (this.scene) this.scene.remove(sub.mesh);
                         if (sub.mesh.geometry) sub.mesh.geometry.dispose();
                         if (sub.mesh.material) {
