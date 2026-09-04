@@ -7626,21 +7626,20 @@ body.dark-theme .partida-action-card,
     font-weight: 500;
 }
 /* =============================================================================
-   AVATAR DE AUTOR CON BRILLO PERIMETRAL (SOLO IMAGEN PNG)
+   AVATAR DE AUTOR
    ============================================================================= */
 .v3d-author-badge {
     position: absolute;
-    bottom: 20px;
-    left: 20px;
-    z-index: 30;
-    display: inline-flex;
+    bottom: 24px;
+    right: 24px;
+    z-index: 90;
+    display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
     margin: 0;
     background: transparent;
     border: none;
-    border-radius: 50%;
     text-decoration: none;
     cursor: pointer;
     outline: none;
@@ -7654,17 +7653,20 @@ body.dark-theme .partida-action-card,
 .v3d-author-avatar {
     width: 48px;
     height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #38bdf8;
-    box-shadow: 0 0 16px rgba(56, 189, 248, 0.75), 0 0 32px rgba(14, 165, 233, 0.45);
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    object-fit: contain;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.45));
+    transition: filter 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     display: block;
 }
 
 .v3d-author-badge:hover .v3d-author-avatar {
-    border-color: #67e8f9;
-    box-shadow: 0 0 24px rgba(56, 189, 248, 0.95), 0 0 48px rgba(56, 189, 248, 0.65);
+    border: none !important;
+    box-shadow: none !important;
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.65));
 }
 
 /* =============================================================================
@@ -8306,6 +8308,164 @@ body.dark-theme .partida-action-card,
     flex-shrink: 0;
     box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
 }
+
+/* =============================================================================
+   MENÚ CONTEXTUAL FLOTANTE 3D (ACCIONES DE ELEMENTO: AISLAR, OCULTAR, CENTRAR, RESTAURAR)
+   ============================================================================= */
+.v3d-context-menu {
+    position: absolute;
+    z-index: 120;
+    display: flex;
+    flex-direction: column;
+    min-width: 230px;
+    max-width: 280px;
+    background: rgba(15, 23, 42, 0.94);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 12px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7), 0 0 1px rgba(56, 189, 248, 0.5);
+    padding: 8px;
+    gap: 3px;
+    user-select: none;
+    animation: v3dCtxFadeIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: auto;
+}
+
+@keyframes v3dCtxFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.94) translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.v3d-ctx-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px 6px 6px;
+}
+
+.v3d-ctx-icon {
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+
+.v3d-ctx-title-box {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex: 1;
+    min-width: 0;
+}
+
+.v3d-ctx-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #f8fafc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+.v3d-ctx-sub {
+    font-size: 0.65rem;
+    color: #38bdf8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+}
+
+.v3d-ctx-close {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 3px 6px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: all 0.15s ease;
+}
+
+.v3d-ctx-close:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.v3d-ctx-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 3px 0;
+}
+
+.v3d-ctx-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 7px 10px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: #e2e8f0;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.v3d-ctx-item:hover {
+    background: rgba(56, 189, 248, 0.14);
+    border-color: rgba(56, 189, 248, 0.35);
+    transform: translateX(2px);
+}
+
+.v3d-ctx-item:active {
+    transform: scale(0.98);
+}
+
+.v3d-ctx-item-icon {
+    font-size: 1.05rem;
+    width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.v3d-ctx-item-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.v3d-ctx-item-label {
+    font-size: 0.77rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    line-height: 1.25;
+}
+
+.v3d-ctx-item-desc {
+    font-size: 0.63rem;
+    color: #94a3b8;
+    line-height: 1.2;
+    margin-top: 1px;
+}
+
+.v3d-ctx-restore:hover {
+    background: rgba(16, 185, 129, 0.14);
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+.v3d-ctx-restore:hover .v3d-ctx-item-label {
+    color: #a7f3d0;
+}
+
 
 
 

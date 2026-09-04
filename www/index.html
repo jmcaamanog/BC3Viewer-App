@@ -716,7 +716,49 @@
                         <span>Cargando geometría 3D del modelo...</span>
                     </div>
 
-                    <!-- Avatar Oficial de Autor con Brillo Perimetral ConTech (Solo Imagen PNG) -->
+                    <!-- Menú Flotante Contextual de Acciones para Elemento Seleccionado -->
+                    <div id="v3dContextMenu" class="v3d-context-menu" style="display: none;">
+                        <div class="v3d-ctx-header">
+                            <span id="v3dCtxIcon" class="v3d-ctx-icon">📐</span>
+                            <div class="v3d-ctx-title-box">
+                                <span id="v3dCtxTitle" class="v3d-ctx-title">Elemento Seleccionado</span>
+                                <span id="v3dCtxSubtitle" class="v3d-ctx-sub">Opciones 3D</span>
+                            </div>
+                            <button type="button" id="v3dCtxCloseBtn" class="v3d-ctx-close" title="Cerrar menú">✕</button>
+                        </div>
+                        <div class="v3d-ctx-divider"></div>
+                        <button type="button" id="v3dCtxIsolateBtn" class="v3d-ctx-item">
+                            <span class="v3d-ctx-item-icon">👁️‍🗨️</span>
+                            <div class="v3d-ctx-item-text">
+                                <span class="v3d-ctx-item-label">Aislar elemento</span>
+                                <span class="v3d-ctx-item-desc">Ocultar todo lo demás</span>
+                            </div>
+                        </button>
+                        <button type="button" id="v3dCtxHideBtn" class="v3d-ctx-item">
+                            <span class="v3d-ctx-item-icon">🚫</span>
+                            <div class="v3d-ctx-item-text">
+                                <span class="v3d-ctx-item-label">Ocultar elemento</span>
+                                <span class="v3d-ctx-item-desc">Quitar temporalmente de la vista</span>
+                            </div>
+                        </button>
+                        <button type="button" id="v3dCtxFocusBtn" class="v3d-ctx-item">
+                            <span class="v3d-ctx-item-icon">🎯</span>
+                            <div class="v3d-ctx-item-text">
+                                <span class="v3d-ctx-item-label">Centrar elemento</span>
+                                <span class="v3d-ctx-item-desc">Enfocar cámara orbital</span>
+                            </div>
+                        </button>
+                        <div class="v3d-ctx-divider"></div>
+                        <button type="button" id="v3dCtxRestoreBtn" class="v3d-ctx-item v3d-ctx-restore">
+                            <span class="v3d-ctx-item-icon">🔄</span>
+                            <div class="v3d-ctx-item-text">
+                                <span class="v3d-ctx-item-label">Restaurar vista</span>
+                                <span class="v3d-ctx-item-desc">Mostrar todo el modelo</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- Avatar Oficial de Autor (Solo Imagen PNG) -->
                     <a href="https://jmcaamanog.pages.dev/" target="_blank" rel="noopener" class="v3d-author-badge" id="v3dAuthorBadge" title="Jose Manuel Caamaño González | Arquitecto Técnico & BIM Manager">
                         <img src="img/jmcaamanog.png" class="v3d-author-avatar" alt="Jose Manuel Caamaño González" />
                     </a>

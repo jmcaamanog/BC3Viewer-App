@@ -18,6 +18,10 @@
         ifcModel: null,
         highlightSubset: null,
         categorySubsets: {},
+        hiddenElementIds: new Set(),
+        isolatedSubset: null,
+        isIsolated: false,
+        isolatedExpressId: null,
         currentBuffer: null,
         currentIfcData: null,
         activeClippingPlane: null,
@@ -27,6 +31,7 @@
         selectedElement: null,
         onElementClickedCallback: null,
         _categoriesMenuInitialized: false,
+        _contextMenuInitialized: false,
 
         /**
          * Configuración Oficial de Estilo Blueprint ConTech
@@ -347,10 +352,11 @@
                 this.ifcLoader.ifcManager.setWasmPath('./');
             }
 
-            // 8. Eventos de Raycasting, Tarjeta HUD y Menú de Elementos
+            // 8. Eventos de Raycasting, Tarjeta HUD, Menú de Elementos y Menú Contextual
             this._setupRaycasting();
             this._setupHudEvents();
             this._setupCategoriesMenuUI();
+            this._setupContextMenuUI();
 
             // 9. Redimensionamiento y bucle de renderizado
             window.addEventListener('resize', () => this.onResize());
@@ -423,6 +429,11 @@
                 this.ifcModel = null;
             }
             this._clearCategorySubsets();
+            this._clearIsolatedSubset();
+            if (this.hiddenElementIds) this.hiddenElementIds.clear();
+            this.isIsolated = false;
+            this.isolatedExpressId = null;
+            this.hideContextMenu();
             this.resetHighlight();
             this.hideElementCard();
             this.applyClippingPlane(null);
@@ -642,6 +653,7 @@
             this.selectedExpressId = null;
             this.selectedElement = null;
             this.hideElementCard();
+            this.hideContextMenu();
 
             const label = document.getElementById('v3dSelectedLabel');
             if (label) label.textContent = 'Haz clic en un elemento para inspeccionarlo';
@@ -1249,10 +1261,15 @@
 
                 raycaster.setFromCamera(mouse, this.camera);
 
-                // Intersectar los subsets de categorías visibles (ignorar suelo grid, luces y categorías ocultas)
-                const activeMeshes = Object.values(this.categorySubsets)
-                    .filter(sub => sub && sub.mesh && sub.mesh.visible)
-                    .map(sub => sub.mesh);
+                // Intersectar los subsets de categorías visibles o el subset aislado
+                let activeMeshes = [];
+                if (this.isIsolated && this.isolatedSubset && this.isolatedSubset.visible) {
+                    activeMeshes = [this.isolatedSubset];
+                } else {
+                    activeMeshes = Object.values(this.categorySubsets)
+                        .filter(sub => sub && sub.mesh && sub.mesh.visible)
+                        .map(sub => sub.mesh);
+                }
 
                 let intersects = [];
                 if (activeMeshes.length > 0) {
@@ -1264,6 +1281,7 @@
                 // Si no hay intersección (clic en el fondo/espacio vacío): DESELECCIONAR
                 if (intersects.length === 0) {
                     this.resetHighlight();
+                    this.hideContextMenu();
                     return;
                 }
 
@@ -1278,12 +1296,6 @@
                 }
 
                 if (id === null || id === undefined) return;
-
-                // Si el usuario hace clic sobre el elemento que ya está seleccionado: DESELECCIONAR
-                if (this.selectedExpressId === id) {
-                    this.resetHighlight();
-                    return;
-                }
 
                 // 1. Resaltar en 3D en cian neón (limpiando cualquier selección anterior)
                 this.highlightElement(id, false);
@@ -1312,7 +1324,10 @@
                 // 3. Mostrar el panel lateral de propiedades y atributos
                 this.showElementCard(elemObj, id);
 
-                // 4. Disparar callback de integración con presupuesto
+                // 4. Mostrar el menú flotante contextual junto a la posición del ratón
+                this.showContextMenu(e.clientX, e.clientY, elemObj, id);
+
+                // 5. Disparar callback de integración con presupuesto
                 if (typeof this.onElementClickedCallback === 'function') {
                     this.onElementClickedCallback(elemObj, id);
                 }
@@ -1732,6 +1747,429 @@
                 } else {
                     labelBtn.textContent = `Elementos (${visibleCount}/${totalCount})`;
                 }
+            }
+        },
+
+        /**
+         * Resuelve el ExpressId numérico a partir de un ID o GlobalId
+         */
+        _resolveExpressId: function (idOrGlobalId) {
+            if (idOrGlobalId === null || idOrGlobalId === undefined) return null;
+            if (typeof idOrGlobalId === 'number' && !isNaN(idOrGlobalId)) return idOrGlobalId;
+            if (this.globalIdToElementMap && this.globalIdToElementMap[idOrGlobalId]) {
+                const elem = this.globalIdToElementMap[idOrGlobalId];
+                return parseInt(elem.id || elem.expressId, 10);
+            }
+            if (this.expressIdToElementMap && this.expressIdToElementMap[idOrGlobalId]) {
+                const elem = this.expressIdToElementMap[idOrGlobalId];
+                return parseInt(elem.id || elem.expressId, 10);
+            }
+            const parsed = parseInt(idOrGlobalId, 10);
+            return isNaN(parsed) ? null : parsed;
+        },
+
+        /**
+         * Obtiene un icono representativo para el elemento
+         */
+        _getElementIcon: function (elemObj) {
+            if (!elemObj) return '📐';
+            if (elemObj.icon) return elemObj.icon;
+            const str = `${elemObj.name || ''} ${elemObj.ifcType || ''} ${elemObj.category || ''}`.toLowerCase();
+            if (str.includes('wall') || str.includes('muro') || str.includes('tabique')) return '🧱';
+            if (str.includes('slab') || str.includes('forjado') || str.includes('suelo') || str.includes('losa') || str.includes('pavimento')) return '📐';
+            if (str.includes('column') || str.includes('pilar')) return '🏛️';
+            if (str.includes('beam') || str.includes('viga')) return '🏗️';
+            if (str.includes('window') || str.includes('ventana') || str.includes('vidrio') || str.includes('cristal')) return '🪟';
+            if (str.includes('door') || str.includes('puerta')) return '🚪';
+            if (str.includes('roof') || str.includes('cubierta') || str.includes('tejado')) return '🏠';
+            if (str.includes('stair') || str.includes('escalera')) return '🪜';
+            if (str.includes('railing') || str.includes('barandilla') || str.includes('cerrajeria')) return '🛡️';
+            if (str.includes('furn') || str.includes('mobiliario')) return '🛋️';
+            if (str.includes('flow') || str.includes('sanit') || str.includes('fontan')) return '🚿';
+            if (str.includes('pipe') || str.includes('tuberi')) return '🚰';
+            if (str.includes('duct') || str.includes('conduct')) return '💨';
+            return '📦';
+        },
+
+        /**
+         * Muestra el menú contextual flotante junto a las coordenadas del ratón
+         */
+        showContextMenu: function (clientX, clientY, elemObj, expressId) {
+            const menu = document.getElementById('v3dContextMenu');
+            if (!menu || !this.container) return;
+
+            this._setupContextMenuUI();
+
+            const titleEl = document.getElementById('v3dCtxTitle');
+            const subEl = document.getElementById('v3dCtxSubtitle');
+            const iconEl = document.getElementById('v3dCtxIcon');
+
+            const name = elemObj ? (elemObj.name || `Elemento #${expressId}`) : `Elemento #${expressId}`;
+            const ifcType = elemObj ? (elemObj.ifcType || elemObj.category || 'Elemento BIM') : 'Elemento BIM';
+            const icon = this._getElementIcon(elemObj);
+
+            if (titleEl) titleEl.textContent = name;
+            if (subEl) subEl.textContent = `${ifcType} · #${expressId}`;
+            if (iconEl) iconEl.textContent = icon;
+
+            // Calcular posición respecto al contenedor relativo del canvas
+            const containerRect = this.container.getBoundingClientRect();
+            let posX = clientX - containerRect.left + 14;
+            let posY = clientY - containerRect.top + 14;
+
+            const menuWidth = 240;
+            const menuHeight = 225;
+
+            if (posX + menuWidth > containerRect.width) {
+                posX = Math.max(12, clientX - containerRect.left - menuWidth - 14);
+            }
+            if (posY + menuHeight > containerRect.height) {
+                posY = Math.max(12, clientY - containerRect.top - menuHeight - 14);
+            }
+
+            menu.style.left = `${Math.round(posX)}px`;
+            menu.style.top = `${Math.round(posY)}px`;
+            menu.style.display = 'flex';
+        },
+
+        /**
+         * Oculta el menú contextual flotante
+         */
+        hideContextMenu: function () {
+            const menu = document.getElementById('v3dContextMenu');
+            if (menu) menu.style.display = 'none';
+        },
+
+        /**
+         * Configura los eventos del menú contextual flotante
+         */
+        _setupContextMenuUI: function () {
+            if (this._contextMenuInitialized) return;
+            this._contextMenuInitialized = true;
+
+            const menu = document.getElementById('v3dContextMenu');
+            const closeBtn = document.getElementById('v3dCtxCloseBtn');
+            const isolateBtn = document.getElementById('v3dCtxIsolateBtn');
+            const hideBtn = document.getElementById('v3dCtxHideBtn');
+            const focusBtn = document.getElementById('v3dCtxFocusBtn');
+            const restoreBtn = document.getElementById('v3dCtxRestoreBtn');
+
+            if (!menu) return;
+
+            menu.addEventListener('pointerdown', (e) => e.stopPropagation());
+            menu.addEventListener('click', (e) => e.stopPropagation());
+
+            if (closeBtn) {
+                closeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    this.hideContextMenu();
+                };
+            }
+
+            if (isolateBtn) {
+                isolateBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (this.selectedExpressId) this.isolateElement(this.selectedExpressId);
+                };
+            }
+
+            if (hideBtn) {
+                hideBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (this.selectedExpressId) this.hideElement(this.selectedExpressId);
+                };
+            }
+
+            if (focusBtn) {
+                focusBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (this.selectedExpressId) this.focusElement(this.selectedExpressId);
+                };
+            }
+
+            if (restoreBtn) {
+                restoreBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    this.restoreView();
+                };
+            }
+
+            // Cerrar menú contextual si se hace clic fuera en cualquier parte del documento
+            document.addEventListener('pointerdown', (e) => {
+                if (!e.target.closest('#v3dContextMenu') && menu.style.display !== 'none') {
+                    this.hideContextMenu();
+                }
+            });
+        },
+
+        /**
+         * Enfoca y centra la cámara orbital sobre el elemento
+         */
+        focusElement: function (idOrGlobalId) {
+            let expressId = this._resolveExpressId(idOrGlobalId) || this.selectedExpressId;
+            if (!expressId || !this.ifcModel || !this.camera || !this.controls) return;
+
+            if (!this.highlightSubset || this.selectedExpressId !== expressId) {
+                this.highlightElement(expressId, false);
+            }
+
+            const targetMesh = this.highlightSubset || (this.isolatedSubset && this.isIsolated ? this.isolatedSubset : null);
+
+            if (targetMesh) {
+                const THREE = window.THREE;
+                const box = new THREE.Box3().setFromObject(targetMesh);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+
+                if (!isNaN(center.x) && !isNaN(center.y) && !isNaN(center.z)) {
+                    const maxDim = Math.max(size.x, size.y, size.z, 2.0);
+                    const fov = this.camera.fov * (Math.PI / 180);
+                    let cameraDist = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 2.2;
+                    if (isNaN(cameraDist) || cameraDist < 4) cameraDist = 8;
+
+                    const dir = this.camera.position.clone().sub(this.controls.target).normalize();
+                    if (dir.lengthSq() === 0) dir.set(1, 1, 1).normalize();
+
+                    this.camera.position.copy(center.clone().add(dir.multiplyScalar(cameraDist)));
+                    this.camera.lookAt(center);
+                    this.controls.target.copy(center);
+                    this.controls.update();
+                }
+            }
+
+            this.hideContextMenu();
+        },
+
+        /**
+         * Aísla el elemento seleccionado ocultando todo lo demás
+         */
+        isolateElement: function (idOrGlobalId) {
+            let expressId = this._resolveExpressId(idOrGlobalId) || this.selectedExpressId;
+            if (!expressId || !this.ifcModel || !this.ifcLoader || !this.ifcLoader.ifcManager) return;
+
+            const elemObj = this.expressIdToElementMap[expressId] || this.selectedElement;
+
+            // 1. Limpiar cualquier aislamiento previo
+            this._clearIsolatedSubset();
+
+            // 2. Ocultar todas las categorías del modelo
+            Object.values(this.categorySubsets).forEach(sub => {
+                if (sub && sub.mesh) {
+                    sub.mesh.visible = false;
+                }
+            });
+
+            // 3. Crear subset exclusivo para el elemento aislado con estilo Blueprint
+            const THREE = window.THREE;
+            const planes = this.activeClippingPlane ? [this.activeClippingPlane] : [];
+            const isolatedMat = new THREE.MeshLambertMaterial({
+                color: this.BLUEPRINT_CONFIG.bodyColor,
+                polygonOffset: true,
+                polygonOffsetFactor: 1,
+                polygonOffsetUnits: 1,
+                depthTest: true,
+                clippingPlanes: planes,
+                clipShadows: true,
+                side: THREE.DoubleSide
+            });
+
+            try {
+                this.isolatedSubset = this.ifcLoader.ifcManager.createSubset({
+                    modelID: this.ifcModel.modelID,
+                    ids: [expressId],
+                    scene: this.scene,
+                    material: isolatedMat,
+                    removePrevious: true,
+                    customID: 'active-isolated-subset'
+                });
+
+                if (this.isolatedSubset) {
+                    if (this.isolatedSubset.parent !== this.scene) {
+                        this.scene.add(this.isolatedSubset);
+                    }
+                    this._attachBlueprintDecorations(this.isolatedSubset, planes);
+                }
+            } catch (err) {
+                console.warn("IFCViewer3D: Error creando subset aislado:", err);
+            }
+
+            this.isIsolated = true;
+            this.isolatedExpressId = expressId;
+
+            // 4. Centrar y enfocar en el elemento
+            this.focusElement(expressId);
+
+            // 5. Ocultar menú contextual
+            this.hideContextMenu();
+
+            // 6. Actualizar barra de información
+            const label = document.getElementById('v3dSelectedLabel');
+            if (label) {
+                const name = elemObj ? elemObj.name : `Elemento #${expressId}`;
+                label.textContent = `👁️‍🗨️ Elemento Aislado: ${name} (Pulsa 'Restaurar vista' para volver)`;
+            }
+        },
+
+        /**
+         * Oculta el elemento específico de la escena
+         */
+        hideElement: function (idOrGlobalId) {
+            let expressId = this._resolveExpressId(idOrGlobalId) || this.selectedExpressId;
+            if (!expressId || !this.ifcModel) return;
+
+            this.hiddenElementIds.add(expressId);
+
+            // Si estaba en modo aislado este elemento y se oculta, restaurar vista
+            if (this.isIsolated && this.isolatedExpressId === expressId) {
+                this.restoreView();
+                return;
+            }
+
+            // Buscar categoría correspondiente y reconstruir sin este elemento
+            let targetCatKey = null;
+            for (const key in this.categorySubsets) {
+                const cat = this.categorySubsets[key];
+                if (cat && cat.ids && cat.ids.includes(expressId)) {
+                    targetCatKey = key;
+                    break;
+                }
+            }
+
+            if (targetCatKey) {
+                const cat = this.categorySubsets[targetCatKey];
+                const remainingIds = cat.ids.filter(id => !this.hiddenElementIds.has(id));
+                if (remainingIds.length === 0) {
+                    cat.mesh.visible = false;
+                } else {
+                    this._rebuildCategorySubset(targetCatKey, remainingIds);
+                }
+            }
+
+            // Deseleccionar si coincide con el elemento activo
+            if (this.selectedExpressId === expressId) {
+                this.resetHighlight();
+            }
+
+            this.hideContextMenu();
+
+            const label = document.getElementById('v3dSelectedLabel');
+            if (label) {
+                label.textContent = `🚫 Elemento #${expressId} ocultado (${this.hiddenElementIds.size} ocultados · Pulsa 'Restaurar vista' para ver todo)`;
+            }
+        },
+
+        /**
+         * Reconstruye un subset de categoría filtrando IDs ocultos
+         */
+        _rebuildCategorySubset: function (catKey, remainingIds) {
+            const cat = this.categorySubsets[catKey];
+            if (!cat || !this.ifcModel || !this.ifcLoader || !this.ifcLoader.ifcManager) return;
+
+            const THREE = window.THREE;
+            const planes = this.activeClippingPlane ? [this.activeClippingPlane] : [];
+
+            // Limpiar geometrías hijas previas (aristas y puntos)
+            if (cat.mesh) {
+                cat.mesh.traverse(child => {
+                    if (child !== cat.mesh) {
+                        if (child.geometry) child.geometry.dispose();
+                        if (child.material) {
+                            if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                            else child.material.dispose();
+                        }
+                    }
+                });
+                while (cat.mesh.children.length > 0) {
+                    cat.mesh.remove(cat.mesh.children[0]);
+                }
+            }
+
+            try {
+                const newSubset = this.ifcLoader.ifcManager.createSubset({
+                    modelID: this.ifcModel.modelID,
+                    ids: remainingIds,
+                    scene: this.scene,
+                    material: cat.material,
+                    removePrevious: true,
+                    customID: `cat_${catKey}`
+                });
+
+                if (newSubset) {
+                    cat.mesh = newSubset;
+                    cat.mesh.visible = cat.visible;
+                    this._attachBlueprintDecorations(newSubset, planes);
+                }
+            } catch (e) {
+                console.warn(`IFCViewer3D: Error reconstruyendo subset ${catKey}:`, e);
+            }
+        },
+
+        /**
+         * Limpia el subset aislado activo
+         */
+        _clearIsolatedSubset: function () {
+            if (this.isolatedSubset) {
+                try {
+                    if (this.ifcModel && this.ifcLoader && this.ifcLoader.ifcManager) {
+                        this.ifcLoader.ifcManager.removeSubset(this.ifcModel.modelID, this.scene, 'active-isolated-subset');
+                    }
+                    this.isolatedSubset.traverse(child => {
+                        if (child !== this.isolatedSubset) {
+                            if (child.geometry) child.geometry.dispose();
+                            if (child.material) {
+                                if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                                else child.material.dispose();
+                            }
+                        }
+                    });
+                    this.scene.remove(this.isolatedSubset);
+                    if (this.isolatedSubset.geometry) this.isolatedSubset.geometry.dispose();
+                    if (this.isolatedSubset.material) {
+                        if (Array.isArray(this.isolatedSubset.material)) this.isolatedSubset.material.forEach(m => m.dispose());
+                        else this.isolatedSubset.material.dispose();
+                    }
+                } catch (e) { }
+                this.isolatedSubset = null;
+            }
+        },
+
+        /**
+         * Restaura la vista mostrando todo el modelo (cancela aislamientos y desoculta elementos)
+         */
+        restoreView: function () {
+            // 1. Limpiar modo aislado
+            this._clearIsolatedSubset();
+            this.isIsolated = false;
+            this.isolatedExpressId = null;
+
+            // 2. Si había elementos individuales ocultados, reconstruir las categorías con sus IDs originales completos
+            if (this.hiddenElementIds && this.hiddenElementIds.size > 0) {
+                this.hiddenElementIds.clear();
+                for (const catKey in this.categorySubsets) {
+                    const cat = this.categorySubsets[catKey];
+                    if (cat && cat.ids && cat.ids.length > 0) {
+                        this._rebuildCategorySubset(catKey, cat.ids);
+                    }
+                }
+            }
+
+            // 3. Restaurar visibilidad de todas las categorías
+            this.setAllCategoriesVisibility(true);
+
+            // 4. Restaurar plano de corte completo
+            const storeySelect = document.getElementById('v3dStoreySelect');
+            if (storeySelect) storeySelect.value = 'all';
+            this.applyClippingPlane(null);
+
+            // 5. Encuadrar vista completa
+            this.fitToView();
+
+            // 6. Ocultar menú contextual
+            this.hideContextMenu();
+
+            const label = document.getElementById('v3dSelectedLabel');
+            if (label) {
+                label.textContent = 'Vista restaurada: Mostrando todo el modelo';
             }
         }
     };
