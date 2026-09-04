@@ -34,6 +34,7 @@
         onElementClickedCallback: null,
         _categoriesMenuInitialized: false,
         _contextMenuInitialized: false,
+        _loadSessionId: 0,
 
         /**
          * Configuración Oficial de Estilo Blueprint ConTech
@@ -383,6 +384,9 @@
          * Purga y descarga completamente el modelo 3D activo y libera toda la memoria en GPU y WebAssembly
          */
         unloadModel: function () {
+            // Incrementar sesión de carga para invalidar inmediatamente cualquier carga asíncrona en curso
+            this._loadSessionId = (this._loadSessionId || 0) + 1;
+
             // 1. Limpiar subsets y decoraciones blueprint de categorías
             this._clearCategorySubsets();
             this._clearIsolatedSubset();
@@ -391,27 +395,63 @@
             this.hideElementCard();
             this.applyClippingPlane(null);
 
-            // 2. Cerrar modelo en Web-IFC si existe y liberar geometría
-            if (this.ifcModel) {
-                try {
-                    if (this.ifcLoader && this.ifcLoader.ifcManager && typeof this.ifcLoader.ifcManager.close === 'function') {
-                        if (this.ifcModel.modelID !== undefined) {
-                            this.ifcLoader.ifcManager.close(this.ifcModel.modelID);
-                        }
+            // 2. Cerrar modelo en Web-IFC y liberar subsets internos de web-ifc-three
+            try {
+                if (this.ifcLoader && this.ifcLoader.ifcManager) {
+                    if (this.ifcLoader.ifcManager.subsets && typeof this.ifcLoader.ifcManager.subsets.dispose === 'function') {
+                        this.ifcLoader.ifcManager.subsets.dispose();
                     }
-                    if (this.scene) {
-                        this.scene.remove(this.ifcModel);
+                    if (this.ifcModel && this.ifcModel.modelID !== undefined && typeof this.ifcLoader.ifcManager.close === 'function') {
+                        this.ifcLoader.ifcManager.close(this.ifcModel.modelID, this.scene);
                     }
-                    if (this.ifcModel.geometry) {
-                        this.ifcModel.geometry.dispose();
-                    }
-                } catch (e) {
-                    console.warn("IFCViewer3D: Error al purgar ifcModel:", e);
                 }
-                this.ifcModel = null;
+            } catch (closeErr) {
+                console.warn("IFCViewer3D: Error cerrando modelo en ifcManager:", closeErr);
             }
 
-            // 3. Resetear variables y mapas de memoria
+            // 3. Purga exhaustiva de la escena Three.js: eliminar y desechar TODO excepto luces y GridHelper
+            if (this.scene) {
+                const THREE = window.THREE;
+                for (let i = this.scene.children.length - 1; i >= 0; i--) {
+                    const child = this.scene.children[i];
+                    // Mantener únicamente luces y la cuadrícula de fondo
+                    if (child.isLight || (THREE && child instanceof THREE.GridHelper) || child.name === 'grid-helper') {
+                        continue;
+                    }
+                    this.scene.remove(child);
+                    if (child.traverse) {
+                        child.traverse(obj => {
+                            if (obj.geometry) obj.geometry.dispose();
+                            if (obj.material) {
+                                if (Array.isArray(obj.material)) {
+                                    obj.material.forEach(m => m && m.dispose && m.dispose());
+                                } else if (obj.material && obj.material.dispose) {
+                                    obj.material.dispose();
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+            this.ifcModel = null;
+            this.highlightSubset = null;
+            this.isolatedSubset = null;
+            this.categorySubsets = {};
+
+            // 4. Re-instanciar el IFCLoader para asegurar aislamiento total de memoria WebAssembly
+            try {
+                const IFCLoader = window.IFCLoader;
+                if (IFCLoader) {
+                    this.ifcLoader = new IFCLoader();
+                    if (this.ifcLoader.ifcManager) {
+                        this.ifcLoader.ifcManager.setWasmPath('./');
+                    }
+                }
+            } catch (ldrErr) {
+                console.warn("IFCViewer3D: Error reiniciando IFCLoader:", ldrErr);
+            }
+
+            // 5. Resetear variables y mapas de memoria
             this.currentBuffer = null;
             this.currentIfcData = null;
             this.currentModelKey = null;
@@ -422,7 +462,7 @@
             this.isIsolated = false;
             this.isolatedExpressId = null;
 
-            // 4. Limpiar componentes de interfaz del visor
+            // 6. Limpiar componentes de interfaz del visor
             const storeySelect = document.getElementById('v3dStoreySelect');
             if (storeySelect) {
                 storeySelect.innerHTML = '<option value="all">🏢 Edificio Completo (Todas las Plantas)</option>';
@@ -437,11 +477,11 @@
             const selLabel = document.getElementById('v3dSelectedLabel');
             if (selLabel) selLabel.textContent = 'Haz clic en un elemento para inspeccionarlo';
 
-            // 5. Renderizar escena vacía
+            // 7. Renderizar escena vacía
             if (this.renderer && this.scene && this.camera) {
                 this.renderer.render(this.scene, this.camera);
             }
-            console.log("IFCViewer3D: Modelo purgado y memoria liberada con éxito.");
+            console.log("IFCViewer3D: Purga total de modelo y memoria completada.");
         },
 
         /**
@@ -460,14 +500,15 @@
 
             const incomingKey = modelKey || fileName || 'default_ifc';
             // Si ya está cargado este mismo modelo y la malla existe, reutilizar
-            if (this.currentModelKey === incomingKey && this.ifcModel) {
+            if (this.currentModelKey === incomingKey && this.ifcModel && Object.keys(this.categorySubsets).length > 0) {
                 console.log("IFCViewer3D: El modelo ya está activo en el visor:", incomingKey);
                 this.fitToView();
                 return;
             }
 
-            // Purgar completamente cualquier modelo anterior antes de cargar el nuevo
+            // Purgar completamente cualquier modelo anterior y registrar nueva sesión de carga única
             this.unloadModel();
+            const currentSession = ++this._loadSessionId;
 
             this.currentBuffer = arrayBuffer;
             this.currentIfcData = ifcData;
@@ -510,6 +551,7 @@
             try {
                 if (this.ifcLoader && this.ifcLoader.ifcManager) {
                     await this.ifcLoader.ifcManager.setWasmPath('./');
+                    if (this._loadSessionId !== currentSession) return;
                     if (this.ifcLoader.ifcManager.applyWebIfcConfig) {
                         this.ifcLoader.ifcManager.applyWebIfcConfig({
                             USE_FAST_BOOLS: true
@@ -524,6 +566,7 @@
                     }
                     if (this.ifcLoader.ifcManager.setOnProgress) {
                         this.ifcLoader.ifcManager.setOnProgress((event) => {
+                            if (this._loadSessionId !== currentSession) return;
                             if (loadingText && event && event.total) {
                                 const pct = Math.min(99, Math.round((event.loaded / event.total) * 100));
                                 loadingText.textContent = `Generando mallas 3D (${pct}%)...`;
@@ -542,6 +585,18 @@
 
                 const t0 = performance.now();
                 const model = await this.ifcLoader.parse(uint8);
+
+                // Si otra llamada más reciente inició mientras parseábamos, descartar este resultado
+                if (this._loadSessionId !== currentSession) {
+                    console.log("IFCViewer3D: Carga obsoleta descartada (sesión", currentSession, "vs actual", this._loadSessionId, ")");
+                    try {
+                        if (this.ifcLoader && this.ifcLoader.ifcManager && model && model.modelID !== undefined) {
+                            this.ifcLoader.ifcManager.close(model.modelID, this.scene);
+                        }
+                    } catch (e) { }
+                    return;
+                }
+
                 const tElapsed = ((performance.now() - t0) / 1000).toFixed(2);
                 console.log(`IFCViewer3D: Modelo 3D base generado con éxito en ${tElapsed}s.`);
 
@@ -554,6 +609,10 @@
                 if (loadingText) loadingText.textContent = 'Generando visualización Blueprint (aristas y geometría)...';
                 await this._buildCategorySubsets(ifcData);
 
+                if (this._loadSessionId !== currentSession) {
+                    return;
+                }
+
                 // Poblar y sincronizar el menú selector de elementos
                 this._populateCategoriesDropdown();
 
@@ -562,9 +621,13 @@
                 // Centrar cámara en el modelo
                 this.fitToView();
             } catch (err) {
-                if (loadingBadge) loadingBadge.style.display = 'none';
+                if (this._loadSessionId === currentSession && loadingBadge) {
+                    loadingBadge.style.display = 'none';
+                }
                 console.error("IFCViewer3D: Error parseando geometría:", err);
-                alert("Error generando geometría 3D: " + (err.message || err));
+                if (this._loadSessionId === currentSession) {
+                    alert("Error generando geometría 3D: " + (err.message || err));
+                }
             }
         },
 
@@ -1977,11 +2040,14 @@
             let expressId = this._resolveExpressId(idOrGlobalId) || this.selectedExpressId;
             if (!expressId || !this.ifcModel || !this.camera || !this.controls) return;
 
-            if (!this.highlightSubset || this.selectedExpressId !== expressId) {
-                this.highlightElement(expressId, false);
+            // Si no estamos en modo aislado, asegurar resaltado
+            if (!this.isIsolated) {
+                if (!this.highlightSubset || this.selectedExpressId !== expressId) {
+                    this.highlightElement(expressId, false);
+                }
             }
 
-            const targetMesh = this.highlightSubset || (this.isolatedSubset && this.isIsolated ? this.isolatedSubset : null);
+            const targetMesh = (this.isIsolated && this.isolatedSubset) ? this.isolatedSubset : this.highlightSubset;
 
             if (targetMesh) {
                 const THREE = window.THREE;
@@ -2017,7 +2083,8 @@
 
             const elemObj = this.expressIdToElementMap[expressId] || this.selectedElement;
 
-            // 1. Limpiar cualquier aislamiento previo
+            // 1. Limpiar cualquier resaltado y aislamiento previo
+            this.resetHighlight();
             this._clearIsolatedSubset();
 
             // 2. Ocultar todas las categorías del modelo
@@ -2064,8 +2131,27 @@
             this.isIsolated = true;
             this.isolatedExpressId = expressId;
 
-            // 4. Centrar y enfocar en el elemento
-            this.focusElement(expressId);
+            // 4. Centrar y enfocar directamente en el elemento aislado sin superponer resaltado cian
+            if (this.isolatedSubset && this.camera && this.controls) {
+                const box = new THREE.Box3().setFromObject(this.isolatedSubset);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+
+                if (!isNaN(center.x) && !isNaN(center.y) && !isNaN(center.z)) {
+                    const maxDim = Math.max(size.x, size.y, size.z, 2.0);
+                    const fov = this.camera.fov * (Math.PI / 180);
+                    let cameraDist = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 2.2;
+                    if (isNaN(cameraDist) || cameraDist < 4) cameraDist = 8;
+
+                    const dir = this.camera.position.clone().sub(this.controls.target).normalize();
+                    if (dir.lengthSq() === 0) dir.set(1, 1, 1).normalize();
+
+                    this.camera.position.copy(center.clone().add(dir.multiplyScalar(cameraDist)));
+                    this.camera.lookAt(center);
+                    this.controls.target.copy(center);
+                    this.controls.update();
+                }
+            }
 
             // 5. Ocultar menú contextual
             this.hideContextMenu();
@@ -2074,7 +2160,7 @@
             const label = document.getElementById('v3dSelectedLabel');
             if (label) {
                 const name = elemObj ? elemObj.name : `Elemento #${expressId}`;
-                label.textContent = `👁️‍🗨️ Elemento Aislado: ${name} (Pulsa 'Restaurar vista' para volver)`;
+                label.textContent = `👁️‍🗨️ Elemento Aislado: ${name} (Pulsa 'Restaurar' para volver)`;
             }
         },
 
@@ -2205,10 +2291,11 @@
          * Restaura la vista mostrando todo el modelo (cancela aislamientos y desoculta elementos)
          */
         restoreView: function () {
-            // 1. Limpiar modo aislado
+            // 1. Limpiar modo aislado y selección activa
             this._clearIsolatedSubset();
             this.isIsolated = false;
             this.isolatedExpressId = null;
+            this.resetHighlight();
 
             // 2. Si había elementos individuales ocultados, reconstruir las categorías con sus IDs originales completos
             if (this.hiddenElementIds && this.hiddenElementIds.size > 0) {

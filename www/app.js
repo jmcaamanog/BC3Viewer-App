@@ -486,13 +486,13 @@ function initIfcWizardEvents() {
                         hideWorkerLoader();
 
                         const bc3Name = (currentIfcFile ? currentIfcFile.name : 'Modelo').replace(/\.ifc$/i, '.bc3');
-                        const newTab = createBudgetTab(bc3Output.data, bc3Name, bc3Output.rawText);
-                        if (newTab) {
-                            newTab.isFromIfc = true;
-                            newTab.ifcData = currentIfcData;
-                            newTab.ifcBuffer = currentIfcBuffer;
-                            newTab.ifcFileName = currentIfcFile ? currentIfcFile.name : 'Modelo IFC';
-                        }
+                        const ifcMeta = {
+                            isFromIfc: true,
+                            ifcData: currentIfcData,
+                            ifcBuffer: currentIfcBuffer,
+                            ifcFileName: currentIfcFile ? currentIfcFile.name : 'Modelo IFC'
+                        };
+                        const newTab = createBudgetTab(bc3Output.data, bc3Name, bc3Output.rawText, ifcMeta);
                         const v3dBtn = document.getElementById('visor3dBtn');
                         if (v3dBtn) v3dBtn.style.display = 'inline-flex';
                         if (typeof updateV3dModelSelector === 'function') updateV3dModelSelector();
@@ -519,7 +519,7 @@ let budgetTabs = [];
 let activeTabId = null;
 let tabCounter = 0;
 
-function createBudgetTab(data, fileName, rawText) {
+function createBudgetTab(data, fileName, rawText, ifcMeta) {
     if (!data) return null;
     tabCounter++;
     const tabId = 'tab_' + tabCounter + '_' + Date.now().toString(36);
@@ -550,7 +550,11 @@ function createBudgetTab(data, fileName, rawText) {
         navigationStack: [],
         currentLevel: null,
         ganttState: {},
-        certifications: {}
+        certifications: {},
+        isFromIfc: ifcMeta ? Boolean(ifcMeta.isFromIfc) : false,
+        ifcData: ifcMeta ? ifcMeta.ifcData : null,
+        ifcBuffer: ifcMeta ? ifcMeta.ifcBuffer : null,
+        ifcFileName: ifcMeta ? ifcMeta.ifcFileName : null
     };
 
     budgetTabs.push(newTab);
@@ -15833,6 +15837,11 @@ function initVisor3dControls() {
         if (typeof IFCViewer3D !== 'undefined') IFCViewer3D.fitToView();
     });
 
+    const restoreBtn = document.getElementById('v3dRestoreBtn');
+    if (restoreBtn) restoreBtn.addEventListener('click', () => {
+        if (typeof IFCViewer3D !== 'undefined') IFCViewer3D.restoreView();
+    });
+
     const xrayBtn = document.getElementById('v3dXrayBtn');
     if (xrayBtn) xrayBtn.addEventListener('click', () => {
         if (typeof IFCViewer3D !== 'undefined') IFCViewer3D.toggleXRay();
@@ -15852,14 +15861,14 @@ function initVisor3dControls() {
             const targetTab = budgetTabs.find(t => t.id === selectedTabId);
             if (!targetTab || !targetTab.ifcBuffer) return;
 
-            // Conmutar pestaña activa de presupuesto si es diferente
+            // Conmutar pestaña activa de presupuesto (switchBudgetTab carga automáticamente el modelo si el visor 3D está visible)
             if (activeTabId !== targetTab.id) {
                 switchBudgetTab(targetTab.id);
-            }
-
-            // Purgar y cargar el modelo seleccionado en el visor 3D
-            if (typeof IFCViewer3D !== 'undefined') {
-                IFCViewer3D.loadModel(targetTab.ifcBuffer, targetTab.ifcData, targetTab.ifcFileName || targetTab.fileName, targetTab.id);
+            } else {
+                // Si ya estamos en la misma pestaña pero el visor aún no tenía este modelo activo
+                if (typeof IFCViewer3D !== 'undefined' && IFCViewer3D.currentModelKey !== targetTab.id) {
+                    IFCViewer3D.loadModel(targetTab.ifcBuffer, targetTab.ifcData, targetTab.ifcFileName || targetTab.fileName, targetTab.id);
+                }
             }
         });
     }
