@@ -46,16 +46,23 @@
             max: 10
         },
         sectionHelperMesh: null,
+        sectionCapGroup: null,
+        sectionCapMesh: null,
+        _stencilMaterials: null,
+        _lastStencilKey: null,
 
         /**
          * Configuración Oficial de Estilo Blueprint ConTech
          * - Geometría base: Azul único y uniforme más claro que el fondo oscuro (#0a0f1d).
+         * - Tapas de sección macizas: Azul más oscuro (#0f2b5c) para caras seccionadas de muros/forjados.
          * - Aristas: Líneas blancas nítidas con THREE.EdgesGeometry.
          * - Vértices: Puntitos blancos circulares ligeramente más gruesos que las líneas.
          */
         BLUEPRINT_CONFIG: {
             bodyColor: 0x1d4ed8,        // Azul Blueprint ConTech (#1d4ed8)
             bodyHex: '#1d4ed8',
+            sectionCapColor: 0x0f2b5c,  // Azul más oscuro para tapas y caras seccionadas macizas (#0f2b5c)
+            sectionCapHex: '#0f2b5c',
             lineColor: 0xffffff,        // Líneas de aristas en blanco técnico puro
             lineOpacity: 0.92,
             vertexColor: 0xffffff,      // Vértices en puntito blanco destacado
@@ -266,6 +273,7 @@
                 });
                 const edgesLine = new THREE.LineSegments(edgesGeom, lineMat);
                 edgesLine.name = 'blueprint-edges';
+                edgesLine.renderOrder = 4;
                 mesh.add(edgesLine);
 
                 // 2. Vértices como puntitos blancos circulares ligeramente más gruesos que la línea
@@ -282,6 +290,7 @@
                 });
                 const vertexPoints = new THREE.Points(mesh.geometry, pointsMat);
                 vertexPoints.name = 'blueprint-points';
+                vertexPoints.renderOrder = 5;
                 mesh.add(vertexPoints);
             } catch (err) {
                 console.warn("IFCViewer3D: No se pudieron generar aristas/vértices blueprint:", err);
@@ -327,8 +336,8 @@
             this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
             this.camera.position.set(25, 20, 30);
 
-            // 3. Renderer con soporte nativo de planos de corte (Local Clipping)
-            this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+            // 3. Renderer con soporte nativo de planos de corte (Local Clipping) y Stencil Buffer para tapas macizas
+            this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, stencil: true, powerPreference: 'high-performance' });
             this.renderer.setSize(width, height);
             this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             this.renderer.localClippingEnabled = true;
@@ -398,6 +407,24 @@
         unloadModel: function () {
             // Incrementar sesión de carga para invalidar inmediatamente cualquier carga asíncrona en curso
             this._loadSessionId = (this._loadSessionId || 0) + 1;
+
+            // 0. Limpiar grupo y mallas de tapas macizas de sección (Stencil Capping)
+            if (this.sectionCapGroup) {
+                try {
+                    this.scene.remove(this.sectionCapGroup);
+                    while (this.sectionCapGroup.children.length > 0) {
+                        const ch = this.sectionCapGroup.children[0];
+                        this.sectionCapGroup.remove(ch);
+                    }
+                    if (this.sectionCapMesh && this.sectionCapMesh.geometry) {
+                        this.sectionCapMesh.geometry.dispose();
+                    }
+                } catch (e) {}
+                this.sectionCapGroup = null;
+                this.sectionCapMesh = null;
+                this._stencilMaterials = null;
+                this._lastStencilKey = null;
+            }
 
             // 1. Limpiar subsets y decoraciones blueprint de categorías
             this._clearCategorySubsets();
@@ -753,6 +780,7 @@
                 if (this.highlightSubset) {
                     this.highlightSubset.name = 'active-selection-subset';
                     this.highlightSubset.isSelectionSubset = true;
+                    this.highlightSubset.renderOrder = 3.5;
                 }
 
                 this.selectedExpressId = expressId;
@@ -1312,6 +1340,21 @@
                     }
                 });
             }
+
+            // Sincronizar tapas de sección macizas en azul oscuro (Stencil Capping)
+            if (this.activeClippingPlane) {
+                const axis = this.sectionConfig.active ? this.sectionConfig.axis : 'Y';
+                let val = this.sectionConfig.active ? this.sectionConfig.value : 0;
+                if (!this.sectionConfig.active && typeof planeOrHeight === 'number') {
+                    val = planeOrHeight;
+                }
+                const inv = this.sectionConfig.active ? this.sectionConfig.inverted : false;
+                this._updateSectionCaps(axis, val, inv);
+            } else {
+                if (this.sectionCapGroup) {
+                    this.sectionCapGroup.visible = false;
+                }
+            }
         },
 
         /**
@@ -1531,6 +1574,186 @@
         },
 
         /**
+         * Inicializa o actualiza los planos de tapa de sección (capping planes) usando
+         * el stencil buffer para que los elementos cortados (muros, forjados, pilares)
+         * aparezcan completamente macizos con un azul más oscuro (#0f2b5c).
+         */
+        _updateSectionCaps: function (axis, value, inverted) {
+            const THREE = window.THREE;
+            if (!this.scene || !THREE || !this.renderer) return;
+
+            // Si la sección no está activa o no hay plano de corte, ocultar y salir
+            if (!this.activeClippingPlane) {
+                if (this.sectionCapGroup) {
+                    this.sectionCapGroup.visible = false;
+                }
+                return;
+            }
+
+            const targetAxis = axis || (this.sectionConfig.active ? this.sectionConfig.axis : 'Y');
+            const targetVal = typeof value === 'number' ? value : (this.sectionConfig.active ? this.sectionConfig.value : 0);
+
+            // 1. Obtener caja envolvente y dimensiones del modelo
+            let box = new THREE.Box3();
+            let hasBounds = false;
+            Object.values(this.categorySubsets).forEach(s => {
+                if (s && s.mesh && s.mesh.visible) {
+                    box.expandByObject(s.mesh);
+                    hasBounds = true;
+                }
+            });
+            if (!hasBounds && this.ifcModel) box.setFromObject(this.ifcModel);
+            if (!hasBounds) box = new THREE.Box3(new THREE.Vector3(-20, -10, -20), new THREE.Vector3(20, 20, 20));
+
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            if (isNaN(center.x)) center.set(0, 0, 0);
+            if (isNaN(size.x) || size.x <= 0) size.set(30, 20, 30);
+
+            const margin = 6.0; // Margen holgado para asegurar cobertura total del corte
+
+            let width = 20, height = 20;
+            if (targetAxis === 'X') {
+                width = Math.max(size.z + margin * 2, 20);
+                height = Math.max(size.y + margin * 2, 20);
+            } else if (targetAxis === 'Y') {
+                width = Math.max(size.x + margin * 2, 20);
+                height = Math.max(size.z + margin * 2, 20);
+            } else if (targetAxis === 'Z') {
+                width = Math.max(size.x + margin * 2, 20);
+                height = Math.max(size.y + margin * 2, 20);
+            }
+
+            // 2. Crear grupo contenedor si no existe
+            if (!this.sectionCapGroup) {
+                this.sectionCapGroup = new THREE.Group();
+                this.sectionCapGroup.name = 'v3d-section-cap-group';
+                this.scene.add(this.sectionCapGroup);
+            }
+            this.sectionCapGroup.visible = true;
+
+            // 3. Crear materiales base de stencil si no existen
+            const plane = this.activeClippingPlane;
+            if (!this._stencilMaterials) {
+                const baseMat = new THREE.MeshBasicMaterial({
+                    depthWrite: false,
+                    depthTest: false,
+                    colorWrite: false,
+                    stencilWrite: true,
+                    stencilFunc: THREE.AlwaysStencilFunc
+                });
+
+                const matBack = baseMat.clone();
+                matBack.side = THREE.BackSide;
+                matBack.clippingPlanes = [plane];
+                matBack.stencilFail = THREE.IncrementWrapStencilOp;
+                matBack.stencilZFail = THREE.IncrementWrapStencilOp;
+                matBack.stencilZPass = THREE.IncrementWrapStencilOp;
+
+                const matFront = baseMat.clone();
+                matFront.side = THREE.FrontSide;
+                matFront.clippingPlanes = [plane];
+                matFront.stencilFail = THREE.DecrementWrapStencilOp;
+                matFront.stencilZFail = THREE.DecrementWrapStencilOp;
+                matFront.stencilZPass = THREE.DecrementWrapStencilOp;
+
+                const capMat = new THREE.MeshBasicMaterial({
+                    color: this.BLUEPRINT_CONFIG.sectionCapColor || 0x0f2b5c,
+                    side: THREE.DoubleSide,
+                    stencilWrite: true,
+                    stencilRef: 0,
+                    stencilFunc: THREE.NotEqualStencilFunc,
+                    stencilFail: THREE.ReplaceStencilOp,
+                    stencilZFail: THREE.ReplaceStencilOp,
+                    stencilZPass: THREE.ReplaceStencilOp,
+                    depthWrite: true,
+                    depthTest: true,
+                    polygonOffset: true,
+                    polygonOffsetFactor: 0.1,
+                    polygonOffsetUnits: 0.1
+                });
+
+                this._stencilMaterials = {
+                    matBack: matBack,
+                    matFront: matFront,
+                    capMat: capMat
+                };
+            } else {
+                this._stencilMaterials.matBack.clippingPlanes = [plane];
+                this._stencilMaterials.matFront.clippingPlanes = [plane];
+            }
+
+            // 4. Identificar mallas activas que deben ser seccionadas
+            let targetMeshes = [];
+            if (this.isIsolated && this.isolatedSubset && this.isolatedSubset.visible) {
+                targetMeshes = [this.isolatedSubset];
+            } else {
+                targetMeshes = Object.values(this.categorySubsets)
+                    .filter(s => s && s.mesh && s.mesh.visible)
+                    .map(s => s.mesh);
+            }
+            if (targetMeshes.length === 0 && this.ifcModel) {
+                targetMeshes = [this.ifcModel];
+            }
+
+            // 5. Comprobar si necesitamos reconstruir las mallas de stencil (cambio de eje o cambio de mallas)
+            const currentMeshesKey = targetMeshes.map(m => m.id).join('_') + `_${targetAxis}`;
+            if (this._lastStencilKey !== currentMeshesKey) {
+                this._lastStencilKey = currentMeshesKey;
+
+                // Limpiar hijos anteriores del grupo
+                while (this.sectionCapGroup.children.length > 0) {
+                    const ch = this.sectionCapGroup.children[0];
+                    this.sectionCapGroup.remove(ch);
+                    if (ch === this.sectionCapMesh && ch.geometry) {
+                        ch.geometry.dispose();
+                    }
+                }
+                this.sectionCapMesh = null;
+
+                // Añadir pares de mallas Front y Back para cada geometría de subset
+                targetMeshes.forEach(m => {
+                    if (!m || !m.geometry) return;
+                    const bMesh = new THREE.Mesh(m.geometry, this._stencilMaterials.matBack);
+                    bMesh.renderOrder = 1;
+                    bMesh.name = 'v3d-stencil-back';
+                    this.sectionCapGroup.add(bMesh);
+
+                    const fMesh = new THREE.Mesh(m.geometry, this._stencilMaterials.matFront);
+                    fMesh.renderOrder = 1;
+                    fMesh.name = 'v3d-stencil-front';
+                    this.sectionCapGroup.add(fMesh);
+                });
+
+                // Crear nueva geometría para el plano de tapa adaptada a las dimensiones de este eje
+                const capGeom = new THREE.PlaneGeometry(width, height);
+                this.sectionCapMesh = new THREE.Mesh(capGeom, this._stencilMaterials.capMat);
+                this.sectionCapMesh.name = 'v3d-section-cap-plane';
+                this.sectionCapMesh.renderOrder = 2;
+                this.sectionCapMesh.onAfterRender = function (renderer) {
+                    if (renderer && typeof renderer.clearStencil === 'function') {
+                        renderer.clearStencil();
+                    }
+                };
+                this.sectionCapGroup.add(this.sectionCapMesh);
+            }
+
+            // 6. Actualizar orientación y posición de la malla de tapa en el espacio 3D
+            if (this.sectionCapMesh) {
+                if (targetAxis === 'X') {
+                    this.sectionCapMesh.rotation.set(0, Math.PI / 2, 0);
+                    this.sectionCapMesh.position.set(targetVal, center.y, center.z);
+                } else if (targetAxis === 'Y') {
+                    this.sectionCapMesh.rotation.set(-Math.PI / 2, 0, 0);
+                    this.sectionCapMesh.position.set(center.x, targetVal, center.z);
+                } else if (targetAxis === 'Z') {
+                    this.sectionCapMesh.rotation.set(0, 0, 0);
+                    this.sectionCapMesh.position.set(center.x, center.y, targetVal);
+                }
+            }
+        },
+
+        /**
          * Desactiva el plano de corte de sección y oculta el plano guía
          */
         disableSectionPlane: function (closeWidget) {
@@ -1539,6 +1762,9 @@
 
             if (this.sectionHelperMesh) {
                 this.sectionHelperMesh.visible = false;
+            }
+            if (this.sectionCapGroup) {
+                this.sectionCapGroup.visible = false;
             }
 
             const btn = document.getElementById('v3dSectionBtn');
@@ -1967,6 +2193,7 @@
                     });
 
                     if (subset) {
+                        subset.renderOrder = 3;
                         if (subset.parent !== this.scene) {
                             this.scene.add(subset);
                         }
@@ -2032,6 +2259,7 @@
                                 customID: 'cat_leftover_constructive'
                             });
                             if (defSubset) {
+                                defSubset.renderOrder = 3;
                                 if (defSubset.parent !== this.scene) {
                                     this.scene.add(defSubset);
                                 }
@@ -2231,6 +2459,15 @@
             }
 
             this._updateCategoriesBadge();
+
+            // Sincronizar tapas de corte macizas si el plano de sección está activo
+            if (this.activeClippingPlane) {
+                this._lastStencilKey = null;
+                const axis = this.sectionConfig.active ? this.sectionConfig.axis : 'Y';
+                const val = this.sectionConfig.active ? this.sectionConfig.value : 0;
+                const inv = this.sectionConfig.active ? this.sectionConfig.inverted : false;
+                this._updateSectionCaps(axis, val, inv);
+            }
         },
 
         /**
@@ -2253,6 +2490,15 @@
             }
 
             this._updateCategoriesBadge();
+
+            // Sincronizar tapas de corte macizas si el plano de sección está activo
+            if (this.activeClippingPlane) {
+                this._lastStencilKey = null;
+                const axis = this.sectionConfig.active ? this.sectionConfig.axis : 'Y';
+                const val = this.sectionConfig.active ? this.sectionConfig.value : 0;
+                const inv = this.sectionConfig.active ? this.sectionConfig.inverted : false;
+                this._updateSectionCaps(axis, val, inv);
+            }
         },
 
         /**
@@ -2634,6 +2880,7 @@
                 });
 
                 if (this.isolatedSubset) {
+                    this.isolatedSubset.renderOrder = 3;
                     if (this.isolatedSubset.parent !== this.scene) {
                         this.scene.add(this.isolatedSubset);
                     }
@@ -2645,6 +2892,15 @@
 
             this.isIsolated = true;
             this.isolatedExpressId = expressId;
+
+            // Sincronizar tapas macizas con el elemento aislado
+            if (this.activeClippingPlane) {
+                this._lastStencilKey = null;
+                const axis = this.sectionConfig.active ? this.sectionConfig.axis : 'Y';
+                const val = this.sectionConfig.active ? this.sectionConfig.value : 0;
+                const inv = this.sectionConfig.active ? this.sectionConfig.inverted : false;
+                this._updateSectionCaps(axis, val, inv);
+            }
 
             // 4. Centrar y enfocar directamente en el elemento aislado sin superponer resaltado cian
             if (this.isolatedSubset && this.camera && this.controls) {
@@ -2764,6 +3020,7 @@
                 });
 
                 if (newSubset) {
+                    newSubset.renderOrder = 3;
                     cat.mesh = newSubset;
                     cat.mesh.visible = cat.visible;
                     this._attachBlueprintDecorations(newSubset, planes);
