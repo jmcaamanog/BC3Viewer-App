@@ -395,11 +395,19 @@
             this.hideElementCard();
             this.applyClippingPlane(null);
 
-            // 2. Cerrar modelo en Web-IFC y liberar subsets internos de web-ifc-three
+            // 2. Cerrar modelo en Web-IFC y limpiar subsets internos sin destruir la instancia del cargador
             try {
                 if (this.ifcLoader && this.ifcLoader.ifcManager) {
-                    if (this.ifcLoader.ifcManager.subsets && typeof this.ifcLoader.ifcManager.subsets.dispose === 'function') {
-                        this.ifcLoader.ifcManager.subsets.dispose();
+                    if (this.ifcLoader.ifcManager.subsets) {
+                        const subsetsObj = this.ifcLoader.ifcManager.subsets.subsets;
+                        if (subsetsObj) {
+                            for (const k in subsetsObj) {
+                                delete subsetsObj[k];
+                            }
+                        }
+                        if (this.ifcLoader.ifcManager.subsets.items) {
+                            this.ifcLoader.ifcManager.subsets.items.map = {};
+                        }
                     }
                     if (this.ifcModel && this.ifcModel.modelID !== undefined && typeof this.ifcLoader.ifcManager.close === 'function') {
                         this.ifcLoader.ifcManager.close(this.ifcModel.modelID, this.scene);
@@ -438,17 +446,11 @@
             this.isolatedSubset = null;
             this.categorySubsets = {};
 
-            // 4. Re-instanciar el IFCLoader para asegurar aislamiento total de memoria WebAssembly
-            try {
-                const IFCLoader = window.IFCLoader;
-                if (IFCLoader) {
-                    this.ifcLoader = new IFCLoader();
-                    if (this.ifcLoader.ifcManager) {
-                        this.ifcLoader.ifcManager.setWasmPath('./');
-                    }
+            // 4. Asegurar que el subsets.items.map esté inicializado como objeto válido
+            if (this.ifcLoader && this.ifcLoader.ifcManager && this.ifcLoader.ifcManager.subsets && this.ifcLoader.ifcManager.subsets.items) {
+                if (!this.ifcLoader.ifcManager.subsets.items.map) {
+                    this.ifcLoader.ifcManager.subsets.items.map = {};
                 }
-            } catch (ldrErr) {
-                console.warn("IFCViewer3D: Error reiniciando IFCLoader:", ldrErr);
             }
 
             // 5. Resetear variables y mapas de memoria
@@ -520,8 +522,11 @@
             this.globalIdToElementMap = {};
             if (ifcData && ifcData.elements) {
                 ifcData.elements.forEach(elem => {
-                    this.expressIdToElementMap[elem.id] = elem;
-                    this.expressIdToElementMap[String(elem.id)] = elem;
+                    const rawId = elem.expressId !== undefined ? elem.expressId : elem.id;
+                    if (rawId !== undefined && rawId !== null) {
+                        this.expressIdToElementMap[rawId] = elem;
+                        this.expressIdToElementMap[String(rawId)] = elem;
+                    }
                     if (elem.globalId) this.globalIdToElementMap[elem.globalId] = elem;
                 });
             }
@@ -1525,8 +1530,9 @@
             const categoriesMap = {};
             const allCategorizedIds = new Set();
 
-            if (ifcData && ifcData.elements && ifcData.elements.length > 0) {
-                ifcData.elements.forEach(elem => {
+            const data = ifcData || this.currentIfcData;
+            if (data && data.elements && data.elements.length > 0) {
+                data.elements.forEach(elem => {
                     const catName = elem.category || 'Elementos Constructivos Varios';
                     if (!categoriesMap[catName]) {
                         const palCfg = this._getPaletteConfig(catName);
@@ -1539,7 +1545,8 @@
                             ids: []
                         };
                     }
-                    const eid = parseInt(elem.expressId || elem.id, 10);
+                    const rawId = elem.expressId !== undefined ? elem.expressId : elem.id;
+                    const eid = parseInt(rawId, 10);
                     if (!isNaN(eid)) {
                         categoriesMap[catName].ids.push(eid);
                         allCategorizedIds.add(eid);
@@ -1604,6 +1611,9 @@
             // 3. Detectar elementos residuales que tengan geometría en el modelo pero no estén en ifcData.elements
             try {
                 if (this.ifcLoader.ifcManager.subsets && this.ifcLoader.ifcManager.subsets.items) {
+                    if (!this.ifcLoader.ifcManager.subsets.items.map) {
+                        this.ifcLoader.ifcManager.subsets.items.map = {};
+                    }
                     if (!this.ifcLoader.ifcManager.subsets.items.map[modelID]) {
                         this.ifcLoader.ifcManager.subsets.items.generateGeometryIndexMap(modelID);
                     }
