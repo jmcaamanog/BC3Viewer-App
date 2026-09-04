@@ -7601,6 +7601,44 @@ body.dark-theme .partida-action-card,
     box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
 }
 
+/* Grupo Segmentado de Vistas Técnicas Ortogonales (Planta, Alzados, 3D) */
+.v3d-views-group {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+}
+
+.v3d-views-group .v3d-view-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #94a3b8;
+    padding: 4px 7px;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    font-weight: 500;
+    gap: 4px;
+    height: 28px;
+    transition: all 0.15s ease;
+}
+
+.v3d-views-group .v3d-view-btn:hover {
+    color: #f8fafc;
+    background: rgba(255, 255, 255, 0.08);
+    transform: none;
+}
+
+.v3d-views-group .v3d-view-btn.active {
+    background: #0284c7;
+    border-color: #38bdf8;
+    color: #ffffff;
+    box-shadow: 0 1px 6px rgba(2, 132, 199, 0.4);
+    font-weight: 600;
+}
+
 .v3d-select {
     background: rgba(30, 41, 59, 0.9);
     border: 1px solid rgba(148, 163, 184, 0.3);

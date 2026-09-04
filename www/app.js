@@ -15852,6 +15852,22 @@ function initVisor3dControls() {
         if (typeof IFCViewer3D !== 'undefined') IFCViewer3D.toggleSectionWidget();
     });
 
+    // Vistas Técnicas Ortogonales (Planta y Alzados sin fuga + 3D)
+    const viewButtons = [
+        { id: 'v3dView3DBtn', mode: '3d' },
+        { id: 'v3dViewTopBtn', mode: 'top' },
+        { id: 'v3dViewFrontBtn', mode: 'front' },
+        { id: 'v3dViewBackBtn', mode: 'back' },
+        { id: 'v3dViewLeftBtn', mode: 'left' },
+        { id: 'v3dViewRightBtn', mode: 'right' }
+    ];
+    viewButtons.forEach(vb => {
+        const el = document.getElementById(vb.id);
+        if (el) el.addEventListener('click', () => {
+            if (typeof IFCViewer3D !== 'undefined') IFCViewer3D.setViewMode(vb.mode);
+        });
+    });
+
     const storeySelect = document.getElementById('v3dStoreySelect');
     if (storeySelect) storeySelect.addEventListener('change', function () {
         if (typeof IFCViewer3D !== 'undefined') IFCViewer3D.filterByStorey(this.value);

@@ -682,6 +682,28 @@
                             <span>✂️</span> <span>Sección</span>
                         </button>
 
+                        <!-- Vistas Técnicas Ortogonales (Planta y Alzados sin fuga + 3D) -->
+                        <div class="v3d-views-group" id="v3dViewsGroup" role="group" aria-label="Vistas Técnicas Ortogonales">
+                            <button type="button" id="v3dView3DBtn" class="v3d-tool-btn v3d-view-btn active" title="Vista 3D (Perspectiva cónica)">
+                                <span>🧊</span> <span>3D</span>
+                            </button>
+                            <button type="button" id="v3dViewTopBtn" class="v3d-tool-btn v3d-view-btn" title="Planta (Vista Cenital en Proyección Ortográfica)">
+                                <span>🔝</span> <span>Planta</span>
+                            </button>
+                            <button type="button" id="v3dViewFrontBtn" class="v3d-tool-btn v3d-view-btn" title="Alzado Frontal (Sur, Proyección Ortográfica)">
+                                <span>🏢</span> <span>Frontal</span>
+                            </button>
+                            <button type="button" id="v3dViewBackBtn" class="v3d-tool-btn v3d-view-btn" title="Alzado Posterior (Norte, Proyección Ortográfica)">
+                                <span>🏢</span> <span>Posterior</span>
+                            </button>
+                            <button type="button" id="v3dViewLeftBtn" class="v3d-tool-btn v3d-view-btn" title="Alzado Izquierdo (Oeste, Proyección Ortográfica)">
+                                <span>🏢</span> <span>Izquierda</span>
+                            </button>
+                            <button type="button" id="v3dViewRightBtn" class="v3d-tool-btn v3d-view-btn" title="Alzado Derecho (Este, Proyección Ortográfica)">
+                                <span>🏢</span> <span>Derecha</span>
+                            </button>
+                        </div>
+
                         <div class="v3d-dropdown-container">
                             <select id="v3dStoreySelect" class="v3d-select" title="Filtrar por Planta">
                                 <option value="all">🏢 Edificio Completo (Todas las Plantas)</option>
@@ -761,14 +783,18 @@
                                 </div>
                             </div>
 
-                            <!-- Opciones Auxiliares: Invertir y Plano Guía -->
+                            <!-- Opciones Auxiliares: Invertir, Plano Guía y Relleno Macizo -->
                             <div class="v3d-section-toggles-row">
                                 <button type="button" id="v3dSectionInvertBtn" class="v3d-section-action-btn" title="Invertir dirección del corte">
-                                    <span>🔄</span> <span>Invertir Corte</span>
+                                    <span>🔄</span> <span>Invertir</span>
                                 </button>
                                 <label class="v3d-section-helper-toggle" title="Mostrar u ocultar plano guía 3D en la escena">
                                     <input type="checkbox" id="v3dSectionHelperChk" checked>
-                                    <span>Plano Guía 3D</span>
+                                    <span>Guía 3D</span>
+                                </label>
+                                <label class="v3d-section-helper-toggle" title="Activar/desactivar relleno macizo de muros y forjados en azul oscuro">
+                                    <input type="checkbox" id="v3dSectionCapChk" checked>
+                                    <span>Macizo</span>
                                 </label>
                             </div>
 

@@ -12,6 +12,10 @@
         container: null,
         scene: null,
         camera: null,
+        perspectiveCamera: null,
+        orthographicCamera: null,
+        currentCameraType: 'perspective',
+        currentViewMode: '3d',
         renderer: null,
         controls: null,
         ifcLoader: null,
@@ -35,6 +39,7 @@
         _categoriesMenuInitialized: false,
         _contextMenuInitialized: false,
         _sectionToolInitialized: false,
+        _viewButtonsInitialized: false,
         _loadSessionId: 0,
         sectionConfig: {
             active: false,
@@ -42,6 +47,7 @@
             inverted: false,
             value: 0,
             showHelper: true,
+            showCaps: true,
             min: -10,
             max: 10
         },
@@ -330,11 +336,28 @@
             this.scene = new THREE.Scene();
             this.scene.background = new THREE.Color(0x0a0f1d);
 
-            // 2. Cámara
+            // 2. Cámaras: Perspectiva cónica estándar y Ortográfica paralela sin deformación de fuga (CAD)
             const width = this.container.clientWidth || 800;
             const height = this.container.clientHeight || 600;
-            this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-            this.camera.position.set(25, 20, 30);
+            const aspect = width / height;
+
+            this.perspectiveCamera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
+            this.perspectiveCamera.position.set(25, 20, 30);
+
+            const frustumSize = 35;
+            this.orthographicCamera = new THREE.OrthographicCamera(
+                -frustumSize * aspect / 2,
+                frustumSize * aspect / 2,
+                frustumSize / 2,
+                -frustumSize / 2,
+                0.1,
+                2000
+            );
+            this.orthographicCamera.position.set(25, 20, 30);
+
+            this.camera = this.perspectiveCamera;
+            this.currentCameraType = 'perspective';
+            this.currentViewMode = '3d';
 
             // 3. Renderer con soporte nativo de planos de corte (Local Clipping) y Stencil Buffer para tapas macizas
             this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, stencil: true, powerPreference: 'high-performance' });
@@ -375,12 +398,13 @@
                 this.ifcLoader.ifcManager.setWasmPath('./');
             }
 
-            // 8. Eventos de Raycasting, Tarjeta HUD, Menú de Elementos, Menú Contextual y Planos de Sección
+            // 8. Eventos de Raycasting, Tarjeta HUD, Menú de Elementos, Menú Contextual, Planos de Sección y Vistas
             this._setupRaycasting();
             this._setupHudEvents();
             this._setupCategoriesMenuUI();
             this._setupContextMenuUI();
             this._setupSectionToolUI();
+            this._setupViewButtonsUI();
 
             // 9. Redimensionamiento y bucle de renderizado
             window.addEventListener('resize', () => this.onResize());
@@ -715,15 +739,193 @@
             const center = box.getCenter(new THREE.Vector3());
             const size = box.getSize(new THREE.Vector3());
 
-            const maxDim = Math.max(size.x, size.y, size.z);
-            const fov = this.camera.fov * (Math.PI / 180);
+            const maxDim = Math.max(size.x, size.y, size.z, 5.0);
+
+            if (this.currentCameraType === 'orthographic' && this.orthographicCamera) {
+                this.setViewMode(this.currentViewMode || 'top');
+                return;
+            }
+
+            const cam = this.perspectiveCamera || this.camera;
+            const fov = (cam && cam.fov ? cam.fov : 45) * (Math.PI / 180);
             let cameraDist = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.5;
             if (isNaN(cameraDist) || cameraDist < 5) cameraDist = 25;
 
-            this.camera.position.set(center.x + cameraDist * 0.7, center.y + cameraDist * 0.5, center.z + cameraDist * 0.7);
-            this.camera.lookAt(center);
+            cam.position.set(center.x + cameraDist * 0.7, center.y + cameraDist * 0.5, center.z + cameraDist * 0.7);
+            cam.lookAt(center);
             this.controls.target.copy(center);
             this.controls.update();
+        },
+
+        /**
+         * Cambia el modo de visualización de cámara:
+         * - '3d': Perspectiva cónica estándar Three.js
+         * - 'top': Planta técnica cenital en proyección ortográfica paralela (sin fuga de profundidad)
+         * - 'front': Alzado frontal (Sur) en proyección ortográfica
+         * - 'back': Alzado posterior (Norte) en proyección ortográfica
+         * - 'left': Alzado izquierdo (Oeste) en proyección ortográfica
+         * - 'right': Alzado derecho (Este) en proyección ortográfica
+         */
+        setViewMode: function (mode) {
+            const THREE = window.THREE;
+            if (!this.controls || !THREE) return;
+
+            const viewMode = mode || '3d';
+
+            // 1. Obtener centro y dimensiones de la caja envolvente del modelo
+            let box = new THREE.Box3();
+            let hasBounds = false;
+            const subs = Object.values(this.categorySubsets);
+            subs.forEach(s => {
+                if (s && s.mesh && s.mesh.visible) {
+                    box.expandByObject(s.mesh);
+                    hasBounds = true;
+                }
+            });
+            if (!hasBounds && this.ifcModel) {
+                box.setFromObject(this.ifcModel);
+                hasBounds = true;
+            }
+            if (!hasBounds) {
+                box = new THREE.Box3(new THREE.Vector3(-15, -2, -15), new THREE.Vector3(15, 15, 15));
+            }
+
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            if (isNaN(center.x)) center.set(0, 0, 0);
+
+            const maxDim = Math.max(size.x, size.y, size.z, 6.0);
+            const w = (this.container && this.container.clientWidth) ? this.container.clientWidth : 800;
+            const h = (this.container && this.container.clientHeight) ? this.container.clientHeight : 600;
+            const aspect = w / h;
+
+            const viewLabels = {
+                '3d': 'Vista 3D (Perspectiva Cónica)',
+                'top': 'Planta (Vista Cenital Ortográfica CAD)',
+                'front': 'Alzado Frontal (Sur - Proyección Paralela)',
+                'back': 'Alzado Posterior (Norte - Proyección Paralela)',
+                'left': 'Alzado Izquierdo (Oeste - Proyección Paralela)',
+                'right': 'Alzado Derecho (Este - Proyección Paralela)'
+            };
+
+            if (viewMode === '3d') {
+                this.currentCameraType = 'perspective';
+                this.currentViewMode = '3d';
+                this.camera = this.perspectiveCamera;
+                this.controls.object = this.camera;
+
+                this.camera.aspect = aspect;
+                this.camera.updateProjectionMatrix();
+                this.camera.up.set(0, 1, 0);
+
+                const fov = this.camera.fov * (Math.PI / 180);
+                let camDist = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.5;
+                if (isNaN(camDist) || camDist < 5) camDist = 25;
+
+                this.camera.position.set(center.x + camDist * 0.7, center.y + camDist * 0.5, center.z + camDist * 0.7);
+                this.camera.lookAt(center);
+                this.controls.target.copy(center);
+                this.controls.update();
+            } else {
+                this.currentCameraType = 'orthographic';
+                this.currentViewMode = viewMode;
+                this.camera = this.orthographicCamera;
+                this.controls.object = this.camera;
+
+                // Calibrar frustum ortográfico según la vista y dimensiones
+                let frustumHeight = maxDim * 1.25;
+                if (viewMode === 'top') {
+                    frustumHeight = Math.max(size.x / aspect, size.z) * 1.25;
+                } else if (viewMode === 'front' || viewMode === 'back') {
+                    frustumHeight = Math.max(size.x / aspect, size.y) * 1.25;
+                } else if (viewMode === 'left' || viewMode === 'right') {
+                    frustumHeight = Math.max(size.z / aspect, size.y) * 1.25;
+                }
+                if (isNaN(frustumHeight) || frustumHeight < 5) frustumHeight = maxDim * 1.25;
+
+                const frustumWidth = frustumHeight * aspect;
+
+                this.orthographicCamera.left = -frustumWidth / 2;
+                this.orthographicCamera.right = frustumWidth / 2;
+                this.orthographicCamera.top = frustumHeight / 2;
+                this.orthographicCamera.bottom = -frustumHeight / 2;
+                this.orthographicCamera.near = 0.1;
+                this.orthographicCamera.far = Math.max(maxDim * 15, 2000);
+                this.orthographicCamera.zoom = 1;
+                this.orthographicCamera.updateProjectionMatrix();
+
+                const camDist = maxDim * 3.0;
+
+                if (viewMode === 'top') {
+                    // Planta: mirada desde arriba hacia abajo, North (-Z) hacia arriba en pantalla
+                    this.orthographicCamera.up.set(0, 0, -1);
+                    this.orthographicCamera.position.set(center.x, center.y + camDist, center.z);
+                } else if (viewMode === 'front') {
+                    // Alzado Frontal (Sur): mirando desde +Z hacia el centro
+                    this.orthographicCamera.up.set(0, 1, 0);
+                    this.orthographicCamera.position.set(center.x, center.y, center.z + camDist);
+                } else if (viewMode === 'back') {
+                    // Alzado Posterior (Norte): mirando desde -Z hacia el centro
+                    this.orthographicCamera.up.set(0, 1, 0);
+                    this.orthographicCamera.position.set(center.x, center.y, center.z - camDist);
+                } else if (viewMode === 'left') {
+                    // Alzado Izquierdo (Oeste): mirando desde -X hacia el centro
+                    this.orthographicCamera.up.set(0, 1, 0);
+                    this.orthographicCamera.position.set(center.x - camDist, center.y, center.z);
+                } else if (viewMode === 'right') {
+                    // Alzado Derecho (Este): mirando desde +X hacia el centro
+                    this.orthographicCamera.up.set(0, 1, 0);
+                    this.orthographicCamera.position.set(center.x + camDist, center.y, center.z);
+                }
+
+                this.orthographicCamera.lookAt(center);
+                this.controls.target.copy(center);
+                this.controls.update();
+            }
+
+            // Actualizar botones activos en UI
+            const btnMap = {
+                '3d': document.getElementById('v3dView3DBtn'),
+                'top': document.getElementById('v3dViewTopBtn'),
+                'front': document.getElementById('v3dViewFrontBtn'),
+                'back': document.getElementById('v3dViewBackBtn'),
+                'left': document.getElementById('v3dViewLeftBtn'),
+                'right': document.getElementById('v3dViewRightBtn')
+            };
+
+            for (const k in btnMap) {
+                if (btnMap[k]) {
+                    if (k === viewMode) btnMap[k].classList.add('active');
+                    else btnMap[k].classList.remove('active');
+                }
+            }
+
+            const label = document.getElementById('v3dSelectedLabel');
+            if (label && !this.selectedElement) {
+                label.textContent = `📐 ${viewLabels[viewMode] || 'Vista activada'}`;
+            }
+        },
+
+        /**
+         * Configura los eventos click de los botones de vistas ortogonales y 3D en la barra de herramientas
+         */
+        _setupViewButtonsUI: function () {
+            if (this._viewButtonsInitialized) return;
+            this._viewButtonsInitialized = true;
+
+            const btn3D = document.getElementById('v3dView3DBtn');
+            const btnTop = document.getElementById('v3dViewTopBtn');
+            const btnFront = document.getElementById('v3dViewFrontBtn');
+            const btnBack = document.getElementById('v3dViewBackBtn');
+            const btnLeft = document.getElementById('v3dViewLeftBtn');
+            const btnRight = document.getElementById('v3dViewRightBtn');
+
+            if (btn3D) btn3D.onclick = () => this.setViewMode('3d');
+            if (btnTop) btnTop.onclick = () => this.setViewMode('top');
+            if (btnFront) btnFront.onclick = () => this.setViewMode('front');
+            if (btnBack) btnBack.onclick = () => this.setViewMode('back');
+            if (btnLeft) btnLeft.onclick = () => this.setViewMode('left');
+            if (btnRight) btnRight.onclick = () => this.setViewMode('right');
         },
 
         /**
@@ -1582,8 +1784,8 @@
             const THREE = window.THREE;
             if (!this.scene || !THREE || !this.renderer) return;
 
-            // Si la sección no está activa o no hay plano de corte, ocultar y salir
-            if (!this.activeClippingPlane) {
+            // Si la sección no está activa, no hay plano de corte o las tapas están desactivadas, ocultar y salir
+            if (!this.activeClippingPlane || this.sectionConfig.showCaps === false) {
                 if (this.sectionCapGroup) {
                     this.sectionCapGroup.visible = false;
                 }
@@ -1683,17 +1885,37 @@
                 this._stencilMaterials.matFront.clippingPlanes = [plane];
             }
 
-            // 4. Identificar mallas activas que deben ser seccionadas
+            // 4. Identificar mallas activas que deben ser seccionadas con relleno macizo
+            // CRÍTICO: Limitar estrictamente el Stencil a geometrías volumétricas sólidas y cerradas
+            // (muros, forjados, pilares, vigas, cimentaciones). Las mallas abiertas o complejas
+            // como mobiliario, sanitarios y escaleras rompen la regla de caras Front/Back y
+            // provocan manchas oscuras parásitas en otras plantas o habitaciones.
+            const isSolidVolumetricCategory = (catName, catKey) => {
+                const s = `${catName || ''} ${catKey || ''}`.toLowerCase();
+                if (s.includes('muro') || s.includes('cerramiento') || s.includes('tabique') || s.includes('wall')) return true;
+                if (s.includes('forjado') || s.includes('suelo') || s.includes('pavimento') || s.includes('losa') || s.includes('slab')) return true;
+                if (s.includes('pilar') || s.includes('columna') || s.includes('column')) return true;
+                if (s.includes('viga') || s.includes('beam')) return true;
+                if (s.includes('cimentac') || s.includes('zapata') || s.includes('footing')) return true;
+                if (s.includes('cubierta') || s.includes('roof')) return true;
+                if (s.includes('estructura') || s.includes('structural')) return true;
+                return false;
+            };
+
             let targetMeshes = [];
             if (this.isIsolated && this.isolatedSubset && this.isolatedSubset.visible) {
                 targetMeshes = [this.isolatedSubset];
             } else {
                 targetMeshes = Object.values(this.categorySubsets)
-                    .filter(s => s && s.mesh && s.mesh.visible)
+                    .filter(s => s && s.mesh && s.mesh.visible && isSolidVolumetricCategory(s.name, s.key))
                     .map(s => s.mesh);
             }
-            if (targetMeshes.length === 0 && this.ifcModel) {
-                targetMeshes = [this.ifcModel];
+
+            if (targetMeshes.length === 0) {
+                if (this.sectionCapGroup) {
+                    this.sectionCapGroup.visible = false;
+                }
+                return;
             }
 
             // 5. Comprobar si necesitamos reconstruir las mallas de stencil (cambio de eje o cambio de mallas)
@@ -1795,6 +2017,7 @@
             const stepUpBtn = document.getElementById('v3dSectionStepUpBtn');
             const invertBtn = document.getElementById('v3dSectionInvertBtn');
             const helperChk = document.getElementById('v3dSectionHelperChk');
+            const capChk = document.getElementById('v3dSectionCapChk');
             const resetBtn = document.getElementById('v3dSectionResetBtn');
             const axisPills = document.querySelectorAll('.v3d-axis-pill');
 
@@ -1868,6 +2091,17 @@
                     if (this.sectionHelperMesh) {
                         this.sectionHelperMesh.visible = this.sectionConfig.active && this.sectionConfig.showHelper;
                     }
+                };
+            }
+
+            if (capChk) {
+                capChk.checked = this.sectionConfig.showCaps !== false;
+                capChk.onchange = () => {
+                    this.sectionConfig.showCaps = capChk.checked;
+                    const axis = this.sectionConfig.active ? this.sectionConfig.axis : 'Y';
+                    const val = this.sectionConfig.active ? this.sectionConfig.value : 0;
+                    const inv = this.sectionConfig.active ? this.sectionConfig.inverted : false;
+                    this._updateSectionCaps(axis, val, inv);
                 };
             }
 
@@ -1969,14 +2203,24 @@
          * Reajusta el tamaño del canvas al contenedor
          */
         onResize: function () {
-            if (!this.container || !this.renderer || !this.camera) return;
+            if (!this.container || !this.renderer) return;
             const w = this.container.clientWidth;
             const h = this.container.clientHeight;
-            if (w > 0 && h > 0) {
-                this.camera.aspect = w / h;
-                this.camera.updateProjectionMatrix();
-                this.renderer.setSize(w, h);
+            if (w <= 0 || h <= 0) return;
+
+            const aspect = w / h;
+            if (this.perspectiveCamera) {
+                this.perspectiveCamera.aspect = aspect;
+                this.perspectiveCamera.updateProjectionMatrix();
             }
+            if (this.orthographicCamera) {
+                const frustumHeight = this.orthographicCamera.top - this.orthographicCamera.bottom;
+                const currentFrustumH = frustumHeight > 0 ? frustumHeight : 35;
+                this.orthographicCamera.left = -currentFrustumH * aspect / 2;
+                this.orthographicCamera.right = currentFrustumH * aspect / 2;
+                this.orthographicCamera.updateProjectionMatrix();
+            }
+            this.renderer.setSize(w, h);
         },
 
         /**
@@ -2024,6 +2268,17 @@
                     intersects = raycaster.intersectObjects(activeMeshes, false);
                 } else if (this.ifcModel && this.ifcModel.visible) {
                     intersects = raycaster.intersectObject(this.ifcModel, true);
+                }
+
+                // FILTRADO CRÍTICO DE PLANO DE SECCIÓN:
+                // Three.js evalúa el rayo contra los triángulos en CPU sin conocer el recorte GPU (clippingPlanes).
+                // Si el corte está activo, descartamos cualquier punto de impacto que caiga en la zona recortada/oculta
+                // (distanceToPoint < 0) para permitir seleccionar muebles, particiones y objetos interiores a través del corte.
+                if (this.activeClippingPlane && intersects.length > 0) {
+                    const plane = this.activeClippingPlane;
+                    intersects = intersects.filter(hit => {
+                        return plane.distanceToPoint(hit.point) >= -0.001;
+                    });
                 }
 
                 // Si no hay intersección (clic en el fondo/espacio vacío): DESELECCIONAR
@@ -2818,17 +3073,26 @@
 
                 if (!isNaN(center.x) && !isNaN(center.y) && !isNaN(center.z)) {
                     const maxDim = Math.max(size.x, size.y, size.z, 2.0);
-                    const fov = this.camera.fov * (Math.PI / 180);
-                    let cameraDist = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 2.2;
-                    if (isNaN(cameraDist) || cameraDist < 4) cameraDist = 8;
+                    if (this.currentCameraType === 'orthographic' && this.orthographicCamera) {
+                        const dir = this.camera.position.clone().sub(this.controls.target).normalize();
+                        if (dir.lengthSq() === 0) dir.set(0, 1, 0);
+                        this.controls.target.copy(center);
+                        this.camera.position.copy(center.clone().add(dir.multiplyScalar(maxDim * 3.0)));
+                        this.camera.lookAt(center);
+                        this.controls.update();
+                    } else {
+                        const fov = (this.perspectiveCamera ? this.perspectiveCamera.fov : 45) * (Math.PI / 180);
+                        let cameraDist = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 2.2;
+                        if (isNaN(cameraDist) || cameraDist < 4) cameraDist = 8;
 
-                    const dir = this.camera.position.clone().sub(this.controls.target).normalize();
-                    if (dir.lengthSq() === 0) dir.set(1, 1, 1).normalize();
+                        const dir = this.camera.position.clone().sub(this.controls.target).normalize();
+                        if (dir.lengthSq() === 0) dir.set(1, 1, 1).normalize();
 
-                    this.camera.position.copy(center.clone().add(dir.multiplyScalar(cameraDist)));
-                    this.camera.lookAt(center);
-                    this.controls.target.copy(center);
-                    this.controls.update();
+                        this.camera.position.copy(center.clone().add(dir.multiplyScalar(cameraDist)));
+                        this.camera.lookAt(center);
+                        this.controls.target.copy(center);
+                        this.controls.update();
+                    }
                 }
             }
 
@@ -2910,17 +3174,26 @@
 
                 if (!isNaN(center.x) && !isNaN(center.y) && !isNaN(center.z)) {
                     const maxDim = Math.max(size.x, size.y, size.z, 2.0);
-                    const fov = this.camera.fov * (Math.PI / 180);
-                    let cameraDist = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 2.2;
-                    if (isNaN(cameraDist) || cameraDist < 4) cameraDist = 8;
+                    if (this.currentCameraType === 'orthographic' && this.orthographicCamera) {
+                        const dir = this.camera.position.clone().sub(this.controls.target).normalize();
+                        if (dir.lengthSq() === 0) dir.set(0, 1, 0);
+                        this.controls.target.copy(center);
+                        this.camera.position.copy(center.clone().add(dir.multiplyScalar(maxDim * 3.0)));
+                        this.camera.lookAt(center);
+                        this.controls.update();
+                    } else {
+                        const fov = (this.perspectiveCamera ? this.perspectiveCamera.fov : 45) * (Math.PI / 180);
+                        let cameraDist = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 2.2;
+                        if (isNaN(cameraDist) || cameraDist < 4) cameraDist = 8;
 
-                    const dir = this.camera.position.clone().sub(this.controls.target).normalize();
-                    if (dir.lengthSq() === 0) dir.set(1, 1, 1).normalize();
+                        const dir = this.camera.position.clone().sub(this.controls.target).normalize();
+                        if (dir.lengthSq() === 0) dir.set(1, 1, 1).normalize();
 
-                    this.camera.position.copy(center.clone().add(dir.multiplyScalar(cameraDist)));
-                    this.camera.lookAt(center);
-                    this.controls.target.copy(center);
-                    this.controls.update();
+                        this.camera.position.copy(center.clone().add(dir.multiplyScalar(cameraDist)));
+                        this.camera.lookAt(center);
+                        this.controls.target.copy(center);
+                        this.controls.update();
+                    }
                 }
             }
 
@@ -3089,8 +3362,8 @@
             this.disableSectionPlane(false);
             this.applyClippingPlane(null);
 
-            // 5. Encuadrar vista completa
-            this.fitToView();
+            // 5. Encuadrar vista completa en 3D
+            this.setViewMode('3d');
 
             // 6. Ocultar menú contextual
             this.hideContextMenu();
