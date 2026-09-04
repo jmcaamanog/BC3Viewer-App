@@ -495,6 +495,7 @@ function initIfcWizardEvents() {
                         }
                         const v3dBtn = document.getElementById('visor3dBtn');
                         if (v3dBtn) v3dBtn.style.display = 'inline-flex';
+                        if (typeof updateV3dModelSelector === 'function') updateV3dModelSelector();
                     } catch (innerErr) {
                         hideWorkerLoader();
                         console.error("Error generando BC3:", innerErr);
@@ -600,10 +601,11 @@ function switchBudgetTab(tabId) {
     }
     window.certifications = targetTab.certifications || {};
 
-    // Controlar visibilidad del botón 📐 VISOR 3D (solo en pestañas IFC)
+    // Controlar visibilidad del botón 📐 VISOR 3D (visible si hay algún modelo IFC abierto)
     const v3dBtnEl = document.getElementById('visor3dBtn');
+    const hasAnyIfc = budgetTabs.some(t => t.isFromIfc && t.ifcBuffer);
     if (v3dBtnEl) {
-        if (targetTab.isFromIfc) {
+        if (targetTab.isFromIfc || hasAnyIfc) {
             v3dBtnEl.style.display = 'inline-flex';
         } else {
             v3dBtnEl.style.display = 'none';
@@ -611,6 +613,21 @@ function switchBudgetTab(tabId) {
             if (v3dPanelEl && v3dPanelEl.style.display !== 'none') {
                 const presBtn = document.getElementById('presupuestoBtn');
                 if (presBtn) presBtn.click();
+            }
+        }
+    }
+
+    // Si hay modelos IFC, mantener sincronizado el selector desplegable del visor 3D
+    if (typeof updateV3dModelSelector === 'function') {
+        updateV3dModelSelector();
+    }
+
+    // Si el panel 3D está abierto y la pestaña entrante es IFC, cargar/actualizar su modelo 3D
+    if (targetTab.isFromIfc && targetTab.ifcBuffer && typeof IFCViewer3D !== 'undefined') {
+        const v3dPanelEl = document.getElementById('visor3dPanel');
+        if (v3dPanelEl && v3dPanelEl.style.display !== 'none') {
+            if (IFCViewer3D.currentModelKey !== targetTab.id) {
+                IFCViewer3D.loadModel(targetTab.ifcBuffer, targetTab.ifcData, targetTab.ifcFileName || targetTab.fileName, targetTab.id);
             }
         }
     }
@@ -736,8 +753,37 @@ function closeBudgetTab(tabId, e) {
         return;
     }
 
+    const tabToClose = budgetTabs[tabIdx];
+    const wasIfc = tabToClose && tabToClose.isFromIfc;
+    const wasLoadedIn3d = typeof IFCViewer3D !== 'undefined' && IFCViewer3D.currentModelKey === tabId;
+
     // Cerrar pestaña
     budgetTabs.splice(tabIdx, 1);
+
+    if (wasIfc) {
+        if (typeof updateV3dModelSelector === 'function') {
+            updateV3dModelSelector();
+        }
+        const remainingIfc = budgetTabs.filter(t => t.isFromIfc && t.ifcBuffer);
+        if (remainingIfc.length === 0) {
+            if (typeof IFCViewer3D !== 'undefined') {
+                IFCViewer3D.unloadModel();
+            }
+            const v3dBtn = document.getElementById('visor3dBtn');
+            if (v3dBtn) v3dBtn.style.display = 'none';
+            const v3dPanel = document.getElementById('visor3dPanel');
+            if (v3dPanel && v3dPanel.style.display !== 'none') {
+                const presBtn = document.getElementById('presupuestoBtn');
+                if (presBtn) presBtn.click();
+            }
+        } else if (wasLoadedIn3d) {
+            // Conmutar el visor 3D al siguiente modelo IFC disponible
+            const nextIfc = remainingIfc[0];
+            if (typeof IFCViewer3D !== 'undefined' && nextIfc) {
+                IFCViewer3D.loadModel(nextIfc.ifcBuffer, nextIfc.ifcData, nextIfc.ifcFileName || nextIfc.fileName, nextIfc.id);
+            }
+        }
+    }
 
     if (activeTabId === tabId) {
         const nextTab = budgetTabs[Math.max(0, tabIdx - 1)];
@@ -896,6 +942,21 @@ function resetToWelcomeState() {
     // 5. Eliminar auto-carga de localStorage
     localStorage.removeItem('last_bc3_content');
     localStorage.removeItem('last_bc3_filename');
+
+    // 6. Descargar y purgar modelo 3D y estados IFC
+    if (typeof IFCViewer3D !== 'undefined') {
+        IFCViewer3D.unloadModel();
+    }
+    currentIfcData = null;
+    currentIfcFile = null;
+    currentIfcBuffer = null;
+    const v3dBtn = document.getElementById('visor3dBtn');
+    if (v3dBtn) v3dBtn.style.display = 'none';
+    const v3dPanel = document.getElementById('visor3dPanel');
+    if (v3dPanel) v3dPanel.style.display = 'none';
+    if (typeof updateV3dModelSelector === 'function') {
+        updateV3dModelSelector();
+    }
 }
 
 // Botón + en la barra de pestañas para añadir nuevo presupuesto
@@ -15686,6 +15747,44 @@ if (typeof document !== "undefined") {
 const visor3dBtn = document.getElementById('visor3dBtn');
 const visor3dPanel = document.getElementById('visor3dPanel');
 
+// Función para sincronizar el selector desplegable de modelos IFC abiertos
+function updateV3dModelSelector() {
+    const modelSelect = document.getElementById('v3dModelSelect');
+    if (!modelSelect) return;
+
+    const ifcTabs = budgetTabs.filter(t => t.isFromIfc && t.ifcBuffer);
+    modelSelect.innerHTML = '';
+
+    if (ifcTabs.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '(Sin modelos IFC abiertos)';
+        modelSelect.appendChild(opt);
+        return;
+    }
+
+    ifcTabs.forEach(tab => {
+        const opt = document.createElement('option');
+        opt.value = tab.id;
+        opt.textContent = tab.ifcFileName || tab.fileName || 'Modelo IFC';
+        modelSelect.appendChild(opt);
+    });
+
+    let selectedId = null;
+    const currentActiveTab = budgetTabs.find(t => t.id === activeTabId);
+    if (currentActiveTab && currentActiveTab.isFromIfc && currentActiveTab.ifcBuffer) {
+        selectedId = currentActiveTab.id;
+    } else if (typeof IFCViewer3D !== 'undefined' && IFCViewer3D.currentModelKey) {
+        selectedId = IFCViewer3D.currentModelKey;
+    } else {
+        selectedId = ifcTabs[0].id;
+    }
+
+    if (selectedId && modelSelect.querySelector(`option[value="${selectedId}"]`)) {
+        modelSelect.value = selectedId;
+    }
+}
+
 if (visor3dBtn && visor3dPanel) {
     visor3dBtn.addEventListener('click', () => {
         // Ocultar vistas de árbol, detalles y precios
@@ -15700,15 +15799,25 @@ if (visor3dBtn && visor3dPanel) {
         document.querySelectorAll('.control-container button').forEach(b => b.classList.remove('active'));
         visor3dBtn.classList.add('active');
 
-        // Cargar modelo si no se ha cargado todavía
-        const currentTab = budgetTabs.find(t => t.id === activeTabId);
-        const bufferToLoad = (currentTab && currentTab.ifcBuffer) || currentIfcBuffer;
-        const dataToLoad = (currentTab && currentTab.ifcData) || currentIfcData;
-        const nameToLoad = (currentTab && (currentTab.ifcFileName || currentTab.fileName)) || currentFileName;
+        // Sincronizar el desplegable de modelos IFC
+        updateV3dModelSelector();
 
-        if (bufferToLoad && typeof IFCViewer3D !== 'undefined') {
-            if (!IFCViewer3D.ifcModel) {
-                IFCViewer3D.loadModel(bufferToLoad, dataToLoad, nameToLoad);
+        // Determinar qué modelo IFC cargar en el visor 3D
+        const currentTab = budgetTabs.find(t => t.id === activeTabId);
+        let tabToLoad = null;
+        if (currentTab && currentTab.isFromIfc && currentTab.ifcBuffer) {
+            tabToLoad = currentTab;
+        } else {
+            const ifcTabs = budgetTabs.filter(t => t.isFromIfc && t.ifcBuffer);
+            if (ifcTabs.length > 0) {
+                tabToLoad = ifcTabs[0];
+            }
+        }
+
+        if (tabToLoad && typeof IFCViewer3D !== 'undefined') {
+            const modelKey = tabToLoad.id;
+            if (IFCViewer3D.currentModelKey !== modelKey || !IFCViewer3D.ifcModel) {
+                IFCViewer3D.loadModel(tabToLoad.ifcBuffer, tabToLoad.ifcData, tabToLoad.ifcFileName || tabToLoad.fileName, modelKey);
             }
         }
 
@@ -15733,6 +15842,27 @@ function initVisor3dControls() {
     if (storeySelect) storeySelect.addEventListener('change', function () {
         if (typeof IFCViewer3D !== 'undefined') IFCViewer3D.filterByStorey(this.value);
     });
+
+    // Desplegable selector de modelos IFC abiertos
+    const modelSelect = document.getElementById('v3dModelSelect');
+    if (modelSelect) {
+        modelSelect.addEventListener('change', function () {
+            const selectedTabId = this.value;
+            if (!selectedTabId) return;
+            const targetTab = budgetTabs.find(t => t.id === selectedTabId);
+            if (!targetTab || !targetTab.ifcBuffer) return;
+
+            // Conmutar pestaña activa de presupuesto si es diferente
+            if (activeTabId !== targetTab.id) {
+                switchBudgetTab(targetTab.id);
+            }
+
+            // Purgar y cargar el modelo seleccionado en el visor 3D
+            if (typeof IFCViewer3D !== 'undefined') {
+                IFCViewer3D.loadModel(targetTab.ifcBuffer, targetTab.ifcData, targetTab.ifcFileName || targetTab.fileName, targetTab.id);
+            }
+        });
+    }
 
     const fsBtn = document.getElementById('v3dFullscreenBtn');
     if (fsBtn) fsBtn.addEventListener('click', () => {

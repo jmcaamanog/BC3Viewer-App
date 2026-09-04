@@ -24,6 +24,8 @@
         isolatedExpressId: null,
         currentBuffer: null,
         currentIfcData: null,
+        currentModelKey: null,
+        currentFileName: null,
         activeClippingPlane: null,
         isXRay: false,
         expressIdToElementMap: {},
@@ -376,11 +378,76 @@
                 this.renderer.render(this.scene, this.camera);
             }
         },
+ 
+        /**
+         * Purga y descarga completamente el modelo 3D activo y libera toda la memoria en GPU y WebAssembly
+         */
+        unloadModel: function () {
+            // 1. Limpiar subsets y decoraciones blueprint de categorías
+            this._clearCategorySubsets();
+            this._clearIsolatedSubset();
+            this.resetHighlight();
+            this.hideContextMenu();
+            this.hideElementCard();
+            this.applyClippingPlane(null);
+
+            // 2. Cerrar modelo en Web-IFC si existe y liberar geometría
+            if (this.ifcModel) {
+                try {
+                    if (this.ifcLoader && this.ifcLoader.ifcManager && typeof this.ifcLoader.ifcManager.close === 'function') {
+                        if (this.ifcModel.modelID !== undefined) {
+                            this.ifcLoader.ifcManager.close(this.ifcModel.modelID);
+                        }
+                    }
+                    if (this.scene) {
+                        this.scene.remove(this.ifcModel);
+                    }
+                    if (this.ifcModel.geometry) {
+                        this.ifcModel.geometry.dispose();
+                    }
+                } catch (e) {
+                    console.warn("IFCViewer3D: Error al purgar ifcModel:", e);
+                }
+                this.ifcModel = null;
+            }
+
+            // 3. Resetear variables y mapas de memoria
+            this.currentBuffer = null;
+            this.currentIfcData = null;
+            this.currentModelKey = null;
+            this.currentFileName = null;
+            this.expressIdToElementMap = {};
+            this.globalIdToElementMap = {};
+            if (this.hiddenElementIds) this.hiddenElementIds.clear();
+            this.isIsolated = false;
+            this.isolatedExpressId = null;
+
+            // 4. Limpiar componentes de interfaz del visor
+            const storeySelect = document.getElementById('v3dStoreySelect');
+            if (storeySelect) {
+                storeySelect.innerHTML = '<option value="all">🏢 Edificio Completo (Todas las Plantas)</option>';
+                storeySelect.value = 'all';
+            }
+            const catList = document.getElementById('v3dCategoriesList');
+            if (catList) catList.innerHTML = '';
+            const catCounter = document.getElementById('v3dCatCounterBadge');
+            if (catCounter) catCounter.textContent = '0/0';
+            const catBtnLabel = document.getElementById('v3dCategoriesBtnLabel');
+            if (catBtnLabel) catBtnLabel.textContent = 'Elementos';
+            const selLabel = document.getElementById('v3dSelectedLabel');
+            if (selLabel) selLabel.textContent = 'Haz clic en un elemento para inspeccionarlo';
+
+            // 5. Renderizar escena vacía
+            if (this.renderer && this.scene && this.camera) {
+                this.renderer.render(this.scene, this.camera);
+            }
+            console.log("IFCViewer3D: Modelo purgado y memoria liberada con éxito.");
+        },
 
         /**
          * Carga y renderiza el modelo IFC desde un ArrayBuffer de forma asíncrona y ultra-rápida
          */
-        loadModel: async function (arrayBuffer, ifcData, fileName) {
+        loadModel: async function (arrayBuffer, ifcData, fileName, modelKey) {
             if (!this.init('visor3dCanvasContainer')) {
                 console.error("IFCViewer3D: No se pudo inicializar el canvas antes de cargar.");
                 return;
@@ -391,8 +458,21 @@
                 return;
             }
 
+            const incomingKey = modelKey || fileName || 'default_ifc';
+            // Si ya está cargado este mismo modelo y la malla existe, reutilizar
+            if (this.currentModelKey === incomingKey && this.ifcModel) {
+                console.log("IFCViewer3D: El modelo ya está activo en el visor:", incomingKey);
+                this.fitToView();
+                return;
+            }
+
+            // Purgar completamente cualquier modelo anterior antes de cargar el nuevo
+            this.unloadModel();
+
             this.currentBuffer = arrayBuffer;
             this.currentIfcData = ifcData;
+            this.currentModelKey = incomingKey;
+            this.currentFileName = fileName || (ifcData && ifcData.header ? ifcData.header.fileName : 'Modelo IFC');
 
             // Crear mapas de búsqueda rápida por GlobalId e ID
             this.expressIdToElementMap = {};
@@ -405,9 +485,15 @@
                 });
             }
 
-            // Actualizar etiqueta del modelo en la barra
+            // Sincronizar selector o etiqueta del modelo en la barra
+            const modelSelect = document.getElementById('v3dModelSelect');
+            if (modelSelect && incomingKey) {
+                if (modelSelect.querySelector(`option[value="${incomingKey}"]`)) {
+                    modelSelect.value = incomingKey;
+                }
+            }
             const modelLabel = document.getElementById('visor3dModelName');
-            if (modelLabel) modelLabel.textContent = fileName || (ifcData && ifcData.header ? ifcData.header.fileName : 'Modelo IFC');
+            if (modelLabel) modelLabel.textContent = this.currentFileName;
 
             // Rellenar selector de plantas con cotas reales
             this._populateStoreysDropdown(ifcData);
@@ -419,24 +505,6 @@
                 loadingBadge.style.display = 'flex';
                 if (loadingText) loadingText.textContent = 'Procesando geometría 3D del modelo...';
             }
-
-            // Limpiar modelo y subsets anteriores si existen
-            if (this.ifcModel) {
-                try {
-                    this.scene.remove(this.ifcModel);
-                    if (this.ifcModel.geometry) this.ifcModel.geometry.dispose();
-                } catch (e) { }
-                this.ifcModel = null;
-            }
-            this._clearCategorySubsets();
-            this._clearIsolatedSubset();
-            if (this.hiddenElementIds) this.hiddenElementIds.clear();
-            this.isIsolated = false;
-            this.isolatedExpressId = null;
-            this.hideContextMenu();
-            this.resetHighlight();
-            this.hideElementCard();
-            this.applyClippingPlane(null);
 
             // Configurar Web-IFC para máxima velocidad (Fast Booleans y omitir espacios vacíos)
             try {

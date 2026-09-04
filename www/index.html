@@ -657,8 +657,12 @@
             <div class="visor3d-panel" id="visor3dPanel" style="display:none;">
                 <div class="visor3d-toolbar" id="visor3dToolbar">
                     <div class="visor3d-toolbar-left">
-                        <span class="visor3d-title">📐 Modelo BIM 3D</span>
-                        <span class="visor3d-model-name" id="visor3dModelName">Modelo IFC</span>
+                        <span class="visor3d-title">📐 Modelo BIM 3D:</span>
+                        <div class="v3d-model-select-wrapper">
+                            <select id="v3dModelSelect" class="v3d-select v3d-model-select" title="Seleccionar Modelo IFC para visualizar">
+                                <option value="">(Sin modelo cargado)</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="visor3d-toolbar-center">
