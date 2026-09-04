@@ -678,6 +678,10 @@
                             <span>👁️</span> <span>Rayos X</span>
                         </button>
 
+                        <button type="button" id="v3dSectionBtn" class="v3d-tool-btn" title="Planos de Sección y Corte 3D (Ejes X, Y, Z)">
+                            <span>✂️</span> <span>Sección</span>
+                        </button>
+
                         <div class="v3d-dropdown-container">
                             <select id="v3dStoreySelect" class="v3d-select" title="Filtrar por Planta">
                                 <option value="all">🏢 Edificio Completo (Todas las Plantas)</option>
@@ -722,6 +726,59 @@
                     <div id="v3dLoadingBadge" class="v3d-loading-badge" style="display:none;">
                         <div class="worker-loading-spinner" style="width: 24px; height: 24px;"></div>
                         <span>Cargando geometría 3D del modelo...</span>
+                    </div>
+
+                    <!-- Panel Flotante de Control de Planos de Sección 3D (Multieje X, Y, Z) -->
+                    <div id="v3dSectionWidget" class="v3d-section-widget" style="display: none;">
+                        <div class="v3d-section-header">
+                            <div class="v3d-section-title-box">
+                                <span class="v3d-section-icon">✂️</span>
+                                <span class="v3d-section-title">Plano de Sección 3D</span>
+                            </div>
+                            <button type="button" id="v3dSectionCloseBtn" class="v3d-section-close" title="Cerrar panel de sección">✕</button>
+                        </div>
+                        <div class="v3d-section-body">
+                            <!-- Selector de Eje de Corte -->
+                            <div class="v3d-section-axis-row">
+                                <label class="v3d-section-label">Eje:</label>
+                                <div class="v3d-section-axis-pills">
+                                    <button type="button" class="v3d-axis-pill" data-axis="X" title="Corte Transversal (Eje X)">Eje X</button>
+                                    <button type="button" class="v3d-axis-pill active" data-axis="Y" title="Corte Horizontal / Planta (Eje Y)">Eje Y (Planta)</button>
+                                    <button type="button" class="v3d-axis-pill" data-axis="Z" title="Corte Longitudinal (Eje Z)">Eje Z</button>
+                                </div>
+                            </div>
+
+                            <!-- Control Deslizante de Posición -->
+                            <div class="v3d-section-slider-group">
+                                <div class="v3d-section-slider-header">
+                                    <span class="v3d-section-label">Posición:</span>
+                                    <span id="v3dSectionValueBadge" class="v3d-section-val-badge">0.00 m</span>
+                                </div>
+                                <div class="v3d-section-slider-row">
+                                    <button type="button" id="v3dSectionStepDownBtn" class="v3d-step-btn" title="Paso atrás (-0.20m)">◀</button>
+                                    <input type="range" id="v3dSectionSlider" class="v3d-section-range" min="-10" max="10" step="0.05" value="0">
+                                    <button type="button" id="v3dSectionStepUpBtn" class="v3d-step-btn" title="Paso adelante (+0.20m)">▶</button>
+                                </div>
+                            </div>
+
+                            <!-- Opciones Auxiliares: Invertir y Plano Guía -->
+                            <div class="v3d-section-toggles-row">
+                                <button type="button" id="v3dSectionInvertBtn" class="v3d-section-action-btn" title="Invertir dirección del corte">
+                                    <span>🔄</span> <span>Invertir Corte</span>
+                                </button>
+                                <label class="v3d-section-helper-toggle" title="Mostrar u ocultar plano guía 3D en la escena">
+                                    <input type="checkbox" id="v3dSectionHelperChk" checked>
+                                    <span>Plano Guía 3D</span>
+                                </label>
+                            </div>
+
+                            <!-- Botón Desactivar Corte -->
+                            <div class="v3d-section-footer">
+                                <button type="button" id="v3dSectionResetBtn" class="v3d-section-reset-btn" title="Desactivar corte y ver todo el modelo">
+                                    <span>🔄 Desactivar Corte</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Menú Flotante Contextual de Acciones para Elemento Seleccionado -->

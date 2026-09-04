@@ -15847,6 +15847,11 @@ function initVisor3dControls() {
         if (typeof IFCViewer3D !== 'undefined') IFCViewer3D.toggleXRay();
     });
 
+    const sectionBtn = document.getElementById('v3dSectionBtn');
+    if (sectionBtn) sectionBtn.addEventListener('click', () => {
+        if (typeof IFCViewer3D !== 'undefined') IFCViewer3D.toggleSectionWidget();
+    });
+
     const storeySelect = document.getElementById('v3dStoreySelect');
     if (storeySelect) storeySelect.addEventListener('change', function () {
         if (typeof IFCViewer3D !== 'undefined') IFCViewer3D.filterByStorey(this.value);

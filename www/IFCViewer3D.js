@@ -34,7 +34,18 @@
         onElementClickedCallback: null,
         _categoriesMenuInitialized: false,
         _contextMenuInitialized: false,
+        _sectionToolInitialized: false,
         _loadSessionId: 0,
+        sectionConfig: {
+            active: false,
+            axis: 'Y',
+            inverted: false,
+            value: 0,
+            showHelper: true,
+            min: -10,
+            max: 10
+        },
+        sectionHelperMesh: null,
 
         /**
          * Configuración Oficial de Estilo Blueprint ConTech
@@ -355,11 +366,12 @@
                 this.ifcLoader.ifcManager.setWasmPath('./');
             }
 
-            // 8. Eventos de Raycasting, Tarjeta HUD, Menú de Elementos y Menú Contextual
+            // 8. Eventos de Raycasting, Tarjeta HUD, Menú de Elementos, Menú Contextual y Planos de Sección
             this._setupRaycasting();
             this._setupHudEvents();
             this._setupCategoriesMenuUI();
             this._setupContextMenuUI();
+            this._setupSectionToolUI();
 
             // 9. Redimensionamiento y bucle de renderizado
             window.addEventListener('resize', () => this.onResize());
@@ -463,6 +475,18 @@
             if (this.hiddenElementIds) this.hiddenElementIds.clear();
             this.isIsolated = false;
             this.isolatedExpressId = null;
+
+            // Limpieza de herramientas de sección
+            this.disableSectionPlane(true);
+            if (this.sectionHelperMesh) {
+                if (this.scene) this.scene.remove(this.sectionHelperMesh);
+                if (this.sectionHelperMesh.geometry) this.sectionHelperMesh.geometry.dispose();
+                if (this.sectionHelperMesh.material) {
+                    if (Array.isArray(this.sectionHelperMesh.material)) this.sectionHelperMesh.material.forEach(m => m.dispose());
+                    else this.sectionHelperMesh.material.dispose();
+                }
+                this.sectionHelperMesh = null;
+            }
 
             // 6. Limpiar componentes de interfaz del visor
             const storeySelect = document.getElementById('v3dStoreySelect');
@@ -620,6 +644,9 @@
 
                 // Poblar y sincronizar el menú selector de elementos
                 this._populateCategoriesDropdown();
+
+                // Calibrar límites de planos de sección según dimensiones de este modelo
+                this.updateSectionBounds(false);
 
                 if (loadingBadge) loadingBadge.style.display = 'none';
 
@@ -1206,17 +1233,20 @@
         },
 
         /**
-         * Aplica un plano de corte horizontal para eliminar plantas superiores
+         * Aplica un plano de corte (THREE.Plane o cota de altura numérica) a todas las geometrías del modelo
          */
-        applyClippingPlane: function (cutHeight) {
+        applyClippingPlane: function (planeOrHeight) {
             const THREE = window.THREE;
-            if (!this.renderer) return;
+            if (!this.renderer || !THREE) return;
             this.renderer.localClippingEnabled = true;
 
             let planes = [];
-            if (cutHeight !== null && cutHeight !== undefined && !isNaN(cutHeight)) {
-                // Normal (0, -1, 0) con constante cutHeight elimina todo donde Y > cutHeight
-                this.activeClippingPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), cutHeight);
+            if (planeOrHeight instanceof THREE.Plane) {
+                this.activeClippingPlane = planeOrHeight;
+                planes = [this.activeClippingPlane];
+            } else if (planeOrHeight !== null && planeOrHeight !== undefined && !isNaN(planeOrHeight)) {
+                // Normal (0, -1, 0) con constante planeOrHeight elimina todo donde Y > planeOrHeight
+                this.activeClippingPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), planeOrHeight);
                 planes = [this.activeClippingPlane];
             } else {
                 this.activeClippingPlane = null;
@@ -1268,6 +1298,358 @@
                         }
                     }
                 });
+            }
+
+            // Si hay un elemento aislado activo, aplicarle también el plano de corte
+            if (this.isolatedSubset) {
+                this.isolatedSubset.traverse(child => {
+                    if (child && child.material) {
+                        if (Array.isArray(child.material)) {
+                            child.material.forEach(setMat);
+                        } else {
+                            setMat(child.material);
+                        }
+                    }
+                });
+            }
+        },
+
+        /**
+         * Abre o cierra el panel flotante de planos de sección
+         */
+        toggleSectionWidget: function (forceState) {
+            const widget = document.getElementById('v3dSectionWidget');
+            const btn = document.getElementById('v3dSectionBtn');
+            if (!widget) return;
+
+            this._setupSectionToolUI();
+
+            const isCurrentlyOpen = widget.style.display !== 'none' && widget.style.display !== '';
+            const shouldOpen = typeof forceState === 'boolean' ? forceState : !isCurrentlyOpen;
+
+            if (shouldOpen) {
+                widget.style.display = 'block';
+                if (btn) btn.classList.add('active');
+                this.updateSectionBounds(false);
+            } else {
+                widget.style.display = 'none';
+                if (btn && !this.sectionConfig.active) btn.classList.remove('active');
+            }
+        },
+
+        /**
+         * Actualiza los límites del slider (min, max) según el BoundingBox del modelo activo
+         */
+        updateSectionBounds: function (resetToMidpoint) {
+            const THREE = window.THREE;
+            const slider = document.getElementById('v3dSectionSlider');
+            const valBadge = document.getElementById('v3dSectionValueBadge');
+            if (!slider || !THREE) return;
+
+            // Calcular caja envolvente del modelo
+            let box = new THREE.Box3();
+            let hasBounds = false;
+            const subs = Object.values(this.categorySubsets);
+            subs.forEach(s => {
+                if (s && s.mesh && s.mesh.visible) {
+                    box.expandByObject(s.mesh);
+                    hasBounds = true;
+                }
+            });
+            if (!hasBounds && this.ifcModel) {
+                box.setFromObject(this.ifcModel);
+                hasBounds = true;
+            }
+
+            if (!hasBounds) {
+                box = new THREE.Box3(new THREE.Vector3(-10, -2, -10), new THREE.Vector3(10, 10, 10));
+            }
+
+            const axis = this.sectionConfig.axis || 'Y';
+            let min = 0, max = 10;
+            if (axis === 'X') {
+                min = box.min.x - 0.2;
+                max = box.max.x + 0.2;
+            } else if (axis === 'Y') {
+                min = box.min.y - 0.2;
+                max = box.max.y + 0.2;
+            } else if (axis === 'Z') {
+                min = box.min.z - 0.2;
+                max = box.max.z + 0.2;
+            }
+
+            min = Math.floor(min * 10) / 10;
+            max = Math.ceil(max * 10) / 10;
+            if (min >= max) max = min + 2;
+
+            slider.min = min.toFixed(2);
+            slider.max = max.toFixed(2);
+            slider.step = '0.05';
+
+            let val = parseFloat(slider.value);
+            if (resetToMidpoint || isNaN(val) || val < min || val > max) {
+                val = (min + max) / 2;
+                val = Math.round(val * 20) / 20;
+                slider.value = val.toFixed(2);
+            }
+
+            this.sectionConfig.min = min;
+            this.sectionConfig.max = max;
+            this.sectionConfig.value = val;
+
+            if (valBadge) valBadge.textContent = `${val >= 0 ? '+' : ''}${val.toFixed(2)} m`;
+
+            // Si el widget está visible o la sección está activa, aplicar corte
+            const widget = document.getElementById('v3dSectionWidget');
+            if ((widget && widget.style.display !== 'none') || this.sectionConfig.active) {
+                this.applySectionPlane(axis, val, this.sectionConfig.inverted);
+            }
+        },
+
+        /**
+         * Aplica el plano de corte en el eje espacial deseado (X, Y, Z) con la cota y orientación indicadas
+         */
+        applySectionPlane: function (axis, value, inverted) {
+            const THREE = window.THREE;
+            if (!this.renderer || !THREE) return;
+
+            this.sectionConfig.active = true;
+            this.sectionConfig.axis = axis;
+            this.sectionConfig.value = value;
+            this.sectionConfig.inverted = !!inverted;
+
+            const btn = document.getElementById('v3dSectionBtn');
+            if (btn) btn.classList.add('active');
+
+            // Construir vector normal y constante del plano
+            const normal = new THREE.Vector3();
+            let constant = 0;
+
+            if (axis === 'X') {
+                normal.set(inverted ? 1 : -1, 0, 0);
+                constant = inverted ? -value : value;
+            } else if (axis === 'Y') {
+                normal.set(0, inverted ? 1 : -1, 0);
+                constant = inverted ? -value : value;
+            } else if (axis === 'Z') {
+                normal.set(0, 0, inverted ? 1 : -1);
+                constant = inverted ? -value : value;
+            }
+
+            const plane = new THREE.Plane(normal, constant);
+            this.applyClippingPlane(plane);
+
+            // Actualizar plano guía 3D en la escena
+            this._updateSectionHelper(axis, value);
+        },
+
+        /**
+         * Crea o actualiza la malla de visualización del plano guía 3D semitransparente con contorno cian
+         */
+        _updateSectionHelper: function (axis, value) {
+            const THREE = window.THREE;
+            if (!this.scene || !THREE) return;
+
+            if (!this.sectionConfig.showHelper || !this.sectionConfig.active) {
+                if (this.sectionHelperMesh) this.sectionHelperMesh.visible = false;
+                return;
+            }
+
+            // Obtener caja envolvente del modelo
+            let box = new THREE.Box3();
+            let hasBounds = false;
+            Object.values(this.categorySubsets).forEach(s => {
+                if (s && s.mesh && s.mesh.visible) {
+                    box.expandByObject(s.mesh);
+                    hasBounds = true;
+                }
+            });
+            if (!hasBounds && this.ifcModel) box.setFromObject(this.ifcModel);
+            if (!hasBounds) box = new THREE.Box3(new THREE.Vector3(-10, -2, -10), new THREE.Vector3(10, 10, 10));
+
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            const margin = 2.0;
+
+            let width = 10, height = 10;
+            if (axis === 'X') {
+                width = size.z + margin * 2;
+                height = size.y + margin * 2;
+            } else if (axis === 'Y') {
+                width = size.x + margin * 2;
+                height = size.z + margin * 2;
+            } else if (axis === 'Z') {
+                width = size.x + margin * 2;
+                height = size.y + margin * 2;
+            }
+
+            if (this.sectionHelperMesh) {
+                this.scene.remove(this.sectionHelperMesh);
+                if (this.sectionHelperMesh.geometry) this.sectionHelperMesh.geometry.dispose();
+                if (this.sectionHelperMesh.material) {
+                    if (Array.isArray(this.sectionHelperMesh.material)) this.sectionHelperMesh.material.forEach(m => m.dispose());
+                    else this.sectionHelperMesh.material.dispose();
+                }
+                this.sectionHelperMesh = null;
+            }
+
+            const planeGeom = new THREE.PlaneGeometry(width, height);
+            const planeMat = new THREE.MeshBasicMaterial({
+                color: 0x38bdf8,
+                transparent: true,
+                opacity: 0.14,
+                side: THREE.DoubleSide,
+                depthWrite: false
+            });
+            const helperMesh = new THREE.Mesh(planeGeom, planeMat);
+            helperMesh.name = 'v3d-section-helper';
+
+            const edgesGeom = new THREE.EdgesGeometry(planeGeom);
+            const edgesMat = new THREE.LineBasicMaterial({
+                color: 0x38bdf8,
+                transparent: true,
+                opacity: 0.85
+            });
+            const edgesMesh = new THREE.LineSegments(edgesGeom, edgesMat);
+            edgesMesh.name = 'v3d-section-helper-edges';
+            helperMesh.add(edgesMesh);
+
+            if (axis === 'X') {
+                helperMesh.rotation.y = Math.PI / 2;
+                helperMesh.position.set(value, center.y, center.z);
+            } else if (axis === 'Y') {
+                helperMesh.rotation.x = -Math.PI / 2;
+                helperMesh.position.set(center.x, value, center.z);
+            } else if (axis === 'Z') {
+                helperMesh.rotation.set(0, 0, 0);
+                helperMesh.position.set(center.x, center.y, value);
+            }
+
+            helperMesh.visible = true;
+            this.scene.add(helperMesh);
+            this.sectionHelperMesh = helperMesh;
+        },
+
+        /**
+         * Desactiva el plano de corte de sección y oculta el plano guía
+         */
+        disableSectionPlane: function (closeWidget) {
+            this.sectionConfig.active = false;
+            this.applyClippingPlane(null);
+
+            if (this.sectionHelperMesh) {
+                this.sectionHelperMesh.visible = false;
+            }
+
+            const btn = document.getElementById('v3dSectionBtn');
+            if (btn) btn.classList.remove('active');
+
+            if (closeWidget) {
+                this.toggleSectionWidget(false);
+            }
+
+            const label = document.getElementById('v3dSelectedLabel');
+            if (label) {
+                label.textContent = 'Plano de sección desactivado: Mostrando todo el modelo';
+            }
+        },
+
+        /**
+         * Configura eventos y controles del panel flotante de planos de sección 3D (Multieje X, Y, Z)
+         */
+        _setupSectionToolUI: function () {
+            if (this._sectionToolInitialized) return;
+            this._sectionToolInitialized = true;
+
+            const widget = document.getElementById('v3dSectionWidget');
+            const closeBtn = document.getElementById('v3dSectionCloseBtn');
+            const slider = document.getElementById('v3dSectionSlider');
+            const valBadge = document.getElementById('v3dSectionValueBadge');
+            const stepDownBtn = document.getElementById('v3dSectionStepDownBtn');
+            const stepUpBtn = document.getElementById('v3dSectionStepUpBtn');
+            const invertBtn = document.getElementById('v3dSectionInvertBtn');
+            const helperChk = document.getElementById('v3dSectionHelperChk');
+            const resetBtn = document.getElementById('v3dSectionResetBtn');
+            const axisPills = document.querySelectorAll('.v3d-axis-pill');
+
+            if (!widget) return;
+
+            widget.addEventListener('pointerdown', (e) => e.stopPropagation());
+            widget.addEventListener('click', (e) => e.stopPropagation());
+
+            if (closeBtn) {
+                closeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    this.toggleSectionWidget(false);
+                };
+            }
+
+            axisPills.forEach(pill => {
+                pill.onclick = (e) => {
+                    e.stopPropagation();
+                    const axis = pill.getAttribute('data-axis');
+                    if (axis && this.sectionConfig.axis !== axis) {
+                        this.sectionConfig.axis = axis;
+                        axisPills.forEach(p => p.classList.remove('active'));
+                        pill.classList.add('active');
+                        this.updateSectionBounds(true);
+                    }
+                };
+            });
+
+            if (slider) {
+                slider.oninput = (e) => {
+                    const val = parseFloat(slider.value);
+                    this.sectionConfig.value = val;
+                    if (valBadge) valBadge.textContent = `${val >= 0 ? '+' : ''}${val.toFixed(2)} m`;
+                    this.applySectionPlane(this.sectionConfig.axis, val, this.sectionConfig.inverted);
+                };
+            }
+
+            if (stepDownBtn && slider) {
+                stepDownBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    const current = parseFloat(slider.value) || 0;
+                    const min = parseFloat(slider.min) || -50;
+                    const next = Math.max(min, Math.round((current - 0.20) * 100) / 100);
+                    slider.value = next.toFixed(2);
+                    slider.dispatchEvent(new Event('input'));
+                };
+            }
+
+            if (stepUpBtn && slider) {
+                stepUpBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    const current = parseFloat(slider.value) || 0;
+                    const max = parseFloat(slider.max) || 50;
+                    const next = Math.min(max, Math.round((current + 0.20) * 100) / 100);
+                    slider.value = next.toFixed(2);
+                    slider.dispatchEvent(new Event('input'));
+                };
+            }
+
+            if (invertBtn) {
+                invertBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    this.sectionConfig.inverted = !this.sectionConfig.inverted;
+                    this.applySectionPlane(this.sectionConfig.axis, this.sectionConfig.value, this.sectionConfig.inverted);
+                };
+            }
+
+            if (helperChk) {
+                helperChk.onchange = () => {
+                    this.sectionConfig.showHelper = helperChk.checked;
+                    if (this.sectionHelperMesh) {
+                        this.sectionHelperMesh.visible = this.sectionConfig.active && this.sectionConfig.showHelper;
+                    }
+                };
+            }
+
+            if (resetBtn) {
+                resetBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    this.disableSectionPlane(true);
+                };
             }
         },
 
@@ -2447,6 +2829,7 @@
             // 4. Restaurar plano de corte completo
             const storeySelect = document.getElementById('v3dStoreySelect');
             if (storeySelect) storeySelect.value = 'all';
+            this.disableSectionPlane(false);
             this.applyClippingPlane(null);
 
             // 5. Encuadrar vista completa
