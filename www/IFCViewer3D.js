@@ -734,10 +734,9 @@
                 // Actualizar etiqueta en barra superior
                 const label = document.getElementById('v3dSelectedLabel');
                 if (label) {
-                    const rawName = elementObj ? elementObj.name : `Elemento #${expressId}`;
-                    const cleanName = this._cleanElementName(rawName);
+                    const displayTitle = this._formatDisplayTitle(elementObj, expressId);
                     const storey = elementObj && elementObj.storey ? ` (${elementObj.storey})` : '';
-                    label.textContent = `🎯 ${cleanName}${storey}`;
+                    label.textContent = `🎯 ${displayTitle}${storey}`;
                 }
 
                 if (focusCamera && this.highlightSubset) {
@@ -811,16 +810,16 @@
             const iconEl = document.getElementById('v3dCardIcon');
 
             const rawName = elemObj ? (elemObj.name || `Elemento #${expressId}`) : `Elemento #${expressId}`;
-            const cleanName = this._cleanElementName(rawName);
+            const displayTitle = this._formatDisplayTitle(elemObj, expressId);
             const storey = elemObj ? (elemObj.storey || 'Sin Planta Asignada') : 'Modelo BIM 3D';
             const globalId = elemObj ? (elemObj.globalId || String(expressId)) : String(expressId);
 
-            if (nameEl) nameEl.textContent = cleanName;
+            if (nameEl) nameEl.textContent = displayTitle;
             if (storeyEl) storeyEl.textContent = storey;
 
             // Icono representativo por tipo
             if (iconEl) {
-                const lower = (name + ' ' + (elemObj ? (elemObj.ifcType || elemObj.category || '') : '')).toLowerCase();
+                const lower = (rawName + ' ' + (elemObj ? (elemObj.ifcType || elemObj.category || '') : '')).toLowerCase();
                 if (lower.includes('wall') || lower.includes('muro') || lower.includes('tabique')) iconEl.textContent = '🧱';
                 else if (lower.includes('slab') || lower.includes('forjado') || lower.includes('suelo') || lower.includes('losa')) iconEl.textContent = '🔲';
                 else if (lower.includes('column') || lower.includes('pilar')) iconEl.textContent = '🏛️';
@@ -844,6 +843,7 @@
 
             // 1. Tabla de Identificación y Ubicación
             const pName = document.getElementById('propValName');
+            const pCat = document.getElementById('propValCategory');
             const pIfcType = document.getElementById('propValIfcType');
             const pType = document.getElementById('propValType');
             const pStorey = document.getElementById('propValStorey');
@@ -853,7 +853,9 @@
             const badgeIfcType = document.getElementById('v3dBadgeIfcType');
 
             const ifcTypeStr = elemObj ? (elemObj.ifcType || 'IFC') : 'IFC';
-            if (pName) pName.textContent = name;
+            const friendlyCat = this._getFriendlyCategory(elemObj) || (elemObj ? elemObj.category : '-');
+            if (pName) pName.textContent = rawName;
+            if (pCat) pCat.textContent = friendlyCat;
             if (pIfcType) pIfcType.textContent = ifcTypeStr;
             if (pType) pType.textContent = elemObj ? (elemObj.typeName || elemObj.category || '-') : '-';
             if (pStorey) pStorey.textContent = storey;
@@ -1961,6 +1963,97 @@
         },
 
         /**
+         * Obtiene la categoría constructiva en lenguaje amigable en español
+         * (ej. "Puerta", "Ventana", "Muro", "Forjado", "Pilar", "Viga", etc.)
+         */
+        _getFriendlyCategory: function (elemObj) {
+            if (!elemObj) return '';
+
+            const ifcType = (elemObj.ifcType || '').toUpperCase();
+            const categoryStr = (elemObj.category || '').toLowerCase();
+
+            // 1. Mapeo directo por ifcType estándar
+            const typeMap = {
+                'IFCDOOR': 'Puerta',
+                'IFCWINDOW': 'Ventana',
+                'IFCWALL': 'Muro',
+                'IFCWALLSTANDARDCASE': 'Muro',
+                'IFCSLAB': 'Forjado',
+                'IFCCOLUMN': 'Pilar',
+                'IFCBEAM': 'Viga',
+                'IFCMEMBER': 'Elemento Estructural',
+                'IFCFOOTING': 'Cimentación',
+                'IFCCOVERING': 'Revestimiento',
+                'IFCROOF': 'Cubierta',
+                'IFCSTAIR': 'Escalera',
+                'IFCSTAIRFLIGHT': 'Tramo de Escalera',
+                'IFCRAILING': 'Barandilla',
+                'IFCSPACE': 'Espacio',
+                'IFCPIPESEGMENT': 'Tubería',
+                'IFCDUCTSEGMENT': 'Conducto',
+                'IFCFURNISHINGELEMENT': 'Mobiliario',
+                'IFCFURNITURE': 'Mobiliario',
+                'IFCFLOWTERMINAL': 'Sanitario / Fontanería',
+                'IFCPLATE': 'Vidrio / Panel',
+                'IFCSITE': 'Parcela',
+                'IFCBUILDINGELEMENTPROXY': ''
+            };
+
+            if (typeMap[ifcType]) {
+                return typeMap[ifcType];
+            }
+
+            // 2. Extracción de categoría semántica desde categoryStr
+            if (categoryStr.includes('puerta')) return 'Puerta';
+            if (categoryStr.includes('ventana')) return 'Ventana';
+            if (categoryStr.includes('muro') || categoryStr.includes('tabique')) return 'Muro';
+            if (categoryStr.includes('forjado') || categoryStr.includes('suelo') || categoryStr.includes('pavimento') || categoryStr.includes('losa')) return 'Forjado';
+            if (categoryStr.includes('pilar') || categoryStr.includes('columna')) return 'Pilar';
+            if (categoryStr.includes('viga')) return 'Viga';
+            if (categoryStr.includes('cubierta') || categoryStr.includes('tejado')) return 'Cubierta';
+            if (categoryStr.includes('escalera')) return 'Escalera';
+            if (categoryStr.includes('barandilla') || categoryStr.includes('cerrajeria')) return 'Barandilla';
+            if (categoryStr.includes('mobiliario')) return 'Mobiliario';
+            if (categoryStr.includes('sanit') || categoryStr.includes('fontan')) return 'Sanitario';
+            if (categoryStr.includes('tuberi')) return 'Tubería';
+            if (categoryStr.includes('conduct')) return 'Conducto';
+            if (categoryStr.includes('cimentac')) return 'Cimentación';
+
+            return '';
+        },
+
+        /**
+         * Formatea el título para mostrar en la interfaz:
+         * combina la categoría amigable y el nombre/código del elemento
+         * (ej. "Puerta: P - 013", o "Entorno" si ya es descriptivo)
+         */
+        _formatDisplayTitle: function (elemObj, expressId) {
+            const rawName = elemObj ? (elemObj.name || `Elemento #${expressId}`) : `Elemento #${expressId}`;
+            const cleanName = this._cleanElementName(rawName);
+            const category = this._getFriendlyCategory(elemObj);
+
+            if (!category) {
+                return cleanName;
+            }
+
+            const cleanLower = cleanName.toLowerCase();
+            const catLower = category.toLowerCase();
+
+            // Si el nombre limpio ya incluye la categoría (ej. "Puerta 21", "Muros básicos")
+            if (cleanLower.includes(catLower)) {
+                return cleanName;
+            }
+
+            // Si el nombre es un ID numérico o genérico
+            if (/^elemento\s*#/i.test(cleanName)) {
+                return `${category} #${expressId}`;
+            }
+
+            // Combinar categoría y nombre: "Puerta: P - 013"
+            return `${category}: ${cleanName}`;
+        },
+
+        /**
          * Muestra el menú contextual flotante junto a las coordenadas del ratón
          */
         showContextMenu: function (clientX, clientY, elemObj, expressId) {
@@ -1973,11 +2066,10 @@
             const subEl = document.getElementById('v3dCtxSubtitle');
             const iconEl = document.getElementById('v3dCtxIcon');
 
-            const rawName = elemObj ? (elemObj.name || `Elemento #${expressId}`) : `Elemento #${expressId}`;
-            const cleanName = this._cleanElementName(rawName);
+            const displayTitle = this._formatDisplayTitle(elemObj, expressId);
             const icon = this._getElementIcon(elemObj);
 
-            if (titleEl) titleEl.textContent = cleanName;
+            if (titleEl) titleEl.textContent = displayTitle;
             if (subEl) {
                 subEl.textContent = '';
                 subEl.style.display = 'none';
@@ -2200,9 +2292,8 @@
             // 6. Actualizar barra de información
             const label = document.getElementById('v3dSelectedLabel');
             if (label) {
-                const rawName = elemObj ? elemObj.name : `Elemento #${expressId}`;
-                const cleanName = this._cleanElementName(rawName);
-                label.textContent = `👁️‍🗨️ Elemento Aislado: ${cleanName} (Pulsa 'Restaurar' para volver)`;
+                const displayTitle = this._formatDisplayTitle(elemObj, expressId);
+                label.textContent = `👁️‍🗨️ Elemento Aislado: ${displayTitle} (Pulsa 'Restaurar' para volver)`;
             }
         },
 
