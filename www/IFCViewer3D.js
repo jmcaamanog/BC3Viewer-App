@@ -734,9 +734,10 @@
                 // Actualizar etiqueta en barra superior
                 const label = document.getElementById('v3dSelectedLabel');
                 if (label) {
-                    const name = elementObj ? elementObj.name : `Elemento #${expressId}`;
+                    const rawName = elementObj ? elementObj.name : `Elemento #${expressId}`;
+                    const cleanName = this._cleanElementName(rawName);
                     const storey = elementObj && elementObj.storey ? ` (${elementObj.storey})` : '';
-                    label.textContent = `🎯 ${name}${storey}`;
+                    label.textContent = `🎯 ${cleanName}${storey}`;
                 }
 
                 if (focusCamera && this.highlightSubset) {
@@ -809,11 +810,12 @@
             const storeyEl = document.getElementById('v3dCardStorey');
             const iconEl = document.getElementById('v3dCardIcon');
 
-            const name = elemObj ? (elemObj.name || `Elemento #${expressId}`) : `Elemento #${expressId}`;
+            const rawName = elemObj ? (elemObj.name || `Elemento #${expressId}`) : `Elemento #${expressId}`;
+            const cleanName = this._cleanElementName(rawName);
             const storey = elemObj ? (elemObj.storey || 'Sin Planta Asignada') : 'Modelo BIM 3D';
             const globalId = elemObj ? (elemObj.globalId || String(expressId)) : String(expressId);
 
-            if (nameEl) nameEl.textContent = name;
+            if (nameEl) nameEl.textContent = cleanName;
             if (storeyEl) storeyEl.textContent = storey;
 
             // Icono representativo por tipo
@@ -1933,6 +1935,32 @@
         },
 
         /**
+         * Limpia y formatea el nombre de un elemento IFC para presentación amigable
+         * (ej. "ENTORNO:ENTORNO:199092" -> "Entorno")
+         */
+        _cleanElementName: function (rawName) {
+            if (!rawName || typeof rawName !== 'string') return 'Elemento';
+            let name = rawName.trim();
+            if (!name) return 'Elemento';
+
+            // Si tiene separadores por dos puntos (formato Familia:Tipo:Id o Categoría:Tipo:Id)
+            if (name.includes(':')) {
+                const parts = name.split(':').map(p => p.trim()).filter(p => p.length > 0);
+                if (parts.length > 0) {
+                    name = parts[0];
+                }
+            }
+
+            // Si el nombre resultante está completamente en mayúsculas (como ENTORNO),
+            // formatearlo a Capitalize/Title Case elegante: "Entorno"
+            if (name.length > 1 && name === name.toUpperCase() && /[A-ZÁÉÍÓÚÑ]/.test(name)) {
+                name = name.toLowerCase().replace(/(^|\s|\/|-)([a-záéíóúñ])/g, (match, sep, char) => sep + char.toUpperCase());
+            }
+
+            return name;
+        },
+
+        /**
          * Muestra el menú contextual flotante junto a las coordenadas del ratón
          */
         showContextMenu: function (clientX, clientY, elemObj, expressId) {
@@ -1945,12 +1973,15 @@
             const subEl = document.getElementById('v3dCtxSubtitle');
             const iconEl = document.getElementById('v3dCtxIcon');
 
-            const name = elemObj ? (elemObj.name || `Elemento #${expressId}`) : `Elemento #${expressId}`;
-            const ifcType = elemObj ? (elemObj.ifcType || elemObj.category || 'Elemento BIM') : 'Elemento BIM';
+            const rawName = elemObj ? (elemObj.name || `Elemento #${expressId}`) : `Elemento #${expressId}`;
+            const cleanName = this._cleanElementName(rawName);
             const icon = this._getElementIcon(elemObj);
 
-            if (titleEl) titleEl.textContent = name;
-            if (subEl) subEl.textContent = `${ifcType} · #${expressId}`;
+            if (titleEl) titleEl.textContent = cleanName;
+            if (subEl) {
+                subEl.textContent = '';
+                subEl.style.display = 'none';
+            }
             if (iconEl) iconEl.textContent = icon;
 
             // Calcular posición respecto al contenedor relativo del canvas
@@ -1959,7 +1990,7 @@
             let posY = clientY - containerRect.top + 14;
 
             const menuWidth = 240;
-            const menuHeight = 225;
+            const menuHeight = 200;
 
             if (posX + menuWidth > containerRect.width) {
                 posX = Math.max(12, clientX - containerRect.left - menuWidth - 14);
@@ -2169,8 +2200,9 @@
             // 6. Actualizar barra de información
             const label = document.getElementById('v3dSelectedLabel');
             if (label) {
-                const name = elemObj ? elemObj.name : `Elemento #${expressId}`;
-                label.textContent = `👁️‍🗨️ Elemento Aislado: ${name} (Pulsa 'Restaurar' para volver)`;
+                const rawName = elemObj ? elemObj.name : `Elemento #${expressId}`;
+                const cleanName = this._cleanElementName(rawName);
+                label.textContent = `👁️‍🗨️ Elemento Aislado: ${cleanName} (Pulsa 'Restaurar' para volver)`;
             }
         },
 

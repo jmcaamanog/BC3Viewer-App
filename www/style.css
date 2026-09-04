@@ -8401,22 +8401,24 @@ body.dark-theme .partida-action-card,
 .v3d-ctx-title-box {
     display: flex;
     flex-direction: column;
+    justify-content: center;
     overflow: hidden;
     flex: 1;
     min-width: 0;
 }
 
 .v3d-ctx-title {
-    font-size: 0.78rem;
+    font-size: 0.82rem;
     font-weight: 700;
     color: #f8fafc;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    line-height: 1.2;
+    line-height: 1.25;
 }
 
 .v3d-ctx-sub {
+    display: none;
     font-size: 0.65rem;
     color: #38bdf8;
     white-space: nowrap;
