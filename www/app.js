@@ -16084,6 +16084,118 @@ function initV3dAddToBudgetModal() {
         }
     });
 
+    // Bloqueo de campos L/W/H según unidad seleccionada
+    const _applyUnitFieldLock = (unit) => {
+        const lInput = document.getElementById('v3dLineLInput');
+        const wInput = document.getElementById('v3dLineWInput');
+        const hInput = document.getElementById('v3dLineHInput');
+        const _setDisabled = (el, disabled) => {
+            if (!el) return;
+            el.disabled = disabled;
+            el.style.opacity = disabled ? '0.4' : '1';
+            el.style.cursor = disabled ? 'not-allowed' : '';
+            el.style.background = disabled ? 'var(--bg-hover)' : 'var(--bg-color)';
+            if (disabled) el.value = '';
+        };
+        // m² (Superficie): bloquear Ancho
+        if (unit === 'm²') {
+            _setDisabled(lInput, false);
+            _setDisabled(wInput, true);
+            _setDisabled(hInput, false);
+        // m (Longitud): bloquear Ancho y Alto
+        } else if (unit === 'm') {
+            _setDisabled(lInput, false);
+            _setDisabled(wInput, true);
+            _setDisabled(hInput, true);
+        // ud (Unidad): bloquear Largo, Ancho y Alto
+        } else if (unit === 'ud') {
+            _setDisabled(lInput, true);
+            _setDisabled(wInput, true);
+            _setDisabled(hInput, true);
+        // m³ y otros: todo habilitado
+        } else {
+            _setDisabled(lInput, false);
+            _setDisabled(wInput, false);
+            _setDisabled(hInput, false);
+        }
+        updateSubtotalLive();
+    };
+
+    const unitSelect = document.getElementById('v3dNewUnitSelect');
+    if (unitSelect) {
+        unitSelect.addEventListener('change', () => _applyUnitFieldLock(unitSelect.value));
+    }
+    // Exponer para que openV3dAddToBudgetModal pueda llamarla al abrir
+    modal._applyUnitFieldLock = _applyUnitFieldLock;
+
+    // ─── Helpers para dos niveles: Capítulo → Subcapítulo → código auto ─────────
+    /**
+     * Devuelve los hijos directos (nivel capítulo o nivel subcapítulo) de un concepto.
+     * Filtra solo los que tienen decomposition (son agrupadores), no las partidas hoja.
+     */
+    const _getChildGroups = (parentCode) => {
+        const c = parsedData && parsedData.concepts && parsedData.concepts[parentCode];
+        if (!c || !c.decomposition) return [];
+        return c.decomposition
+            .map(d => parsedData.concepts[d.code])
+            .filter(ch => ch && ch.decomposition && ch.decomposition.length > 0);
+    };
+
+    /**
+     * Calcula el siguiente código secuencial para una partida nueva dentro de parentCode.
+     * Si parentCode tiene hijos, cuenta las hojas existentes y suma 1.
+     */
+    const _autoCode = (parentCode) => {
+        if (!parsedData || !parsedData.concepts) return '';
+        const parent = parsedData.concepts[parentCode];
+        const cleanParent = parentCode.replace(/#+$/, '').replace(/\.$/, '');
+        const count = (parent && parent.decomposition ? parent.decomposition.length : 0) + 1;
+        return `${cleanParent}.${String(count).padStart(2, '0')}`;
+    };
+
+    /** Rellena el select de subcapítulos según el capítulo seleccionado */
+    const _fillSubchapters = (chapterCode) => {
+        const subSelect = document.getElementById('v3dNewSubchapterSelect');
+        const subCustomInput = document.getElementById('v3dCustomSubchapterInput');
+        const codeInput = document.getElementById('v3dNewCodeInput');
+        if (!subSelect) return;
+
+        subSelect.innerHTML = '';
+        const children = _getChildGroups(chapterCode);
+
+        if (children.length > 0) {
+            // Hay subcapítulos: llenar select con ellos
+            children.forEach(ch => {
+                const opt = document.createElement('option');
+                opt.value = ch.code;
+                opt.textContent = `${ch.code.replace(/#+$/, '')} · ${ch.summary || ch.code}`;
+                subSelect.appendChild(opt);
+            });
+            // Opción "Nuevo subcapítulo"
+            const newOpt = document.createElement('option');
+            newOpt.value = '__new_sub__';
+            newOpt.textContent = '➕ Nuevo subcapítulo...';
+            subSelect.appendChild(newOpt);
+            if (subCustomInput) subCustomInput.style.display = 'none';
+        } else {
+            // El capítulo no tiene subcapítulos → las partidas van directamente aquí
+            const directOpt = document.createElement('option');
+            directOpt.value = chapterCode;
+            directOpt.textContent = '(Directamente en el capítulo)';
+            subSelect.appendChild(directOpt);
+            const newOpt = document.createElement('option');
+            newOpt.value = '__new_sub__';
+            newOpt.textContent = '➕ Nuevo subcapítulo...';
+            subSelect.appendChild(newOpt);
+            if (subCustomInput) subCustomInput.style.display = 'none';
+        }
+
+        // Actualizar código al primer ítem
+        if (codeInput) {
+            codeInput.value = _autoCode(subSelect.value !== '__new_sub__' ? subSelect.value : chapterCode);
+        }
+    };
+
     // Desplegable de capítulos
     const chSelect = document.getElementById('v3dNewChapterSelect');
     const customChInput = document.getElementById('v3dCustomChapterInput');
@@ -16093,19 +16205,29 @@ function initV3dAddToBudgetModal() {
                 if (customChInput) customChInput.style.display = 'block';
             } else {
                 if (customChInput) customChInput.style.display = 'none';
-                if (parsedData && parsedData.concepts) {
-                    const targetCh = chSelect.value;
-                    const cleanCh = targetCh.replace(/#+$/, '');
-                    const chConcept = parsedData.concepts[targetCh];
-                    const count = (chConcept && chConcept.decomposition ? chConcept.decomposition.length : 0) + 1;
-                    const codeIn = document.getElementById('v3dNewCodeInput');
-                    if (codeIn && (!codeIn.value || codeIn.value.includes('.'))) {
-                        codeIn.value = `${cleanCh}.${String(count).padStart(2, '0')}`;
-                    }
-                }
+                _fillSubchapters(chSelect.value);
             }
         });
     }
+
+    // Desplegable de subcapítulos
+    const subchSelect = document.getElementById('v3dNewSubchapterSelect');
+    const customSubChInput = document.getElementById('v3dCustomSubchapterInput');
+    if (subchSelect) {
+        subchSelect.addEventListener('change', () => {
+            const codeInput = document.getElementById('v3dNewCodeInput');
+            if (subchSelect.value === '__new_sub__') {
+                if (customSubChInput) customSubChInput.style.display = 'block';
+            } else {
+                if (customSubChInput) customSubChInput.style.display = 'none';
+                if (codeInput) codeInput.value = _autoCode(subchSelect.value);
+            }
+        });
+    }
+
+    // Exponer helpers para openV3dAddToBudgetModal
+    modal._fillSubchapters = _fillSubchapters;
+    modal._autoCode = _autoCode;
 
     // Buscador y vista previa de partidas existentes
     const existingSearch = document.getElementById('v3dExistingSearchInput');
@@ -16162,13 +16284,14 @@ function initV3dAddToBudgetModal() {
             }
 
             if (activeTab === 'new') {
-                let targetCh = chSelect ? chSelect.value : '';
-                if (!targetCh) {
-                    alert("Selecciona un capítulo de destino.");
-                    return;
-                }
+                // El padre real es el subcapítulo (o el capítulo si no hay subcapítulos)
+                const subchSelectEl = document.getElementById('v3dNewSubchapterSelect');
+                let targetParent = subchSelectEl && subchSelectEl.value && subchSelectEl.value !== '__new_sub__'
+                    ? subchSelectEl.value
+                    : (chSelect ? chSelect.value : '');
 
-                if (targetCh === '__custom__') {
+                if (!targetParent || targetParent === '__custom__') {
+                    // Crear nuevo capítulo personalizado
                     const customName = customChInput ? customChInput.value.trim() : '';
                     if (!customName) {
                         alert("Por favor escribe el nombre para el nuevo capítulo.");
@@ -16177,10 +16300,10 @@ function initV3dAddToBudgetModal() {
                     const roots = Array.isArray(parsedData.root_nodes) ? parsedData.root_nodes : Object.values(parsedData.root_nodes || {});
                     const rootConcept = roots.length > 0 ? parsedData.concepts[roots[0]] : null;
                     const nextNum = (rootConcept && rootConcept.decomposition ? rootConcept.decomposition.length : 0) + 1;
-                    targetCh = String(nextNum).padStart(2, '0');
+                    targetParent = String(nextNum).padStart(2, '0');
 
-                    parsedData.concepts[targetCh] = {
-                        code: targetCh,
+                    parsedData.concepts[targetParent] = {
+                        code: targetParent,
                         unit: '',
                         summary: customName,
                         price: 0,
@@ -16190,17 +16313,46 @@ function initV3dAddToBudgetModal() {
                     };
                     if (rootConcept) {
                         if (!rootConcept.decomposition) rootConcept.decomposition = [];
-                        rootConcept.decomposition.push({ code: targetCh, factor: 1.0 });
+                        rootConcept.decomposition.push({ code: targetParent, factor: 1.0 });
                     }
                 }
 
-                const code = document.getElementById('v3dNewCodeInput').value.trim();
+                // Si el subcapítulo es "__new_sub__", crear uno nuevo
+                if (subchSelectEl && subchSelectEl.value === '__new_sub__') {
+                    const customSubName = document.getElementById('v3dCustomSubchapterInput') ?
+                        document.getElementById('v3dCustomSubchapterInput').value.trim() : '';
+                    if (customSubName) {
+                        const parentConcept = parsedData.concepts[chSelect ? chSelect.value : ''];
+                        const nextSubNum = (parentConcept && parentConcept.decomposition ? parentConcept.decomposition.length : 0) + 1;
+                        const chBase = (chSelect ? chSelect.value : '01').replace(/#+$/, '').replace(/\.$/, '');
+                        const newSubCode = `${chBase}.${String(nextSubNum).padStart(2, '0')}`;
+                        parsedData.concepts[newSubCode] = {
+                            code: newSubCode, unit: '', summary: customSubName,
+                            price: 0, quantity: 1, type: 'CHAPTER', decomposition: []
+                        };
+                        if (parentConcept) {
+                            if (!parentConcept.decomposition) parentConcept.decomposition = [];
+                            parentConcept.decomposition.push({ code: newSubCode, factor: 1.0 });
+                        }
+                        targetParent = newSubCode;
+                    }
+                }
+
+                // Código auto-generado: leer del hidden input, o regenerar si vacío
+                let code = document.getElementById('v3dNewCodeInput').value.trim();
+                if (!code) {
+                    const parentC = parsedData.concepts[targetParent];
+                    const cleanP = targetParent.replace(/#+$/, '').replace(/\.$/, '');
+                    const n = (parentC && parentC.decomposition ? parentC.decomposition.length : 0) + 1;
+                    code = `${cleanP}.${String(n).padStart(2, '0')}`;
+                }
+
                 const summary = document.getElementById('v3dNewSummaryInput').value.trim();
                 const unit = document.getElementById('v3dNewUnitSelect').value || 'm²';
                 const price = parseFloat(document.getElementById('v3dNewPriceInput').value) || 0;
 
-                if (!code || !summary) {
-                    alert("Por favor indica el código y el título de la partida.");
+                if (!summary) {
+                    alert("Por favor introduce el título de la partida.");
                     return;
                 }
 
@@ -16232,7 +16384,7 @@ function initV3dAddToBudgetModal() {
 
                 parsedData.concepts[code] = newConcept;
 
-                const parentCh = parsedData.concepts[targetCh];
+                const parentCh = parsedData.concepts[targetParent];
                 if (parentCh) {
                     if (!parentCh.decomposition) parentCh.decomposition = [];
                     if (!parentCh.decomposition.some(d => d.code === code)) {
@@ -16317,29 +16469,31 @@ window.openV3dAddToBudgetModal = function (measData) {
         return;
     }
 
-    // 1. Mostrar información del elemento BIM medido
+    // 1. Mostrar información del elemento BIM medido (encabezado fijo)
     const elem = measData.element || (typeof IFCViewer3D !== 'undefined' ? IFCViewer3D.selectedElement : null);
     const elemNameEl = document.getElementById('v3dTakeoffElemName');
     const elemMetaEl = document.getElementById('v3dTakeoffElemMeta');
     const qtyDisplay = document.getElementById('v3dTakeoffQtyDisplay');
 
+    // El encabezado siempre muestra "Nueva medición" como el usuario pidió
     if (elemNameEl) {
-        const catStr = elem && elem.category ? `${elem.category}: ` : '';
-        elemNameEl.textContent = elem ? `${catStr}${elem.name || 'Elemento constructivo'}` : 'Geometría 3D';
+        elemNameEl.textContent = 'Nueva medición';
     }
     if (elemMetaEl) {
-        const storeyStr = elem && elem.storey ? elem.storey : 'Ubicación general';
-        const idStr = elem && (elem.globalId || elem.id) ? ` · ID: ${elem.globalId || elem.id}` : '';
+        const storeyStr = elem && elem.storey ? elem.storey : 'Medición directa 3D';
+        const idStr = elem && (elem.globalId || elem.id) ? ` · ID: ${(elem.globalId || elem.id).substring(0, 12)}...` : '';
         elemMetaEl.textContent = `${storeyStr}${idStr}`;
     }
     if (qtyDisplay) {
         qtyDisplay.textContent = `${measData.value.toFixed(2)} ${measData.unit}`;
     }
 
-    // 2. Rellenar desplegable de capítulos
+    // 2. Rellenar desplegable de capítulos (nivel 1)
     const chSelect = document.getElementById('v3dNewChapterSelect');
     if (chSelect) {
         chSelect.innerHTML = '';
+
+        // Recoger solo los capítulos de primer nivel (hijos del nodo raíz del presupuesto)
         const chapters = [];
         const roots = Array.isArray(parsedData.root_nodes) ? parsedData.root_nodes : Object.values(parsedData.root_nodes || {});
         const rootConcept = roots.length > 0 ? parsedData.concepts[roots[0]] : null;
@@ -16351,12 +16505,14 @@ window.openV3dAddToBudgetModal = function (measData) {
             });
         }
 
-        Object.values(parsedData.concepts).forEach(c => {
-            if ((c.type === 'CHAPTER' || (c.decomposition && c.decomposition.length > 0 && !c.code.endsWith('#'))) && !chapters.some(ch => ch.code === c.code)) {
-                chapters.push({ code: c.code, summary: c.summary || c.code });
-            }
-        });
-
+        // Fallback: cualquier concepto con hijos que no sea hoja
+        if (chapters.length === 0) {
+            Object.values(parsedData.concepts).forEach(c => {
+                if (c.decomposition && c.decomposition.length > 0 && !chapters.some(ch => ch.code === c.code)) {
+                    chapters.push({ code: c.code, summary: c.summary || c.code });
+                }
+            });
+        }
         if (chapters.length === 0) {
             chapters.push({ code: '01', summary: 'CAPÍTULO GENERAL' });
         }
@@ -16364,16 +16520,16 @@ window.openV3dAddToBudgetModal = function (measData) {
         chapters.forEach(ch => {
             const opt = document.createElement('option');
             opt.value = ch.code;
-            opt.textContent = `${ch.code} - ${ch.summary}`;
+            opt.textContent = `${ch.code.replace(/#+$/, '')} · ${ch.summary}`;
             chSelect.appendChild(opt);
         });
 
         const customOpt = document.createElement('option');
         customOpt.value = '__custom__';
-        customOpt.textContent = '➕ Crear Nuevo Capítulo...';
+        customOpt.textContent = '➕ Nuevo capítulo...';
         chSelect.appendChild(customOpt);
 
-        // Seleccionar capítulo adecuado según categoría del elemento
+        // Seleccionar capítulo sugerido según categoría BIM del elemento
         if (elem && elem.category) {
             const catLower = elem.category.toLowerCase();
             const matchedCh = chapters.find(ch => {
@@ -16386,44 +16542,32 @@ window.openV3dAddToBudgetModal = function (measData) {
             if (matchedCh) chSelect.value = matchedCh.code;
         }
 
-        // Sugerir código secuencial
-        const targetCh = chSelect.value !== '__custom__' ? chSelect.value : '01';
-        const cleanCh = targetCh.replace(/#+$/, '');
-        const chConcept = parsedData.concepts[targetCh];
-        const count = (chConcept && chConcept.decomposition ? chConcept.decomposition.length : 0) + 1;
-        const codeInput = document.getElementById('v3dNewCodeInput');
-        if (codeInput) {
-            codeInput.value = `${cleanCh}.${String(count).padStart(2, '0')}`;
+        // Poblar subcapítulos y auto-generar código para el capítulo seleccionado
+        if (typeof modal._fillSubchapters === 'function' && chSelect.value !== '__custom__') {
+            modal._fillSubchapters(chSelect.value);
         }
     }
 
     // 3. Título y unidad sugeridos
     const summaryInput = document.getElementById('v3dNewSummaryInput');
     if (summaryInput) {
-        if (elem && elem.name) {
-            const friendlyCat = elem.category ? `${elem.category}: ` : '';
-            summaryInput.value = `${friendlyCat}${elem.name} (Medición directa 3D)`;
-        } else if (measData.type === 'area') {
-            summaryInput.value = 'Revestimiento / Fábrica de superficie (Medición directa 3D)';
-        } else if (measData.type === 'volume') {
-            summaryInput.value = 'Elemento de hormigón / fábrica volumétrica (Medición directa 3D)';
-        } else {
-            summaryInput.value = 'Línea de medición técnica 3D';
-        }
+        summaryInput.value = ''; // Dejar vacío; el placeholder indica qué escribir
     }
 
     const unitSelect = document.getElementById('v3dNewUnitSelect');
     if (unitSelect) {
         unitSelect.value = measData.unit;
+        // Aplicar bloqueo de campos según unidad
+        if (typeof modal._applyUnitFieldLock === 'function') {
+            modal._applyUnitFieldLock(unitSelect.value);
+        }
     }
 
     // 4. Prefill de la línea de medición detallada (~M)
     const commentInput = document.getElementById('v3dLineCommentInput');
     if (commentInput) {
-        const elemTag = elem ?
-            `${elem.category || 'Elemento'} ${elem.name || ''}${elem.storey ? ' (' + elem.storey + ')' : ''}${elem.globalId ? ' [ID: ' + elem.globalId + ']' : (elem.id ? ' [ID: ' + elem.id + ']' : '')}` :
-            (measData.description || 'Medición directa 3D');
-        commentInput.value = elemTag;
+        // Dejar vacío - el placeholder indica qué escribir
+        commentInput.value = '';
     }
 
     const udsInput = document.getElementById('v3dLineUdsInput');
@@ -16433,9 +16577,41 @@ window.openV3dAddToBudgetModal = function (measData) {
     const subtotalEl = document.getElementById('v3dLineSubtotal');
 
     if (udsInput) udsInput.value = '1';
-    if (lInput) lInput.value = measData.l ? measData.l.toFixed(2) : '';
-    if (wInput) wInput.value = measData.w ? measData.w.toFixed(2) : '';
-    if (hInput) hInput.value = measData.h ? measData.h.toFixed(2) : '';
+
+    // Lógica de orientación: asignar L y H según si la medida es más horizontal o vertical
+    // Para medida lineal: si la componente Y (vertical) > componente horizontal, es Alto; si no, es Largo
+    // Para área/volumen: el measData ya viene con l=base y h=altura del plano medido
+    const _fillLH = () => {
+        const rawL = measData.l || 0;
+        const rawH = measData.h || 0;
+        const rawW = measData.w || 0;
+
+        if (measData.type === 'linear' && measData.p1 && measData.p2) {
+            // Calcular componentes del vector de la cota
+            const dx = Math.abs(measData.p2.x - measData.p1.x);
+            const dy = Math.abs(measData.p2.y - measData.p1.y); // Y es vertical en Three.js
+            const dz = Math.abs(measData.p2.z - measData.p1.z);
+            const horizDist = Math.sqrt(dx * dx + dz * dz);
+            const dist = measData.value;
+
+            if (dy > horizDist * 1.2) {
+                // Predominantemente vertical → va al Alto
+                if (lInput && !lInput.disabled) lInput.value = '';
+                if (hInput && !hInput.disabled) hInput.value = dist.toFixed(2);
+            } else {
+                // Predominantemente horizontal → va al Largo
+                if (lInput && !lInput.disabled) lInput.value = dist.toFixed(2);
+                if (hInput && !hInput.disabled) hInput.value = '';
+            }
+            if (wInput && !wInput.disabled) wInput.value = '';
+        } else {
+            // Para área y volumen: L ya es la base medida, H ya es la altura medida
+            if (lInput && !lInput.disabled) lInput.value = rawL > 0 ? rawL.toFixed(2) : '';
+            if (wInput && !wInput.disabled) wInput.value = rawW > 0 ? rawW.toFixed(2) : '';
+            if (hInput && !hInput.disabled) hInput.value = rawH > 0 ? rawH.toFixed(2) : '';
+        }
+    };
+    _fillLH();
     if (subtotalEl) subtotalEl.textContent = measData.value.toFixed(2);
 
     // 5. Rellenar lista de partidas existentes (Pestaña 2)
