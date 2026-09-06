@@ -1144,15 +1144,30 @@
             this._measureControlsInitialized = true;
 
             this.isMeasuring = false;
+            this.measureMode = 'linear'; // 'linear' | 'area' | 'volume'
             this.measureStartPoint = null;
+            this.measureAreaStep = 0; // 0: inicio, 1: P1 fijado, 2: L fijada, 3: P3 fijado
+            this.measureAreaP1 = null;
+            this.measureAreaP2 = null;
+            this.measureAreaP3 = null;
+            this.measureAreaP4 = null;
+            this.measureAreaL = 0;
+            this.measureAreaH = 0;
+            this.lastMeasurementData = null;
+            this.currentMeasuredElement = null;
             this.measurements = [];
             this.measureGroup = null;
             this.measurePreviewLine = null;
+            this.measureAreaPreviewMesh = null;
             this.measureSnapMarker = null;
 
             const measureBtn = document.getElementById('v3dMeasureBtn');
             const clearBtn = document.getElementById('v3dMeasureClearBtn');
             const closeBtn = document.getElementById('v3dMeasureCloseBtn');
+            const modeLinearBtn = document.getElementById('v3dMeasureModeLinear');
+            const modeAreaBtn = document.getElementById('v3dMeasureModeArea');
+            const modeVolumeBtn = document.getElementById('v3dMeasureModeVolume');
+            const addToBudgetBtn = document.getElementById('v3dMeasureAddToBudgetBtn');
 
             if (measureBtn) {
                 measureBtn.onclick = (e) => {
@@ -1175,11 +1190,41 @@
                 };
             }
 
+            if (modeLinearBtn) {
+                modeLinearBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    this.setMeasureMode('linear');
+                };
+            }
+
+            if (modeAreaBtn) {
+                modeAreaBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    this.setMeasureMode('area');
+                };
+            }
+
+            if (modeVolumeBtn) {
+                modeVolumeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    this.setMeasureMode('volume');
+                };
+            }
+
+            if (addToBudgetBtn) {
+                addToBudgetBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (typeof window.openV3dAddToBudgetModal === 'function' && this.lastMeasurementData) {
+                        window.openV3dAddToBudgetModal(this.lastMeasurementData);
+                    }
+                };
+            }
+
             // Atajos de teclado: Escape cancela punto o cierra herramienta; Supr borra última cota
             window.addEventListener('keydown', (e) => {
                 if (!this.isMeasuring && (!this.measurements || this.measurements.length === 0)) return;
                 if (e.key === 'Escape') {
-                    if (this.measureStartPoint) {
+                    if (this.measureStartPoint || this.measureAreaStep > 0) {
                         this._cancelActiveMeasurementPoint();
                     } else if (this.isMeasuring) {
                         this.toggleMeasure(false);
@@ -1221,6 +1266,33 @@
         },
 
         /**
+         * Cambia el modo de medición activo (linear, area, volume)
+         */
+        setMeasureMode: function (mode) {
+            this.measureMode = mode;
+            this._cancelActiveMeasurementPoint();
+
+            const modeLinearBtn = document.getElementById('v3dMeasureModeLinear');
+            const modeAreaBtn = document.getElementById('v3dMeasureModeArea');
+            const modeVolumeBtn = document.getElementById('v3dMeasureModeVolume');
+
+            if (modeLinearBtn) modeLinearBtn.classList.toggle('active', mode === 'linear');
+            if (modeAreaBtn) modeAreaBtn.classList.toggle('active', mode === 'area');
+            if (modeVolumeBtn) modeVolumeBtn.classList.toggle('active', mode === 'volume');
+
+            const hudText = document.getElementById('v3dMeasureHudText');
+            if (hudText) {
+                if (mode === 'linear') {
+                    hudText.textContent = '📏 Modo Distancia: Haz clic en el primer punto para iniciar la cota';
+                } else if (mode === 'area') {
+                    hudText.textContent = '📐 Modo Superficie: Paso 1/2. Haz clic en 2 puntos para medir la base (L)';
+                } else if (mode === 'volume') {
+                    hudText.textContent = '🧊 Modo Volumen: Paso 1/3. Haz clic en 2 puntos para medir la base (L)';
+                }
+            }
+        },
+
+        /**
          * Alterna o fuerza el estado de la herramienta de medición 3D
          */
         toggleMeasure: function (forceState) {
@@ -1251,13 +1323,15 @@
             }
 
             if (this.isMeasuring) {
-                if (hudText) hudText.textContent = 'Haz clic en el primer punto para iniciar la cota';
+                this.setMeasureMode(this.measureMode || 'linear');
                 this._ensureMeasureGroup();
             } else {
                 this._cancelActiveMeasurementPoint();
                 if (this.measureSnapMarker) {
                     this.measureSnapMarker.visible = false;
                 }
+                const addToBudgetBtn = document.getElementById('v3dMeasureAddToBudgetBtn');
+                if (addToBudgetBtn) addToBudgetBtn.style.display = 'none';
             }
         },
 
@@ -1310,17 +1384,36 @@
          */
         _cancelActiveMeasurementPoint: function () {
             this.measureStartPoint = null;
+            this.measureAreaStep = 0;
+            this.measureAreaP1 = null;
+            this.measureAreaP2 = null;
+            this.measureAreaP3 = null;
+            this.measureAreaP4 = null;
+            this.measureAreaL = 0;
+            this.measureAreaH = 0;
+
             if (this.measurePreviewLine) {
                 this.scene.remove(this.measurePreviewLine);
                 if (this.measurePreviewLine.geometry) this.measurePreviewLine.geometry.dispose();
                 this.measurePreviewLine = null;
+            }
+            if (this.measureAreaPreviewMesh) {
+                this.scene.remove(this.measureAreaPreviewMesh);
+                if (this.measureAreaPreviewMesh.geometry) this.measureAreaPreviewMesh.geometry.dispose();
+                this.measureAreaPreviewMesh = null;
             }
             const previewBadge = document.getElementById('v3dMeasurePreviewBadge');
             if (previewBadge) previewBadge.remove();
 
             const hudText = document.getElementById('v3dMeasureHudText');
             if (hudText && this.isMeasuring) {
-                hudText.textContent = 'Haz clic en el primer punto para iniciar la cota';
+                if (this.measureMode === 'area') {
+                    hudText.textContent = '📐 Modo Superficie: Paso 1/2. Haz clic en 2 puntos para medir la base (L)';
+                } else if (this.measureMode === 'volume') {
+                    hudText.textContent = '🧊 Modo Volumen: Paso 1/3. Haz clic en 2 puntos para medir la base (L)';
+                } else {
+                    hudText.textContent = '📏 Modo Distancia: Haz clic en el primer punto para iniciar la cota';
+                }
             }
         },
 
@@ -1403,14 +1496,33 @@
                 }
             }
 
+            // Extracción de metadatos del elemento BIM intersectado
+            let expressId = null;
+            let elementInfo = null;
+            if (hit.object && hit.object.geometry && hit.faceIndex !== undefined && this.ifcLoader && this.ifcLoader.ifcManager && this.ifcModel) {
+                try {
+                    expressId = this.ifcLoader.ifcManager.getExpressId(hit.object.geometry, hit.faceIndex);
+                    if (expressId !== null && expressId !== undefined) {
+                        elementInfo = (this.expressIdToElementMap && (this.expressIdToElementMap[expressId] || this.expressIdToElementMap[String(expressId)])) || null;
+                        if (!elementInfo && this.selectedElement && (this.selectedElement.expressId === expressId || this.selectedElement.id === expressId)) {
+                            elementInfo = this.selectedElement;
+                        }
+                    }
+                } catch (err) {
+                    // ignore
+                }
+            }
+
             return {
                 point: targetPoint,
-                isSnap: isSnap
+                isSnap: isSnap,
+                expressId: expressId,
+                element: elementInfo
             };
         },
 
         /**
-         * Manejador de movimiento del ratón en modo acotar: actualiza snap marker y línea elástica
+         * Manejador de movimiento del ratón en modo acotar: actualiza snap marker, línea elástica y plano provisional
          */
         _handleMeasurePointerMove: function (e) {
             const THREE = window.THREE;
@@ -1441,93 +1553,320 @@
                 this.measureSnapMarker.scale.set(s, s, s);
             }
 
-            // Si ya hay punto inicial fijado, actualizar la línea elástica (rubberband) y badge provisional
-            if (this.measureStartPoint) {
-                const p1 = this.measureStartPoint;
-                const p2 = pt;
-                const dist = p1.distanceTo(p2);
+            const hudText = document.getElementById('v3dMeasureHudText');
+            let previewBadge = document.getElementById('v3dMeasurePreviewBadge');
+            const overlay = document.getElementById('v3dMeasureOverlay');
 
-                const hudText = document.getElementById('v3dMeasureHudText');
-                if (hudText) {
-                    hudText.textContent = `📏 Distancia: ${dist.toFixed(2)} m (Clic para fijar cota, Esc para cancelar)`;
-                }
+            // --- 1. MODO LINEAL ---
+            if (this.measureMode === 'linear') {
+                if (this.measureStartPoint) {
+                    const p1 = this.measureStartPoint;
+                    const p2 = pt;
+                    const dist = p1.distanceTo(p2);
 
-                // Crear o actualizar la línea elástica
-                if (!this.measurePreviewLine) {
-                    const lineGeom = new THREE.BufferGeometry().setFromPoints([p1, p2]);
-                    const lineMat = new THREE.LineDashedMaterial({
-                        color: 0x38bdf8,
-                        dashSize: 0.15,
-                        gapSize: 0.08,
-                        depthTest: false,
-                        linewidth: 2
-                    });
-                    this.measurePreviewLine = new THREE.Line(lineGeom, lineMat);
-                    this.measurePreviewLine.computeLineDistances();
-                    this.measurePreviewLine.renderOrder = 11;
-                    this.scene.add(this.measurePreviewLine);
-                } else {
-                    const posAttr = this.measurePreviewLine.geometry.attributes.position;
-                    posAttr.setXYZ(0, p1.x, p1.y, p1.z);
-                    posAttr.setXYZ(1, p2.x, p2.y, p2.z);
-                    posAttr.needsUpdate = true;
-                    this.measurePreviewLine.computeLineDistances();
-                }
+                    if (hudText) {
+                        hudText.textContent = `📏 Distancia: ${dist.toFixed(2)} m (Clic para fijar cota, Esc para cancelar)`;
+                    }
 
-                // Badge flotante provisional
-                let previewBadge = document.getElementById('v3dMeasurePreviewBadge');
-                const overlay = document.getElementById('v3dMeasureOverlay');
-                if (!previewBadge && overlay) {
-                    previewBadge = document.createElement('div');
-                    previewBadge.id = 'v3dMeasurePreviewBadge';
-                    previewBadge.className = 'v3d-measure-badge preview';
-                    overlay.appendChild(previewBadge);
+                    // Crear o actualizar la línea elástica
+                    if (!this.measurePreviewLine) {
+                        const lineGeom = new THREE.BufferGeometry().setFromPoints([p1, p2]);
+                        const lineMat = new THREE.LineDashedMaterial({
+                            color: 0x38bdf8,
+                            dashSize: 0.15,
+                            gapSize: 0.08,
+                            depthTest: false,
+                            linewidth: 2
+                        });
+                        this.measurePreviewLine = new THREE.Line(lineGeom, lineMat);
+                        this.measurePreviewLine.computeLineDistances();
+                        this.measurePreviewLine.renderOrder = 11;
+                        this.scene.add(this.measurePreviewLine);
+                    } else {
+                        const posAttr = this.measurePreviewLine.geometry.attributes.position;
+                        posAttr.setXYZ(0, p1.x, p1.y, p1.z);
+                        posAttr.setXYZ(1, p2.x, p2.y, p2.z);
+                        posAttr.needsUpdate = true;
+                        this.measurePreviewLine.computeLineDistances();
+                    }
+
+                    // Badge flotante provisional
+                    if (!previewBadge && overlay) {
+                        previewBadge = document.createElement('div');
+                        previewBadge.id = 'v3dMeasurePreviewBadge';
+                        previewBadge.className = 'v3d-measure-badge preview';
+                        overlay.appendChild(previewBadge);
+                    }
+                    if (previewBadge && this.container) {
+                        previewBadge.textContent = `${dist.toFixed(2)} m`;
+                        const mid = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
+                        const rect = this.container.getBoundingClientRect();
+                        const sPos = mid.clone().project(this.camera);
+                        const px = (sPos.x * 0.5 + 0.5) * rect.width;
+                        const py = (-sPos.y * 0.5 + 0.5) * rect.height;
+                        previewBadge.style.left = `${px}px`;
+                        previewBadge.style.top = `${py}px`;
+                        previewBadge.style.display = 'flex';
+                    }
                 }
-                if (previewBadge && this.container) {
-                    previewBadge.textContent = `${dist.toFixed(2)} m`;
-                    const mid = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
-                    const rect = this.container.getBoundingClientRect();
-                    const sPos = mid.clone().project(this.camera);
-                    const px = (sPos.x * 0.5 + 0.5) * rect.width;
-                    const py = (-sPos.y * 0.5 + 0.5) * rect.height;
-                    previewBadge.style.left = `${px}px`;
-                    previewBadge.style.top = `${py}px`;
-                    previewBadge.style.display = 'flex';
+            }
+            // --- 2. MODO SUPERFICIE O VOLUMEN ---
+            else if (this.measureMode === 'area' || this.measureMode === 'volume') {
+                if (this.measureAreaStep === 1 && this.measureAreaP1) {
+                    const p1 = this.measureAreaP1;
+                    const p2 = pt;
+                    const distL = p1.distanceTo(p2);
+
+                    if (hudText) {
+                        hudText.textContent = `📐 Base L: ${distL.toFixed(2)} m (Clic para fijar longitud base L)`;
+                    }
+
+                    if (!this.measurePreviewLine) {
+                        const lineGeom = new THREE.BufferGeometry().setFromPoints([p1, p2]);
+                        const lineMat = new THREE.LineDashedMaterial({
+                            color: 0x38bdf8,
+                            dashSize: 0.15,
+                            gapSize: 0.08,
+                            depthTest: false,
+                            linewidth: 2
+                        });
+                        this.measurePreviewLine = new THREE.Line(lineGeom, lineMat);
+                        this.measurePreviewLine.computeLineDistances();
+                        this.measurePreviewLine.renderOrder = 11;
+                        this.scene.add(this.measurePreviewLine);
+                    } else {
+                        const posAttr = this.measurePreviewLine.geometry.attributes.position;
+                        posAttr.setXYZ(0, p1.x, p1.y, p1.z);
+                        posAttr.setXYZ(1, p2.x, p2.y, p2.z);
+                        posAttr.needsUpdate = true;
+                        this.measurePreviewLine.computeLineDistances();
+                    }
+
+                    if (!previewBadge && overlay) {
+                        previewBadge = document.createElement('div');
+                        previewBadge.id = 'v3dMeasurePreviewBadge';
+                        previewBadge.className = 'v3d-measure-badge preview';
+                        overlay.appendChild(previewBadge);
+                    }
+                    if (previewBadge && this.container) {
+                        previewBadge.textContent = `L: ${distL.toFixed(2)} m`;
+                        const mid = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
+                        const rect = this.container.getBoundingClientRect();
+                        const sPos = mid.clone().project(this.camera);
+                        const px = (sPos.x * 0.5 + 0.5) * rect.width;
+                        const py = (-sPos.y * 0.5 + 0.5) * rect.height;
+                        previewBadge.style.left = `${px}px`;
+                        previewBadge.style.top = `${py}px`;
+                        previewBadge.style.display = 'flex';
+                    }
+                } else if (this.measureAreaStep === 2 && this.measureAreaP1 && this.measureAreaP2) {
+                    const p1 = this.measureAreaP1;
+                    const p2 = this.measureAreaP2;
+                    const L = this.measureAreaL;
+
+                    const u = new THREE.Vector3().subVectors(p2, p1).normalize();
+                    const v = new THREE.Vector3().subVectors(pt, p1);
+                    const proj = v.dot(u);
+                    const hVec = new THREE.Vector3().subVectors(v, u.clone().multiplyScalar(proj));
+                    const H = hVec.length();
+                    const S = L * H;
+
+                    if (hudText) {
+                        if (this.measureMode === 'volume') {
+                            const thick = 0.30;
+                            const V = S * thick;
+                            hudText.textContent = `🧊 Superficie L ${L.toFixed(2)} × H ${H.toFixed(2)} = ${S.toFixed(2)} m² (Vol ~ ${V.toFixed(2)} m³). Clic para fijar`;
+                        } else {
+                            hudText.textContent = `📐 Superficie: L ${L.toFixed(2)} m × H ${H.toFixed(2)} m = ${S.toFixed(2)} m² (Clic para confirmar)`;
+                        }
+                    }
+
+                    const p3 = p2.clone().add(hVec);
+                    const p4 = p1.clone().add(hVec);
+
+                    // Malla elástica transparente del plano
+                    if (!this.measureAreaPreviewMesh) {
+                        const quadGeom = new THREE.BufferGeometry();
+                        const positions = new Float32Array([
+                            p1.x, p1.y, p1.z,  p2.x, p2.y, p2.z,  p3.x, p3.y, p3.z,
+                            p1.x, p1.y, p1.z,  p3.x, p3.y, p3.z,  p4.x, p4.y, p4.z
+                        ]);
+                        quadGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                        const quadMat = new THREE.MeshBasicMaterial({
+                            color: 0x38bdf8,
+                            side: THREE.DoubleSide,
+                            transparent: true,
+                            opacity: 0.28,
+                            depthWrite: false
+                        });
+                        this.measureAreaPreviewMesh = new THREE.Mesh(quadGeom, quadMat);
+                        this.measureAreaPreviewMesh.renderOrder = 10;
+                        this.scene.add(this.measureAreaPreviewMesh);
+                    } else {
+                        const pos = this.measureAreaPreviewMesh.geometry.attributes.position;
+                        pos.setXYZ(0, p1.x, p1.y, p1.z);
+                        pos.setXYZ(1, p2.x, p2.y, p2.z);
+                        pos.setXYZ(2, p3.x, p3.y, p3.z);
+                        pos.setXYZ(3, p1.x, p1.y, p1.z);
+                        pos.setXYZ(4, p3.x, p3.y, p3.z);
+                        pos.setXYZ(5, p4.x, p4.y, p4.z);
+                        pos.needsUpdate = true;
+                    }
+
+                    if (!previewBadge && overlay) {
+                        previewBadge = document.createElement('div');
+                        previewBadge.id = 'v3dMeasurePreviewBadge';
+                        previewBadge.className = 'v3d-measure-badge preview';
+                        overlay.appendChild(previewBadge);
+                    }
+                    if (previewBadge && this.container) {
+                        previewBadge.textContent = `${S.toFixed(2)} m²`;
+                        const centroid = new THREE.Vector3().add(p1).add(p2).add(p3).add(p4).multiplyScalar(0.25);
+                        const rect = this.container.getBoundingClientRect();
+                        const sPos = centroid.clone().project(this.camera);
+                        const px = (sPos.x * 0.5 + 0.5) * rect.width;
+                        const py = (-sPos.y * 0.5 + 0.5) * rect.height;
+                        previewBadge.style.left = `${px}px`;
+                        previewBadge.style.top = `${py}px`;
+                        previewBadge.style.display = 'flex';
+                    }
                 }
             }
         },
 
         /**
-         * Manejador de clic para fijar puntos de la cota
+         * Manejador de clic para fijar puntos de la cota o superficie
          */
         _handleMeasureClick: function (e) {
+            const THREE = window.THREE;
             const res = this._getMeasurePoint(e);
             if (!res || !res.point) return;
 
             const pt = res.point;
+            if (res.element) {
+                this.currentMeasuredElement = res.element;
+            }
 
-            if (!this.measureStartPoint) {
-                // PRIMER CLIC: Fijar origen P1
-                this.measureStartPoint = pt.clone();
-                const hudText = document.getElementById('v3dMeasureHudText');
-                if (hudText) {
-                    hudText.textContent = '📏 Punto 1 fijado. Haz clic en el segundo punto para completar la cota';
+            const hudText = document.getElementById('v3dMeasureHudText');
+            const addToBudgetBtn = document.getElementById('v3dMeasureAddToBudgetBtn');
+
+            // --- 1. MODO LINEAL ---
+            if (this.measureMode === 'linear') {
+                if (!this.measureStartPoint) {
+                    // PRIMER CLIC: Fijar origen P1
+                    this.measureStartPoint = pt.clone();
+                    if (hudText) {
+                        hudText.textContent = '📏 Punto 1 fijado. Haz clic en el segundo punto para completar la cota';
+                    }
+                } else {
+                    // SEGUNDO CLIC: Fijar destino P2 y consolidar cota
+                    const p1 = this.measureStartPoint;
+                    const p2 = pt.clone();
+                    const dist = p1.distanceTo(p2);
+
+                    // Evitar cotas de longitud 0 por doble clic instantáneo
+                    if (dist < 0.02) return;
+
+                    this._addMeasurement(p1, p2, dist);
+
+                    const elem = this.currentMeasuredElement || res.element;
+                    this.lastMeasurementData = {
+                        type: 'linear',
+                        unit: 'm',
+                        value: dist,
+                        l: dist,
+                        w: 0,
+                        h: 0,
+                        units: 1,
+                        element: elem,
+                        p1: p1,
+                        p2: p2,
+                        description: `Longitud 3D: ${dist.toFixed(2)} m`
+                    };
+
+                    if (addToBudgetBtn) addToBudgetBtn.style.display = 'inline-flex';
+                    this._cancelActiveMeasurementPoint();
+
+                    if (hudText) {
+                        hudText.textContent = `✅ Cota fijada: ${dist.toFixed(2)} m. Pulsa '➕ Añadir a Partida' para presupuestar`;
+                    }
                 }
-            } else {
-                // SEGUNDO CLIC: Fijar destino P2 y consolidar cota
-                const p1 = this.measureStartPoint;
-                const p2 = pt.clone();
-                const dist = p1.distanceTo(p2);
+            }
+            // --- 2. MODO SUPERFICIE O VOLUMEN ---
+            else if (this.measureMode === 'area' || this.measureMode === 'volume') {
+                if (this.measureAreaStep === 0) {
+                    this.measureAreaP1 = pt.clone();
+                    this.measureAreaStep = 1;
+                    if (hudText) {
+                        hudText.textContent = '📐 Base iniciada. Haz clic en el 2º punto para fijar la longitud base (L)';
+                    }
+                } else if (this.measureAreaStep === 1) {
+                    this.measureAreaP2 = pt.clone();
+                    this.measureAreaL = this.measureAreaP1.distanceTo(this.measureAreaP2);
+                    if (this.measureAreaL < 0.02) return;
+                    this.measureAreaStep = 2;
+                    if (hudText) {
+                        hudText.textContent = `📐 Base L = ${this.measureAreaL.toFixed(2)} m fijada. Ahora haz clic en la altura (H)`;
+                    }
+                } else if (this.measureAreaStep === 2) {
+                    const p1 = this.measureAreaP1;
+                    const p2 = this.measureAreaP2;
+                    const L = this.measureAreaL;
 
-                // Evitar cotas de longitud 0 por doble clic instantáneo
-                if (dist < 0.02) return;
+                    const u = new THREE.Vector3().subVectors(p2, p1).normalize();
+                    const v = new THREE.Vector3().subVectors(pt, p1);
+                    const proj = v.dot(u);
+                    const hVec = new THREE.Vector3().subVectors(v, u.clone().multiplyScalar(proj));
+                    const H = hVec.length();
 
-                this._addMeasurement(p1, p2, dist);
-                this._cancelActiveMeasurementPoint();
+                    if (H < 0.02) return;
 
-                const hudText = document.getElementById('v3dMeasureHudText');
-                if (hudText) {
-                    hudText.textContent = `✅ Cota fijada: ${dist.toFixed(2)} m. Clic para trazar otra cota`;
+                    const p3 = p2.clone().add(hVec);
+                    const p4 = p1.clone().add(hVec);
+                    const S = L * H;
+
+                    this._addAreaMeasurement(p1, p2, p3, p4, L, H, S);
+
+                    const elem = this.currentMeasuredElement || res.element;
+
+                    if (this.measureMode === 'volume') {
+                        const thick = 0.30;
+                        const V = S * thick;
+                        this.lastMeasurementData = {
+                            type: 'volume',
+                            unit: 'm³',
+                            value: V,
+                            l: L,
+                            w: thick,
+                            h: H,
+                            units: 1,
+                            element: elem,
+                            p1: p1, p2: p2, p3: p3, p4: p4,
+                            description: `Volumen 3D: ${L.toFixed(2)} m × ${H.toFixed(2)} m × ${thick.toFixed(2)} m = ${V.toFixed(2)} m³`
+                        };
+                        if (hudText) {
+                            hudText.textContent = `✅ Volumen fijado: ${V.toFixed(2)} m³. Pulsa '➕ Añadir a Partida' para presupuestar`;
+                        }
+                    } else {
+                        this.lastMeasurementData = {
+                            type: 'area',
+                            unit: 'm²',
+                            value: S,
+                            l: L,
+                            w: 0,
+                            h: H,
+                            units: 1,
+                            element: elem,
+                            p1: p1, p2: p2, p3: p3, p4: p4,
+                            description: `Superficie 3D: ${L.toFixed(2)} m × ${H.toFixed(2)} m = ${S.toFixed(2)} m²`
+                        };
+                        if (hudText) {
+                            hudText.textContent = `✅ Superficie fijada: ${S.toFixed(2)} m² (L: ${L.toFixed(2)} m × H: ${H.toFixed(2)} m). Pulsa '➕ Añadir a Partida'`;
+                        }
+                    }
+
+                    if (addToBudgetBtn) addToBudgetBtn.style.display = 'inline-flex';
+                    this._cancelActiveMeasurementPoint();
                 }
             }
         },
@@ -1634,6 +1973,105 @@
         },
 
         /**
+         * Añade una medición de superficie planar 3D (cuadrilátero) con relleno semitransparente y badge en m²
+         */
+        _addAreaMeasurement: function (p1, p2, p3, p4, l, h, s) {
+            const THREE = window.THREE;
+            this._ensureMeasureGroup();
+
+            const id = 'meas_area_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+            const dimGroup = new THREE.Group();
+            dimGroup.name = id;
+
+            // 1. Malla 3D semitransparente del paño de superficie
+            const quadGeom = new THREE.BufferGeometry();
+            const positions = new Float32Array([
+                p1.x, p1.y, p1.z,  p2.x, p2.y, p2.z,  p3.x, p3.y, p3.z,
+                p1.x, p1.y, p1.z,  p3.x, p3.y, p3.z,  p4.x, p4.y, p4.z
+            ]);
+            quadGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            quadGeom.computeVertexNormals();
+
+            const quadMat = new THREE.MeshBasicMaterial({
+                color: 0x38bdf8,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.28,
+                depthWrite: false
+            });
+            const quadMesh = new THREE.Mesh(quadGeom, quadMat);
+            quadMesh.renderOrder = 10;
+            dimGroup.add(quadMesh);
+
+            // 2. Contorno perimetral cerrado en cian
+            const loopGeom = new THREE.BufferGeometry().setFromPoints([p1, p2, p3, p4, p1]);
+            const loopMat = new THREE.LineBasicMaterial({
+                color: 0x38bdf8,
+                depthTest: false,
+                transparent: true,
+                opacity: 0.95,
+                linewidth: 2
+            });
+            const loopLine = new THREE.Line(loopGeom, loopMat);
+            loopLine.renderOrder = 11;
+            dimGroup.add(loopLine);
+
+            // 3. Vértices en las 4 esquinas
+            const sphereGeom = new THREE.SphereGeometry(0.04, 12, 12);
+            const sphereMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, depthTest: false });
+            [p1, p2, p3, p4].forEach(pt => {
+                const sMesh = new THREE.Mesh(sphereGeom, sphereMat);
+                sMesh.position.copy(pt);
+                sMesh.renderOrder = 12;
+                dimGroup.add(sMesh);
+            });
+
+            this.measureGroup.add(dimGroup);
+
+            // 4. Badge flotante en el centroide
+            const centroid = new THREE.Vector3().add(p1).add(p2).add(p3).add(p4).multiplyScalar(0.25);
+            const overlay = document.getElementById('v3dMeasureOverlay');
+            let badgeEl = null;
+
+            if (overlay) {
+                overlay.style.display = 'block';
+                badgeEl = document.createElement('div');
+                badgeEl.id = `v3dBadge_${id}`;
+                badgeEl.className = 'v3d-measure-badge';
+                badgeEl.innerHTML = `
+                    <span>📐</span>
+                    <span class="v3d-measure-badge-val">${s.toFixed(2)} m² <small style="opacity:0.8;font-size:0.75em;">(${l.toFixed(2)}×${h.toFixed(2)})</small></span>
+                    <span class="v3d-measure-badge-del" title="Eliminar esta medición">✕</span>
+                `;
+
+                const delBtn = badgeEl.querySelector('.v3d-measure-badge-del');
+                if (delBtn) {
+                    delBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        this.removeMeasurement(id);
+                    };
+                }
+
+                overlay.appendChild(badgeEl);
+            }
+
+            this.measurements.push({
+                id: id,
+                type: 'area',
+                p1: p1,
+                p2: p2,
+                p3: p3,
+                p4: p4,
+                midpoint: centroid,
+                area: s,
+                group: dimGroup,
+                badgeEl: badgeEl
+            });
+
+            this._updateMeasureOverlayPositions();
+        },
+
+        /**
          * Elimina una cota específica por su identificador
          */
         removeMeasurement: function (id) {
@@ -1673,6 +2111,10 @@
          */
         clearMeasurements: function () {
             this._cancelActiveMeasurementPoint();
+
+            const addToBudgetBtn = document.getElementById('v3dMeasureAddToBudgetBtn');
+            if (addToBudgetBtn) addToBudgetBtn.style.display = 'none';
+            this.lastMeasurementData = null;
 
             if (this.measurements) {
                 this.measurements.forEach(m => {

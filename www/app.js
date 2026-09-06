@@ -15984,7 +15984,486 @@ function initVisor3dControls() {
             }
         };
     }
+
+    // Inicializar el modal de creación y asignación de partidas desde medición 3D (Takeoff 5D)
+    initV3dAddToBudgetModal();
 }
+
+/**
+ * Variable global para retener los datos de la última medición transferida al modal de takeoff
+ */
+let currentV3dMeasData = null;
+
+/**
+ * Inicializa los controladores del modal de creación y asignación de partidas desde el Visor 3D
+ */
+function initV3dAddToBudgetModal() {
+    const modal = document.getElementById('v3dAddToBudgetModal');
+    if (!modal) return;
+
+    const closeBtn = document.getElementById('closeV3dAddToBudgetBtn');
+    const cancelBtn = document.getElementById('v3dAddToBudgetCancelBtn');
+    const submitBtn = document.getElementById('v3dAddToBudgetSubmitBtn');
+    const submitLabel = document.getElementById('v3dAddToBudgetSubmitLabel');
+
+    const tabNewBtn = document.getElementById('v3dTabNewPartidaBtn');
+    const tabExistingBtn = document.getElementById('v3dTabExistingPartidaBtn');
+    const tabNewContent = document.getElementById('v3dTabNewPartidaContent');
+    const tabExistingContent = document.getElementById('v3dTabExistingPartidaContent');
+
+    let activeTab = 'new'; // 'new' | 'existing'
+
+    const switchTab = (tab) => {
+        activeTab = tab;
+        if (tab === 'new') {
+            tabNewBtn.classList.add('active');
+            tabNewBtn.style.color = '#38bdf8';
+            tabNewBtn.style.borderBottom = '2px solid #38bdf8';
+            tabNewBtn.style.fontWeight = '700';
+
+            tabExistingBtn.classList.remove('active');
+            tabExistingBtn.style.color = 'var(--text-secondary)';
+            tabExistingBtn.style.borderBottom = 'none';
+            tabExistingBtn.style.fontWeight = '600';
+
+            tabNewContent.style.display = 'block';
+            tabExistingContent.style.display = 'none';
+            if (submitLabel) submitLabel.textContent = 'Guardar y Crear Partida';
+        } else {
+            tabExistingBtn.classList.add('active');
+            tabExistingBtn.style.color = '#38bdf8';
+            tabExistingBtn.style.borderBottom = '2px solid #38bdf8';
+            tabExistingBtn.style.fontWeight = '700';
+
+            tabNewBtn.classList.remove('active');
+            tabNewBtn.style.color = 'var(--text-secondary)';
+            tabNewBtn.style.borderBottom = 'none';
+            tabNewBtn.style.fontWeight = '600';
+
+            tabNewContent.style.display = 'none';
+            tabExistingContent.style.display = 'block';
+            if (submitLabel) submitLabel.textContent = 'Añadir Medición a Partida';
+            updateExistingPreview();
+        }
+    };
+
+    if (tabNewBtn) tabNewBtn.onclick = () => switchTab('new');
+    if (tabExistingBtn) tabExistingBtn.onclick = () => switchTab('existing');
+
+    const closeModal = () => {
+        modal.style.display = 'none';
+    };
+
+    if (closeBtn) closeBtn.onclick = closeModal;
+    if (cancelBtn) cancelBtn.onclick = closeModal;
+
+    // Actualización dinámica del subtotal de la línea de medición
+    const updateSubtotalLive = () => {
+        const udsVal = parseFloat(document.getElementById('v3dLineUdsInput').value) || 1;
+        const lRaw = document.getElementById('v3dLineLInput').value;
+        const wRaw = document.getElementById('v3dLineWInput').value;
+        const hRaw = document.getElementById('v3dLineHInput').value;
+
+        const lVal = lRaw !== '' ? (parseFloat(lRaw) || 1) : 1;
+        const wVal = wRaw !== '' ? (parseFloat(wRaw) || 1) : 1;
+        const hVal = hRaw !== '' ? (parseFloat(hRaw) || 1) : 1;
+
+        let total = udsVal;
+        if (lRaw !== '') total *= lVal;
+        if (wRaw !== '') total *= wVal;
+        if (hRaw !== '') total *= hVal;
+
+        const subEl = document.getElementById('v3dLineSubtotal');
+        if (subEl) subEl.textContent = total.toFixed(2);
+    };
+
+    ['v3dLineUdsInput', 'v3dLineLInput', 'v3dLineWInput', 'v3dLineHInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', updateSubtotalLive);
+        }
+    });
+
+    // Desplegable de capítulos
+    const chSelect = document.getElementById('v3dNewChapterSelect');
+    const customChInput = document.getElementById('v3dCustomChapterInput');
+    if (chSelect) {
+        chSelect.addEventListener('change', () => {
+            if (chSelect.value === '__custom__') {
+                if (customChInput) customChInput.style.display = 'block';
+            } else {
+                if (customChInput) customChInput.style.display = 'none';
+                if (parsedData && parsedData.concepts) {
+                    const targetCh = chSelect.value;
+                    const cleanCh = targetCh.replace(/#+$/, '');
+                    const chConcept = parsedData.concepts[targetCh];
+                    const count = (chConcept && chConcept.decomposition ? chConcept.decomposition.length : 0) + 1;
+                    const codeIn = document.getElementById('v3dNewCodeInput');
+                    if (codeIn && (!codeIn.value || codeIn.value.includes('.'))) {
+                        codeIn.value = `${cleanCh}.${String(count).padStart(2, '0')}`;
+                    }
+                }
+            }
+        });
+    }
+
+    // Buscador y vista previa de partidas existentes
+    const existingSearch = document.getElementById('v3dExistingSearchInput');
+    const existingSelect = document.getElementById('v3dExistingPartidaSelect');
+
+    const updateExistingPreview = () => {
+        const box = document.getElementById('v3dExistingPreviewBox');
+        if (!existingSelect || !existingSelect.value || !parsedData || !parsedData.concepts) {
+            if (box) box.style.display = 'none';
+            return;
+        }
+        const concept = parsedData.concepts[existingSelect.value];
+        if (!concept) {
+            if (box) box.style.display = 'none';
+            return;
+        }
+        if (box) box.style.display = 'block';
+        const titleEl = document.getElementById('v3dExistingSelectedTitle');
+        const unitEl = document.getElementById('v3dExistingSelectedUnit');
+        const curEl = document.getElementById('v3dExistingCurQty');
+        const addEl = document.getElementById('v3dExistingAddQty');
+        const newEl = document.getElementById('v3dExistingNewQty');
+
+        if (titleEl) titleEl.textContent = `${concept.code}: ${concept.summary || ''}`;
+        if (unitEl) unitEl.textContent = concept.unit || 'ud';
+        const curQty = concept.quantity || 0;
+        const addQty = currentV3dMeasData ? currentV3dMeasData.value : 0;
+        if (curEl) curEl.textContent = curQty.toFixed(2);
+        if (addEl) addEl.textContent = addQty.toFixed(2);
+        if (newEl) newEl.textContent = (curQty + addQty).toFixed(2);
+    };
+
+    if (existingSelect) {
+        existingSelect.addEventListener('change', updateExistingPreview);
+    }
+
+    if (existingSearch && existingSelect) {
+        existingSearch.addEventListener('input', () => {
+            const query = existingSearch.value.toLowerCase().trim();
+            Array.from(existingSelect.options).forEach(opt => {
+                const text = opt.textContent.toLowerCase();
+                opt.style.display = text.includes(query) ? '' : 'none';
+            });
+            updateExistingPreview();
+        });
+    }
+
+    // Ejecución de guardado (Crear o Asignar)
+    if (submitBtn) {
+        submitBtn.onclick = () => {
+            if (!parsedData || !parsedData.concepts) {
+                alert("Primero debes tener un presupuesto abierto para guardar mediciones.");
+                return;
+            }
+
+            if (activeTab === 'new') {
+                let targetCh = chSelect ? chSelect.value : '';
+                if (!targetCh) {
+                    alert("Selecciona un capítulo de destino.");
+                    return;
+                }
+
+                if (targetCh === '__custom__') {
+                    const customName = customChInput ? customChInput.value.trim() : '';
+                    if (!customName) {
+                        alert("Por favor escribe el nombre para el nuevo capítulo.");
+                        return;
+                    }
+                    const roots = Array.isArray(parsedData.root_nodes) ? parsedData.root_nodes : Object.values(parsedData.root_nodes || {});
+                    const rootConcept = roots.length > 0 ? parsedData.concepts[roots[0]] : null;
+                    const nextNum = (rootConcept && rootConcept.decomposition ? rootConcept.decomposition.length : 0) + 1;
+                    targetCh = String(nextNum).padStart(2, '0');
+
+                    parsedData.concepts[targetCh] = {
+                        code: targetCh,
+                        unit: '',
+                        summary: customName,
+                        price: 0,
+                        quantity: 1,
+                        type: 'CHAPTER',
+                        decomposition: []
+                    };
+                    if (rootConcept) {
+                        if (!rootConcept.decomposition) rootConcept.decomposition = [];
+                        rootConcept.decomposition.push({ code: targetCh, factor: 1.0 });
+                    }
+                }
+
+                const code = document.getElementById('v3dNewCodeInput').value.trim();
+                const summary = document.getElementById('v3dNewSummaryInput').value.trim();
+                const unit = document.getElementById('v3dNewUnitSelect').value || 'm²';
+                const price = parseFloat(document.getElementById('v3dNewPriceInput').value) || 0;
+
+                if (!code || !summary) {
+                    alert("Por favor indica el código y el título de la partida.");
+                    return;
+                }
+
+                const comment = document.getElementById('v3dLineCommentInput').value.trim() || 'Medición 3D';
+                const uds = document.getElementById('v3dLineUdsInput').value || '1';
+                const l = document.getElementById('v3dLineLInput').value;
+                const w = document.getElementById('v3dLineWInput').value;
+                const h = document.getElementById('v3dLineHInput').value;
+                const partial = parseFloat(document.getElementById('v3dLineSubtotal').textContent) || (currentV3dMeasData ? currentV3dMeasData.value : 0);
+
+                const newConcept = {
+                    code: code,
+                    unit: unit,
+                    summary: summary,
+                    description: `${summary}. Partida generada directamente desde medición interactiva en el modelo BIM 3D.`,
+                    price: price,
+                    quantity: partial,
+                    type: 'ITEM',
+                    measurements: [{
+                        label: comment,
+                        units: String(uds),
+                        l: String(l),
+                        w: String(w),
+                        h: String(h),
+                        _calculatedPartial: partial
+                    }],
+                    decomposition: []
+                };
+
+                parsedData.concepts[code] = newConcept;
+
+                const parentCh = parsedData.concepts[targetCh];
+                if (parentCh) {
+                    if (!parentCh.decomposition) parentCh.decomposition = [];
+                    if (!parentCh.decomposition.some(d => d.code === code)) {
+                        parentCh.decomposition.push({ code: code, factor: partial });
+                    }
+                }
+
+                if (typeof recalculateMeasurements === 'function') {
+                    recalculateMeasurements(newConcept);
+                } else {
+                    if (typeof recalculateAll === 'function') recalculateAll();
+                    if (typeof updateTotalBudgetDisplay === 'function') updateTotalBudgetDisplay();
+                    if (typeof renderCurrentLevel === 'function') renderCurrentLevel();
+                    if (typeof saveHistoryState === 'function') saveHistoryState();
+                }
+
+                closeModal();
+                if (typeof showToastMessage === 'function') {
+                    showToastMessage(`✨ Partida ${code} creada e incorporada al presupuesto.`);
+                }
+            } else {
+                // Asignar a Partida Existente
+                const targetCode = existingSelect ? existingSelect.value : '';
+                if (!targetCode || !parsedData.concepts[targetCode]) {
+                    alert("Por favor selecciona una partida de la lista.");
+                    return;
+                }
+
+                const concept = parsedData.concepts[targetCode];
+                if (!concept.measurements) concept.measurements = [];
+
+                const elem = currentV3dMeasData ? currentV3dMeasData.element : null;
+                const comment = elem ?
+                    `${elem.category || 'Elemento'} ${elem.name || ''}${elem.storey ? ' (' + elem.storey + ')' : ''}${elem.globalId ? ' [ID: ' + elem.globalId + ']' : (elem.id ? ' [ID: ' + elem.id + ']' : '')}` :
+                    (currentV3dMeasData ? currentV3dMeasData.description : 'Medición 3D');
+
+                const uds = currentV3dMeasData && currentV3dMeasData.units ? currentV3dMeasData.units : 1;
+                const l = currentV3dMeasData && currentV3dMeasData.l ? currentV3dMeasData.l.toFixed(2) : '';
+                const w = currentV3dMeasData && currentV3dMeasData.w ? currentV3dMeasData.w.toFixed(2) : '';
+                const h = currentV3dMeasData && currentV3dMeasData.h ? currentV3dMeasData.h.toFixed(2) : '';
+                const partial = currentV3dMeasData ? currentV3dMeasData.value : 0;
+
+                concept.measurements.push({
+                    label: comment,
+                    units: String(uds),
+                    l: String(l),
+                    w: String(w),
+                    h: String(h),
+                    _calculatedPartial: partial
+                });
+
+                if (typeof recalculateMeasurements === 'function') {
+                    recalculateMeasurements(concept);
+                } else {
+                    if (typeof recalculateAll === 'function') recalculateAll();
+                    if (typeof updateTotalBudgetDisplay === 'function') updateTotalBudgetDisplay();
+                    if (typeof renderCurrentLevel === 'function') renderCurrentLevel();
+                    if (typeof saveHistoryState === 'function') saveHistoryState();
+                }
+
+                closeModal();
+                if (typeof showToastMessage === 'function') {
+                    showToastMessage(`📋 Medición añadida a la partida ${targetCode}.`);
+                }
+            }
+        };
+    }
+}
+
+/**
+ * Abre y preconfigura el modal para transferir una medición 3D al presupuesto BC3
+ */
+window.openV3dAddToBudgetModal = function (measData) {
+    if (!measData) return;
+    currentV3dMeasData = measData;
+
+    const modal = document.getElementById('v3dAddToBudgetModal');
+    if (!modal) return;
+
+    if (!parsedData || !parsedData.concepts) {
+        alert("Primero debes crear o abrir un presupuesto para incorporar partidas o mediciones.");
+        return;
+    }
+
+    // 1. Mostrar información del elemento BIM medido
+    const elem = measData.element || (typeof IFCViewer3D !== 'undefined' ? IFCViewer3D.selectedElement : null);
+    const elemNameEl = document.getElementById('v3dTakeoffElemName');
+    const elemMetaEl = document.getElementById('v3dTakeoffElemMeta');
+    const qtyDisplay = document.getElementById('v3dTakeoffQtyDisplay');
+
+    if (elemNameEl) {
+        const catStr = elem && elem.category ? `${elem.category}: ` : '';
+        elemNameEl.textContent = elem ? `${catStr}${elem.name || 'Elemento constructivo'}` : 'Geometría 3D';
+    }
+    if (elemMetaEl) {
+        const storeyStr = elem && elem.storey ? elem.storey : 'Ubicación general';
+        const idStr = elem && (elem.globalId || elem.id) ? ` · ID: ${elem.globalId || elem.id}` : '';
+        elemMetaEl.textContent = `${storeyStr}${idStr}`;
+    }
+    if (qtyDisplay) {
+        qtyDisplay.textContent = `${measData.value.toFixed(2)} ${measData.unit}`;
+    }
+
+    // 2. Rellenar desplegable de capítulos
+    const chSelect = document.getElementById('v3dNewChapterSelect');
+    if (chSelect) {
+        chSelect.innerHTML = '';
+        const chapters = [];
+        const roots = Array.isArray(parsedData.root_nodes) ? parsedData.root_nodes : Object.values(parsedData.root_nodes || {});
+        const rootConcept = roots.length > 0 ? parsedData.concepts[roots[0]] : null;
+
+        if (rootConcept && rootConcept.decomposition) {
+            rootConcept.decomposition.forEach(d => {
+                const c = parsedData.concepts[d.code];
+                if (c) chapters.push({ code: c.code, summary: c.summary || c.code });
+            });
+        }
+
+        Object.values(parsedData.concepts).forEach(c => {
+            if ((c.type === 'CHAPTER' || (c.decomposition && c.decomposition.length > 0 && !c.code.endsWith('#'))) && !chapters.some(ch => ch.code === c.code)) {
+                chapters.push({ code: c.code, summary: c.summary || c.code });
+            }
+        });
+
+        if (chapters.length === 0) {
+            chapters.push({ code: '01', summary: 'CAPÍTULO GENERAL' });
+        }
+
+        chapters.forEach(ch => {
+            const opt = document.createElement('option');
+            opt.value = ch.code;
+            opt.textContent = `${ch.code} - ${ch.summary}`;
+            chSelect.appendChild(opt);
+        });
+
+        const customOpt = document.createElement('option');
+        customOpt.value = '__custom__';
+        customOpt.textContent = '➕ Crear Nuevo Capítulo...';
+        chSelect.appendChild(customOpt);
+
+        // Seleccionar capítulo adecuado según categoría del elemento
+        if (elem && elem.category) {
+            const catLower = elem.category.toLowerCase();
+            const matchedCh = chapters.find(ch => {
+                const s = ch.summary.toLowerCase();
+                if ((catLower.includes('wall') || catLower.includes('muro')) && (s.includes('albañil') || s.includes('cerram') || s.includes('fachad'))) return true;
+                if ((catLower.includes('slab') || catLower.includes('forjado') || catLower.includes('beam') || catLower.includes('column')) && (s.includes('estruct') || s.includes('ciment'))) return true;
+                if ((catLower.includes('door') || catLower.includes('window') || catLower.includes('puerta') || catLower.includes('ventana')) && (s.includes('carpint') || s.includes('vidr'))) return true;
+                return false;
+            });
+            if (matchedCh) chSelect.value = matchedCh.code;
+        }
+
+        // Sugerir código secuencial
+        const targetCh = chSelect.value !== '__custom__' ? chSelect.value : '01';
+        const cleanCh = targetCh.replace(/#+$/, '');
+        const chConcept = parsedData.concepts[targetCh];
+        const count = (chConcept && chConcept.decomposition ? chConcept.decomposition.length : 0) + 1;
+        const codeInput = document.getElementById('v3dNewCodeInput');
+        if (codeInput) {
+            codeInput.value = `${cleanCh}.${String(count).padStart(2, '0')}`;
+        }
+    }
+
+    // 3. Título y unidad sugeridos
+    const summaryInput = document.getElementById('v3dNewSummaryInput');
+    if (summaryInput) {
+        if (elem && elem.name) {
+            const friendlyCat = elem.category ? `${elem.category}: ` : '';
+            summaryInput.value = `${friendlyCat}${elem.name} (Medición directa 3D)`;
+        } else if (measData.type === 'area') {
+            summaryInput.value = 'Revestimiento / Fábrica de superficie (Medición directa 3D)';
+        } else if (measData.type === 'volume') {
+            summaryInput.value = 'Elemento de hormigón / fábrica volumétrica (Medición directa 3D)';
+        } else {
+            summaryInput.value = 'Línea de medición técnica 3D';
+        }
+    }
+
+    const unitSelect = document.getElementById('v3dNewUnitSelect');
+    if (unitSelect) {
+        unitSelect.value = measData.unit;
+    }
+
+    // 4. Prefill de la línea de medición detallada (~M)
+    const commentInput = document.getElementById('v3dLineCommentInput');
+    if (commentInput) {
+        const elemTag = elem ?
+            `${elem.category || 'Elemento'} ${elem.name || ''}${elem.storey ? ' (' + elem.storey + ')' : ''}${elem.globalId ? ' [ID: ' + elem.globalId + ']' : (elem.id ? ' [ID: ' + elem.id + ']' : '')}` :
+            (measData.description || 'Medición directa 3D');
+        commentInput.value = elemTag;
+    }
+
+    const udsInput = document.getElementById('v3dLineUdsInput');
+    const lInput = document.getElementById('v3dLineLInput');
+    const wInput = document.getElementById('v3dLineWInput');
+    const hInput = document.getElementById('v3dLineHInput');
+    const subtotalEl = document.getElementById('v3dLineSubtotal');
+
+    if (udsInput) udsInput.value = '1';
+    if (lInput) lInput.value = measData.l ? measData.l.toFixed(2) : '';
+    if (wInput) wInput.value = measData.w ? measData.w.toFixed(2) : '';
+    if (hInput) hInput.value = measData.h ? measData.h.toFixed(2) : '';
+    if (subtotalEl) subtotalEl.textContent = measData.value.toFixed(2);
+
+    // 5. Rellenar lista de partidas existentes (Pestaña 2)
+    const existingSelect = document.getElementById('v3dExistingPartidaSelect');
+    if (existingSelect) {
+        existingSelect.innerHTML = '';
+        const items = Object.values(parsedData.concepts).filter(c => {
+            return c.type === 'ITEM' || (!c.decomposition || c.decomposition.length === 0) && !c.code.endsWith('#');
+        });
+
+        items.forEach(it => {
+            const opt = document.createElement('option');
+            opt.value = it.code;
+            opt.textContent = `${it.code} · ${it.summary || ''} [${it.unit || 'ud'}]`;
+            existingSelect.appendChild(opt);
+        });
+
+        if (items.length > 0) {
+            existingSelect.selectedIndex = 0;
+        }
+    }
+
+    // Restablecer a Pestaña 1 por defecto
+    const tabNewBtn = document.getElementById('v3dTabNewPartidaBtn');
+    if (tabNewBtn) tabNewBtn.click();
+
+    modal.style.display = 'flex';
+};
 
 if (typeof document !== "undefined") {
     if (document.readyState === "loading") {
@@ -15993,3 +16472,4 @@ if (typeof document !== "undefined") {
         initVisor3dControls();
     }
 }
+

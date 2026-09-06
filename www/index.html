@@ -769,11 +769,25 @@
 
                     <!-- Barra de estado / HUD del modo Acotar -->
                     <div id="v3dMeasureHud" class="v3d-measure-hud" style="display:none;">
-                        <span class="v3d-measure-hud-icon">📏</span>
+                        <div class="v3d-measure-hud-modes">
+                            <button type="button" id="v3dMeasureModeLinear" class="v3d-measure-mode-btn active" title="Cota lineal entre 2 puntos">
+                                <span>📏</span> <span>Distancia</span>
+                            </button>
+                            <button type="button" id="v3dMeasureModeArea" class="v3d-measure-mode-btn" title="Superficie rectangular L × H">
+                                <span>📐</span> <span>Superficie (L × H)</span>
+                            </button>
+                            <button type="button" id="v3dMeasureModeVolume" class="v3d-measure-mode-btn" title="Volumen L × H × Espesor">
+                                <span>🧊</span> <span>Volumen</span>
+                            </button>
+                        </div>
+                        <div class="v3d-measure-hud-divider"></div>
                         <span id="v3dMeasureHudText" class="v3d-measure-hud-text">Haz clic en el primer punto para iniciar la cota</span>
                         <div class="v3d-measure-hud-actions">
+                            <button type="button" id="v3dMeasureAddToBudgetBtn" class="v3d-measure-hud-btn primary" style="display:none;" title="Añadir esta medición al presupuesto BC3">
+                                <span>➕</span> <span>Añadir a Partida</span>
+                            </button>
                             <button type="button" id="v3dMeasureClearBtn" class="v3d-measure-hud-btn" title="Borrar todas las cotas activas">
-                                <span>🗑️</span> <span>Limpiar cotas</span>
+                                <span>🗑️</span> <span>Limpiar</span>
                             </button>
                             <button type="button" id="v3dMeasureCloseBtn" class="v3d-measure-hud-btn close" title="Salir del modo acotación (Esc)">✕</button>
                         </div>
@@ -3170,6 +3184,159 @@
                 <button type="button" id="ifcGenerateBc3Btn" class="process-btn" style="padding: 8px 18px; margin: 0; background: linear-gradient(135deg, #2563eb, #0284c7); color:white; font-weight:600; display:flex; align-items:center; gap:8px;">
                     <span>⚡</span>
                     <span>Generar Presupuesto BC3 y Abrir</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Asistente 3D para Crear o Asignar Partidas desde Medición (BIM Takeoff) -->
+    <div id="v3dAddToBudgetModal" class="modal" style="display: none;">
+        <div class="modal-content v3d-takeoff-modal" style="max-width: 660px; width: 92%; border: 1px solid rgba(56, 189, 248, 0.4); box-shadow: 0 16px 40px rgba(0,0,0,0.6);">
+            <div class="modal-header" style="background: linear-gradient(135deg, rgba(30, 58, 138, 0.4), rgba(15, 23, 42, 0.8)); border-bottom: 1px solid var(--border-color); padding: 14px 20px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:1.4rem;">📐</span>
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.15rem; color: #38bdf8; display:flex; align-items:center; gap:8px;">
+                            <span>Medición 3D BIM ➔ Presupuesto FIEBDC-3</span>
+                            <span style="font-size: 0.72rem; font-weight: 700; background: linear-gradient(135deg, #0284c7, #2563eb); color: white; padding: 2px 8px; border-radius: 12px;">Takeoff 5D</span>
+                        </h3>
+                        <span id="v3dModalSubtitle" style="font-size: 0.78rem; color: var(--text-secondary);">Incorporar medición geométrica a las partidas del presupuesto</span>
+                    </div>
+                </div>
+                <button type="button" id="closeV3dAddToBudgetBtn" class="close-btn" style="border:none; background:none; font-size:1.4rem; cursor:pointer; color:var(--text-secondary);">&times;</button>
+            </div>
+
+            <!-- Resumen de lo medido -->
+            <div style="padding: 12px 20px; background: rgba(56, 189, 248, 0.06); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 34px; height: 34px; border-radius: 6px; background: rgba(56, 189, 248, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #38bdf8;">
+                        🧱
+                    </div>
+                    <div>
+                        <div id="v3dTakeoffElemName" style="font-weight: 700; font-size: 0.86rem; color: var(--text-primary);">Muro / Elemento BIM</div>
+                        <div id="v3dTakeoffElemMeta" style="font-size: 0.74rem; color: var(--text-secondary);">Planta 1 · ID: 000000</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <div style="text-align: right;">
+                        <span style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 600; display: block;">Medición Calculada</span>
+                        <strong id="v3dTakeoffQtyDisplay" style="font-size: 1.25rem; color: #38bdf8; font-family: monospace;">0.00 m²</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pestañas de modo: Crear Partida vs Asignar a Existente -->
+            <div style="display: flex; border-bottom: 1px solid var(--border-color); background: var(--bg-hover);">
+                <button type="button" id="v3dTabNewPartidaBtn" class="v3d-takeoff-tab active" style="flex: 1; padding: 10px; border: none; background: none; font-size: 0.82rem; font-weight: 700; color: #38bdf8; cursor: pointer; border-bottom: 2px solid #38bdf8; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <span>✨</span> <span>Crear Nueva Partida</span>
+                </button>
+                <button type="button" id="v3dTabExistingPartidaBtn" class="v3d-takeoff-tab" style="flex: 1; padding: 10px; border: none; background: none; font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <span>📋</span> <span>Asignar a Partida Existente</span>
+                </button>
+            </div>
+
+            <div class="modal-body" style="padding: 16px 20px; max-height: calc(80vh - 180px); overflow-y: auto;">
+                <!-- Pestaña 1: Crear Nueva Partida -->
+                <div id="v3dTabNewPartidaContent">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <label style="display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">Capítulo de Destino</label>
+                            <select id="v3dNewChapterSelect" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-primary); font-size: 0.82rem;"></select>
+                            <input type="text" id="v3dCustomChapterInput" placeholder="Nombre de nuevo capítulo (ej. 04 ALBAÑILERÍA)" style="display:none; width: 100%; margin-top: 6px; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-primary); font-size: 0.82rem; box-sizing: border-box;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">Código de Partida</label>
+                            <input type="text" id="v3dNewCodeInput" placeholder="ej. 04.01.01" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-primary); font-size: 0.82rem; box-sizing: border-box; font-family: monospace;">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">Resumen / Título de la Partida</label>
+                        <input type="text" id="v3dNewSummaryInput" placeholder="ej. Fábrica de ladrillo cerámico hueco triple de 11 cm de espesor..." style="width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-primary); font-size: 0.82rem; box-sizing: border-box;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+                        <div>
+                            <label style="display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">Unidad de Medida</label>
+                            <select id="v3dNewUnitSelect" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-primary); font-size: 0.82rem;">
+                                <option value="m²">m² (Superficie)</option>
+                                <option value="m">m (Longitud)</option>
+                                <option value="m³">m³ (Volumen)</option>
+                                <option value="ud">ud (Unidad)</option>
+                                <option value="kg">kg (Peso)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">Precio Unitario (€)</label>
+                            <input type="number" id="v3dNewPriceInput" step="0.01" value="0.00" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-primary); font-size: 0.82rem; box-sizing: border-box; text-align: right; font-weight: 600;">
+                        </div>
+                    </div>
+
+                    <!-- Ficha de la Línea de Medición Detallada (~M) -->
+                    <div style="background: var(--bg-hover); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                        <span style="font-size: 0.74rem; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">
+                            📝 Línea de Medición Detallada (~M) a Insertar
+                        </span>
+                        <div style="margin-bottom: 8px;">
+                            <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 2px;">Etiqueta / Comentario de Medición</label>
+                            <input type="text" id="v3dLineCommentInput" style="width: 100%; padding: 6px 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color); color: var(--text-primary); font-size: 0.78rem; box-sizing: border-box;">
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; text-align: center;">
+                            <div>
+                                <span style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 600;">Uds</span>
+                                <input type="number" id="v3dLineUdsInput" value="1" step="1" style="width: 100%; padding: 4px; text-align: center; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color); color: var(--text-primary); font-size: 0.78rem; box-sizing: border-box;">
+                            </div>
+                            <div>
+                                <span style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 600;">Largo (m)</span>
+                                <input type="number" id="v3dLineLInput" step="0.01" style="width: 100%; padding: 4px; text-align: center; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color); color: var(--text-primary); font-size: 0.78rem; box-sizing: border-box;">
+                            </div>
+                            <div>
+                                <span style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 600;">Ancho (m)</span>
+                                <input type="number" id="v3dLineWInput" step="0.01" style="width: 100%; padding: 4px; text-align: center; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color); color: var(--text-primary); font-size: 0.78rem; box-sizing: border-box;">
+                            </div>
+                            <div>
+                                <span style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 600;">Alto (m)</span>
+                                <input type="number" id="v3dLineHInput" step="0.01" style="width: 100%; padding: 4px; text-align: center; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color); color: var(--text-primary); font-size: 0.78rem; box-sizing: border-box;">
+                            </div>
+                            <div>
+                                <span style="font-size: 0.68rem; color: #38bdf8; font-weight: 700;">Parcial</span>
+                                <div id="v3dLineSubtotal" style="padding: 4px; font-weight: 700; color: #38bdf8; font-size: 0.85rem;">0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pestaña 2: Asignar a Partida Existente -->
+                <div id="v3dTabExistingPartidaContent" style="display: none;">
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">Buscar Partida en el Presupuesto Activo</label>
+                        <input type="text" id="v3dExistingSearchInput" placeholder="Buscar por código o descripción de partida..." style="width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-primary); font-size: 0.82rem; box-sizing: border-box;">
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">Selecciona la Partida de Destino</label>
+                        <select id="v3dExistingPartidaSelect" size="5" style="width: 100%; padding: 6px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-primary); font-size: 0.8rem; height: 130px;"></select>
+                    </div>
+
+                    <!-- Vista previa del impacto en la partida -->
+                    <div id="v3dExistingPreviewBox" style="display:none; background: var(--bg-hover); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <strong id="v3dExistingSelectedTitle" style="font-size: 0.82rem; color: var(--text-primary);">Partida</strong>
+                            <span id="v3dExistingSelectedUnit" style="font-size: 0.75rem; background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-weight: 600;">m²</span>
+                        </div>
+                        <div style="display: flex; gap: 14px; font-size: 0.78rem; color: var(--text-secondary);">
+                            <div>Medición actual: <strong id="v3dExistingCurQty" style="color: var(--text-primary);">0.00</strong></div>
+                            <div>+ Medición 3D: <strong id="v3dExistingAddQty" style="color: #38bdf8;">0.00</strong></div>
+                            <div>= Nuevo Total: <strong id="v3dExistingNewQty" style="color: #10b981;">0.00</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="padding: 12px 20px; border-top: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                <button type="button" id="v3dAddToBudgetCancelBtn" class="tool-btn" style="padding: 6px 14px; margin: 0;">Cancelar</button>
+                <button type="button" id="v3dAddToBudgetSubmitBtn" class="process-btn" style="padding: 8px 18px; margin: 0; background: linear-gradient(135deg, #059669, #0d9488); color:white; font-weight:600; display:flex; align-items:center; gap:8px;">
+                    <span>💾</span>
+                    <span id="v3dAddToBudgetSubmitLabel">Guardar y Crear Partida</span>
                 </button>
             </div>
         </div>
