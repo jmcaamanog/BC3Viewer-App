@@ -282,13 +282,80 @@
         },
 
         /**
+         * Limpia triángulos parásitos no-manifold generados por booleanos imperfectos de Web-IFC.
+         * En modelos IFC con carpinterías compuestas (múltiples extrusiones de hueco solapadas como en ArchiCAD),
+         * el motor CSG en ocasiones produce aletas triangulares parásitas (T-junctions con arista flotante)
+         * que cubren diagonalmente partes de los huecos de ventanas y puertas (como en Ms - 043).
+         * Esta función elimina del índice de la geometría exclusivamente dichos triángulos sin tocar la geometría válida.
+         */
+        _cleanGeometryParasiteTriangles: function (geometry) {
+            if (!geometry || !geometry.index || !geometry.attributes || !geometry.attributes.position) return;
+            const pos = geometry.attributes.position;
+            const indexAttr = geometry.index;
+            const indices = indexAttr.array;
+            if (!indices || indices.length < 3) return;
+
+            const posKey = (idx) => {
+                return `${pos.getX(idx).toFixed(2)}_${pos.getY(idx).toFixed(2)}_${pos.getZ(idx).toFixed(2)}`;
+            };
+            const edgeKey = (a, b) => {
+                const ka = posKey(a);
+                const kb = posKey(b);
+                return ka < kb ? `${ka}#${kb}` : `${kb}#${ka}`;
+            };
+
+            const edgeMap = new Map();
+            const len = indices.length;
+            for (let t = 0; t < len; t += 3) {
+                const i0 = indices[t];
+                const i1 = indices[t + 1];
+                const i2 = indices[t + 2];
+                const k01 = edgeKey(i0, i1);
+                const k12 = edgeKey(i1, i2);
+                const k20 = edgeKey(i2, i0);
+                edgeMap.set(k01, (edgeMap.get(k01) || 0) + 1);
+                edgeMap.set(k12, (edgeMap.get(k12) || 0) + 1);
+                edgeMap.set(k20, (edgeMap.get(k20) || 0) + 1);
+            }
+
+            const cleanIndices = [];
+            let removed = 0;
+            for (let t = 0; t < len; t += 3) {
+                const i0 = indices[t];
+                const i1 = indices[t + 1];
+                const i2 = indices[t + 2];
+                const e01 = edgeMap.get(edgeKey(i0, i1)) || 0;
+                const e12 = edgeMap.get(edgeKey(i1, i2)) || 0;
+                const e20 = edgeMap.get(edgeKey(i2, i0)) || 0;
+
+                // Triángulo parásito / aleta no-manifold:
+                // Comparte aristas con conteo >= 3 (unión interna con el muro) pero tiene al menos una
+                // arista huérfana con conteo == 1 que flota a través del hueco de la ventana.
+                const isFlap = (e01 >= 3 || e12 >= 3 || e20 >= 3) && (e01 === 1 || e12 === 1 || e20 === 1);
+                if (isFlap) {
+                    removed++;
+                } else {
+                    cleanIndices.push(i0, i1, i2);
+                }
+            }
+
+            if (removed > 0) {
+                const THREE = window.THREE;
+                const ArrayType = (indexAttr.array instanceof Uint16Array && pos.count < 65535) ? Uint16Array : Uint32Array;
+                geometry.setIndex(new THREE.BufferAttribute(new ArrayType(cleanIndices), 1));
+                geometry.index.needsUpdate = true;
+            }
+        },
+
+        /**
          * Adjunta las aristas blancas (LineSegments), los puntos de vértice blancos (Points)
          * y la capa interior maciza (BackSide en #0f2b5c) como hijos de la malla del subset.
-         * La capa interior maciza BackSide reside estrictamente en la geometría física del elemento,
-         * eliminando de forma definitiva cualquier triángulo flotante en el aire o fugas sobre puertas y ventanas.
+         * Aplica previamente la depuración de aletas parásitas para que ni las aristas blancas
+         * ni el renderizado de caras presenten triángulos espurios en ventanas o puertas.
          */
         _attachBlueprintDecorations: function (mesh, planes = [], isSolid = true) {
             if (!mesh || !mesh.geometry) return;
+            this._cleanGeometryParasiteTriangles(mesh.geometry);
             const THREE = window.THREE;
             try {
                 // 1. Aristas blancas limpias con EdgesGeometry
@@ -302,7 +369,7 @@
                 });
                 const edgesLine = new THREE.LineSegments(edgesGeom, lineMat);
                 edgesLine.name = 'blueprint-edges';
-                edgesLine.renderOrder = 4;
+                edgesLine.renderOrder = 5;
                 mesh.add(edgesLine);
 
                 // 2. Vértices como puntitos blancos circulares ligeramente más gruesos que la línea
@@ -319,22 +386,25 @@
                 });
                 const vertexPoints = new THREE.Points(mesh.geometry, pointsMat);
                 vertexPoints.name = 'blueprint-points';
-                vertexPoints.renderOrder = 5;
+                vertexPoints.renderOrder = 6;
                 mesh.add(vertexPoints);
 
-                // 3. Cara interior (BackSide) en azul oscuro (#0f2b5c) para efecto macizo sin estarcido ni planos infinitos
+                // 3. Cara interior (BackSide) en azul oscuro (#0f2b5c) para efecto macizo cuando hay corte de sección
                 if (isSolid) {
                     const backMat = new THREE.MeshBasicMaterial({
                         color: this.BLUEPRINT_CONFIG.sectionCapColor || 0x0f2b5c,
                         side: THREE.BackSide,
                         clippingPlanes: planes,
                         clipShadows: true,
+                        polygonOffset: true,
+                        polygonOffsetFactor: -1,
+                        polygonOffsetUnits: -1,
                         depthTest: true,
                         depthWrite: true
                     });
                     const backMesh = new THREE.Mesh(mesh.geometry, backMat);
                     backMesh.name = 'blueprint-back-solid';
-                    backMesh.renderOrder = 3;
+                    backMesh.renderOrder = 4;
                     const showCaps = (this.sectionConfig && this.sectionConfig.showCaps !== undefined) ? this.sectionConfig.showCaps : true;
                     const isSectionActive = this.sectionConfig && this.sectionConfig.active && !!this.activeClippingPlane;
                     backMesh.visible = isSectionActive && showCaps;
@@ -676,7 +746,8 @@
                     if (this._loadSessionId !== currentSession) return;
                     if (this.ifcLoader.ifcManager.applyWebIfcConfig) {
                         this.ifcLoader.ifcManager.applyWebIfcConfig({
-                            USE_FAST_BOOLS: true
+                            COORDINATE_TO_ORIGIN: true,
+                            USE_FAST_BOOLS: false
                         });
                     }
                     if (this.ifcLoader.ifcManager.setupOptionalCategories) {
@@ -1027,6 +1098,7 @@
                 });
 
                 if (this.highlightSubset) {
+                    this._cleanGeometryParasiteTriangles(this.highlightSubset.geometry);
                     this.highlightSubset.name = 'active-selection-subset';
                     this.highlightSubset.isSelectionSubset = true;
                     this.highlightSubset.renderOrder = 3.5;
@@ -2333,7 +2405,7 @@
                     depthTest: true,
                     clippingPlanes: planes,
                     clipShadows: true,
-                    side: isSolid ? THREE.FrontSide : THREE.DoubleSide
+                    side: THREE.DoubleSide
                 });
 
                 try {
@@ -3043,7 +3115,7 @@
                 depthTest: true,
                 clippingPlanes: planes,
                 clipShadows: true,
-                side: isSolid ? THREE.FrontSide : THREE.DoubleSide
+                side: THREE.DoubleSide
             });
 
             try {
