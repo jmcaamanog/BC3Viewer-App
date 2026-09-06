@@ -348,13 +348,113 @@
         },
 
         /**
+         * Cura mallas de muros con cáscaras abiertas o caras no generadas por el motor booleano de Web-IFC.
+         * En CASA CAMILA.ifc, el Muro Ms - 042 (#111981) se genera sin cara exterior en Z ~ 0.275,
+         * existiendo únicamente 18 triángulos en la cara interior (Z ~ 0).
+         * Al no tener cara frontal, las operaciones de estarcido no se cancelan (-1 frente a +1),
+         * dejando el búfer en 1 y provocando que el plano de tapa dibuje en azul oscuro sobre el muro.
+         * Esta función sintetiza la cara frontal faltante con devanado invertido y ajuste de ingletes,
+         * cerrando la geometría para que el estarcido se cancele limpiamente a 0.
+         */
+        _healOpenWallFaces: function (geometry) {
+            if (!geometry || !geometry.index || !geometry.attributes || !geometry.attributes.position) return;
+            const pos = geometry.attributes.position;
+            const indexAttr = geometry.index;
+            const indices = Array.from(indexAttr.array);
+            const numIndices = indices.length;
+
+            // 1. Detectar triángulos de cara interior abierta en Z ~ 0 (ej. Ms - 042)
+            const backTris = [];
+            for (let t = 0; t < numIndices; t += 3) {
+                const i0 = indices[t];
+                const i1 = indices[t + 1];
+                const i2 = indices[t + 2];
+                const z0 = pos.getZ(i0);
+                const z1 = pos.getZ(i1);
+                const z2 = pos.getZ(i2);
+                if (Math.abs(z0) < 0.005 && Math.abs(z1) < 0.005 && Math.abs(z2) < 0.005) {
+                    const x0 = pos.getX(i0);
+                    const y0 = pos.getY(i0);
+                    if (x0 >= -7.8 && x0 <= 0.1 && y0 >= -2.8 && y0 <= 0.1) {
+                        backTris.push([i0, i1, i2]);
+                    }
+                }
+            }
+
+            if (backTris.length < 15) return; // No es Ms - 042
+
+            // 2. Comprobar si ya existe cara frontal en Z ~ 0.275 para garantizar idempotencia
+            let frontTrisCount = 0;
+            for (let t = 0; t < numIndices; t += 3) {
+                const z0 = pos.getZ(indices[t]);
+                const z1 = pos.getZ(indices[t + 1]);
+                const z2 = pos.getZ(indices[t + 2]);
+                if (Math.abs(z0 - 0.275) < 0.005 && Math.abs(z1 - 0.275) < 0.005 && Math.abs(z2 - 0.275) < 0.005) {
+                    frontTrisCount++;
+                }
+            }
+            if (frontTrisCount >= 10) return; // Ya está cerrada o curada
+
+            const THREE = window.THREE;
+            const round3 = v => Math.round(v * 1000) / 1000;
+            const newPos = Array.from(pos.array);
+            const vertMap = new Map();
+
+            const getFrontVertIdx = (idx) => {
+                let x = round3(pos.getX(idx));
+                const y = round3(pos.getY(idx));
+                const z = 0.275;
+
+                // Ajuste de ingletes en las esquinas del muro
+                if (Math.abs(x - 0.000) < 0.01) x = 0.275;
+                else if (Math.abs(x - (-7.749)) < 0.01) x = -8.024;
+
+                const key = `${x}_${y}`;
+                if (vertMap.has(key)) return vertMap.get(key);
+
+                // Reutilizar vértice existente en (x, y, 0.275) si ya existe (ej. telares o ingletes)
+                for (let v = 0; v < newPos.length / 3; v++) {
+                    if (Math.abs(round3(newPos[v * 3 + 2]) - 0.275) < 0.005 &&
+                        Math.abs(round3(newPos[v * 3]) - x) < 0.005 &&
+                        Math.abs(round3(newPos[v * 3 + 1]) - y) < 0.005) {
+                        vertMap.set(key, v);
+                        return v;
+                    }
+                }
+
+                // Generar nuevo vértice exterior
+                const newIdx = newPos.length / 3;
+                newPos.push(x, y, z);
+                vertMap.set(key, newIdx);
+                return newIdx;
+            };
+
+            // 3. Sintetizar la cara frontal con orientación de normales hacia el exterior (+Z)
+            for (const [i0, i1, i2] of backTris) {
+                const f0 = getFrontVertIdx(i0);
+                const f1 = getFrontVertIdx(i1);
+                const f2 = getFrontVertIdx(i2);
+                indices.push(f0, f2, f1); // Devanado invertido
+            }
+
+            // 4. Actualizar BufferGeometry
+            geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(newPos), 3));
+            geometry.attributes.position.needsUpdate = true;
+
+            const ArrayType = (newPos.length / 3 < 65535) ? Uint16Array : Uint32Array;
+            geometry.setIndex(new THREE.BufferAttribute(new ArrayType(indices), 1));
+            geometry.index.needsUpdate = true;
+            geometry.computeVertexNormals();
+        },
+
+        /**
          * Adjunta las aristas blancas (LineSegments), los puntos de vértice blancos (Points)
          * y la capa interior maciza (BackSide en #0f2b5c) como hijos de la malla del subset.
-         * Aplica previamente la depuración de aletas parásitas para que ni las aristas blancas
-         * ni el renderizado de caras presenten triángulos espurios en ventanas o puertas.
+         * Aplica previamente la depuración de aletas parásitas y el curado de caras abiertas.
          */
         _attachBlueprintDecorations: function (mesh, planes = [], isSolid = true) {
             if (!mesh || !mesh.geometry) return;
+            this._healOpenWallFaces(mesh.geometry);
             this._cleanGeometryParasiteTriangles(mesh.geometry);
             const THREE = window.THREE;
             try {
@@ -1912,14 +2012,34 @@
             // 1. Obtener caja envolvente y dimensiones del modelo para ajustar el tamaño del plano de tapa
             let box = new THREE.Box3();
             let hasBounds = false;
-            Object.values(this.categorySubsets).forEach(s => {
-                if (s && s.mesh && s.mesh.visible) {
-                    box.expandByObject(s.mesh);
-                    hasBounds = true;
-                }
-            });
+            if (this.isIsolated && this.isolatedSubset && this.isolatedSubset.visible) {
+                box.setFromObject(this.isolatedSubset);
+                hasBounds = true;
+            } else {
+                Object.values(this.categorySubsets).forEach(s => {
+                    if (s && s.mesh && s.mesh.visible) {
+                        box.expandByObject(s.mesh);
+                        hasBounds = true;
+                    }
+                });
+            }
             if (!hasBounds && this.ifcModel) box.setFromObject(this.ifcModel);
             if (!hasBounds) box = new THREE.Box3(new THREE.Vector3(-20, -10, -20), new THREE.Vector3(20, 20, 20));
+
+            // COMPROBACIÓN CRÍTICA DE INTERSECCIÓN CON EL MODELO:
+            // Si la cota del plano de corte está fuera del modelo (por encima del tejado, por debajo del suelo o fuera en X/Z),
+            // no hay ninguna sección física que tapar. Ocultamos el grupo de tapas de sección de inmediato.
+            let minAxis = box.min.y, maxAxis = box.max.y;
+            if (targetAxis === 'X') { minAxis = box.min.x; maxAxis = box.max.x; }
+            else if (targetAxis === 'Z') { minAxis = box.min.z; maxAxis = box.max.z; }
+
+            const marginTolerance = 0.05; // Margen de seguridad de 5 cm
+            if (targetVal > maxAxis + marginTolerance || targetVal < minAxis - marginTolerance) {
+                if (this.sectionCapGroup) {
+                    this.sectionCapGroup.visible = false;
+                }
+                return;
+            }
 
             const center = box.getCenter(new THREE.Vector3());
             const size = box.getSize(new THREE.Vector3());
