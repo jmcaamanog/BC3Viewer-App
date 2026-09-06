@@ -386,30 +386,8 @@
                 });
                 const vertexPoints = new THREE.Points(mesh.geometry, pointsMat);
                 vertexPoints.name = 'blueprint-points';
-                vertexPoints.renderOrder = 6;
+                vertexPoints.renderOrder = 5;
                 mesh.add(vertexPoints);
-
-                // 3. Cara interior (BackSide) en azul oscuro (#0f2b5c) para efecto macizo cuando hay corte de sección
-                if (isSolid) {
-                    const backMat = new THREE.MeshBasicMaterial({
-                        color: this.BLUEPRINT_CONFIG.sectionCapColor || 0x0f2b5c,
-                        side: THREE.BackSide,
-                        clippingPlanes: planes,
-                        clipShadows: true,
-                        polygonOffset: true,
-                        polygonOffsetFactor: -1,
-                        polygonOffsetUnits: -1,
-                        depthTest: true,
-                        depthWrite: true
-                    });
-                    const backMesh = new THREE.Mesh(mesh.geometry, backMat);
-                    backMesh.name = 'blueprint-back-solid';
-                    backMesh.renderOrder = 4;
-                    const showCaps = (this.sectionConfig && this.sectionConfig.showCaps !== undefined) ? this.sectionConfig.showCaps : true;
-                    const isSectionActive = this.sectionConfig && this.sectionConfig.active && !!this.activeClippingPlane;
-                    backMesh.visible = isSectionActive && showCaps;
-                    mesh.add(backMesh);
-                }
             } catch (err) {
                 console.warn("IFCViewer3D: No se pudieron generar aristas/vértices blueprint:", err);
             }
@@ -1905,45 +1883,208 @@
         },
 
         /**
-         * Gestiona la visibilidad y planos de corte de las tapas macizas en azul oscuro (#0f2b5c).
-         * Utiliza la técnica de renderizado de núcleo interior volumétrico (THREE.BackSide en submallas
-         * hijas 'blueprint-back-solid'), ancladas a la geometría real de los elementos constructivos.
-         * Esto garantiza 0 artefactos, 0 triángulos flotantes en puertas/ventanas y máximo rendimiento a 60 FPS.
+         * Gestiona la creación, posicionamiento y renderizado de las tapas macizas en azul oscuro (#0f2b5c)
+         * mediante Stencil Capping oficial de Three.js.
+         * El plano de tapa (sectionCapMesh) es una superficie plana 2D situada estrictamente en el plano de corte.
+         * Al ser un plano 2D en la cota de corte, es físicamente imposible que manche o altere los alzados
+         * exteriores de los muros (como Ms - 042), los cantos de forjados no cortados (como Cub - 012)
+         * o las carpinterías y huecos de ventana.
          */
         _updateSectionCaps: function (axis, value, inverted) {
+            const THREE = window.THREE;
+            if (!this.scene || !THREE) return;
+
             const showCaps = (this.sectionConfig && this.sectionConfig.showCaps !== undefined) ? this.sectionConfig.showCaps : true;
             const isSectionActive = this.sectionConfig && this.sectionConfig.active && !!this.activeClippingPlane;
-            const shouldShowSolid = isSectionActive && showCaps;
+            const shouldShowCaps = isSectionActive && showCaps;
 
-            // 1. Actualizar visibilidad y planos de corte de todas las capas de núcleo macizo
-            if (this.scene) {
-                this.scene.traverse(obj => {
-                    if (obj.name === 'blueprint-back-solid') {
-                        obj.visible = shouldShowSolid;
-                        if (obj.material) {
-                            obj.material.clippingPlanes = this.activeClippingPlane ? [this.activeClippingPlane] : [];
-                            obj.material.needsUpdate = true;
-                        }
-                    }
+            if (!shouldShowCaps) {
+                if (this.sectionCapGroup) {
+                    this.sectionCapGroup.visible = false;
+                }
+                return;
+            }
+
+            const plane = this.activeClippingPlane;
+            const targetAxis = axis || (this.sectionConfig.active ? this.sectionConfig.axis : 'Y');
+            const targetVal = typeof value === 'number' ? value : (this.sectionConfig.active ? this.sectionConfig.value : 0);
+
+            // 1. Obtener caja envolvente y dimensiones del modelo para ajustar el tamaño del plano de tapa
+            let box = new THREE.Box3();
+            let hasBounds = false;
+            Object.values(this.categorySubsets).forEach(s => {
+                if (s && s.mesh && s.mesh.visible) {
+                    box.expandByObject(s.mesh);
+                    hasBounds = true;
+                }
+            });
+            if (!hasBounds && this.ifcModel) box.setFromObject(this.ifcModel);
+            if (!hasBounds) box = new THREE.Box3(new THREE.Vector3(-20, -10, -20), new THREE.Vector3(20, 20, 20));
+
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            if (isNaN(center.x)) center.set(0, 0, 0);
+            if (isNaN(size.x) || size.x <= 0) size.set(30, 20, 30);
+
+            const margin = 10.0;
+            const maxDim = Math.max(size.x, size.y, size.z, 20) + margin * 2;
+            const width = maxDim;
+            const height = maxDim;
+
+            // 2. Crear grupo contenedor si no existe
+            if (!this.sectionCapGroup) {
+                this.sectionCapGroup = new THREE.Group();
+                this.sectionCapGroup.name = 'v3d-section-cap-group';
+                this.scene.add(this.sectionCapGroup);
+            }
+            this.sectionCapGroup.visible = true;
+
+            // 3. Crear materiales base de stencil si no existen
+            if (!this._stencilMaterials) {
+                const baseMat = new THREE.MeshBasicMaterial({
+                    depthWrite: false,
+                    depthTest: false,
+                    colorWrite: false,
+                    stencilWrite: true,
+                    stencilFunc: THREE.AlwaysStencilFunc
                 });
+
+                const matBack = baseMat.clone();
+                matBack.side = THREE.BackSide;
+                matBack.clippingPlanes = [plane];
+                matBack.stencilFail = THREE.IncrementWrapStencilOp;
+                matBack.stencilZFail = THREE.IncrementWrapStencilOp;
+                matBack.stencilZPass = THREE.IncrementWrapStencilOp;
+
+                const matFront = baseMat.clone();
+                matFront.side = THREE.FrontSide;
+                matFront.clippingPlanes = [plane];
+                matFront.stencilFail = THREE.DecrementWrapStencilOp;
+                matFront.stencilZFail = THREE.DecrementWrapStencilOp;
+                matFront.stencilZPass = THREE.DecrementWrapStencilOp;
+
+                const capMat = new THREE.MeshBasicMaterial({
+                    color: this.BLUEPRINT_CONFIG.sectionCapColor || 0x0f2b5c,
+                    side: THREE.DoubleSide,
+                    clippingPlanes: [],
+                    stencilWrite: true,
+                    stencilRef: 0,
+                    stencilFunc: THREE.NotEqualStencilFunc,
+                    stencilFail: THREE.ReplaceStencilOp,
+                    stencilZFail: THREE.ReplaceStencilOp,
+                    stencilZPass: THREE.ReplaceStencilOp,
+                    depthWrite: true,
+                    depthTest: true,
+                    polygonOffset: true,
+                    polygonOffsetFactor: 0.1,
+                    polygonOffsetUnits: 0.1
+                });
+
+                this._stencilMaterials = {
+                    matBack: matBack,
+                    matFront: matFront,
+                    capMat: capMat
+                };
+            } else {
+                this._stencilMaterials.matBack.clippingPlanes = [plane];
+                this._stencilMaterials.matFront.clippingPlanes = [plane];
             }
 
-            // 2. Limpiar cualquier resto obsoleto del sistema anterior de stencil si existiera en memoria
-            if (this.sectionCapGroup) {
-                try {
-                    this.scene.remove(this.sectionCapGroup);
-                    while (this.sectionCapGroup.children.length > 0) {
-                        const ch = this.sectionCapGroup.children[0];
-                        this.sectionCapGroup.remove(ch);
-                    }
-                } catch (e) { }
-                this.sectionCapGroup = null;
+            // 4. Identificar mallas volumétricas sólidas que deben generar tapas
+            // CRÍTICO: Excluir carpinterías (ventanas, puertas), barandillas, escaleras y mobiliario
+            // que son láminas o mallas abiertas para evitar inconsistencias en el buffer de estarcido.
+            const isSolidVolumetricCategory = (catName, catKey) => {
+                const s = `${catName || ''} ${catKey || ''}`.toLowerCase();
+                if (s.includes('vidrio') || s.includes('cristal') || s.includes('glass') ||
+                    s.includes('puerta') || s.includes('door') ||
+                    s.includes('ventana') || s.includes('window') ||
+                    s.includes('panel') || s.includes('plate') ||
+                    s.includes('barandilla') || s.includes('railing') ||
+                    s.includes('escalera') || s.includes('stair') ||
+                    s.includes('mobiliario') || s.includes('furnishing') ||
+                    s.includes('sanit') || s.includes('espacio') || s.includes('zona') || s.includes('space')) {
+                    return false;
+                }
+                if (s.includes('muro') || s.includes('cerramiento') || s.includes('tabique') || s.includes('wall')) return true;
+                if (s.includes('forjado') || s.includes('suelo') || s.includes('pavimento') || s.includes('losa') || s.includes('slab')) return true;
+                if (s.includes('pilar') || s.includes('columna') || s.includes('column')) return true;
+                if (s.includes('viga') || s.includes('beam')) return true;
+                if (s.includes('cimentac') || s.includes('zapata') || s.includes('footing')) return true;
+                if (s.includes('cubierta') || s.includes('roof')) return true;
+                if (s.includes('estructura') || s.includes('structural')) return true;
+                return false;
+            };
+
+            let targetMeshes = [];
+            if (this.isIsolated && this.isolatedSubset && this.isolatedSubset.visible) {
+                targetMeshes = [this.isolatedSubset];
+            } else {
+                targetMeshes = Object.values(this.categorySubsets)
+                    .filter(s => s && s.mesh && s.mesh.visible && isSolidVolumetricCategory(s.name, s.key))
+                    .map(s => s.mesh);
             }
-            if (this.sectionCapMesh) {
-                try {
-                    if (this.sectionCapMesh.geometry) this.sectionCapMesh.geometry.dispose();
-                } catch (e) { }
+
+            if (targetMeshes.length === 0) {
+                if (this.sectionCapGroup) {
+                    this.sectionCapGroup.visible = false;
+                }
+                return;
+            }
+
+            // 5. Comprobar si necesitamos reconstruir las mallas de stencil
+            const currentMeshesKey = targetMeshes.map(m => m.id).join('_') + `_${targetAxis}`;
+            if (this._lastStencilKey !== currentMeshesKey) {
+                this._lastStencilKey = currentMeshesKey;
+
+                // Limpiar hijos anteriores del grupo
+                while (this.sectionCapGroup.children.length > 0) {
+                    const ch = this.sectionCapGroup.children[0];
+                    this.sectionCapGroup.remove(ch);
+                    if (ch === this.sectionCapMesh && ch.geometry) {
+                        ch.geometry.dispose();
+                    }
+                }
                 this.sectionCapMesh = null;
+
+                // Añadir pares de mallas Front y Back para cada geometría de subset sólido
+                targetMeshes.forEach(m => {
+                    if (!m || !m.geometry) return;
+                    const bMesh = new THREE.Mesh(m.geometry, this._stencilMaterials.matBack);
+                    bMesh.renderOrder = 1;
+                    bMesh.name = 'v3d-stencil-back';
+                    this.sectionCapGroup.add(bMesh);
+
+                    const fMesh = new THREE.Mesh(m.geometry, this._stencilMaterials.matFront);
+                    fMesh.renderOrder = 1;
+                    fMesh.name = 'v3d-stencil-front';
+                    this.sectionCapGroup.add(fMesh);
+                });
+
+                // Crear nueva geometría para el plano de tapa
+                const capGeom = new THREE.PlaneGeometry(width, height);
+                this.sectionCapMesh = new THREE.Mesh(capGeom, this._stencilMaterials.capMat);
+                this.sectionCapMesh.name = 'v3d-section-cap-plane';
+                this.sectionCapMesh.renderOrder = 2;
+                this.sectionCapMesh.onAfterRender = function (renderer) {
+                    if (renderer && typeof renderer.clearStencil === 'function') {
+                        renderer.clearStencil();
+                    }
+                };
+                this.sectionCapGroup.add(this.sectionCapMesh);
+            }
+
+            // 6. Actualizar orientación y posición de la malla de tapa en el espacio 3D
+            if (this.sectionCapMesh) {
+                if (targetAxis === 'X') {
+                    this.sectionCapMesh.rotation.set(0, Math.PI / 2, 0);
+                    this.sectionCapMesh.position.set(targetVal, center.y, center.z);
+                } else if (targetAxis === 'Y') {
+                    this.sectionCapMesh.rotation.set(-Math.PI / 2, 0, 0);
+                    this.sectionCapMesh.position.set(center.x, targetVal, center.z);
+                } else if (targetAxis === 'Z') {
+                    this.sectionCapMesh.rotation.set(0, 0, 0);
+                    this.sectionCapMesh.position.set(center.x, center.y, targetVal);
+                }
             }
         },
 
@@ -3283,6 +3424,15 @@
                     cat.mesh.visible = cat.visible;
                     const isSolid = this._isSolidCategory(cat.name, cat.key);
                     this._attachBlueprintDecorations(newSubset, planes, isSolid);
+
+                    // Sincronizar tapas macizas si el plano de sección está activo
+                    if (this.activeClippingPlane) {
+                        this._lastStencilKey = null;
+                        const axis = this.sectionConfig.active ? this.sectionConfig.axis : 'Y';
+                        const val = this.sectionConfig.active ? this.sectionConfig.value : 0;
+                        const inv = this.sectionConfig.active ? this.sectionConfig.inverted : false;
+                        this._updateSectionCaps(axis, val, inv);
+                    }
                 }
             } catch (e) {
                 console.warn(`IFCViewer3D: Error reconstruyendo subset ${catKey}:`, e);
