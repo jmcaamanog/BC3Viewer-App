@@ -399,6 +399,22 @@ async function handleIfcFile(file) {
     }
 }
 
+async function loadIfcFromUrl(url = 'CASA_JAVIER.ifc', fileName = 'CASA JAVIER.ifc') {
+    try {
+        showWorkerLoader("Descargando y preparando modelo BIM...", fileName);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("No se pudo cargar el archivo IFC: " + res.statusText);
+        const blob = await res.blob();
+        const file = new File([blob], fileName, { type: 'application/octet-stream' });
+        await handleIfcFile(file);
+    } catch (err) {
+        hideWorkerLoader();
+        console.error("Error en loadIfcFromUrl:", err);
+        alert("Error al cargar modelo IFC: " + (err.message || err));
+    }
+}
+window.loadIfcFromUrl = loadIfcFromUrl;
+
 function openIfcWizardModal(ifcData, fileName) {
     const modal = document.getElementById('ifcWizardModal');
     if (!modal) return;
@@ -3502,6 +3518,32 @@ if (openImportBc3Btn) {
     openImportBc3Btn.addEventListener('click', () => {
         const bc3FileInput = document.getElementById('bc3file');
         if (bc3FileInput) bc3FileInput.click();
+    });
+}
+
+const openImportIfcBtn = document.getElementById('openImportIfcBtn');
+if (openImportIfcBtn) {
+    openImportIfcBtn.addEventListener('click', () => {
+        const bc3FileInput = document.getElementById('bc3file');
+        if (bc3FileInput) bc3FileInput.click();
+    });
+}
+
+const loadSampleIfcBtn = document.getElementById('loadSampleIfcBtn');
+if (loadSampleIfcBtn) {
+    loadSampleIfcBtn.addEventListener('click', () => {
+        if (typeof window.loadIfcFromUrl === 'function') {
+            window.loadIfcFromUrl('CASA_JAVIER.ifc', 'CASA JAVIER.ifc');
+        }
+    });
+}
+
+const welcomeLoadSampleIfcBtn = document.getElementById('welcomeLoadSampleIfcBtn');
+if (welcomeLoadSampleIfcBtn) {
+    welcomeLoadSampleIfcBtn.addEventListener('click', () => {
+        if (typeof window.loadIfcFromUrl === 'function') {
+            window.loadIfcFromUrl('CASA_JAVIER.ifc', 'CASA JAVIER.ifc');
+        }
     });
 }
 

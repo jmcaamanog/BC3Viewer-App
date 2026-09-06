@@ -18,5 +18,6 @@ ios/
 .npmrc
 NOTAS/
 scratch/
+*.ifc
 
 

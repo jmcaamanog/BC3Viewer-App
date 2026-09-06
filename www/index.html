@@ -106,6 +106,12 @@
                                 <button type="button" id="openImportBc3Btn" class="export-menu-item import-bc3-item">
                                     <span class="menu-icon">📂</span><span class="btn-text">FIEBDC-3 (.bc3)</span>
                                 </button>
+                                <button type="button" id="openImportIfcBtn" class="export-menu-item import-ifc-item">
+                                    <span class="menu-icon">📐</span><span class="btn-text">Modelo IFC (.ifc)</span>
+                                </button>
+                                <button type="button" id="loadSampleIfcBtn" class="export-menu-item sample-ifc-item" style="color: var(--accent); font-weight: 600;">
+                                    <span class="menu-icon">🏠</span><span class="btn-text">Ejemplo: CASA JAVIER (.ifc)</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -437,6 +443,10 @@
                                 <button type="button" id="welcomeNewBudgetBtn" class="welcome-load-btn" style="flex: 1; min-width: 200px; max-width: 280px; text-align: center; margin: 0; background: var(--accent, #3b82f6); border-color: var(--accent, #3b82f6); color: white;">
                                     ✨ CREAR NUEVO PRESUPUESTO
                                 </button>
+
+                                <button type="button" id="welcomeLoadSampleIfcBtn" class="welcome-load-btn" style="flex: 1; min-width: 200px; max-width: 280px; text-align: center; margin: 0; background: linear-gradient(135deg, #059669, #0d9488); border-color: #0d9488; color: white;">
+                                    🏠 EJEMPLO BIM: CASA JAVIER
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -682,6 +692,10 @@
                             <span>✂️</span> <span>Sección</span>
                         </button>
 
+                        <button type="button" id="v3dMeasureBtn" class="v3d-tool-btn" title="Herramienta de Medición / Acotar (Distancia punto a punto en metros)">
+                            <span>📏</span> <span>Acotar</span>
+                        </button>
+
                         <!-- Vistas Técnicas Ortogonales (Planta y Alzados sin fuga + 3D) -->
                         <div class="v3d-views-group" id="v3dViewsGroup" role="group" aria-label="Vistas Técnicas Ortogonales">
                             <button type="button" id="v3dView3DBtn" class="v3d-tool-btn v3d-view-btn active" title="Vista 3D (Perspectiva cónica)">
@@ -748,6 +762,21 @@
                     <div id="v3dLoadingBadge" class="v3d-loading-badge" style="display:none;">
                         <div class="worker-loading-spinner" style="width: 24px; height: 24px;"></div>
                         <span>Cargando geometría 3D del modelo...</span>
+                    </div>
+
+                    <!-- Contenedor overlay para etiquetas y cotas de medición 3D -->
+                    <div id="v3dMeasureOverlay" class="v3d-measure-overlay" style="display:none;"></div>
+
+                    <!-- Barra de estado / HUD del modo Acotar -->
+                    <div id="v3dMeasureHud" class="v3d-measure-hud" style="display:none;">
+                        <span class="v3d-measure-hud-icon">📏</span>
+                        <span id="v3dMeasureHudText" class="v3d-measure-hud-text">Haz clic en el primer punto para iniciar la cota</span>
+                        <div class="v3d-measure-hud-actions">
+                            <button type="button" id="v3dMeasureClearBtn" class="v3d-measure-hud-btn" title="Borrar todas las cotas activas">
+                                <span>🗑️</span> <span>Limpiar cotas</span>
+                            </button>
+                            <button type="button" id="v3dMeasureCloseBtn" class="v3d-measure-hud-btn close" title="Salir del modo acotación (Esc)">✕</button>
+                        </div>
                     </div>
 
                     <!-- Panel Flotante de Control de Planos de Sección 3D (Multieje X, Y, Z) -->

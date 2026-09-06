@@ -588,13 +588,14 @@
                 this.ifcLoader.ifcManager.setWasmPath('./');
             }
 
-            // 8. Eventos de Raycasting, Tarjeta HUD, Menú de Elementos, Menú Contextual, Planos de Sección y Vistas
+            // 8. Eventos de Raycasting, Tarjeta HUD, Menú de Elementos, Menú Contextual, Planos de Sección, Vistas y Medición
             this._setupRaycasting();
             this._setupHudEvents();
             this._setupCategoriesMenuUI();
             this._setupContextMenuUI();
             this._setupSectionToolUI();
             this._setupViewButtonsUI();
+            this._setupMeasureControls();
 
             // 9. Redimensionamiento y bucle de renderizado
             window.addEventListener('resize', () => this.onResize());
@@ -610,6 +611,9 @@
         _animate: function () {
             requestAnimationFrame(() => this._animate());
             if (this.controls) this.controls.update();
+            if (this.measurements && this.measurements.length > 0) {
+                this._updateMeasureOverlayPositions();
+            }
             if (this.renderer && this.scene && this.camera) {
                 this.renderer.render(this.scene, this.camera);
             }
@@ -622,7 +626,15 @@
             // Incrementar sesión de carga para invalidar inmediatamente cualquier carga asíncrona en curso
             this._loadSessionId = (this._loadSessionId || 0) + 1;
 
-            // 0. Limpiar grupo y mallas de tapas macizas de sección (Stencil Capping)
+            // 0. Limpiar herramientas de acotación y medición 3D
+            if (typeof this.clearMeasurements === 'function') {
+                this.clearMeasurements();
+            }
+            if (typeof this.toggleMeasure === 'function') {
+                this.toggleMeasure(false);
+            }
+
+            // Limpiar grupo y mallas de tapas macizas de sección (Stencil Capping)
             if (this.sectionCapGroup) {
                 try {
                     this.scene.remove(this.sectionCapGroup);
@@ -1122,6 +1134,615 @@
             if (btnBack) btnBack.onclick = () => this.setViewMode('back');
             if (btnLeft) btnLeft.onclick = () => this.setViewMode('left');
             if (btnRight) btnRight.onclick = () => this.setViewMode('right');
+        },
+
+        /**
+         * Inicializa las variables y eventos de la herramienta de medición y acotación 3D ("📏 Acotar")
+         */
+        _setupMeasureControls: function () {
+            if (this._measureControlsInitialized) return;
+            this._measureControlsInitialized = true;
+
+            this.isMeasuring = false;
+            this.measureStartPoint = null;
+            this.measurements = [];
+            this.measureGroup = null;
+            this.measurePreviewLine = null;
+            this.measureSnapMarker = null;
+
+            const measureBtn = document.getElementById('v3dMeasureBtn');
+            const clearBtn = document.getElementById('v3dMeasureClearBtn');
+            const closeBtn = document.getElementById('v3dMeasureCloseBtn');
+
+            if (measureBtn) {
+                measureBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    this.toggleMeasure();
+                };
+            }
+
+            if (clearBtn) {
+                clearBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    this.clearMeasurements();
+                };
+            }
+
+            if (closeBtn) {
+                closeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    this.toggleMeasure(false);
+                };
+            }
+
+            // Atajos de teclado: Escape cancela punto o cierra herramienta; Supr borra última cota
+            window.addEventListener('keydown', (e) => {
+                if (!this.isMeasuring && (!this.measurements || this.measurements.length === 0)) return;
+                if (e.key === 'Escape') {
+                    if (this.measureStartPoint) {
+                        this._cancelActiveMeasurementPoint();
+                    } else if (this.isMeasuring) {
+                        this.toggleMeasure(false);
+                    }
+                } else if ((e.key === 'Delete' || e.key === 'Backspace') && !e.target.matches('input, textarea, select')) {
+                    if (this.measurements.length > 0) {
+                        this.removeLastMeasurement();
+                    }
+                }
+            });
+
+            // Listeners de ratón en canvas para medición
+            if (this.renderer && this.renderer.domElement) {
+                const dom = this.renderer.domElement;
+                let measureDownPos = { x: 0, y: 0 };
+
+                dom.addEventListener('pointerdown', (e) => {
+                    if (!this.isMeasuring || e.button !== 0) return;
+                    measureDownPos.x = e.clientX;
+                    measureDownPos.y = e.clientY;
+                });
+
+                dom.addEventListener('pointermove', (e) => {
+                    if (!this.isMeasuring) return;
+                    this._handleMeasurePointerMove(e);
+                });
+
+                dom.addEventListener('pointerup', (e) => {
+                    if (!this.isMeasuring || e.button !== 0) return;
+                    const dist = Math.hypot(e.clientX - measureDownPos.x, e.clientY - measureDownPos.y);
+                    if (dist > 6) return; // Arrastre / paneo de cámara
+                    this._handleMeasureClick(e);
+                });
+
+                dom.addEventListener('pointerleave', () => {
+                    if (this.measureSnapMarker) this.measureSnapMarker.visible = false;
+                });
+            }
+        },
+
+        /**
+         * Alterna o fuerza el estado de la herramienta de medición 3D
+         */
+        toggleMeasure: function (forceState) {
+            const newState = typeof forceState === 'boolean' ? forceState : !this.isMeasuring;
+            this.isMeasuring = newState;
+
+            const btn = document.getElementById('v3dMeasureBtn');
+            const hud = document.getElementById('v3dMeasureHud');
+            const overlay = document.getElementById('v3dMeasureOverlay');
+            const hudText = document.getElementById('v3dMeasureHudText');
+
+            if (btn) {
+                if (this.isMeasuring) btn.classList.add('active');
+                else btn.classList.remove('active');
+            }
+
+            if (this.container) {
+                if (this.isMeasuring) this.container.classList.add('v3d-measure-cursor');
+                else this.container.classList.remove('v3d-measure-cursor');
+            }
+
+            if (hud) {
+                hud.style.display = this.isMeasuring ? 'flex' : 'none';
+            }
+
+            if (overlay) {
+                overlay.style.display = (this.isMeasuring || (this.measurements && this.measurements.length > 0)) ? 'block' : 'none';
+            }
+
+            if (this.isMeasuring) {
+                if (hudText) hudText.textContent = 'Haz clic en el primer punto para iniciar la cota';
+                this._ensureMeasureGroup();
+            } else {
+                this._cancelActiveMeasurementPoint();
+                if (this.measureSnapMarker) {
+                    this.measureSnapMarker.visible = false;
+                }
+            }
+        },
+
+        /**
+         * Asegura la existencia del grupo contenedor de cotas y marcadores en la escena
+         */
+        _ensureMeasureGroup: function () {
+            const THREE = window.THREE;
+            if (!this.scene || !THREE) return;
+
+            if (!this.measureGroup) {
+                this.measureGroup = new THREE.Group();
+                this.measureGroup.name = 'v3d-measurements-group';
+                this.measureGroup.renderOrder = 10;
+                this.scene.add(this.measureGroup);
+            }
+
+            // Marcador de Snap (anillo cian neón de alta visibilidad)
+            if (!this.measureSnapMarker) {
+                const markerGroup = new THREE.Group();
+                markerGroup.name = 'v3d-measure-snap-marker';
+
+                const ringGeom = new THREE.RingGeometry(0.6, 0.9, 24);
+                const ringMat = new THREE.MeshBasicMaterial({
+                    color: 0x38bdf8,
+                    side: THREE.DoubleSide,
+                    depthTest: false,
+                    transparent: true,
+                    opacity: 0.95
+                });
+                const ringMesh = new THREE.Mesh(ringGeom, ringMat);
+                ringMesh.renderOrder = 14;
+                markerGroup.add(ringMesh);
+
+                const centerDot = new THREE.Mesh(
+                    new THREE.CircleGeometry(0.28, 16),
+                    new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, depthTest: false })
+                );
+                centerDot.renderOrder = 15;
+                markerGroup.add(centerDot);
+
+                markerGroup.visible = false;
+                this.measureSnapMarker = markerGroup;
+                this.scene.add(markerGroup);
+            }
+        },
+
+        /**
+         * Cancela el punto inicial provisional de la cota en curso
+         */
+        _cancelActiveMeasurementPoint: function () {
+            this.measureStartPoint = null;
+            if (this.measurePreviewLine) {
+                this.scene.remove(this.measurePreviewLine);
+                if (this.measurePreviewLine.geometry) this.measurePreviewLine.geometry.dispose();
+                this.measurePreviewLine = null;
+            }
+            const previewBadge = document.getElementById('v3dMeasurePreviewBadge');
+            if (previewBadge) previewBadge.remove();
+
+            const hudText = document.getElementById('v3dMeasureHudText');
+            if (hudText && this.isMeasuring) {
+                hudText.textContent = 'Haz clic en el primer punto para iniciar la cota';
+            }
+        },
+
+        /**
+         * Obtiene el punto de impacto 3D y realiza snap inteligente a vértices de la geometría cercana
+         */
+        _getMeasurePoint: function (e) {
+            const THREE = window.THREE;
+            if (!this.renderer || !this.camera || !THREE) return null;
+
+            const rect = this.renderer.domElement.getBoundingClientRect();
+            const mouseX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            const mouseY = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(new THREE.Vector2(mouseX, mouseY), this.camera);
+
+            let activeMeshes = [];
+            if (this.isIsolated && this.isolatedSubset && this.isolatedSubset.visible) {
+                activeMeshes = [this.isolatedSubset];
+            } else {
+                activeMeshes = Object.values(this.categorySubsets)
+                    .filter(sub => sub && sub.mesh && sub.mesh.visible)
+                    .map(sub => sub.mesh);
+            }
+            if (activeMeshes.length === 0 && this.ifcModel && this.ifcModel.visible) {
+                activeMeshes = [this.ifcModel];
+            }
+
+            let intersects = raycaster.intersectObjects(activeMeshes, false);
+
+            // Filtrar zonas recortadas si el plano de sección está activo
+            if (this.activeClippingPlane && intersects.length > 0) {
+                const plane = this.activeClippingPlane;
+                intersects = intersects.filter(hit => plane.distanceToPoint(hit.point) >= -0.001);
+            }
+
+            if (intersects.length === 0) return null;
+
+            const hit = intersects[0];
+            let targetPoint = hit.point.clone();
+            let isSnap = false;
+
+            // SNAP INTELIGENTE A VÉRTICES:
+            // Comprobamos los 3 vértices de la cara triangular intersectada
+            if (hit.face && hit.object && hit.object.geometry && hit.object.geometry.attributes && hit.object.geometry.attributes.position) {
+                const pos = hit.object.geometry.attributes.position;
+                const vIndices = [hit.face.a, hit.face.b, hit.face.c];
+                let closestVert = null;
+                let minPixelDist = 20; // Radio de imantado en píxeles de pantalla
+
+                const cursorPx = new THREE.Vector2(e.clientX - rect.left, e.clientY - rect.top);
+
+                vIndices.forEach(vi => {
+                    const worldV = new THREE.Vector3(pos.getX(vi), pos.getY(vi), pos.getZ(vi));
+                    hit.object.localToWorld(worldV);
+
+                    // Si el plano de sección corta este vértice, no hacer snap
+                    if (this.activeClippingPlane && this.activeClippingPlane.distanceToPoint(worldV) < -0.001) {
+                        return;
+                    }
+
+                    // Proyectar vértice a coordenadas de píxel en pantalla
+                    const screenPos = worldV.clone().project(this.camera);
+                    const vertPx = new THREE.Vector2(
+                        (screenPos.x * 0.5 + 0.5) * rect.width,
+                        (-screenPos.y * 0.5 + 0.5) * rect.height
+                    );
+
+                    const distPx = cursorPx.distanceTo(vertPx);
+                    if (distPx < minPixelDist) {
+                        minPixelDist = distPx;
+                        closestVert = worldV;
+                    }
+                });
+
+                if (closestVert) {
+                    targetPoint = closestVert;
+                    isSnap = true;
+                }
+            }
+
+            return {
+                point: targetPoint,
+                isSnap: isSnap
+            };
+        },
+
+        /**
+         * Manejador de movimiento del ratón en modo acotar: actualiza snap marker y línea elástica
+         */
+        _handleMeasurePointerMove: function (e) {
+            const THREE = window.THREE;
+            const res = this._getMeasurePoint(e);
+
+            if (!res || !res.point) {
+                if (this.measureSnapMarker) this.measureSnapMarker.visible = false;
+                return;
+            }
+
+            const pt = res.point;
+
+            // Actualizar posición, orientación y escala del marcador de snap
+            if (this.measureSnapMarker) {
+                this.measureSnapMarker.visible = true;
+                this.measureSnapMarker.position.copy(pt);
+                this.measureSnapMarker.quaternion.copy(this.camera.quaternion);
+
+                let s = 0.08;
+                if (this.currentCameraType === 'orthographic' && this.orthographicCamera) {
+                    const frustumH = (this.orthographicCamera.top - this.orthographicCamera.bottom) / (this.orthographicCamera.zoom || 1);
+                    s = Math.max(0.04, frustumH * 0.016);
+                } else if (this.camera) {
+                    const distCam = this.camera.position.distanceTo(pt);
+                    s = Math.max(0.04, distCam * 0.016);
+                }
+                if (res.isSnap) s *= 1.35;
+                this.measureSnapMarker.scale.set(s, s, s);
+            }
+
+            // Si ya hay punto inicial fijado, actualizar la línea elástica (rubberband) y badge provisional
+            if (this.measureStartPoint) {
+                const p1 = this.measureStartPoint;
+                const p2 = pt;
+                const dist = p1.distanceTo(p2);
+
+                const hudText = document.getElementById('v3dMeasureHudText');
+                if (hudText) {
+                    hudText.textContent = `📏 Distancia: ${dist.toFixed(2)} m (Clic para fijar cota, Esc para cancelar)`;
+                }
+
+                // Crear o actualizar la línea elástica
+                if (!this.measurePreviewLine) {
+                    const lineGeom = new THREE.BufferGeometry().setFromPoints([p1, p2]);
+                    const lineMat = new THREE.LineDashedMaterial({
+                        color: 0x38bdf8,
+                        dashSize: 0.15,
+                        gapSize: 0.08,
+                        depthTest: false,
+                        linewidth: 2
+                    });
+                    this.measurePreviewLine = new THREE.Line(lineGeom, lineMat);
+                    this.measurePreviewLine.computeLineDistances();
+                    this.measurePreviewLine.renderOrder = 11;
+                    this.scene.add(this.measurePreviewLine);
+                } else {
+                    const posAttr = this.measurePreviewLine.geometry.attributes.position;
+                    posAttr.setXYZ(0, p1.x, p1.y, p1.z);
+                    posAttr.setXYZ(1, p2.x, p2.y, p2.z);
+                    posAttr.needsUpdate = true;
+                    this.measurePreviewLine.computeLineDistances();
+                }
+
+                // Badge flotante provisional
+                let previewBadge = document.getElementById('v3dMeasurePreviewBadge');
+                const overlay = document.getElementById('v3dMeasureOverlay');
+                if (!previewBadge && overlay) {
+                    previewBadge = document.createElement('div');
+                    previewBadge.id = 'v3dMeasurePreviewBadge';
+                    previewBadge.className = 'v3d-measure-badge preview';
+                    overlay.appendChild(previewBadge);
+                }
+                if (previewBadge && this.container) {
+                    previewBadge.textContent = `${dist.toFixed(2)} m`;
+                    const mid = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
+                    const rect = this.container.getBoundingClientRect();
+                    const sPos = mid.clone().project(this.camera);
+                    const px = (sPos.x * 0.5 + 0.5) * rect.width;
+                    const py = (-sPos.y * 0.5 + 0.5) * rect.height;
+                    previewBadge.style.left = `${px}px`;
+                    previewBadge.style.top = `${py}px`;
+                    previewBadge.style.display = 'flex';
+                }
+            }
+        },
+
+        /**
+         * Manejador de clic para fijar puntos de la cota
+         */
+        _handleMeasureClick: function (e) {
+            const res = this._getMeasurePoint(e);
+            if (!res || !res.point) return;
+
+            const pt = res.point;
+
+            if (!this.measureStartPoint) {
+                // PRIMER CLIC: Fijar origen P1
+                this.measureStartPoint = pt.clone();
+                const hudText = document.getElementById('v3dMeasureHudText');
+                if (hudText) {
+                    hudText.textContent = '📏 Punto 1 fijado. Haz clic en el segundo punto para completar la cota';
+                }
+            } else {
+                // SEGUNDO CLIC: Fijar destino P2 y consolidar cota
+                const p1 = this.measureStartPoint;
+                const p2 = pt.clone();
+                const dist = p1.distanceTo(p2);
+
+                // Evitar cotas de longitud 0 por doble clic instantáneo
+                if (dist < 0.02) return;
+
+                this._addMeasurement(p1, p2, dist);
+                this._cancelActiveMeasurementPoint();
+
+                const hudText = document.getElementById('v3dMeasureHudText');
+                if (hudText) {
+                    hudText.textContent = `✅ Cota fijada: ${dist.toFixed(2)} m. Clic para trazar otra cota`;
+                }
+            }
+        },
+
+        /**
+         * Construye y añade una cota técnica CAD permanente con línea, topes arquitectónicos y tarjeta 3D
+         */
+        _addMeasurement: function (p1, p2, dist) {
+            const THREE = window.THREE;
+            this._ensureMeasureGroup();
+
+            const id = 'meas_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+            const dimGroup = new THREE.Group();
+            dimGroup.name = id;
+
+            // 1. Línea principal de cota
+            const lineGeom = new THREE.BufferGeometry().setFromPoints([p1, p2]);
+            const lineMat = new THREE.LineBasicMaterial({
+                color: 0x38bdf8,
+                depthTest: false,
+                transparent: true,
+                opacity: 0.95
+            });
+            const mainLine = new THREE.Line(lineGeom, lineMat);
+            mainLine.renderOrder = 10;
+            dimGroup.add(mainLine);
+
+            // 2. Nodos extremos en P1 y P2
+            const sphereGeom = new THREE.SphereGeometry(0.04, 12, 12);
+            const sphereMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, depthTest: false });
+
+            const s1 = new THREE.Mesh(sphereGeom, sphereMat);
+            s1.position.copy(p1);
+            s1.renderOrder = 10;
+            dimGroup.add(s1);
+
+            const s2 = new THREE.Mesh(sphereGeom, sphereMat);
+            s2.position.copy(p2);
+            s2.renderOrder = 10;
+            dimGroup.add(s2);
+
+            // 3. Marcas de tope arquitectónico (ticks perpendiculares estilo CAD)
+            const dir = new THREE.Vector3().subVectors(p2, p1).normalize();
+            let perp = new THREE.Vector3(0, 1, 0).cross(dir).normalize();
+            if (perp.lengthSq() < 0.01) perp = new THREE.Vector3(1, 0, 0).cross(dir).normalize();
+            perp.multiplyScalar(0.08); // Tamaño del tick arquitectónico
+
+            const tickGeom1 = new THREE.BufferGeometry().setFromPoints([
+                p1.clone().add(perp),
+                p1.clone().sub(perp)
+            ]);
+            const tick1 = new THREE.Line(tickGeom1, lineMat);
+            tick1.renderOrder = 10;
+            dimGroup.add(tick1);
+
+            const tickGeom2 = new THREE.BufferGeometry().setFromPoints([
+                p2.clone().add(perp),
+                p2.clone().sub(perp)
+            ]);
+            const tick2 = new THREE.Line(tickGeom2, lineMat);
+            tick2.renderOrder = 10;
+            dimGroup.add(tick2);
+
+            this.measureGroup.add(dimGroup);
+
+            // 4. Elemento DOM para etiqueta flotante
+            const overlay = document.getElementById('v3dMeasureOverlay');
+            let badgeEl = null;
+            if (overlay) {
+                overlay.style.display = 'block';
+                badgeEl = document.createElement('div');
+                badgeEl.id = `v3dBadge_${id}`;
+                badgeEl.className = 'v3d-measure-badge';
+                badgeEl.innerHTML = `
+                    <span>📏</span>
+                    <span class="v3d-measure-badge-val">${dist.toFixed(2)} m</span>
+                    <span class="v3d-measure-badge-del" title="Eliminar esta cota">✕</span>
+                `;
+
+                const delBtn = badgeEl.querySelector('.v3d-measure-badge-del');
+                if (delBtn) {
+                    delBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        this.removeMeasurement(id);
+                    };
+                }
+
+                overlay.appendChild(badgeEl);
+            }
+
+            const midpoint = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
+
+            this.measurements.push({
+                id: id,
+                p1: p1,
+                p2: p2,
+                midpoint: midpoint,
+                distance: dist,
+                group: dimGroup,
+                badgeEl: badgeEl
+            });
+
+            this._updateMeasureOverlayPositions();
+        },
+
+        /**
+         * Elimina una cota específica por su identificador
+         */
+        removeMeasurement: function (id) {
+            const idx = this.measurements.findIndex(m => m.id === id);
+            if (idx === -1) return;
+
+            const m = this.measurements[idx];
+            if (m.group && this.measureGroup) {
+                this.measureGroup.remove(m.group);
+                m.group.traverse(obj => {
+                    if (obj.geometry) obj.geometry.dispose();
+                    if (obj.material) obj.material.dispose();
+                });
+            }
+            if (m.badgeEl) {
+                m.badgeEl.remove();
+            }
+
+            this.measurements.splice(idx, 1);
+            if (this.measurements.length === 0 && !this.isMeasuring) {
+                const overlay = document.getElementById('v3dMeasureOverlay');
+                if (overlay) overlay.style.display = 'none';
+            }
+        },
+
+        /**
+         * Elimina la última cota trazada
+         */
+        removeLastMeasurement: function () {
+            if (!this.measurements || this.measurements.length === 0) return;
+            const last = this.measurements[this.measurements.length - 1];
+            this.removeMeasurement(last.id);
+        },
+
+        /**
+         * Limpia y elimina todas las cotas activas en la escena 3D
+         */
+        clearMeasurements: function () {
+            this._cancelActiveMeasurementPoint();
+
+            if (this.measurements) {
+                this.measurements.forEach(m => {
+                    if (m.group && this.measureGroup) {
+                        this.measureGroup.remove(m.group);
+                        m.group.traverse(obj => {
+                            if (obj.geometry) obj.geometry.dispose();
+                            if (obj.material) obj.material.dispose();
+                        });
+                    }
+                    if (m.badgeEl) {
+                        m.badgeEl.remove();
+                    }
+                });
+                this.measurements = [];
+            }
+
+            if (this.measureGroup && this.scene) {
+                this.scene.remove(this.measureGroup);
+                this.measureGroup = null;
+            }
+
+            const overlay = document.getElementById('v3dMeasureOverlay');
+            if (overlay) {
+                overlay.innerHTML = '';
+                if (!this.isMeasuring) overlay.style.display = 'none';
+            }
+
+            const hudText = document.getElementById('v3dMeasureHudText');
+            if (hudText && this.isMeasuring) {
+                hudText.textContent = 'Todas las cotas han sido eliminadas. Clic para medir.';
+            }
+        },
+
+        /**
+         * Actualiza en tiempo real la posición en píxeles de pantalla de todas las etiquetas de cota
+         * mediante vector.project(this.camera) en cada frame del bucle de animación.
+         */
+        _updateMeasureOverlayPositions: function () {
+            if (!this.container || !this.camera || !this.measurements || this.measurements.length === 0) return;
+
+            const rect = this.container.getBoundingClientRect();
+            const w = rect.width;
+            const h = rect.height;
+            if (w <= 0 || h <= 0) return;
+
+            const isOrtho = (this.currentCameraType === 'orthographic');
+
+            this.measurements.forEach(m => {
+                if (!m.badgeEl) return;
+                const sPos = m.midpoint.clone().project(this.camera);
+
+                // Si está detrás de la cámara en perspectiva, ocultar
+                if (!isOrtho && sPos.z > 1) {
+                    m.badgeEl.style.display = 'none';
+                    return;
+                }
+
+                // Ocultar si cae fuera del área de visualización con margen
+                if (sPos.x < -1.1 || sPos.x > 1.1 || sPos.y < -1.1 || sPos.y > 1.1) {
+                    m.badgeEl.style.display = 'none';
+                    return;
+                }
+
+                m.badgeEl.style.display = 'flex';
+                const px = (sPos.x * 0.5 + 0.5) * w;
+                const py = (-sPos.y * 0.5 + 0.5) * h;
+                m.badgeEl.style.left = `${px}px`;
+                m.badgeEl.style.top = `${py}px`;
+            });
         },
 
         /**
@@ -2471,6 +3092,7 @@
 
             this.renderer.domElement.addEventListener('pointerup', async (e) => {
                 if (e.button !== 0) return; // Sólo botón primario / toque táctil
+                if (this.isMeasuring) return; // En modo acotar, el listener de medición gestiona los clics
 
                 // Si el usuario arrastró el ratón más de 6px, fue una órbita o paneo, no un clic de selección
                 const dist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
