@@ -415,6 +415,25 @@ async function loadIfcFromUrl(url = 'CASA_JAVIER.ifc', fileName = 'CASA JAVIER.i
 }
 window.loadIfcFromUrl = loadIfcFromUrl;
 
+async function loadBc3FromUrl(url = 'ARCHIVO_EJEMPLO.bc3', fileName = 'ARCHIVO EJEMPLO.bc3') {
+    try {
+        showWorkerLoader("Descargando y preparando presupuesto...", fileName);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("No se pudo cargar el archivo BC3: " + res.statusText);
+        const blob = await res.blob();
+        const file = new File([blob], fileName, { type: 'application/octet-stream' });
+        const result = await readAndParseBC3File(file);
+        if (result && result.success) {
+            createBudgetTab(result.data, file.name, result.rawText || result.data.original_text);
+        }
+        hideWorkerLoader();
+    } catch (err) {
+        hideWorkerLoader();
+        console.error("Error en loadBc3FromUrl:", err);
+    }
+}
+window.loadBc3FromUrl = loadBc3FromUrl;
+
 function openIfcWizardModal(ifcData, fileName) {
     const modal = document.getElementById('ifcWizardModal');
     if (!modal) return;

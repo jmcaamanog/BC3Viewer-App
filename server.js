@@ -28,10 +28,14 @@ const server = http.createServer((req, res) => {
         safePath = '/index.html';
     }
 
-    const filePath = path.join(WWW_DIR, safePath);
+    const ROOT_DIR = __dirname;
+    let filePath = path.join(WWW_DIR, safePath);
+    if (safePath === '/landing.html' || safePath.startsWith('/CAPTURAS/') || safePath.startsWith('/assets/')) {
+        filePath = path.join(ROOT_DIR, safePath);
+    }
 
-    // Evitar salir del directorio www
-    if (!filePath.startsWith(WWW_DIR)) {
+    // Evitar salir del directorio permitido
+    if (!filePath.startsWith(WWW_DIR) && !filePath.startsWith(ROOT_DIR)) {
         res.writeHead(403, { 'Content-Type': 'text/plain' });
         res.end('403 Forbidden');
         return;
