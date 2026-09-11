@@ -7,7 +7,7 @@ function sendAssistantQuickQuery(btnOrQuery) {
 }
 window.sendAssistantQuickQuery = sendAssistantQuickQuery;
 
-const APP_VERSION = '2.3.3'; // Versión actual de la aplicación (Single Source of Truth)
+const APP_VERSION = '3.0.0'; // Versión actual de la aplicación (Single Source of Truth)
 const ACCESS_PIN = '1234'; // PIN de acceso por defecto
 
 // Sincronizador centralizado y automático de versión en toda la interfaz

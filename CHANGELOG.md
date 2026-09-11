@@ -2,6 +2,17 @@
 
 En este documento se detalla la evolución completa de la aplicación, incluyendo todas las revisiones y mejoras intermedias realizadas.
 
+### Versión 3.0.0 — 11/09/2026: 🚀 Hito Mayor BIM 5D & Visor IFC 3D Interactivo
+
+* **📐 Visor 3D Interactivo del Modelo IFC (Three.js / Web-IFC 100% Offline):** Renderizado en local de modelos BIM (.ifc) con estilo Blueprint ConTech (cuerpo en azul uniforme `#1d4ed8`, aristas en blanco técnico y nodos de vértices). Navegación con órbita 3D, paneo, zoom y 5 vistas ortogonales paralelas tipo CAD (Planta, Frontal, Posterior, Izquierda, Derecha).
+* **🧊 BIM Takeoff 5D (Medición 3D y Creación Directa de Partidas BC3):** Herramienta integrada para calcular superficies ($m^2$) y volúmenes ($m^3$) directamente en el modelo 3D con asistente modal para crear partidas nuevas o asignarlas a conceptos existentes en el presupuesto FIEBDC-3, inyectando líneas de medición `~M` con trazabilidad bidireccional por `GlobalId`.
+* **📏 Herramienta Interactiva de Acotación CAD 3D ("Acotar"):** Medición milimétrica punto a punto en metros ($X.XX\text{ m}$) con snap magnético a vértices de geometría BIM, línea elástica interactiva y cotas técnicas persistentes proyectadas en pantalla en tiempo real a 60 FPS.
+* **✂️ Planos de Corte y Sección Multieje con Relleno Macizo (Stencil Capping):** Deslizador continuo de sección en ejes X, Y, Z con plano guía semitransparente, paso fino, inversión de corte y caras seccionadas macizas en azul oscuro (#0f2b5c) mediante estarcido en GPU libre de artefactos.
+* **🧱 Probeta Constructiva 3D Axonométrica Multicapa:** Desglose interactivo en perspectiva caballera con espesores de capas proporcionales en mm, tramas constructivas normalizadas (ladrillo, aislamiento en zigzag, cámara de aire, hormigón, tarima), elevación interactiva de capas en hover y giro automático a 90° para forjados/cubiertas (con indicación de caras Superior/Inferior).
+* **✨ Selección Inteligente de Elementos Similares:** Menú contextual flotante con submenú interactivo para agrupar elementos por Familia, Tipo, Planta, Superficie similar (±10%), Volumen similar (±10%) o Misma partida BC3, con panel lateral consolidado de características comunes, mediciones acumuladas y suma agregada de costes en euros (€).
+* **🛡️ Filtrado y Control de Visibilidad por Categorías:** Menú desplegable con checkboxes y badges de recuento para aislar u ocultar familias IFC en tiempo real, con desactivación por defecto de `Espacios y Zonas` para facilitar la inspección interior.
+* **🔄 Selector Multi-Modelo y Purga de Memoria:** Soporte para alternar fluidamente entre varios modelos IFC abiertos con sincronización bidireccional con el árbol de presupuesto y purga total de recursos WebGL/Three.js.
+
 ### Versión 2.3.3 — 17/08/2026
 
 * **🎁 IA de Cortesía Gratis de Serie (Promoción Especial):** Integrada para todos los usuarios de serie sin necesidad de tarjeta ni registro obligatorio, con cuenta atrás en tiempo real hasta el 21 de Octubre de 2026.
