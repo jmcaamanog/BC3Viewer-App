@@ -109,9 +109,6 @@
                                 <button type="button" id="openImportIfcBtn" class="export-menu-item import-ifc-item">
                                     <span class="menu-icon">📐</span><span class="btn-text">Modelo IFC (.ifc)</span>
                                 </button>
-                                <button type="button" id="loadSampleIfcBtn" class="export-menu-item sample-ifc-item" style="color: var(--accent); font-weight: 600;">
-                                    <span class="menu-icon">🏠</span><span class="btn-text">Ejemplo: CASA JAVIER (.ifc)</span>
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -372,33 +369,33 @@
                                         BC3 Viewer Premium
                                     </h2>
                                     <span style="font-size: 0.72rem; font-weight: 700; background: linear-gradient(135deg, #3b82f6, #06b6d4); color: white; padding: 2px 8px; border-radius: 12px; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.35);">
-                                        v2.0
+                                        v3.0
                                     </span>
                                 </div>
                                 <span style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 500;">
-                                    Visualizador, Editor y Motor de Análisis <strong>FIEBDC-3 (.bc3)</strong> ConTech para Arquitectos Técnicos y profesionales de la edificación.
+                                    Visualizador, Editor y Motor de Análisis <strong>FIEBDC-3 (.bc3)</strong> & <strong>BIM 5D (.ifc)</strong> ConTech para Arquitectos Técnicos y profesionales de la edificación.
                                 </span>
                             </div>
                         </div>
 
                         <p style="margin: 0; font-size: 0.85rem; line-height: 1.55; color: var(--text-primary); text-align: justify;">
-                            ¡Bienvenido al entorno interactivo de referencia para la gestión offline de presupuestos <strong>FIEBDC-3 (.bc3)</strong>! Explora, edita, analiza la estructura de costes, planifica plazos y calcula el impacto ambiental en un único flujo de trabajo rápido y 100% privado.
+                            ¡Bienvenido al entorno interactivo de referencia para la gestión offline de presupuestos <strong>FIEBDC-3 (.bc3)</strong> y modelos <strong>BIM 5D (.ifc)</strong>! Explora en 3D, edita descompuestos, mide paños, planifica plazos y audita costes con Inteligencia Artificial en un único flujo de trabajo rápido y 100% privado.
                         </p>
 
-                        <!-- Panel de Novedades y Capacidades v2.0 -->
+                        <!-- Panel de Novedades y Capacidades v3.0 -->
                         <div style="margin: 4px 0; background: var(--hover-bg, rgba(0,0,0,0.02)); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 14px;">
                             <h4 style="margin: 0 0 8px 0; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--accent, #3b82f6); display: flex; align-items: center; gap: 6px;">
-                                <span>🚀</span> Novedades Principales de la Versión 2.0
+                                <span>🚀</span> Novedades Principales de la Versión 3.0 (Revolución BIM 5D)
                             </h4>
                             <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.8rem; line-height: 1.6; color: var(--text-secondary); display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px;">
-                                <li>📑 <strong>Multi-Presupuesto:</strong> Pestañas simultáneas y guardado directo</li>
-                                <li>☀️ <strong>Sunburst Multinivel:</strong> Zoom y descompuestos a fondo</li>
-                                <li>🌊 <strong>Diagrama Sankey:</strong> Flujo interactivo de costes</li>
-                                <li>🌿 <strong>Impacto Ambiental:</strong> Huella de carbono CO₂ y materiales</li>
-                                <li>⚙️ <strong>Coeficientes Completos:</strong> PEM + GG 13% + BI 6% = PEC</li>
-                                <li>📝 <strong>Mediciones con Fórmulas:</strong> Deducciones de huecos y <code>fx</code></li>
-                                <li>📅 <strong>Planning Gantt:</strong> Ruta crítica, plazos y curva S</li>
-                                <li>📤 <strong>Importar / Exportar:</strong> PDF, Excel, CSV y FIEBDC-3 a color</li>
+                                <li>🏢 <strong>Visor 3D IFC Blueprint:</strong> Renderizado técnico Three.js sin nube</li>
+                                <li>🧊 <strong>BIM Takeoff 5D:</strong> Medición en 3D y presupuesto directo (~M)</li>
+                                <li>📏 <strong>Acotación CAD con Snap:</strong> Cotas milimétricas imantadas a vértices</li>
+                                <li>✂️ <strong>Secciones Stencil Macizas:</strong> Corte multieje en azul (#0f2b5c)</li>
+                                <li>🧱 <strong>Probeta Multicapa 3D:</strong> Desglose de muros y forjados con giro 90°</li>
+                                <li>✨ <strong>Selección de Similares:</strong> 11 criterios y cómputo (€, m², m³)</li>
+                                <li>🤖 <strong>Asesor IA ConTech:</strong> Auditoría y partidas con Google Gemini</li>
+                                <li>📑 <strong>Ecosistema BC3 Integral:</strong> Multi-Presupuesto, Gantt, EVM y Sankey</li>
                             </ul>
                         </div>
 
@@ -442,10 +439,6 @@
 
                                 <button type="button" id="welcomeNewBudgetBtn" class="welcome-load-btn" style="flex: 1; min-width: 200px; max-width: 280px; text-align: center; margin: 0; background: var(--accent, #3b82f6); border-color: var(--accent, #3b82f6); color: white;">
                                     ✨ CREAR NUEVO PRESUPUESTO
-                                </button>
-
-                                <button type="button" id="welcomeLoadSampleIfcBtn" class="welcome-load-btn" style="flex: 1; min-width: 200px; max-width: 280px; text-align: center; margin: 0; background: linear-gradient(135deg, #059669, #0d9488); border-color: #0d9488; color: white;">
-                                    🏠 EJEMPLO BIM: CASA JAVIER
                                 </button>
                             </div>
                         </div>
@@ -1206,7 +1199,7 @@
         </main>
         <footer class="app-footer">
             <span>&#169; © Licencia Open Source - Software Libre by jmcaamanog </span>
-            <span class="app-version-label" id="footerAppVersion">v2.0.0</span>
+            <span class="app-version-label" id="footerAppVersion">v3.0.0</span>
         </footer>
     </div>
     <!-- Modal: Dashboard y Visualizador de Descompuestos (Sunburst / Sankey) -->
@@ -1940,26 +1933,26 @@
                 <div style="text-align: center; margin-bottom: 1.2rem;">
                     <div style="font-size: 2.5rem; margin-bottom: 0.25rem;">ℹ️</div>
                     <h4 style="font-size: 1.2rem; margin: 0; color: var(--accent);">Visualizador BC3 Premium</h4>
-                    <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight:700;">Versión 2.0.0 (Gran Salto de Versión)</span>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight:700;">Versión 3.0.0 (Revolución BIM 5D)</span>
                 </div>
 
                 <p style="font-size: 0.85rem; margin-bottom: 1rem;">Esta herramienta permite la importación,
                     visualización, edición, comparativa y análisis interactivo de presupuestos en formato <strong>Standard FIEBDC-3
-                        (.bc3)</strong> con arquitectura 100% offline y privada.</p>
+                        (.bc3)</strong> y modelos <strong>BIM 5D (.ifc)</strong> con arquitectura 100% offline y privada.</p>
 
                 <div
                     style="background-color: var(--hover-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.8rem; margin-bottom: 1rem;">
-                    <h5 style="margin-top: 0; margin-bottom: 0.4rem; font-size: 0.85rem; color: var(--accent);">Características Principales v2.0:
+                    <h5 style="margin-top: 0; margin-bottom: 0.4rem; font-size: 0.85rem; color: var(--accent);">Características Principales v3.0:
                     </h5>
                     <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.8rem; color: var(--text-secondary);">
-                        <li>Pestañas multi-presupuesto simultáneas con guardado nativo directo (.bc3).</li>
-                        <li>Dashboard integrado con 4 vistas: KPIs, Sunburst Multinivel, Diagrama Sankey e Impacto Ambiental.</li>
-                        <li>Módulo de Sostenibilidad y Huella de Carbono (Emisiones de CO₂ y materiales).</li>
-                        <li>Cálculo exacto de coeficientes: PEM + GG (13%) + BI (6%) = PEC con control de bajas.</li>
-                        <li>Editor de mediciones dinámicas con deducción de huecos (-1) y fórmulas matemáticas fx.</li>
-                        <li>Paleta de Comandos Rápida (Ctrl+K) y atajos de teclado profesionales.</li>
-                        <li>Exportación e Importación homogénea a 6 formatos con distintivo visual por colores.</li>
-                        <li>Planning Gantt interactivo con ruta crítica y curva S acumulada.</li>
+                        <li>Visor 3D IFC nativo estilo Blueprint con renderizado local WebGL / Three.js sin nube.</li>
+                        <li>BIM Takeoff 5D: Medición 3D de superficies (m²) y volúmenes (m³) vinculada a partidas BC3 (~M).</li>
+                        <li>Acotación técnica CAD 3D interactiva con snap magnético a vértices y cotas permanentes.</li>
+                        <li>Planos de sección dinámicos multieje con tapado macizo stencil en azul oscuro (#0f2b5c).</li>
+                        <li>Probeta multicapa 3D para muros y forjados con tramas arquitectónicas y giro 90°.</li>
+                        <li>Selección inteligente de similares por 11 criterios y cómputo agregado (€, m², m³).</li>
+                        <li>Asesor de IA Oficial ConTech (Google Gemini) para auditoría y redacción de partidas.</li>
+                        <li>Pestañas multi-presupuesto simultáneas, Planning Gantt, EVM (Curva S), Sunburst y Sankey.</li>
                     </ul>
                 </div>
 
@@ -1978,7 +1971,7 @@
                             </div>
                             <ul style="font-size: 0.7rem; color: var(--text-secondary); margin: 4px 0 10px 16px; padding: 0; line-height: 1.4;">
                                 <li>Visor 3D interactivo WebGL / Three.js con soporte offline para modelos IFC.</li>
-                                <li>BIM Takeoff 5D: Medición de superficies ($m^2$) y volúmenes ($m^3$) con asistente de inserción directa de partidas en el presupuesto (~M).</li>
+                                <li>BIM Takeoff 5D: Medición de superficies (m²) y volúmenes (m³) con asistente de inserción directa de partidas en el presupuesto (~M).</li>
                                 <li>Herramienta de medición y acotación técnica CAD 3D con snap magnético a vértices.</li>
                                 <li>Planos de corte y sección interactivos multieje (X, Y, Z) con relleno macizo (Stencil Capping).</li>
                                 <li>Probeta constructiva 3D axonométrica interactiva con tramas CAD, espesores y giro 90° para forjados.</li>
@@ -2940,7 +2933,7 @@
                 <p class="update-notify-title">¡Ya tienes nuevas funciones!</p>
                 <p class="update-notify-text">Que las disfrutes</p>
                 <p class="update-notify-author">(by jmcaamanog)</p>
-                <div class="update-notify-version-badge app-version-badge" id="updateNotifyVersion">v2.0.0</div>
+                <div class="update-notify-version-badge app-version-badge" id="updateNotifyVersion">v3.0.0</div>
             </div>
             <div class="update-notify-footer">
                 <button type="button" id="updateNotifyOkBtn" class="update-notify-btn">¡Entendido! 👍</button>
@@ -2953,7 +2946,7 @@
         <div class="pin-lock-card">
             <img src="assets/icon.png" alt="Logo" class="pin-lock-logo">
             <h2 class="pin-lock-title">BC3 Viewer</h2>
-            <div class="pin-lock-version-badge" id="pinAppVersionBadge">v2.0.0</div>
+            <div class="pin-lock-version-badge" id="pinAppVersionBadge">v3.0.0</div>
             <p class="pin-lock-subtitle">Acceso Protegido</p>
             <input type="password" id="pinInput" placeholder="PIN" maxlength="8" pattern="[0-9]*" inputmode="numeric">
             <button type="button" id="pinSubmitBtn">Entrar</button>

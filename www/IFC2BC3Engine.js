@@ -72,7 +72,7 @@
             const properties = {
                 owner: (ifcData.header && ifcData.header.author) || 'COATAC / jmcaamanog',
                 format: 'FIEBDC-3/2024',
-                generator: 'BC3Viewer-BIM5D-Engine v2.0',
+                generator: 'BC3Viewer-BIM5D-Engine v3.0',
                 description: `Presupuesto BIM 5D derivado de ${projectName}.ifc (Modo: ${mode === 'layers' ? 'Desglose Multicapa' : 'Elementos Integrados'})`,
                 charset: 'ANSI'
             };
