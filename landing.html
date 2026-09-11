@@ -2666,20 +2666,83 @@
                 son las líneas prioritarias de desarrollo técnico.</p>
         </div>
 
-        <div class="features-grid" style="grid-template-columns: 1fr; max-width: 680px; margin: 0 auto;">
-            <!-- IFC BIM -->
+        <div class="features-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); max-width: 1140px; margin: 0 auto; gap: 24px;">
+            <!-- 1. Motor Nativo BIM 5D: Takeoff & Presupuestación Directa -->
             <div class="feature-card reveal"
-                style="border-color: rgba(59, 130, 246, 0.2); background: rgba(59, 130, 246, 0.03);">
+                style="border-color: rgba(59, 130, 246, 0.25); background: rgba(59, 130, 246, 0.04);">
                 <div class="feature-icon-wrapper"
                     style="background: rgba(59, 130, 246, 0.15); color: var(--accent-primary);">🏗️</div>
-                <h3 style="display: flex; align-items: center; justify-content: space-between;">
-                    <span>Mediciones desde IFC (BIM)</span>
+                <h3 style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                    <span style="font-size: 1.15rem;">Motor Nativo BIM 5D: Takeoff Directo</span>
                     <span class="coming-badge"
-                        style="font-size: 0.65rem; padding: 2px 8px; margin: 0; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));">Prioritario</span>
+                        style="font-size: 0.65rem; padding: 2px 8px; margin: 0; background: linear-gradient(135deg, #0284c7, #38bdf8); white-space: nowrap;">Próximamente v2.4</span>
                 </h3>
-                <p>Integración de un visor 3D en local basado en <strong>web-ifc</strong> para abrir archivos IFC en el
-                    navegador. Permitirá mapear entidades del modelo (muros, forjados, pilares) y extraer cantidades
-                    directamente para rellenar las líneas de medición (~M) del presupuesto BC3.</p>
+                <p>Integración de un flujo de extracción geométrica directa: medir paños, superficies (m²) y volúmenes (m³) sobre el modelo tridimensional y transferirlos con un solo clic a partidas nuevas o existentes del presupuesto FIEBDC-3, con líneas de medición detallada <code>~M</code> y trazabilidad total por ID.</p>
+            </div>
+
+            <!-- 2. Visualizador 3D Técnico Blueprint -->
+            <div class="feature-card reveal"
+                style="border-color: rgba(56, 189, 248, 0.25); background: rgba(56, 189, 248, 0.04);">
+                <div class="feature-icon-wrapper"
+                    style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">📐</div>
+                <h3 style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                    <span style="font-size: 1.15rem;">Visor 3D Técnico Blueprint (100% Local)</span>
+                    <span class="coming-badge"
+                        style="font-size: 0.65rem; padding: 2px 8px; margin: 0; background: linear-gradient(135deg, #059669, #10b981); white-space: nowrap;">Cero Nube</span>
+                </h3>
+                <p>Apertura ultrarrápida de modelos IFC directamente en el navegador sin intermediarios ni plataformas de pago. Un entorno visual técnico estilo cianotipia/blueprint (cuerpo azul uniforme, aristas blancas y nodos de precisión), ejecutándose 100% en la máquina del usuario sin subir planos a la nube.</p>
+            </div>
+
+            <!-- 3. Selección Inteligente de Elementos Similares -->
+            <div class="feature-card reveal"
+                style="border-color: rgba(168, 85, 247, 0.25); background: rgba(168, 85, 247, 0.04);">
+                <div class="feature-icon-wrapper"
+                    style="background: rgba(168, 85, 247, 0.15); color: #c084fc;">✨</div>
+                <h3 style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                    <span style="font-size: 1.15rem;">Selección Inteligente por Similitud</span>
+                    <span class="coming-badge"
+                        style="font-size: 0.65rem; padding: 2px 8px; margin: 0; background: linear-gradient(135deg, #7c3aed, #a855f7); white-space: nowrap;">Smart Selection</span>
+                </h3>
+                <p>Detección y selección en bloque de elementos similares según 11 criterios contextuales: misma familia, tipo constructivo, planta o tolerancia dimensional (±10% en superficie o volumen). Permite aislar, ocultar o presupuestar paquetes completos de obra en segundos.</p>
+            </div>
+
+            <!-- 4. Auditoría de Impacto Económico en Selección Múltiple -->
+            <div class="feature-card reveal"
+                style="border-color: rgba(16, 185, 129, 0.25); background: rgba(16, 185, 129, 0.04);">
+                <div class="feature-icon-wrapper"
+                    style="background: rgba(16, 185, 129, 0.15); color: #34d399;">📊</div>
+                <h3 style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                    <span style="font-size: 1.15rem;">Auditoría de Costes en Selección Múltiple</span>
+                    <span class="coming-badge"
+                        style="font-size: 0.65rem; padding: 2px 8px; margin: 0; background: linear-gradient(135deg, #0d9488, #14b8a6); white-space: nowrap;">Control Económico</span>
+                </h3>
+                <p>Al seleccionar múltiples elementos en la escena 3D, el visor despliega un panel de control ejecutivo: síntesis de características comunes, suma agregada de mediciones métricas y cálculo en tiempo real del impacto económico acumulado en euros (€) según las partidas del presupuesto FIEBDC-3.</p>
+            </div>
+
+            <!-- 5. Acotación CAD Interactiva con Snap Magnético -->
+            <div class="feature-card reveal"
+                style="border-color: rgba(245, 158, 11, 0.25); background: rgba(245, 158, 11, 0.04);">
+                <div class="feature-icon-wrapper"
+                    style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">📏</div>
+                <h3 style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                    <span style="font-size: 1.15rem;">Acotación 3D con Snap Magnético</span>
+                    <span class="coming-badge"
+                        style="font-size: 0.65rem; padding: 2px 8px; margin: 0; background: linear-gradient(135deg, #d97706, #f59e0b); white-space: nowrap;">Precisión CAD</span>
+                </h3>
+                <p>Comprobación dimensional milimétrica en el espacio 3D. Trazado de líneas de cota dinámicas con imantación automática a vértices y aristas arquitectónicas, permitiendo verificar alturas libres, luces de vanos y paños tanto en perspectiva como en vistas axonométricas ortogonales.</p>
+            </div>
+
+            <!-- 6. Cortes de Sección Multieje con Estarcido Macizo -->
+            <div class="feature-card reveal"
+                style="border-color: rgba(239, 68, 68, 0.25); background: rgba(239, 68, 68, 0.04);">
+                <div class="feature-icon-wrapper"
+                    style="background: rgba(239, 68, 68, 0.15); color: #f87171;">✂️</div>
+                <h3 style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                    <span style="font-size: 1.15rem;">Cortes de Sección con Relleno Macizo</span>
+                    <span class="coming-badge"
+                        style="font-size: 0.65rem; padding: 2px 8px; margin: 0; background: linear-gradient(135deg, #dc2626, #ef4444); white-space: nowrap;">WebGL Stencil</span>
+                </h3>
+                <p>Planos de corte dinámicos en tiempo real en los ejes X, Y y Z. Mediante algoritmos de doble pasada de estarcido en GPU (<em>Stencil Capping</em>), las zonas cortadas de muros y forjados se muestran como masas sólidas continuas, inspeccionando interiores con calidad de plano técnico.</p>
             </div>
         </div>
     </section>

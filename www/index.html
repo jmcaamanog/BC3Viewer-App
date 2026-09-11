@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visualizador BC3 Premium</title>
-    <link rel="stylesheet" href="style.css?v=2.3.3">
+    <link rel="stylesheet" href="style.css?v=2.3.5">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 
@@ -883,6 +883,20 @@
                             </div>
                         </button>
                         <div class="v3d-ctx-divider"></div>
+                        <!-- Nueva Opción: Seleccionar Similares -->
+                        <div class="v3d-ctx-similar-wrapper" id="v3dCtxSimilarWrapper">
+                            <button type="button" id="v3dCtxSimilarBtn" class="v3d-ctx-item v3d-ctx-has-sub">
+                                <span class="v3d-ctx-item-icon">✨</span>
+                                <div class="v3d-ctx-item-text">
+                                    <span class="v3d-ctx-item-label">Seleccionar similares</span>
+                                    <span class="v3d-ctx-item-desc">Por familia, tipo, medidas...</span>
+                                </div>
+                                <span class="v3d-ctx-sub-arrow">▸</span>
+                            </button>
+                            <!-- Submenú flotante de similitud inyectado dinámicamente -->
+                            <div id="v3dCtxSimilarSubmenu" class="v3d-ctx-submenu" style="display: none;"></div>
+                        </div>
+                        <div class="v3d-ctx-divider"></div>
                         <button type="button" id="v3dCtxRestoreBtn" class="v3d-ctx-item v3d-ctx-restore">
                             <span class="v3d-ctx-item-icon">🔄</span>
                             <div class="v3d-ctx-item-text">
@@ -913,110 +927,234 @@
                             <button type="button" id="v3dCardClose" class="v3d-sidebar-close" title="Cerrar panel y deseleccionar">✕</button>
                         </div>
 
-                        <!-- Buscador de propiedades rápido -->
-                        <div class="v3d-props-filter-box">
-                            <input type="text" id="v3dPropsSearch" placeholder="🔍 Filtrar propiedades o valores..." autocomplete="off">
-                        </div>
+                        <!-- VISTA 1: Elemento Individual Único -->
+                        <div id="v3dSingleElementView">
+                            <!-- Buscador de propiedades rápido -->
+                            <div class="v3d-props-filter-box">
+                                <input type="text" id="v3dPropsSearch" placeholder="🔍 Filtrar propiedades o valores..." autocomplete="off">
+                            </div>
 
-                        <!-- Barra de utilidades para desplegar/replegar todos los bloques -->
-                        <div class="v3d-sections-toolbar">
-                            <span class="v3d-sections-toolbar-label">Bloques de datos:</span>
-                            <div class="v3d-sections-toolbar-btns">
-                                <button type="button" id="v3dExpandAllBtn" class="v3d-btn-toggle-all" title="Desplegar todos los bloques">▾ Desplegar todo</button>
-                                <button type="button" id="v3dCollapseAllBtn" class="v3d-btn-toggle-all" title="Replegar todos los bloques">▸ Replegar todo</button>
+                            <!-- Barra de utilidades para desplegar/replegar todos los bloques -->
+                            <div class="v3d-sections-toolbar">
+                                <span class="v3d-sections-toolbar-label">Bloques de datos:</span>
+                                <div class="v3d-sections-toolbar-btns">
+                                    <button type="button" id="v3dExpandAllBtn" class="v3d-btn-toggle-all" title="Desplegar todos los bloques">▾ Desplegar todo</button>
+                                    <button type="button" id="v3dCollapseAllBtn" class="v3d-btn-toggle-all" title="Replegar todos los bloques">▸ Replegar todo</button>
+                                </div>
+                            </div>
+
+                            <!-- Contenedor scrollable con barra vertical -->
+                            <div class="v3d-sidebar-body" id="v3dSidebarBody">
+                                <!-- Bloque 1: Acceso Directo a Presupuesto FIEBDC-3 -->
+                                <div class="v3d-props-section is-collapsed" id="v3dSectionBudget">
+                                    <div class="v3d-props-section-header" data-toggle="v3dSectionBudget">
+                                        <div class="v3d-section-header-left">
+                                            <span class="v3d-collapse-arrow">▶</span>
+                                            <span class="v3d-section-icon">🌳</span>
+                                            <span class="v3d-section-title">Presupuesto FIEBDC-3</span>
+                                        </div>
+                                        <span class="v3d-sidebar-badge budget-badge" id="v3dBudgetPrice">- €</span>
+                                    </div>
+                                    <div class="v3d-props-section-body">
+                                        <div class="v3d-budget-callout-inner" id="v3dBudgetCallout">
+                                            <div class="v3d-budget-concept-title" id="v3dCardBudget">Buscando partida vinculada...</div>
+                                            <button type="button" id="v3dCardGoToBudget" class="v3d-btn-budget-action">
+                                                <span>🌳</span> <span>Ver en Árbol de Presupuesto</span> <span>➔</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Bloque 2: Tabla de Identificación y Ubicación -->
+                                <div class="v3d-props-section is-collapsed" id="v3dSectionIdentity">
+                                    <div class="v3d-props-section-header" data-toggle="v3dSectionIdentity">
+                                        <div class="v3d-section-header-left">
+                                            <span class="v3d-collapse-arrow">▶</span>
+                                            <span class="v3d-section-icon">📍</span>
+                                            <span class="v3d-section-title">Identificación y Ubicación</span>
+                                        </div>
+                                        <span class="v3d-sidebar-badge" id="v3dBadgeIfcType">IFC</span>
+                                    </div>
+                                    <div class="v3d-props-section-body">
+                                        <table class="v3d-props-table" id="v3dTableId">
+                                            <tbody>
+                                                <tr><td class="prop-key">Nombre</td><td class="prop-val" id="propValName">-</td></tr>
+                                                <tr><td class="prop-key">Categoría</td><td class="prop-val" id="propValCategory">-</td></tr>
+                                                <tr><td class="prop-key">Tipo IFC</td><td class="prop-val mono" id="propValIfcType">-</td></tr>
+                                                <tr><td class="prop-key">Familia / Tipo</td><td class="prop-val" id="propValType">-</td></tr>
+                                                <tr><td class="prop-key">Nivel / Planta</td><td class="prop-val" id="propValStorey">-</td></tr>
+                                                <tr><td class="prop-key">Función Estructural</td><td class="prop-val" id="propValLoadBearing">-</td></tr>
+                                                <tr><td class="prop-key">Exposición</td><td class="prop-val" id="propValIsExternal">-</td></tr>
+                                                <tr><td class="prop-key">Resistencia al Fuego</td><td class="prop-val" id="propValFireRating">-</td></tr>
+                                                <tr><td class="prop-key">Clasificación BIM</td><td class="prop-val mono" id="propValClassification">-</td></tr>
+                                                <tr><td class="prop-key">GlobalId (GUID)</td><td class="prop-val mono copyable" id="v3dCardId" title="Clic para copiar">-</td></tr>
+                                                <tr><td class="prop-key">ID Express (STEP)</td><td class="prop-val mono" id="propValExpressId">-</td></tr>
+                                                <tr><td class="prop-key">Tag / Revit ID</td><td class="prop-val mono" id="propValTag">-</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Bloque 3: Desglose Multicapa (Capas Constructivas en 3D) -->
+                                <div class="v3d-props-section is-collapsed" id="v3dSectionLayers" style="display:none;">
+                                    <div class="v3d-props-section-header" data-toggle="v3dSectionLayers">
+                                        <div class="v3d-section-header-left">
+                                            <span class="v3d-collapse-arrow">▶</span>
+                                            <span class="v3d-section-icon">🧱</span>
+                                            <span class="v3d-section-title">Desglose Multicapa 3D</span>
+                                        </div>
+                                        <span class="v3d-sidebar-badge highlight" id="v3dBadgeLayersCount">0 capas</span>
+                                    </div>
+                                    <div class="v3d-props-section-body">
+                                        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+                                            <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-primary);" id="v3dLayerSetName">Solución constructiva</span>
+                                            <span style="font-size: 0.72rem; color: #38bdf8; font-family: monospace; font-weight: 600;" id="v3dTotalThickBadge">0 mm</span>
+                                        </div>
+
+                                        <!-- Probeta Constructiva 3D Axonométrica Interactiva (Perspectiva Caballera) -->
+                                        <div class="v3d-layers-3d-wrapper" style="position: relative; background: #070c18; border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; overflow: hidden; margin-bottom: 12px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.6);">
+                                            <canvas id="v3dLayersCanvas3D" width="340" height="128" style="width: 100%; height: 128px; display: block; cursor: pointer;"></canvas>
+                                            <div id="v3dLayer3DTooltip" style="position: absolute; display: none; pointer-events: none; background: rgba(15, 23, 42, 0.92); border: 1px solid #38bdf8; border-radius: 6px; padding: 4px 8px; font-size: 0.7rem; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 10; white-space: nowrap;">
+                                                <div id="v3dLayerTooltipName" style="font-weight: 700; color: #38bdf8;">Capa</div>
+                                                <div id="v3dLayerTooltipMeta" style="font-size: 0.65rem; color: var(--text-secondary);">Espesor</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Tabla de desglose de capas con etiquetas de ubicación -->
+                                        <table class="v3d-props-table" id="v3dTableLayers">
+                                            <thead>
+                                                <tr style="color: var(--text-secondary); font-size: 0.72rem; border-bottom: 1px solid var(--border-color);">
+                                                    <th style="padding: 4px 6px; text-align: left; width: 60px;">Cara</th>
+                                                    <th style="padding: 4px 6px; text-align: left;">Capa / Material</th>
+                                                    <th style="padding: 4px 6px; text-align: right; width: 55px;">Espesor</th>
+                                                    <th style="padding: 4px 6px; text-align: right; width: 60px;">Cubicación</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="v3dTableLayersBody">
+                                                <!-- Filas de capas dinámicas -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Bloque 4: Tabla de Mediciones y Dimensiones -->
+                                <div class="v3d-props-section is-collapsed" id="v3dSectionQuantities">
+                                    <div class="v3d-props-section-header" data-toggle="v3dSectionQuantities">
+                                        <div class="v3d-section-header-left">
+                                            <span class="v3d-collapse-arrow">▶</span>
+                                            <span class="v3d-section-icon">📐</span>
+                                            <span class="v3d-section-title">Mediciones y Dimensiones</span>
+                                        </div>
+                                        <span class="v3d-sidebar-badge highlight" id="v3dBadgeQty">-</span>
+                                    </div>
+                                    <div class="v3d-props-section-body">
+                                        <table class="v3d-props-table" id="v3dTableQty">
+                                            <tbody id="v3dTableQtyBody">
+                                                <tr><td class="prop-key">Medición Principal</td><td class="prop-val highlight" id="v3dCardQty">-</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Bloque 4: Tabla de Propiedades Extendidas / Psets -->
+                                <div class="v3d-props-section is-collapsed" id="v3dPsetsSection">
+                                    <div class="v3d-props-section-header" data-toggle="v3dPsetsSection">
+                                        <div class="v3d-section-header-left">
+                                            <span class="v3d-collapse-arrow">▶</span>
+                                            <span class="v3d-section-icon">⚙️</span>
+                                            <span class="v3d-section-title">Propiedades y Parámetros BIM</span>
+                                        </div>
+                                        <span class="v3d-sidebar-badge" id="v3dBadgePsetsCount">0</span>
+                                    </div>
+                                    <div class="v3d-props-section-body">
+                                        <table class="v3d-props-table" id="v3dTablePsets">
+                                            <tbody id="v3dTablePsetsBody">
+                                                <!-- Inyectado dinámicamente -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Contenedor scrollable con barra vertical -->
-                        <div class="v3d-sidebar-body" id="v3dSidebarBody">
-                            <!-- Bloque 1: Acceso Directo a Presupuesto FIEBDC-3 -->
-                            <div class="v3d-props-section is-collapsed" id="v3dSectionBudget">
-                                <div class="v3d-props-section-header" data-toggle="v3dSectionBudget">
-                                    <div class="v3d-section-header-left">
-                                        <span class="v3d-collapse-arrow">▶</span>
-                                        <span class="v3d-section-icon">🌳</span>
-                                        <span class="v3d-section-title">Presupuesto FIEBDC-3</span>
+                        <!-- VISTA 2: Selección Múltiple (Contenedores de Resumen y Suma de Precios) -->
+                        <div id="v3dMultiSelectionView" class="v3d-multi-view" style="display: none;">
+                            <div class="v3d-sidebar-body v3d-multi-body">
+                                <!-- Banner de Criterio de Selección -->
+                                <div class="v3d-multi-banner">
+                                    <span class="v3d-multi-badge-icon">✨</span>
+                                    <div class="v3d-multi-banner-info">
+                                        <span class="v3d-multi-banner-title" id="v3dMultiBannerTitle">Selección por Criterio</span>
+                                        <span class="v3d-multi-banner-count" id="v3dMultiBannerCount">0 elementos seleccionados</span>
                                     </div>
-                                    <span class="v3d-sidebar-badge budget-badge" id="v3dBudgetPrice">- €</span>
                                 </div>
-                                <div class="v3d-props-section-body">
-                                    <div class="v3d-budget-callout-inner" id="v3dBudgetCallout">
-                                        <div class="v3d-budget-concept-title" id="v3dCardBudget">Buscando partida vinculada...</div>
-                                        <button type="button" id="v3dCardGoToBudget" class="v3d-btn-budget-action">
-                                            <span>🌳</span> <span>Ver en Árbol de Presupuesto</span> <span>➔</span>
+
+                                <!-- Contenedor 1: Características en Común -->
+                                <div class="v3d-multi-card">
+                                    <div class="v3d-multi-card-header">
+                                        <span class="v3d-multi-card-icon">🔗</span>
+                                        <span class="v3d-multi-card-title">Características en Común</span>
+                                    </div>
+                                    <div class="v3d-multi-card-body" id="v3dMultiCommonTraits">
+                                        <!-- Inyectado dinámicamente -->
+                                    </div>
+                                </div>
+
+                                <!-- Contenedor 2: Suma de Precios e Impacto en Presupuesto -->
+                                <div class="v3d-multi-card v3d-multi-card-budget">
+                                    <div class="v3d-multi-card-header">
+                                        <span class="v3d-multi-card-icon">💰</span>
+                                        <span class="v3d-multi-card-title">Suma de Precios (FIEBDC-3)</span>
+                                    </div>
+                                    <div class="v3d-multi-card-body">
+                                        <div class="v3d-multi-price-display">
+                                            <span class="v3d-multi-price-val" id="v3dMultiTotalPrice">0,00 €</span>
+                                            <span class="v3d-multi-price-sub" id="v3dMultiPriceSub">Importe total calculado</span>
+                                        </div>
+                                        <div class="v3d-multi-budget-list" id="v3dMultiBudgetList">
+                                            <!-- Lista de partidas vinculadas -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Contenedor 3: Mediciones y Cantidades Acumuladas -->
+                                <div class="v3d-multi-card">
+                                    <div class="v3d-multi-card-header">
+                                        <span class="v3d-multi-card-icon">📊</span>
+                                        <span class="v3d-multi-card-title">Mediciones Acumuladas</span>
+                                    </div>
+                                    <div class="v3d-multi-card-body" id="v3dMultiQuantities">
+                                        <!-- Mediciones agregadas -->
+                                    </div>
+                                </div>
+
+                                <!-- Contenedor 4: Acciones Rápidas para la Selección -->
+                                <div class="v3d-multi-card v3d-multi-card-actions">
+                                    <div class="v3d-multi-card-header">
+                                        <span class="v3d-multi-card-icon">⚡</span>
+                                        <span class="v3d-multi-card-title">Acciones en Bloque</span>
+                                    </div>
+                                    <div class="v3d-multi-actions-grid">
+                                        <button type="button" id="v3dMultiIsolateBtn" class="v3d-multi-btn v3d-multi-btn-isolate" title="Aislar todos los elementos seleccionados">
+                                            <span>🎯</span> <span>Aislar Selección</span>
+                                        </button>
+                                        <button type="button" id="v3dMultiHideBtn" class="v3d-multi-btn v3d-multi-btn-hide" title="Ocultar elementos seleccionados">
+                                            <span>🚫</span> <span>Ocultar Selección</span>
+                                        </button>
+                                        <button type="button" id="v3dMultiFocusBtn" class="v3d-multi-btn v3d-multi-btn-focus" title="Centrar cámara en la selección">
+                                            <span>🔍</span> <span>Centrar Selección</span>
+                                        </button>
+                                        <button type="button" id="v3dMultiAddToBudgetBtn" class="v3d-multi-btn v3d-multi-btn-budget" title="Presupuestar medición acumulada">
+                                            <span>➕</span> <span>Añadir a Partida</span>
                                         </button>
                                     </div>
-                                </div>
-                            </div>
-
-                            <!-- Bloque 2: Tabla de Identificación y Ubicación -->
-                            <div class="v3d-props-section is-collapsed" id="v3dSectionIdentity">
-                                <div class="v3d-props-section-header" data-toggle="v3dSectionIdentity">
-                                    <div class="v3d-section-header-left">
-                                        <span class="v3d-collapse-arrow">▶</span>
-                                        <span class="v3d-section-icon">📍</span>
-                                        <span class="v3d-section-title">Identificación y Ubicación</span>
-                                    </div>
-                                    <span class="v3d-sidebar-badge" id="v3dBadgeIfcType">IFC</span>
-                                </div>
-                                <div class="v3d-props-section-body">
-                                    <table class="v3d-props-table" id="v3dTableId">
-                                        <tbody>
-                                            <tr><td class="prop-key">Nombre</td><td class="prop-val" id="propValName">-</td></tr>
-                                            <tr><td class="prop-key">Categoría</td><td class="prop-val" id="propValCategory">-</td></tr>
-                                            <tr><td class="prop-key">Tipo IFC</td><td class="prop-val mono" id="propValIfcType">-</td></tr>
-                                            <tr><td class="prop-key">Familia / Tipo</td><td class="prop-val" id="propValType">-</td></tr>
-                                            <tr><td class="prop-key">Nivel / Planta</td><td class="prop-val" id="propValStorey">-</td></tr>
-                                            <tr><td class="prop-key">GlobalId (GUID)</td><td class="prop-val mono copyable" id="v3dCardId" title="Clic para copiar">-</td></tr>
-                                            <tr><td class="prop-key">ID Express (STEP)</td><td class="prop-val mono" id="propValExpressId">-</td></tr>
-                                            <tr><td class="prop-key">Tag / Revit ID</td><td class="prop-val mono" id="propValTag">-</td></tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            <!-- Bloque 3: Tabla de Mediciones y Dimensiones -->
-                            <div class="v3d-props-section is-collapsed" id="v3dSectionQuantities">
-                                <div class="v3d-props-section-header" data-toggle="v3dSectionQuantities">
-                                    <div class="v3d-section-header-left">
-                                        <span class="v3d-collapse-arrow">▶</span>
-                                        <span class="v3d-section-icon">📐</span>
-                                        <span class="v3d-section-title">Mediciones y Dimensiones</span>
-                                    </div>
-                                    <span class="v3d-sidebar-badge highlight" id="v3dBadgeQty">-</span>
-                                </div>
-                                <div class="v3d-props-section-body">
-                                    <table class="v3d-props-table" id="v3dTableQty">
-                                        <tbody id="v3dTableQtyBody">
-                                            <tr><td class="prop-key">Medición Principal</td><td class="prop-val highlight" id="v3dCardQty">-</td></tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            <!-- Bloque 4: Tabla de Propiedades Extendidas / Psets -->
-                            <div class="v3d-props-section is-collapsed" id="v3dPsetsSection">
-                                <div class="v3d-props-section-header" data-toggle="v3dPsetsSection">
-                                    <div class="v3d-section-header-left">
-                                        <span class="v3d-collapse-arrow">▶</span>
-                                        <span class="v3d-section-icon">⚙️</span>
-                                        <span class="v3d-section-title">Propiedades y Parámetros BIM</span>
-                                    </div>
-                                    <span class="v3d-sidebar-badge" id="v3dBadgePsetsCount">0</span>
-                                </div>
-                                <div class="v3d-props-section-body">
-                                    <table class="v3d-props-table" id="v3dTablePsets">
-                                        <tbody id="v3dTablePsetsBody">
-                                            <!-- Inyectado dinámicamente -->
-                                        </tbody>
-                                    </table>
                                 </div>
                             </div>
                         </div>
 
                         <div class="v3d-sidebar-footer">
                             <button type="button" id="v3dDeselectBtn" class="v3d-btn-deselect">
-                                <span>✕ Deseleccionar Elemento</span>
+                                <span>✕ Deseleccionar</span>
                             </button>
                         </div>
                     </aside>
@@ -3124,7 +3262,7 @@
 
             <div class="modal-body" style="padding: 16px 20px; max-height: calc(85vh - 140px); overflow-y: auto;">
                 <!-- Tarjetas de Métricas Resumen -->
-                <div class="ifc-metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 16px;">
+                <div class="ifc-metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px;">
                     <div class="ifc-metric-card" style="background: var(--bg-hover); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px; text-align: center;">
                         <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; display: block;">Total Elementos</span>
                         <strong id="ifcMetricElements" style="font-size: 1.25rem; color: var(--text-primary);">0</strong>
@@ -3141,6 +3279,30 @@
                         <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; display: block;">Volumen Estructura</span>
                         <strong id="ifcMetricVolume" style="font-size: 1.25rem; color: #f59e0b;">0 m³</strong>
                     </div>
+                    <div class="ifc-metric-card" style="background: var(--bg-hover); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px; text-align: center;">
+                        <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; display: block;">Capas Multicapa</span>
+                        <strong id="ifcMetricLayers" style="font-size: 1.25rem; color: #38bdf8;">0</strong>
+                    </div>
+                </div>
+
+                <!-- Selector de Modo de Presupuestación BIM 5D -->
+                <div style="background: var(--bg-hover); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 16px; margin-bottom: 14px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                            <span>⚙️</span> <span>Criterio de Presupuestación BIM 5D (FIEBDC-3):</span>
+                        </span>
+                        <span style="font-size: 0.72rem; color: #38bdf8; font-weight: 600; background: rgba(56, 189, 248, 0.1); padding: 2px 8px; border-radius: 10px;">16 Capítulos Canónicos</span>
+                    </div>
+                    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-primary); cursor: pointer; background: var(--bg-color); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+                            <input type="radio" name="ifcBudgetTypeMode" id="ifcModeLayers" value="layers" checked style="accent-color: var(--accent, #3b82f6);">
+                            <span><strong>Desglose Multicapa</strong> (Fábricas, aislamientos, trasdosados y acabados desglosados)</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-secondary); cursor: pointer; background: var(--bg-color); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+                            <input type="radio" name="ifcBudgetTypeMode" id="ifcModeElements" value="elements" style="accent-color: var(--accent, #3b82f6);">
+                            <span><strong>Elementos Globales</strong> (1 partida integrada por elemento constructivo)</span>
+                        </label>
+                    </div>
                 </div>
 
                 <!-- Desglose de Partidas Detectadas -->
@@ -3153,7 +3315,7 @@
 
                 <!-- Tabla de Elementos y Mediciones -->
                 <div style="border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; background: var(--bg-color);">
-                    <div style="max-height: 280px; overflow-y: auto;">
+                    <div style="max-height: 250px; overflow-y: auto;">
                         <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
                             <thead style="position: sticky; top: 0; background: var(--bg-hover); border-bottom: 1px solid var(--border-color); z-index: 1;">
                                 <tr style="color: var(--text-secondary); text-align: left;">
@@ -3174,7 +3336,7 @@
                 <div style="margin-top: 12px; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; gap: 10px;">
                     <span style="font-size: 1.2rem;">💡</span>
                     <span style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4;">
-                        Al generar el presupuesto, cada elemento del modelo IFC creará una línea de medición detallada (<strong>~M</strong>) con su planta y código de identificación (<strong>GlobalId</strong>) para auditoría completa.
+                        El motor clasifica el 100% de los elementos en <strong>16 Capítulos Canónicos de Edificación</strong> y genera líneas de medición detallada (<strong>~M</strong>) con su planta, solución constructiva y código de trazabilidad 3D (<strong>GlobalId</strong>).
                     </span>
                 </div>
             </div>
@@ -3344,16 +3506,16 @@
     <script src="jspdf.plugin.autotable.min.js"></script>
     <script src="chart.min.js"></script>
     <script src="xlsx.full.min.js"></script>
-    <script src="BC3Parser.js?v=2.3.3"></script>
-    <script src="BC3GanttEngine.js?v=2.3.3"></script>
-    <script src="BC3PriceBank.js?v=2.3.3"></script>
-    <script src="BC3Writer.js?v=2.3.3"></script>
-    <script src="IFCParser.js?v=2.3.3"></script>
-    <script src="IFC2BC3Engine.js?v=2.3.3"></script>
-    <script src="IFCViewer3D.bundle.js?v=2.3.3"></script>
-    <script src="IFCViewer3D.js?v=2.3.3"></script>
+    <script src="BC3Parser.js?v=2.4.0"></script>
+    <script src="BC3GanttEngine.js?v=2.4.0"></script>
+    <script src="BC3PriceBank.js?v=2.4.0"></script>
+    <script src="BC3Writer.js?v=2.4.0"></script>
+    <script src="IFCParser.js?v=2.4.0"></script>
+    <script src="IFC2BC3Engine.js?v=2.4.0"></script>
+    <script src="IFCViewer3D.bundle.js?v=2.4.0"></script>
+    <script src="IFCViewer3D.js?v=2.4.0"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="app.js?v=2.3.3"></script>
+    <script src="app.js?v=2.4.0"></script>
 </body>
 
 </html>

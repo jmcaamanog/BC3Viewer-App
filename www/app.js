@@ -439,6 +439,13 @@ function openIfcWizardModal(ifcData, fileName) {
     const elVol = document.getElementById('ifcMetricVolume');
     if (elVol) elVol.textContent = `${ifcData.stats.totalVolumeM3.toLocaleString('es-ES')} m³`;
 
+    const elLayers = document.getElementById('ifcMetricLayers');
+    if (elLayers) {
+        const layersCount = ifcData.stats.totalMaterialLayers || 0;
+        const elemWithLayers = ifcData.stats.elementsWithLayersCount || 0;
+        elLayers.textContent = `${layersCount} (${elemWithLayers} elem)`;
+    }
+
     const elBadge = document.getElementById('ifcSchemaBadge');
     if (elBadge) elBadge.textContent = `${ifcData.header.schema || 'IFC'} · ${ifcData.stats.parseTimeSec}s`;
 
@@ -492,12 +499,19 @@ function initIfcWizardEvents() {
                 return;
             }
 
+            // Obtener modo de presupuestación (multicapa vs global)
+            let selectedMode = 'layers';
+            const modeRadio = document.querySelector('input[name="ifcBudgetTypeMode"]:checked');
+            if (modeRadio && modeRadio.value) {
+                selectedMode = modeRadio.value;
+            }
+
             try {
-                showWorkerLoader("Confeccionando presupuesto FIEBDC-3 y líneas de medición...", currentIfcFile ? currentIfcFile.name : "Modelo IFC");
+                showWorkerLoader(`Confeccionando presupuesto en 16 Capítulos Canónicos (${selectedMode === 'layers' ? 'Desglose Multicapa' : 'Elementos Globales'})...`, currentIfcFile ? currentIfcFile.name : "Modelo IFC");
                 
                 setTimeout(() => {
                     try {
-                        const bc3Output = IFC2BC3Engine.generateBC3(currentIfcData);
+                        const bc3Output = IFC2BC3Engine.generateBC3(currentIfcData, { mode: selectedMode });
                         closeIfcWizardModal();
                         hideWorkerLoader();
 

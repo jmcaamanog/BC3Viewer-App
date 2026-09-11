@@ -7458,6 +7458,39 @@ body.dark-theme .partida-action-card,
     }
 }
 
+/* Inspector de Capas Multicapa BIM 3D */
+.v3d-layers-3d-wrapper {
+    background: radial-gradient(circle at 50% 30%, #0d172e 0%, #060a14 100%) !important;
+    background-image: 
+        linear-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.05) 1px, transparent 1px) !important;
+    background-size: 14px 14px !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.v3d-layers-3d-wrapper:hover {
+    border-color: rgba(56, 189, 248, 0.5) !important;
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.15), inset 0 2px 10px rgba(0,0,0,0.6) !important;
+}
+
+#v3dTableLayers tr {
+    transition: background-color 0.12s ease;
+    cursor: pointer;
+}
+
+#v3dTableLayers tr:hover,
+#v3dTableLayers tr.layer-active {
+    background-color: rgba(56, 189, 248, 0.12) !important;
+}
+
+#v3dTableLayers th {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+
+
 
 /* =============================================================================
    📐 MÓDULO BIM 3D: VISOR 3D INTERACTIVO CON THREE.JS Y GLASSMORPHISM
@@ -7952,13 +7985,32 @@ body.dark-theme .partida-action-card,
     color: #ffffff;
 }
 
+/* Contenedores de Vistas (Individual y Múltiple) con Flexbox contenido */
+#v3dSingleElementView,
+#v3dMultiSelectionView {
+    flex: 1 1 0px !important;
+    min-height: 0 !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+#v3dSingleElementView:not([style*="display: none"]),
+#v3dMultiSelectionView:not([style*="display: none"]) {
+    display: flex !important;
+}
+
+#v3dSingleElementView[style*="display: none"],
+#v3dMultiSelectionView[style*="display: none"] {
+    display: none !important;
+}
+
 /* Cuerpo Scrollable con Tablas y Slicer Derecho Ultra-Visible */
 .v3d-sidebar-body {
-    flex: 1 1 0px;
-    min-height: 0;
-    overflow-y: scroll !important;
+    flex: 1 1 0px !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
     overflow-x: hidden;
-    padding: 8px 10px 16px 16px;
+    padding: 8px 12px 16px 16px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -8550,6 +8602,414 @@ body.dark-theme .partida-action-card,
 }
 
 /* =============================================================================
+   SUBMENÚ CONTEXTUAL DE SIMILITUD (SELECCIONAR SIMILARES)
+   ============================================================================= */
+.v3d-ctx-similar-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.v3d-ctx-has-sub {
+    position: relative;
+    padding-right: 22px;
+}
+
+.v3d-ctx-sub-arrow {
+    position: absolute;
+    right: 8px;
+    font-size: 0.85rem;
+    color: #38bdf8;
+    transition: transform 0.15s ease;
+}
+
+.v3d-ctx-similar-wrapper:hover .v3d-ctx-sub-arrow,
+.v3d-ctx-similar-wrapper.open .v3d-ctx-sub-arrow {
+    transform: translateX(2px);
+}
+
+.v3d-ctx-submenu {
+    position: absolute;
+    top: -4px;
+    left: calc(100% + 8px);
+    z-index: 130;
+    display: flex;
+    flex-direction: column;
+    min-width: 260px;
+    max-width: 330px;
+    max-height: 420px;
+    overflow-y: auto;
+    background: rgba(15, 23, 42, 0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    border-radius: 12px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75), 0 0 16px rgba(56, 189, 248, 0.25);
+    padding: 6px;
+    gap: 3px;
+    animation: v3dCtxFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: auto;
+}
+
+.v3d-ctx-submenu.to-left {
+    left: auto;
+    right: calc(100% + 8px);
+}
+
+.v3d-ctx-submenu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    padding: 6px 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: #e2e8f0;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+
+.v3d-ctx-submenu-item:hover {
+    background: rgba(56, 189, 248, 0.16);
+    border-color: rgba(56, 189, 248, 0.4);
+    transform: translateX(2px);
+}
+
+.v3d-ctx-submenu-item:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.v3d-ctx-submenu-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+}
+
+.v3d-ctx-submenu-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+    width: 18px;
+    text-align: center;
+}
+
+.v3d-ctx-submenu-label-box {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.v3d-ctx-submenu-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.25;
+}
+
+.v3d-ctx-submenu-detail {
+    font-size: 0.63rem;
+    color: #94a3b8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    margin-top: 1px;
+}
+
+.v3d-submenu-badge {
+    background: rgba(56, 189, 248, 0.18);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    color: #38bdf8;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* =============================================================================
+   VISTA DE SELECCIÓN MÚLTIPLE EN EL PANEL LATERAL 3D
+   ============================================================================= */
+.v3d-multi-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.v3d-multi-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 14px;
+    overflow-y: auto;
+}
+
+.v3d-multi-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, rgba(2, 132, 199, 0.25), rgba(56, 189, 248, 0.1));
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 10px;
+    padding: 10px 12px;
+}
+
+.v3d-multi-badge-icon {
+    font-size: 1.4rem;
+}
+
+.v3d-multi-banner-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.v3d-multi-banner-title {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #f8fafc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.v3d-multi-banner-count {
+    font-size: 0.72rem;
+    color: #38bdf8;
+    font-weight: 600;
+}
+
+.v3d-multi-card {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.v3d-multi-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #cbd5e1;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 6px;
+}
+
+.v3d-multi-card-icon {
+    font-size: 0.95rem;
+}
+
+.v3d-multi-card-title {
+    flex: 1;
+}
+
+/* Card de Presupuesto y Precios */
+.v3d-multi-card-budget {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(15, 23, 42, 0.85));
+    border-color: rgba(16, 185, 129, 0.35);
+}
+
+.v3d-multi-price-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.v3d-multi-price-val {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #34d399;
+    font-family: 'Consolas', 'Monaco', monospace;
+    letter-spacing: 0.5px;
+}
+
+.v3d-multi-price-sub {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.v3d-multi-budget-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 6px;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.v3d-multi-budget-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.72rem;
+    padding: 4px 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+    color: #cbd5e1;
+}
+
+.v3d-multi-budget-code {
+    font-weight: 700;
+    color: #38bdf8;
+    font-family: monospace;
+}
+
+.v3d-multi-budget-amt {
+    font-weight: 600;
+    color: #34d399;
+    font-family: monospace;
+}
+
+/* Grids de Características Comunes y Mediciones */
+.v3d-multi-traits-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+}
+
+.v3d-multi-trait-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.72rem;
+    padding: 5px 8px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 4px;
+    border-left: 2px solid #38bdf8;
+}
+
+.v3d-multi-trait-label {
+    color: #94a3b8;
+}
+
+.v3d-multi-trait-val {
+    font-weight: 600;
+    color: #f1f5f9;
+    text-align: right;
+    max-width: 65%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.v3d-multi-qtys-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.v3d-multi-qty-box {
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 6px;
+    padding: 6px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.v3d-multi-qty-lbl {
+    font-size: 0.65rem;
+    color: #94a3b8;
+}
+
+.v3d-multi-qty-num {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #38bdf8;
+    font-family: 'Consolas', monospace;
+    margin-top: 2px;
+}
+
+/* Botones de Acciones en Bloque */
+.v3d-multi-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.v3d-multi-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.v3d-multi-btn:hover {
+    transform: translateY(-1px);
+}
+
+.v3d-multi-btn-isolate {
+    background: rgba(56, 189, 248, 0.16);
+    border-color: rgba(56, 189, 248, 0.45);
+    color: #38bdf8;
+}
+
+.v3d-multi-btn-isolate:hover {
+    background: rgba(56, 189, 248, 0.28);
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+}
+
+.v3d-multi-btn-hide {
+    background: rgba(239, 68, 68, 0.14);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+}
+
+.v3d-multi-btn-hide:hover {
+    background: rgba(239, 68, 68, 0.25);
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.35);
+}
+
+.v3d-multi-btn-focus {
+    background: rgba(148, 163, 184, 0.14);
+    border-color: rgba(148, 163, 184, 0.35);
+    color: #e2e8f0;
+}
+
+.v3d-multi-btn-focus:hover {
+    background: rgba(148, 163, 184, 0.25);
+}
+
+.v3d-multi-btn-budget {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.2));
+    border-color: rgba(16, 185, 129, 0.45);
+    color: #6ee7b7;
+}
+
+.v3d-multi-btn-budget:hover {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.35), rgba(5, 150, 105, 0.3));
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+}
+
+/* =============================================================================
    PANEL FLOTANTE DE CONTROL DE PLANOS DE SECCIÓN 3D (MULTIEJE X, Y, Z)
    ============================================================================= */
 .v3d-section-widget {
@@ -9027,6 +9487,451 @@ body.dark-theme .partida-action-card,
     border-bottom: 2px solid #38bdf8 !important;
     color: #38bdf8 !important;
     background: rgba(56, 189, 248, 0.05) !important;
+}
+
+/* ==========================================================================
+   Menú Contextual 3D - Submenú de Seleccionar Similares
+   ========================================================================== */
+.v3d-ctx-similar-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.v3d-ctx-submenu-arrow {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    margin-left: auto;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.v3d-ctx-similar-wrapper:hover .v3d-ctx-submenu-arrow,
+.v3d-ctx-similar-wrapper.open .v3d-ctx-submenu-arrow {
+    transform: translateX(3px);
+    color: #38bdf8;
+}
+
+.v3d-ctx-submenu {
+    position: absolute;
+    top: -6px;
+    left: calc(100% + 8px);
+    width: 290px;
+    max-height: 420px;
+    overflow-y: auto;
+    background: rgba(13, 22, 45, 0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 12px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65), 0 0 20px rgba(56, 189, 248, 0.15);
+    padding: 6px;
+    display: none;
+    flex-direction: column;
+    gap: 3px;
+    z-index: 10050;
+    pointer-events: auto;
+}
+
+.v3d-ctx-submenu.to-left {
+    left: auto;
+    right: calc(100% + 8px);
+}
+
+.v3d-ctx-submenu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 7px 10px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: #f1f5f9;
+    cursor: pointer;
+    font-size: 0.76rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    text-align: left;
+    width: 100%;
+}
+
+.v3d-ctx-submenu-item:hover {
+    background: rgba(56, 189, 248, 0.12);
+    border-color: rgba(56, 189, 248, 0.3);
+    color: #38bdf8;
+    transform: translateX(2px);
+}
+
+.v3d-ctx-submenu-left,
+.v3d-ctx-submenu-item-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+}
+
+.v3d-ctx-submenu-icon,
+.v3d-submenu-icon {
+    font-size: 0.88rem;
+    flex-shrink: 0;
+}
+
+.v3d-ctx-submenu-label-box,
+.v3d-submenu-labels {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.v3d-ctx-submenu-title,
+.v3d-submenu-title {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #f8fafc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.v3d-ctx-submenu-item:hover .v3d-ctx-submenu-title,
+.v3d-ctx-submenu-item:hover .v3d-submenu-title {
+    color: #38bdf8;
+}
+
+.v3d-ctx-submenu-detail,
+.v3d-submenu-desc {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.v3d-submenu-badge {
+    padding: 2px 7px;
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 12px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.v3d-ctx-submenu-item:hover .v3d-submenu-badge {
+    background: #38bdf8;
+    color: #0b1329;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+/* ==========================================================================
+   Panel Lateral 3D - Vista de Selección Múltiple
+   ========================================================================== */
+.v3d-multi-view {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.v3d-multi-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 14px;
+}
+
+.v3d-multi-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.2), rgba(30, 58, 138, 0.3));
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 10px;
+    padding: 12px 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.v3d-multi-badge-icon {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.v3d-multi-banner-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.v3d-multi-banner-title {
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: #f8fafc;
+    letter-spacing: 0.2px;
+}
+
+.v3d-multi-banner-count {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #38bdf8;
+}
+
+.v3d-multi-card {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s ease;
+}
+
+.v3d-multi-card:hover {
+    border-color: rgba(56, 189, 248, 0.25);
+}
+
+.v3d-multi-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.v3d-multi-card-icon {
+    font-size: 0.95rem;
+}
+
+.v3d-multi-card-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.v3d-multi-card-body {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Tarjeta de Presupuesto */
+.v3d-multi-card-budget {
+    background: linear-gradient(180deg, rgba(16, 185, 129, 0.08), rgba(15, 23, 42, 0.8));
+    border-color: rgba(16, 185, 129, 0.35);
+}
+
+.v3d-multi-price-display {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+}
+
+.v3d-multi-price-val {
+    font-family: 'Consolas', 'Monaco', 'SF Pro Display', monospace;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #34d399;
+    text-shadow: 0 0 16px rgba(52, 211, 153, 0.4);
+}
+
+.v3d-multi-price-sub {
+    font-size: 0.68rem;
+    color: #94a3b8;
+}
+
+.v3d-multi-budget-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 140px;
+    overflow-y: auto;
+}
+
+.v3d-multi-budget-row,
+.v3d-multi-budget-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.72rem;
+}
+
+.v3d-multi-budget-code,
+.v3d-multi-budget-item-name {
+    color: #cbd5e1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.v3d-multi-budget-amt,
+.v3d-multi-budget-item-price {
+    font-family: monospace;
+    font-weight: 700;
+    color: #34d399;
+    white-space: nowrap;
+}
+
+/* Grilla de Características en Común */
+.v3d-multi-traits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+}
+
+.v3d-multi-trait-item,
+.v3d-multi-trait-chip {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-left: 3px solid #38bdf8;
+    border-radius: 8px;
+}
+
+.v3d-multi-trait-label {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.v3d-multi-trait-val {
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.v3d-multi-trait-val.highlight {
+    color: #38bdf8;
+    font-weight: 700;
+}
+
+.v3d-multi-trait-val.mono {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.72rem;
+    color: #93c5fd;
+}
+
+/* Grilla de Mediciones Acumuladas */
+.v3d-multi-qtys-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.v3d-multi-qty-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 8px;
+}
+
+.v3d-multi-qty-label {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.v3d-multi-qty-val {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #38bdf8;
+}
+
+/* Acciones Rápidas en Bloque */
+.v3d-multi-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 10px 12px;
+}
+
+.v3d-multi-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+}
+
+.v3d-multi-btn-isolate {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.4);
+    color: #38bdf8;
+}
+
+.v3d-multi-btn-isolate:hover {
+    background: #38bdf8;
+    color: #0b1329;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+}
+
+.v3d-multi-btn-hide {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #f87171;
+}
+
+.v3d-multi-btn-hide:hover {
+    background: #ef4444;
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+}
+
+.v3d-multi-btn-focus {
+    background: rgba(148, 163, 184, 0.12);
+    border-color: rgba(148, 163, 184, 0.3);
+    color: #cbd5e1;
+}
+
+.v3d-multi-btn-focus:hover {
+    background: rgba(148, 163, 184, 0.25);
+    color: #ffffff;
+}
+
+.v3d-multi-btn-budget {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.3));
+    border-color: rgba(16, 185, 129, 0.5);
+    color: #34d399;
+}
+
+.v3d-multi-btn-budget:hover {
+    background: #10b981;
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
 }
 
 

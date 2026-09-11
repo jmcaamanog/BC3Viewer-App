@@ -35,6 +35,8 @@
         expressIdToElementMap: {},
         globalIdToElementMap: {},
         selectedElement: null,
+        selectedExpressIds: [],
+        selectedSimilarityCriterion: null,
         onElementClickedCallback: null,
         _categoriesMenuInitialized: false,
         _contextMenuInitialized: false,
@@ -2190,6 +2192,9 @@
         /**
          * Resalta un elemento en color cian brillante por su GlobalId o ExpressID
          */
+        /**
+         * Resalta un elemento en color cian brillante por su GlobalId o ExpressID
+         */
         highlightElement: function (idOrGlobalId, focusCamera = false) {
             if (!this.ifcModel) return;
 
@@ -2246,6 +2251,7 @@
                 }
 
                 this.selectedExpressId = expressId;
+                this.selectedExpressIds = [expressId];
                 this.selectedElement = elementObj || { id: String(expressId), name: `Elemento #${expressId}` };
 
                 // Actualizar etiqueta en barra superior
@@ -2266,6 +2272,71 @@
                 }
             } catch (err) {
                 console.warn("IFCViewer3D: No se pudo resaltar elemento:", err);
+            }
+        },
+
+        /**
+         * Resalta múltiples elementos simultáneamente en color cian brillante
+         */
+        highlightElements: function (ids, focusCamera = false) {
+            if (!this.ifcModel) return;
+            if (!ids || ids.length === 0) {
+                this.resetHighlight();
+                return;
+            }
+
+            if (ids.length === 1) {
+                return this.highlightElement(ids[0], focusCamera);
+            }
+
+            this.resetHighlight();
+
+            const validIds = ids.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+            if (validIds.length === 0) return;
+
+            const THREE = window.THREE;
+            const planes = this.activeClippingPlane ? [this.activeClippingPlane] : [];
+            const highlightMat = new THREE.MeshLambertMaterial({
+                color: 0x00f0ff,
+                emissive: 0x0284c7,
+                emissiveIntensity: 0.65,
+                polygonOffset: true,
+                polygonOffsetFactor: -1,
+                polygonOffsetUnits: -1,
+                transparent: true,
+                opacity: 0.92,
+                depthTest: true,
+                clippingPlanes: planes,
+                clipShadows: true,
+                side: THREE.DoubleSide
+            });
+
+            try {
+                this.highlightSubset = this.ifcLoader.ifcManager.createSubset({
+                    modelID: this.ifcModel.modelID,
+                    ids: validIds,
+                    material: highlightMat,
+                    scene: this.scene,
+                    removePrevious: true,
+                    customID: 'active-selection-subset'
+                });
+
+                if (this.highlightSubset) {
+                    this._cleanGeometryParasiteTriangles(this.highlightSubset.geometry);
+                    this.highlightSubset.name = 'active-selection-subset';
+                    this.highlightSubset.isSelectionSubset = true;
+                    this.highlightSubset.renderOrder = 3.5;
+                }
+
+                this.selectedExpressIds = validIds;
+                this.selectedExpressId = null;
+                this.selectedElement = null;
+
+                if (focusCamera && this.highlightSubset) {
+                    this.focusElements(validIds);
+                }
+            } catch (err) {
+                console.warn("IFCViewer3D: Error resaltando elementos múltiples:", err);
             }
         },
 
@@ -2304,6 +2375,8 @@
             }
 
             this.selectedExpressId = null;
+            this.selectedExpressIds = [];
+            this.selectedSimilarityCriterion = null;
             this.selectedElement = null;
             this.hideElementCard();
             this.hideContextMenu();
@@ -2319,8 +2392,14 @@
             const sidebar = document.getElementById('v3dElementSidebar');
             if (!sidebar) return;
 
+            const singleView = document.getElementById('v3dSingleElementView');
+            const multiView = document.getElementById('v3dMultiSelectionView');
+            if (singleView) singleView.style.display = 'block';
+            if (multiView) multiView.style.display = 'none';
+
             this.selectedElement = elemObj || { id: String(expressId), name: `Elemento #${expressId}` };
             this.selectedExpressId = parseInt(expressId, 10);
+            this.selectedExpressIds = [parseInt(expressId, 10)];
 
             const nameEl = document.getElementById('v3dCardName');
             const storeyEl = document.getElementById('v3dCardStorey');
@@ -2364,6 +2443,10 @@
             const pIfcType = document.getElementById('propValIfcType');
             const pType = document.getElementById('propValType');
             const pStorey = document.getElementById('propValStorey');
+            const pLoadBearing = document.getElementById('propValLoadBearing');
+            const pIsExternal = document.getElementById('propValIsExternal');
+            const pFireRating = document.getElementById('propValFireRating');
+            const pClassif = document.getElementById('propValClassification');
             const pId = document.getElementById('v3dCardId');
             const pExp = document.getElementById('propValExpressId');
             const pTag = document.getElementById('propValTag');
@@ -2371,15 +2454,218 @@
 
             const ifcTypeStr = elemObj ? (elemObj.ifcType || 'IFC') : 'IFC';
             const friendlyCat = this._getFriendlyCategory(elemObj) || (elemObj ? elemObj.category : '-');
+            const func = elemObj ? (elemObj.functionalProperties || {}) : {};
+            const classif = elemObj ? elemObj.classification : null;
+
             if (pName) pName.textContent = rawName;
             if (pCat) pCat.textContent = friendlyCat;
             if (pIfcType) pIfcType.textContent = ifcTypeStr;
             if (pType) pType.textContent = elemObj ? (elemObj.typeName || elemObj.category || '-') : '-';
             if (pStorey) pStorey.textContent = storey;
+
+            // Parámetros normativos CTE
+            if (pLoadBearing) {
+                if (func.isLoadBearing === true) pLoadBearing.innerHTML = '<span style="color:#10b981; font-weight:600;">Portante / Resistente</span>';
+                else if (func.isLoadBearing === false) pLoadBearing.innerHTML = '<span style="color:var(--text-secondary);">No portante (Divisorio)</span>';
+                else pLoadBearing.textContent = '-';
+            }
+            if (pIsExternal) {
+                if (func.isExternal === true) pIsExternal.innerHTML = '<span style="color:#38bdf8; font-weight:600;">Exterior (Fachada)</span>';
+                else if (func.isExternal === false) pIsExternal.innerHTML = '<span style="color:var(--text-secondary);">Interior</span>';
+                else pIsExternal.textContent = '-';
+            }
+            if (pFireRating) {
+                pFireRating.textContent = func.fireRating ? String(func.fireRating) : '-';
+            }
+            if (pClassif) {
+                pClassif.textContent = classif ? `${classif.code} (${classif.system || 'BIM'})` : '-';
+            }
+
             if (pId) pId.textContent = globalId;
             if (pExp) pExp.textContent = '#' + expressId;
             if (pTag) pTag.textContent = (elemObj && elemObj.tag) ? elemObj.tag : '-';
             if (badgeIfcType) badgeIfcType.textContent = ifcTypeStr;
+
+            // NUEVO: Desglose Multicapa (Capas Constructivas en 3D)
+            const layersSec = document.getElementById('v3dSectionLayers');
+            const layersBadge = document.getElementById('v3dBadgeLayersCount');
+            const layerSetNameEl = document.getElementById('v3dLayerSetName');
+            const totalThickEl = document.getElementById('v3dTotalThickBadge');
+            const tableLayersBody = document.getElementById('v3dTableLayersBody');
+            let canvas3D = document.getElementById('v3dLayersCanvas3D');
+            let tooltip3D = document.getElementById('v3dLayer3DTooltip');
+            let tooltipName = document.getElementById('v3dLayerTooltipName');
+            let tooltipMeta = document.getElementById('v3dLayerTooltipMeta');
+
+            if (layersSec && elemObj && elemObj.materialLayers && elemObj.materialLayers.length > 0) {
+                const layers = elemObj.materialLayers;
+                layersSec.style.display = 'block';
+                layersSec.classList.remove('is-collapsed');
+                if (layersBadge) layersBadge.textContent = `${layers.length} capas`;
+                if (layerSetNameEl) layerSetNameEl.textContent = elemObj.layerSetName || elemObj.typeName || 'Solución constructiva';
+
+                const totalThickM = layers.reduce((sum, l) => sum + (l.thickness || 0), 0);
+                const totalThickMm = Math.round(totalThickM * 1000);
+                if (totalThickEl) totalThickEl.textContent = `Espesor total: ${totalThickMm} mm`;
+
+                // Inyección dinámica de seguridad si el contenedor 3D no estuviese en el DOM (caché de sesión)
+                if (!canvas3D) {
+                    const tableEl = document.getElementById('v3dTableLayers');
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'v3d-layers-3d-wrapper';
+                    wrapper.style.cssText = 'position: relative; background: #070c18; border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; overflow: hidden; margin-bottom: 12px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.6);';
+                    wrapper.innerHTML = `
+                        <canvas id="v3dLayersCanvas3D" width="360" height="128" style="width: 100%; height: 128px; display: block; cursor: pointer;"></canvas>
+                        <div id="v3dLayer3DTooltip" style="position: absolute; display: none; pointer-events: none; background: rgba(15, 23, 42, 0.94); border: 1px solid #38bdf8; border-radius: 6px; padding: 4px 8px; font-size: 0.7rem; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.6); z-index: 10; white-space: nowrap;">
+                            <div id="v3dLayerTooltipName" style="font-weight: 700; color: #38bdf8;">Capa</div>
+                            <div id="v3dLayerTooltipMeta" style="font-size: 0.65rem; color: var(--text-secondary);">Espesor</div>
+                        </div>
+                    `;
+                    if (tableEl && tableEl.parentNode) {
+                        tableEl.parentNode.insertBefore(wrapper, tableEl);
+                    } else {
+                        const secBody = layersSec.querySelector('.v3d-props-section-body');
+                        if (secBody) secBody.appendChild(wrapper);
+                    }
+                    canvas3D = document.getElementById('v3dLayersCanvas3D');
+                    tooltip3D = document.getElementById('v3dLayer3DTooltip');
+                    tooltipName = document.getElementById('v3dLayerTooltipName');
+                    tooltipMeta = document.getElementById('v3dLayerTooltipMeta');
+                }
+
+                // Detección automática de orientación: Forjados / Suelos / Cubiertas (Horizontal) vs Muros (Vertical)
+                const rawCat = ((elemObj.ifcType || '') + ' ' + (elemObj.category || '') + ' ' + (elemObj.name || '') + ' ' + (elemObj.typeName || '')).toLowerCase();
+                const isHorizontal = rawCat.includes('slab') || rawCat.includes('forjado') || rawCat.includes('suelo') || rawCat.includes('pavimento') || rawCat.includes('losa') || rawCat.includes('roof') || rawCat.includes('cubierta') || rawCat.includes('solera');
+                this._currentIsHorizontal = isHorizontal;
+
+                // Renderizar probeta 3D axonométrica en perspectiva
+                if (canvas3D) {
+                    const renderSample = () => {
+                        this._renderIsometricMultilayer(canvas3D, layers, this._hoveredLayerIdx !== undefined ? this._hoveredLayerIdx : -1, isHorizontal);
+                    };
+                    renderSample();
+                    requestAnimationFrame(renderSample);
+                    setTimeout(renderSample, 50);
+
+                    // Eventos de interactividad sobre el canvas 3D
+                    canvas3D.onmousemove = (e) => {
+                        const rect = canvas3D.getBoundingClientRect();
+                        const mx = e.clientX - rect.left;
+                        const my = e.clientY - rect.top;
+
+                        let foundIdx = -1;
+                        if (this._layerPolygons) {
+                            for (let i = this._layerPolygons.length - 1; i >= 0; i--) {
+                                const lp = this._layerPolygons[i];
+                                if (this._isPointInPoly(mx, my, lp.poly)) {
+                                    foundIdx = lp.index;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (foundIdx !== this._hoveredLayerIdx) {
+                            this._hoveredLayerIdx = foundIdx;
+                            this._renderIsometricMultilayer(canvas3D, layers, foundIdx, isHorizontal);
+
+                            // Sincronizar clase activa en tabla
+                            if (tableLayersBody) {
+                                const rows = tableLayersBody.querySelectorAll('tr');
+                                rows.forEach((r, rIdx) => {
+                                    if (rIdx === foundIdx) r.classList.add('layer-active');
+                                    else r.classList.remove('layer-active');
+                                });
+                            }
+                        }
+
+                        // Mostrar tooltip
+                        if (tooltip3D && foundIdx !== -1 && this._layerPolygons && this._layerPolygons[foundIdx]) {
+                            const lp = this._layerPolygons[foundIdx];
+                            const faceTag = foundIdx === 0 
+                                ? (isHorizontal ? '☀️ CARA SUPERIOR (EXT.)' : '☀️ CARA EXTERIOR') 
+                                : (foundIdx === layers.length - 1 
+                                    ? (isHorizontal ? '🏠 CARA INFERIOR (INT.)' : '🏠 CARA INTERIOR') 
+                                    : '🧱 ESTRATO INTERMEDIO');
+                            if (tooltipName) tooltipName.textContent = `${lp.layer.materialName}`;
+                            if (tooltipMeta) tooltipMeta.textContent = `${faceTag} · ${lp.thickMm} mm`;
+                            tooltip3D.style.display = 'block';
+                            tooltip3D.style.left = `${Math.min(mx + 10, rect.width - 150)}px`;
+                            tooltip3D.style.top = `${Math.max(6, my - 38)}px`;
+                        } else if (tooltip3D && foundIdx === -1) {
+                            tooltip3D.style.display = 'none';
+                        }
+                    };
+
+                    canvas3D.onmouseleave = () => {
+                        this._hoveredLayerIdx = -1;
+                        this._renderIsometricMultilayer(canvas3D, layers, -1, isHorizontal);
+                        if (tooltip3D) tooltip3D.style.display = 'none';
+                        if (tableLayersBody) {
+                            tableLayersBody.querySelectorAll('tr').forEach(r => r.classList.remove('layer-active'));
+                        }
+                    };
+                }
+
+                // Generar tabla de capas con indicación de Cara Exterior / Interior
+                if (tableLayersBody) {
+                    let rows = '';
+                    const baseArea = (elemObj.quantity && elemObj.unit === 'm2') ? elemObj.quantity : ((elemObj.allQuantities && (elemObj.allQuantities.netSideArea || elemObj.allQuantities.area)) || 1);
+                    
+                    layers.forEach((l, idx) => {
+                        const thickMm = Math.round(l.thickness * 1000);
+                        const volM3 = Math.round(baseArea * l.thickness * 1000) / 1000;
+                        
+                        // Etiqueta de ubicación
+                        let caraBadge = '<span style="font-size:0.68rem; color:var(--text-secondary); background:var(--bg-hover); padding:1px 5px; border-radius:3px;">Núcleo</span>';
+                        if (idx === 0) {
+                            caraBadge = isHorizontal
+                                ? '<span style="font-size:0.68rem; font-weight:700; color:#fbbf24; background:rgba(245,158,11,0.15); padding:2px 6px; border-radius:4px; border:1px solid rgba(245,158,11,0.3);">☀️ Sup.</span>'
+                                : '<span style="font-size:0.68rem; font-weight:700; color:#fbbf24; background:rgba(245,158,11,0.15); padding:2px 6px; border-radius:4px; border:1px solid rgba(245,158,11,0.3);">☀️ Ext.</span>';
+                        } else if (idx === layers.length - 1) {
+                            caraBadge = isHorizontal
+                                ? '<span style="font-size:0.68rem; font-weight:700; color:#38bdf8; background:rgba(56,189,248,0.15); padding:2px 6px; border-radius:4px; border:1px solid rgba(56,189,248,0.3);">🏠 Inf.</span>'
+                                : '<span style="font-size:0.68rem; font-weight:700; color:#38bdf8; background:rgba(56,189,248,0.15); padding:2px 6px; border-radius:4px; border:1px solid rgba(56,189,248,0.3);">🏠 Int.</span>';
+                        } else {
+                            const lm = (l.materialName || '').toLowerCase();
+                            if (lm.includes('aislamiento') || lm.includes('xps') || lm.includes('lana')) {
+                                caraBadge = '<span style="font-size:0.68rem; color:#eab308; background:rgba(234,179,8,0.1); padding:1px 5px; border-radius:3px;">🧊 Aisl.</span>';
+                            } else if (lm.includes('aire') || lm.includes('cámara') || lm.includes('camara')) {
+                                caraBadge = '<span style="font-size:0.68rem; color:#0284c7; background:rgba(2,132,199,0.1); padding:1px 5px; border-radius:3px;">💨 Cám.</span>';
+                            } else if (lm.includes('placa') || lm.includes('pyl') || lm.includes('pladur')) {
+                                caraBadge = '<span style="font-size:0.68rem; color:#94a3b8; background:rgba(148,163,184,0.1); padding:1px 5px; border-radius:3px;">🚪 Trasd.</span>';
+                            }
+                        }
+
+                        rows += `
+                            <tr style="border-bottom:1px solid var(--border-color);" data-layer-idx="${idx}">
+                                <td style="padding:6px 4px; vertical-align:middle;">${caraBadge}</td>
+                                <td style="padding:6px 4px; font-size:0.75rem; color:var(--text-primary); vertical-align:middle;">
+                                    <span style="display:inline-block; width:15px; height:15px; line-height:15px; text-align:center; background:var(--bg-hover); border-radius:3px; font-size:0.65rem; margin-right:4px; font-weight:700;">${idx + 1}</span>
+                                    <strong>${l.materialName}</strong>
+                                </td>
+                                <td style="padding:6px 4px; text-align:right; font-family:monospace; font-size:0.75rem; color:#38bdf8; vertical-align:middle;">${thickMm > 0 ? thickMm + ' mm' : '-'}</td>
+                                <td style="padding:6px 4px; text-align:right; font-family:monospace; font-size:0.75rem; color:var(--text-secondary); vertical-align:middle;">${volM3 > 0 ? volM3 + ' m³' : baseArea + ' m²'}</td>
+                            </tr>
+                        `;
+                    });
+                    tableLayersBody.innerHTML = rows;
+
+                    // Hover sobre filas de la tabla sincronizado con la probeta 3D
+                    tableLayersBody.querySelectorAll('tr').forEach(tr => {
+                        tr.addEventListener('mouseenter', () => {
+                            const lIdx = parseInt(tr.getAttribute('data-layer-idx'), 10);
+                            tr.classList.add('layer-active');
+                            if (canvas3D) this._renderIsometricMultilayer(canvas3D, layers, lIdx, isHorizontal);
+                        });
+                        tr.addEventListener('mouseleave', () => {
+                            tr.classList.remove('layer-active');
+                            if (canvas3D) this._renderIsometricMultilayer(canvas3D, layers, -1, isHorizontal);
+                        });
+                    });
+                }
+            } else if (layersSec) {
+                layersSec.style.display = 'none';
+            }
 
             // 2. Tabla de Mediciones y Dimensiones
             const qtyBody = document.getElementById('v3dTableQtyBody');
@@ -2509,8 +2795,291 @@
         hideElementCard: function () {
             const sidebar = document.getElementById('v3dElementSidebar');
             if (sidebar) sidebar.style.display = 'none';
+            const singleView = document.getElementById('v3dSingleElementView');
+            const multiView = document.getElementById('v3dMultiSelectionView');
+            if (singleView) singleView.style.display = 'block';
+            if (multiView) multiView.style.display = 'none';
             this.selectedElement = null;
             this.selectedExpressId = null;
+            this.selectedExpressIds = [];
+            this.selectedSimilarityCriterion = null;
+        },
+
+        /**
+         * Muestra el panel lateral en modo Selección Múltiple con resumen de características en común,
+         * suma de mediciones y acumulación de precios FIEBDC-3
+         */
+        showMultiElementCard: function (ids, criterionInfo) {
+            const sidebar = document.getElementById('v3dElementSidebar');
+            if (!sidebar) return;
+
+            const singleView = document.getElementById('v3dSingleElementView');
+            const multiView = document.getElementById('v3dMultiSelectionView');
+            if (singleView) singleView.style.display = 'none';
+            if (multiView) multiView.style.display = 'block';
+
+            const nameEl = document.getElementById('v3dCardName');
+            const storeyEl = document.getElementById('v3dCardStorey');
+            const iconEl = document.getElementById('v3dCardIcon');
+            const bannerTitle = document.getElementById('v3dMultiBannerTitle');
+            const bannerCount = document.getElementById('v3dMultiBannerCount');
+
+            if (nameEl) nameEl.textContent = 'Selección Múltiple';
+            if (iconEl) iconEl.textContent = '📦';
+            if (storeyEl) storeyEl.textContent = `${ids.length} elementos`;
+            if (bannerTitle) bannerTitle.textContent = criterionInfo ? criterionInfo.title : 'Selección Múltiple';
+            if (bannerCount) bannerCount.textContent = `${ids.length} elementos seleccionados en el modelo`;
+
+            const elements = ids.map(id => this.expressIdToElementMap[id] || this.expressIdToElementMap[String(id)]).filter(Boolean);
+
+            // 1. Contenedor de Características en Común
+            const commonTraitsEl = document.getElementById('v3dMultiCommonTraits');
+            if (commonTraitsEl) {
+                const categories = new Set(elements.map(e => e.category).filter(Boolean));
+                const typeNames = new Set(elements.map(e => e.typeName).filter(Boolean));
+                const storeys = new Set(elements.map(e => e.storey).filter(Boolean));
+                const ifcTypes = new Set(elements.map(e => e.ifcType).filter(Boolean));
+
+                let traitsHtml = '<div class="v3d-multi-traits-grid">';
+
+                // Categoría / Familia
+                if (categories.size === 1) {
+                    const cat = [...categories][0];
+                    traitsHtml += `<div class="v3d-multi-trait-item"><span class="v3d-multi-trait-label">🏷️ Familia / Categoría</span><span class="v3d-multi-trait-val highlight">${cat}</span></div>`;
+                } else if (categories.size > 1) {
+                    traitsHtml += `<div class="v3d-multi-trait-item"><span class="v3d-multi-trait-label">🏷️ Familias</span><span class="v3d-multi-trait-val">${categories.size} distintas</span></div>`;
+                }
+
+                // Tipo Constructivo
+                if (typeNames.size === 1) {
+                    const t = [...typeNames][0];
+                    traitsHtml += `<div class="v3d-multi-trait-item"><span class="v3d-multi-trait-label">🧱 Tipo</span><span class="v3d-multi-trait-val" title="${t}">${t}</span></div>`;
+                } else if (typeNames.size > 1) {
+                    traitsHtml += `<div class="v3d-multi-trait-item"><span class="v3d-multi-trait-label">🧱 Tipos</span><span class="v3d-multi-trait-val">${typeNames.size} diferentes</span></div>`;
+                }
+
+                // Planta / Nivel
+                if (storeys.size === 1) {
+                    const s = [...storeys][0];
+                    traitsHtml += `<div class="v3d-multi-trait-item"><span class="v3d-multi-trait-label">🏢 Planta</span><span class="v3d-multi-trait-val highlight">${s}</span></div>`;
+                } else if (storeys.size > 1) {
+                    traitsHtml += `<div class="v3d-multi-trait-item"><span class="v3d-multi-trait-label">🏢 Plantas</span><span class="v3d-multi-trait-val">${storeys.size} niveles</span></div>`;
+                }
+
+                // Entidad IFC
+                if (ifcTypes.size === 1) {
+                    const it = [...ifcTypes][0];
+                    traitsHtml += `<div class="v3d-multi-trait-item"><span class="v3d-multi-trait-label">🏛️ Entidad IFC</span><span class="v3d-multi-trait-val mono">${it}</span></div>`;
+                }
+
+                // Criterio específico aplicado
+                if (criterionInfo && criterionInfo.detail) {
+                    traitsHtml += `<div class="v3d-multi-trait-item" style="border-left-color: #34d399;"><span class="v3d-multi-trait-label">✨ Criterio común</span><span class="v3d-multi-trait-val" style="color:#a7f3d0;" title="${criterionInfo.detail}">${criterionInfo.detail}</span></div>`;
+                }
+
+                traitsHtml += '</div>';
+                commonTraitsEl.innerHTML = traitsHtml;
+            }
+
+            // 2. Contenedor de Suma de Precios e Impacto en Presupuesto FIEBDC-3
+            const totalPriceEl = document.getElementById('v3dMultiTotalPrice');
+            const priceSubEl = document.getElementById('v3dMultiPriceSub');
+            const budgetListEl = document.getElementById('v3dMultiBudgetList');
+
+            let totalBudgetSum = 0;
+            const conceptsMap = {};
+            let linkedCount = 0;
+
+            elements.forEach(elem => {
+                let bc = elem.budgetConcept;
+                if (!bc && window.parsedData && window.parsedData.concepts) {
+                    const targetGid = elem.globalId;
+                    for (const code in window.parsedData.concepts) {
+                        const c = window.parsedData.concepts[code];
+                        if (c.measurements && c.measurements.length > 0) {
+                            const m = c.measurements.find(it => it.label && it.label.includes(targetGid));
+                            if (m) {
+                                bc = { code: c.code, summary: c.summary, price: c.price };
+                                elem.budgetConcept = bc;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (bc) {
+                    linkedCount++;
+                    const price = parseFloat(bc.price || 0);
+                    const qty = parseFloat(elem.quantity || 1);
+                    const itemTotal = price * qty;
+                    totalBudgetSum += itemTotal;
+
+                    if (!conceptsMap[bc.code]) {
+                        conceptsMap[bc.code] = {
+                            code: bc.code,
+                            summary: bc.summary || '',
+                            price: price,
+                            count: 0,
+                            totalItemSum: 0
+                        };
+                    }
+                    conceptsMap[bc.code].count++;
+                    conceptsMap[bc.code].totalItemSum += itemTotal;
+                }
+            });
+
+            if (totalPriceEl) {
+                totalPriceEl.textContent = totalBudgetSum > 0
+                    ? totalBudgetSum.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
+                    : '0,00 €';
+            }
+
+            if (priceSubEl) {
+                if (linkedCount > 0) {
+                    priceSubEl.textContent = `${linkedCount} de ${ids.length} elementos vinculados a partidas FIEBDC-3`;
+                } else {
+                    priceSubEl.textContent = 'Sin partidas FIEBDC-3 vinculadas aún en el presupuesto';
+                }
+            }
+
+            if (budgetListEl) {
+                let listHtml = '';
+                const conceptCodes = Object.keys(conceptsMap);
+                if (conceptCodes.length > 0) {
+                    conceptCodes.forEach(code => {
+                        const item = conceptsMap[code];
+                        const amtStr = item.totalItemSum.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+                        listHtml += `
+                            <div class="v3d-multi-budget-row" title="${item.summary}">
+                                <span class="v3d-multi-budget-code">${item.code} (${item.count} ud)</span>
+                                <span class="v3d-multi-budget-amt">${amtStr}</span>
+                            </div>
+                        `;
+                    });
+                } else {
+                    listHtml = '<div style="font-size:0.7rem; color:#94a3b8; text-align:center; padding:4px;">Usa "Añadir a Partida" para presupuestar este grupo.</div>';
+                }
+                budgetListEl.innerHTML = listHtml;
+            }
+
+            // 3. Contenedor de Mediciones Acumuladas
+            const qtysEl = document.getElementById('v3dMultiQuantities');
+            if (qtysEl) {
+                let sumArea = 0;
+                let sumVolume = 0;
+                let sumLength = 0;
+
+                elements.forEach(e => {
+                    const q = e.allQuantities || {};
+                    const a = q.netArea || q.grossArea || q.netSideArea || (e.unit === 'm2' ? e.quantity : 0);
+                    const v = q.netVolume || q.grossVolume || q.volume || (e.unit === 'm3' ? e.quantity : 0);
+                    const l = q.length || q.height || (e.unit === 'm' ? e.quantity : 0);
+
+                    if (typeof a === 'number' && !isNaN(a)) sumArea += a;
+                    if (typeof v === 'number' && !isNaN(v)) sumVolume += v;
+                    if (typeof l === 'number' && !isNaN(l)) sumLength += l;
+                });
+
+                let qHtml = '<div class="v3d-multi-qtys-grid">';
+                qHtml += `
+                    <div class="v3d-multi-qty-box">
+                        <span class="v3d-multi-qty-lbl">📐 Superficie Total</span>
+                        <span class="v3d-multi-qty-num">${sumArea > 0 ? sumArea.toFixed(2) + ' m²' : '-'}</span>
+                    </div>
+                    <div class="v3d-multi-qty-box">
+                        <span class="v3d-multi-qty-lbl">🧊 Volumen Total</span>
+                        <span class="v3d-multi-qty-num">${sumVolume > 0 ? sumVolume.toFixed(2) + ' m³' : '-'}</span>
+                    </div>
+                    <div class="v3d-multi-qty-box">
+                        <span class="v3d-multi-qty-lbl">📏 Longitud / Dim.</span>
+                        <span class="v3d-multi-qty-num">${sumLength > 0 ? sumLength.toFixed(2) + ' m' : '-'}</span>
+                    </div>
+                    <div class="v3d-multi-qty-box">
+                        <span class="v3d-multi-qty-lbl">🔢 Recuento Total</span>
+                        <span class="v3d-multi-qty-num">${ids.length} ud</span>
+                    </div>
+                `;
+                qHtml += '</div>';
+                qtysEl.innerHTML = qHtml;
+            }
+
+            // 4. Acciones en bloque
+            const isolateBtn = document.getElementById('v3dMultiIsolateBtn');
+            const hideBtn = document.getElementById('v3dMultiHideBtn');
+            const focusBtn = document.getElementById('v3dMultiFocusBtn');
+            const budgetBtn = document.getElementById('v3dMultiAddToBudgetBtn');
+
+            if (isolateBtn) {
+                isolateBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    this.isolateElements(ids);
+                };
+            }
+            if (hideBtn) {
+                hideBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    this.hideElements(ids);
+                };
+            }
+            if (focusBtn) {
+                focusBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    this.focusElements(ids);
+                };
+            }
+            if (budgetBtn) {
+                budgetBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    // Calcular medición agregada
+                    let totalVal = 0;
+                    let unit = 'ud';
+                    const uCounts = {};
+                    elements.forEach(e => {
+                        const u = e.unit || 'ud';
+                        uCounts[u] = (uCounts[u] || 0) + 1;
+                    });
+                    let bestUnit = 'ud';
+                    let bestCount = 0;
+                    for (const u in uCounts) {
+                        if (uCounts[u] > bestCount) {
+                            bestCount = uCounts[u];
+                            bestUnit = u;
+                        }
+                    }
+                    unit = bestUnit;
+                    if (unit === 'm2') {
+                        totalVal = parseFloat(elements.reduce((acc, e) => acc + (e.allQuantities?.netArea || e.allQuantities?.grossArea || e.quantity || 0), 0).toFixed(2));
+                    } else if (unit === 'm3') {
+                        totalVal = parseFloat(elements.reduce((acc, e) => acc + (e.allQuantities?.netVolume || e.allQuantities?.grossVolume || e.quantity || 0), 0).toFixed(2));
+                    } else if (unit === 'm') {
+                        totalVal = parseFloat(elements.reduce((acc, e) => acc + (e.allQuantities?.length || e.quantity || 0), 0).toFixed(2));
+                    } else {
+                        totalVal = ids.length;
+                    }
+
+                    if (typeof window.openV3dAddToBudgetModal === 'function') {
+                        const sampleElem = elements[0] || {};
+                        window.openV3dAddToBudgetModal({
+                            type: unit === 'm2' ? 'area' : (unit === 'm3' ? 'volume' : 'linear'),
+                            unit: unit,
+                            value: totalVal,
+                            l: totalVal,
+                            w: unit === 'm3' ? 0.30 : 0,
+                            h: 0,
+                            units: ids.length,
+                            element: {
+                                name: `${criterionInfo ? criterionInfo.title : 'Selección Múltiple'} (${ids.length} ud)`,
+                                storey: sampleElem.storey || 'Modelo BIM',
+                                globalId: elements.map(e => e.globalId).filter(Boolean).slice(0, 4).join('; ') + (elements.length > 4 ? '...' : ''),
+                                category: sampleElem.category || 'General'
+                            },
+                            description: `Medición agrupada de ${ids.length} elementos por ${criterionInfo ? criterionInfo.title : 'similitud'}`
+                        });
+                    }
+                };
+            }
+
+            sidebar.style.display = 'flex';
         },
 
         /**
@@ -3607,14 +4176,18 @@
                         const props = await this.ifcLoader.ifcManager.getItemProperties(this.ifcModel.modelID, id);
                         if (props) {
                             const gid = props.GlobalId ? props.GlobalId.value : null;
-                            const rawN = props.Name ? props.Name.value : `Elemento #${id}`;
-                            elemObj = {
-                                id: String(id),
-                                expressId: id,
-                                globalId: gid,
-                                name: this._decodeStepString(rawN),
-                                storey: 'Modelo 3D'
-                            };
+                            if (gid && this.globalIdToElementMap && this.globalIdToElementMap[gid]) {
+                                elemObj = this.globalIdToElementMap[gid];
+                            } else {
+                                const rawN = props.Name ? props.Name.value : `Elemento #${id}`;
+                                elemObj = {
+                                    id: String(id),
+                                    expressId: id,
+                                    globalId: gid,
+                                    name: this._decodeStepString(rawN),
+                                    storey: 'Modelo 3D'
+                                };
+                            }
                         }
                     } catch (e) { }
                 }
@@ -4240,6 +4813,268 @@
         /**
          * Muestra el menú contextual flotante junto a las coordenadas del ratón
          */
+        /**
+         * Construye los criterios de similitud para un elemento BIM inspeccionando todos los elementos del modelo
+         */
+        _buildSimilarCriteria: function (elemObj, expressId) {
+            if (!this.currentIfcData || !this.currentIfcData.elements || !elemObj) return [];
+            const allElems = this.currentIfcData.elements;
+            const getEid = (e) => parseInt(e.expressId !== undefined ? e.expressId : e.id, 10);
+
+            const criteria = [];
+
+            // 1. Familia / Categoría
+            if (elemObj.category) {
+                const matches = allElems.filter(e => e.category === elemObj.category);
+                criteria.push({
+                    key: 'category',
+                    icon: elemObj.icon || '🏷️',
+                    title: 'Familia / Categoría',
+                    detail: elemObj.category,
+                    ids: matches.map(getEid)
+                });
+            }
+
+            // 2. Tipo Constructivo
+            if (elemObj.typeName) {
+                const matches = allElems.filter(e => e.typeName === elemObj.typeName);
+                criteria.push({
+                    key: 'type',
+                    icon: '🧱',
+                    title: 'Tipo Constructivo',
+                    detail: elemObj.typeName,
+                    ids: matches.map(getEid)
+                });
+            }
+
+            // 3. Misma Planta
+            if (elemObj.storey) {
+                const matches = allElems.filter(e => e.storey === elemObj.storey);
+                criteria.push({
+                    key: 'storey',
+                    icon: '🏢',
+                    title: 'Misma Planta / Nivel',
+                    detail: elemObj.storey,
+                    ids: matches.map(getEid)
+                });
+            }
+
+            // 4. Tipo en esta Planta
+            if (elemObj.storey && elemObj.typeName) {
+                const matches = allElems.filter(e => e.storey === elemObj.storey && e.typeName === elemObj.typeName);
+                if (matches.length > 0) {
+                    criteria.push({
+                        key: 'storey_type',
+                        icon: '📌',
+                        title: 'Mismo Tipo en esta Planta',
+                        detail: `${elemObj.storey} · ${elemObj.typeName}`,
+                        ids: matches.map(getEid)
+                    });
+                }
+            }
+
+            // 5. Categoría en esta Planta
+            if (elemObj.storey && elemObj.category && (!elemObj.typeName || elemObj.typeName !== elemObj.category)) {
+                const matches = allElems.filter(e => e.storey === elemObj.storey && e.category === elemObj.category);
+                if (matches.length > 0) {
+                    criteria.push({
+                        key: 'storey_cat',
+                        icon: '🏗️',
+                        title: 'Categoría en esta Planta',
+                        detail: `${elemObj.storey} · ${elemObj.category}`,
+                        ids: matches.map(getEid)
+                    });
+                }
+            }
+
+            // 6. Mismo Nombre exacto
+            if (elemObj.name && elemObj.name !== elemObj.typeName) {
+                const matches = allElems.filter(e => e.name === elemObj.name);
+                if (matches.length > 1) {
+                    criteria.push({
+                        key: 'name',
+                        icon: '🔤',
+                        title: 'Mismo Nombre',
+                        detail: elemObj.name,
+                        ids: matches.map(getEid)
+                    });
+                }
+            }
+
+            // 7. Superficie similar (±10%)
+            const areaVal = elemObj.allQuantities?.netArea || elemObj.allQuantities?.grossArea || elemObj.allQuantities?.netSideArea || (elemObj.unit === 'm2' ? elemObj.quantity : null);
+            if (areaVal && areaVal > 0) {
+                const minA = areaVal * 0.90;
+                const maxA = areaVal * 1.10;
+                const matches = allElems.filter(e => {
+                    const a = e.allQuantities?.netArea || e.allQuantities?.grossArea || e.allQuantities?.netSideArea || (e.unit === 'm2' ? e.quantity : null);
+                    return a && a >= minA && a <= maxA;
+                });
+                criteria.push({
+                    key: 'area',
+                    icon: '📐',
+                    title: 'Superficie Similar (±10%)',
+                    detail: `~${areaVal.toFixed(2)} m² [${minA.toFixed(1)} - ${maxA.toFixed(1)} m²]`,
+                    ids: matches.map(getEid)
+                });
+            }
+
+            // 8. Volumen similar (±10%)
+            const volVal = elemObj.allQuantities?.netVolume || elemObj.allQuantities?.grossVolume || elemObj.allQuantities?.volume || (elemObj.unit === 'm3' ? elemObj.quantity : null);
+            if (volVal && volVal > 0) {
+                const minV = volVal * 0.90;
+                const maxV = volVal * 1.10;
+                const matches = allElems.filter(e => {
+                    const v = e.allQuantities?.netVolume || e.allQuantities?.grossVolume || e.allQuantities?.volume || (e.unit === 'm3' ? e.quantity : null);
+                    return v && v >= minV && v <= maxV;
+                });
+                criteria.push({
+                    key: 'volume',
+                    icon: '🧊',
+                    title: 'Volumen Similar (±10%)',
+                    detail: `~${volVal.toFixed(2)} m³ [${minV.toFixed(1)} - ${maxV.toFixed(1)} m³]`,
+                    ids: matches.map(getEid)
+                });
+            }
+
+            // 9. Longitud / Dimensión similar (±10%)
+            const lenVal = elemObj.allQuantities?.length || elemObj.allQuantities?.height || (elemObj.unit === 'm' ? elemObj.quantity : null);
+            if (lenVal && lenVal > 0) {
+                const minL = lenVal * 0.90;
+                const maxL = lenVal * 1.10;
+                const matches = allElems.filter(e => {
+                    const l = e.allQuantities?.length || e.allQuantities?.height || (e.unit === 'm' ? e.quantity : null);
+                    return l && l >= minL && l <= maxL;
+                });
+                criteria.push({
+                    key: 'length',
+                    icon: '📏',
+                    title: 'Dimensión Similar (±10%)',
+                    detail: `~${lenVal.toFixed(2)} m`,
+                    ids: matches.map(getEid)
+                });
+            }
+
+            // 10. Partida de Presupuesto FIEBDC-3
+            let targetConceptCode = elemObj.budgetConcept?.code;
+            if (!targetConceptCode && window.parsedData && window.parsedData.concepts) {
+                const targetGid = elemObj.globalId;
+                for (const code in window.parsedData.concepts) {
+                    const c = window.parsedData.concepts[code];
+                    if (c.measurements && c.measurements.some(m => m.label && m.label.includes(targetGid))) {
+                        targetConceptCode = c.code;
+                        elemObj.budgetConcept = { code: c.code, summary: c.summary, price: c.price };
+                        break;
+                    }
+                }
+            }
+            if (targetConceptCode && window.parsedData && window.parsedData.concepts) {
+                const c = window.parsedData.concepts[targetConceptCode];
+                const matches = allElems.filter(e => {
+                    if (e.budgetConcept?.code === targetConceptCode) return true;
+                    if (c.measurements && c.measurements.some(m => m.label && m.label.includes(e.globalId))) return true;
+                    return false;
+                });
+                if (matches.length > 0) {
+                    criteria.push({
+                        key: 'budget',
+                        icon: '💶',
+                        title: 'Misma Partida FIEBDC-3',
+                        detail: `${c.code}: ${c.summary || ''}`.substring(0, 30) + '...',
+                        ids: matches.map(getEid)
+                    });
+                }
+            }
+
+            // 11. Entidad IFC
+            if (elemObj.ifcType) {
+                const matches = allElems.filter(e => e.ifcType === elemObj.ifcType);
+                criteria.push({
+                    key: 'ifcType',
+                    icon: '🏛️',
+                    title: 'Entidad IFC',
+                    detail: elemObj.ifcType,
+                    ids: matches.map(getEid)
+                });
+            }
+
+            return criteria;
+        },
+
+        /**
+         * Renderiza dinámicamente las opciones de similitud en el submenú contextual
+         */
+        _renderSimilarSubmenu: function (elemObj, expressId) {
+            const submenu = document.getElementById('v3dCtxSimilarSubmenu');
+            if (!submenu) return;
+
+            const criteria = this._buildSimilarCriteria(elemObj, expressId);
+            if (!criteria || criteria.length === 0) {
+                submenu.innerHTML = '<div style="padding:10px; color:#94a3b8; font-size:0.72rem; text-align:center;">Sin criterios de similitud disponibles</div>';
+                return;
+            }
+
+            let html = '';
+            criteria.forEach(crit => {
+                const count = crit.ids.length;
+                html += `
+                    <button type="button" class="v3d-ctx-submenu-item" data-key="${crit.key}">
+                        <div class="v3d-ctx-submenu-left">
+                            <span class="v3d-ctx-submenu-icon">${crit.icon}</span>
+                            <div class="v3d-ctx-submenu-label-box">
+                                <span class="v3d-ctx-submenu-title">${crit.title}</span>
+                                <span class="v3d-ctx-submenu-detail" title="${crit.detail}">${crit.detail}</span>
+                            </div>
+                        </div>
+                        <span class="v3d-submenu-badge">${count}</span>
+                    </button>
+                `;
+            });
+
+            submenu.innerHTML = html;
+
+            // Enlazar eventos de clic para seleccionar el grupo
+            submenu.querySelectorAll('.v3d-ctx-submenu-item').forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const key = btn.getAttribute('data-key');
+                    const crit = criteria.find(c => c.key === key);
+                    if (crit) {
+                        this.selectSimilar(crit.key, crit.ids, crit);
+                    }
+                };
+            });
+        },
+
+        /**
+         * Ejecuta la selección masiva de elementos similares por un criterio dado
+         */
+        selectSimilar: function (criterionKey, ids, criterionInfo) {
+            const uniqueIds = [...new Set(ids)].map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+            if (uniqueIds.length === 0) return;
+
+            this.selectedExpressIds = uniqueIds;
+            this.selectedSimilarityCriterion = criterionInfo;
+
+            // Resaltar en cian neón todos los elementos coincidentes
+            this.highlightElements(uniqueIds, false);
+
+            // Mostrar el panel lateral con la ficha de selección múltiple
+            this.showMultiElementCard(uniqueIds, criterionInfo);
+
+            // Cerrar menú contextual
+            this.hideContextMenu();
+
+            // Actualizar etiqueta en la barra superior
+            const label = document.getElementById('v3dSelectedLabel');
+            if (label) {
+                label.textContent = `🎯 ${uniqueIds.length} elementos seleccionados (${criterionInfo ? criterionInfo.title : 'Similares'})`;
+            }
+        },
+
+        /**
+         * Muestra el menú contextual flotante junto a las coordenadas del ratón
+         */
         showContextMenu: function (clientX, clientY, elemObj, expressId) {
             const menu = document.getElementById('v3dContextMenu');
             if (!menu || !this.container) return;
@@ -4249,24 +5084,67 @@
             const titleEl = document.getElementById('v3dCtxTitle');
             const subEl = document.getElementById('v3dCtxSubtitle');
             const iconEl = document.getElementById('v3dCtxIcon');
+            const isolateBtn = document.getElementById('v3dCtxIsolateBtn');
+            const hideBtn = document.getElementById('v3dCtxHideBtn');
+            const focusBtn = document.getElementById('v3dCtxFocusBtn');
 
-            const displayTitle = this._formatDisplayTitle(elemObj, expressId);
-            const icon = this._getElementIcon(elemObj);
+            const isMulti = this.selectedExpressIds && this.selectedExpressIds.length > 1;
 
-            if (titleEl) titleEl.textContent = displayTitle;
+            if (isMulti) {
+                if (titleEl) titleEl.textContent = `📦 ${this.selectedExpressIds.length} seleccionados`;
+                if (iconEl) iconEl.textContent = '📦';
+                if (isolateBtn) {
+                    const lbl = isolateBtn.querySelector('.v3d-ctx-item-label');
+                    if (lbl) lbl.textContent = `Aislar selección (${this.selectedExpressIds.length})`;
+                }
+                if (hideBtn) {
+                    const lbl = hideBtn.querySelector('.v3d-ctx-item-label');
+                    if (lbl) lbl.textContent = `Ocultar selección (${this.selectedExpressIds.length})`;
+                }
+                if (focusBtn) {
+                    const lbl = focusBtn.querySelector('.v3d-ctx-item-label');
+                    if (lbl) lbl.textContent = 'Centrar selección';
+                }
+            } else {
+                const displayTitle = this._formatDisplayTitle(elemObj, expressId);
+                const icon = this._getElementIcon(elemObj);
+                if (titleEl) titleEl.textContent = displayTitle;
+                if (iconEl) iconEl.textContent = icon;
+                if (isolateBtn) {
+                    const lbl = isolateBtn.querySelector('.v3d-ctx-item-label');
+                    if (lbl) lbl.textContent = 'Aislar elemento';
+                }
+                if (hideBtn) {
+                    const lbl = hideBtn.querySelector('.v3d-ctx-item-label');
+                    if (lbl) lbl.textContent = 'Ocultar elemento';
+                }
+                if (focusBtn) {
+                    const lbl = focusBtn.querySelector('.v3d-ctx-item-label');
+                    if (lbl) lbl.textContent = 'Centrar elemento';
+                }
+            }
+
             if (subEl) {
                 subEl.textContent = '';
                 subEl.style.display = 'none';
             }
-            if (iconEl) iconEl.textContent = icon;
+
+            // Renderizar criterios de similitud en el submenú dinámico
+            this._renderSimilarSubmenu(elemObj, expressId);
+
+            // Ocultar submenú al abrir el menú principal
+            const submenu = document.getElementById('v3dCtxSimilarSubmenu');
+            if (submenu) submenu.style.display = 'none';
+            const similarWrapper = document.getElementById('v3dCtxSimilarWrapper');
+            if (similarWrapper) similarWrapper.classList.remove('open');
 
             // Calcular posición respecto al contenedor relativo del canvas
             const containerRect = this.container.getBoundingClientRect();
             let posX = clientX - containerRect.left + 14;
             let posY = clientY - containerRect.top + 14;
 
-            const menuWidth = 240;
-            const menuHeight = 200;
+            const menuWidth = 250;
+            const menuHeight = 250;
 
             if (posX + menuWidth > containerRect.width) {
                 posX = Math.max(12, clientX - containerRect.left - menuWidth - 14);
@@ -4286,6 +5164,10 @@
         hideContextMenu: function () {
             const menu = document.getElementById('v3dContextMenu');
             if (menu) menu.style.display = 'none';
+            const submenu = document.getElementById('v3dCtxSimilarSubmenu');
+            if (submenu) submenu.style.display = 'none';
+            const similarWrapper = document.getElementById('v3dCtxSimilarWrapper');
+            if (similarWrapper) similarWrapper.classList.remove('open');
         },
 
         /**
@@ -4317,21 +5199,33 @@
             if (isolateBtn) {
                 isolateBtn.onclick = (e) => {
                     e.stopPropagation();
-                    if (this.selectedExpressId) this.isolateElement(this.selectedExpressId);
+                    if (this.selectedExpressIds && this.selectedExpressIds.length > 1) {
+                        this.isolateElements(this.selectedExpressIds);
+                    } else if (this.selectedExpressId) {
+                        this.isolateElement(this.selectedExpressId);
+                    }
                 };
             }
 
             if (hideBtn) {
                 hideBtn.onclick = (e) => {
                     e.stopPropagation();
-                    if (this.selectedExpressId) this.hideElement(this.selectedExpressId);
+                    if (this.selectedExpressIds && this.selectedExpressIds.length > 1) {
+                        this.hideElements(this.selectedExpressIds);
+                    } else if (this.selectedExpressId) {
+                        this.hideElement(this.selectedExpressId);
+                    }
                 };
             }
 
             if (focusBtn) {
                 focusBtn.onclick = (e) => {
                     e.stopPropagation();
-                    if (this.selectedExpressId) this.focusElement(this.selectedExpressId);
+                    if (this.selectedExpressIds && this.selectedExpressIds.length > 1) {
+                        this.focusElements(this.selectedExpressIds);
+                    } else if (this.selectedExpressId) {
+                        this.focusElement(this.selectedExpressId);
+                    }
                 };
             }
 
@@ -4340,6 +5234,41 @@
                     e.stopPropagation();
                     this.restoreView();
                 };
+            }
+
+            // Eventos para el submenú de Seleccionar Similares
+            const similarWrapper = document.getElementById('v3dCtxSimilarWrapper');
+            const similarBtn = document.getElementById('v3dCtxSimilarBtn');
+            const similarSubmenu = document.getElementById('v3dCtxSimilarSubmenu');
+
+            if (similarWrapper && similarSubmenu) {
+                const showSub = () => {
+                    similarSubmenu.style.display = 'flex';
+                    similarWrapper.classList.add('open');
+                    const containerRect = this.container ? this.container.getBoundingClientRect() : { width: window.innerWidth, right: window.innerWidth };
+                    const menuRect = menu.getBoundingClientRect();
+                    if (menuRect.right + 280 > containerRect.right) {
+                        similarSubmenu.classList.add('to-left');
+                    } else {
+                        similarSubmenu.classList.remove('to-left');
+                    }
+                };
+
+                const hideSub = () => {
+                    similarSubmenu.style.display = 'none';
+                    similarWrapper.classList.remove('open');
+                };
+
+                similarWrapper.addEventListener('mouseenter', showSub);
+                similarWrapper.addEventListener('mouseleave', hideSub);
+
+                if (similarBtn) {
+                    similarBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        if (similarSubmenu.style.display === 'none') showSub();
+                        else hideSub();
+                    };
+                }
             }
 
             // Cerrar menú contextual si se hace clic fuera en cualquier parte del documento
@@ -4351,7 +5280,7 @@
         },
 
         /**
-         * Enfoca y centra la cámara orbital sobre el elemento
+         * Enfoca y centra la cámara orbital sobre un elemento individual
          */
         focusElement: function (idOrGlobalId) {
             let expressId = this._resolveExpressId(idOrGlobalId) || this.selectedExpressId;
@@ -4365,38 +5294,48 @@
             }
 
             const targetMesh = (this.isIsolated && this.isolatedSubset) ? this.isolatedSubset : this.highlightSubset;
-
             if (targetMesh) {
-                const THREE = window.THREE;
-                const box = new THREE.Box3().setFromObject(targetMesh);
-                const center = box.getCenter(new THREE.Vector3());
-                const size = box.getSize(new THREE.Vector3());
-
-                if (!isNaN(center.x) && !isNaN(center.y) && !isNaN(center.z)) {
-                    const maxDim = Math.max(size.x, size.y, size.z, 2.0);
-                    if (this.currentCameraType === 'orthographic' && this.orthographicCamera) {
-                        const dir = this.camera.position.clone().sub(this.controls.target).normalize();
-                        if (dir.lengthSq() === 0) dir.set(0, 1, 0);
-                        this.controls.target.copy(center);
-                        this.camera.position.copy(center.clone().add(dir.multiplyScalar(maxDim * 3.0)));
-                        this.camera.lookAt(center);
-                        this.controls.update();
-                    } else {
-                        const fov = (this.perspectiveCamera ? this.perspectiveCamera.fov : 45) * (Math.PI / 180);
-                        let cameraDist = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 2.2;
-                        if (isNaN(cameraDist) || cameraDist < 4) cameraDist = 8;
-
-                        const dir = this.camera.position.clone().sub(this.controls.target).normalize();
-                        if (dir.lengthSq() === 0) dir.set(1, 1, 1).normalize();
-
-                        this.camera.position.copy(center.clone().add(dir.multiplyScalar(cameraDist)));
-                        this.camera.lookAt(center);
-                        this.controls.target.copy(center);
-                        this.controls.update();
-                    }
-                }
+                this.focusElements([expressId]);
             }
 
+            this.hideContextMenu();
+        },
+
+        /**
+         * Enfoca y centra la cámara orbital sobre un grupo de elementos
+         */
+        focusElements: function (ids) {
+            const targetMesh = (this.isIsolated && this.isolatedSubset) ? this.isolatedSubset : this.highlightSubset;
+            if (!targetMesh || !this.camera || !this.controls) return;
+
+            const THREE = window.THREE;
+            const box = new THREE.Box3().setFromObject(targetMesh);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+
+            if (!isNaN(center.x) && !isNaN(center.y) && !isNaN(center.z)) {
+                const maxDim = Math.max(size.x, size.y, size.z, 2.0);
+                if (this.currentCameraType === 'orthographic' && this.orthographicCamera) {
+                    const dir = this.camera.position.clone().sub(this.controls.target).normalize();
+                    if (dir.lengthSq() === 0) dir.set(0, 1, 0);
+                    this.controls.target.copy(center);
+                    this.camera.position.copy(center.clone().add(dir.multiplyScalar(maxDim * 2.5)));
+                    this.camera.lookAt(center);
+                    this.controls.update();
+                } else {
+                    const fov = (this.perspectiveCamera ? this.perspectiveCamera.fov : 45) * (Math.PI / 180);
+                    let cameraDist = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.8;
+                    if (isNaN(cameraDist) || cameraDist < 4) cameraDist = 8;
+
+                    const dir = this.camera.position.clone().sub(this.controls.target).normalize();
+                    if (dir.lengthSq() === 0) dir.set(1, 1, 1).normalize();
+
+                    this.camera.position.copy(center.clone().add(dir.multiplyScalar(cameraDist)));
+                    this.camera.lookAt(center);
+                    this.controls.target.copy(center);
+                    this.controls.update();
+                }
+            }
             this.hideContextMenu();
         },
 
@@ -4405,9 +5344,18 @@
          */
         isolateElement: function (idOrGlobalId) {
             let expressId = this._resolveExpressId(idOrGlobalId) || this.selectedExpressId;
-            if (!expressId || !this.ifcModel || !this.ifcLoader || !this.ifcLoader.ifcManager) return;
+            if (!expressId) return;
+            this.isolateElements([expressId]);
+        },
 
-            const elemObj = this.expressIdToElementMap[expressId] || this.selectedElement;
+        /**
+         * Aísla un grupo de elementos ocultando el resto del modelo
+         */
+        isolateElements: function (ids) {
+            if (!ids || ids.length === 0 || !this.ifcModel || !this.ifcLoader || !this.ifcLoader.ifcManager) return;
+
+            const validIds = ids.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+            if (validIds.length === 0) return;
 
             // 1. Limpiar cualquier resaltado y aislamiento previo
             this.resetHighlight();
@@ -4420,16 +5368,7 @@
                 }
             });
 
-            // Determinar si el elemento aislado es de una categoría sólida
-            let isSolid = true;
-            if (this.currentIfcData && this.currentIfcData.elements) {
-                const elemObj = this.currentIfcData.elements.find(e => (e.expressId !== undefined ? e.expressId : e.id) == expressId);
-                if (elemObj) {
-                    isSolid = this._isSolidCategory(elemObj.category, elemObj.type);
-                }
-            }
-
-            // 3. Crear subset exclusivo para el elemento aislado con estilo Blueprint
+            // 3. Crear subset exclusivo para el grupo aislado con estilo Blueprint
             const THREE = window.THREE;
             const planes = this.activeClippingPlane ? [this.activeClippingPlane] : [];
             const isolatedMat = new THREE.MeshLambertMaterial({
@@ -4446,7 +5385,7 @@
             try {
                 this.isolatedSubset = this.ifcLoader.ifcManager.createSubset({
                     modelID: this.ifcModel.modelID,
-                    ids: [expressId],
+                    ids: validIds,
                     scene: this.scene,
                     material: isolatedMat,
                     removePrevious: true,
@@ -4458,16 +5397,17 @@
                     if (this.isolatedSubset.parent !== this.scene) {
                         this.scene.add(this.isolatedSubset);
                     }
-                    this._attachBlueprintDecorations(this.isolatedSubset, planes, isSolid);
+                    this._attachBlueprintDecorations(this.isolatedSubset, planes, true);
                 }
             } catch (err) {
                 console.warn("IFCViewer3D: Error creando subset aislado:", err);
             }
 
             this.isIsolated = true;
-            this.isolatedExpressId = expressId;
+            this.isolatedExpressId = validIds.length === 1 ? validIds[0] : null;
+            this.isolatedExpressIds = validIds;
 
-            // Sincronizar tapas macizas con el elemento aislado
+            // Sincronizar tapas macizas con los elementos aislados
             if (this.activeClippingPlane) {
                 this._lastStencilKey = null;
                 const axis = this.sectionConfig.active ? this.sectionConfig.axis : 'Y';
@@ -4476,35 +5416,9 @@
                 this._updateSectionCaps(axis, val, inv);
             }
 
-            // 4. Centrar y enfocar directamente en el elemento aislado sin superponer resaltado cian
+            // 4. Centrar y enfocar en el grupo aislado
             if (this.isolatedSubset && this.camera && this.controls) {
-                const box = new THREE.Box3().setFromObject(this.isolatedSubset);
-                const center = box.getCenter(new THREE.Vector3());
-                const size = box.getSize(new THREE.Vector3());
-
-                if (!isNaN(center.x) && !isNaN(center.y) && !isNaN(center.z)) {
-                    const maxDim = Math.max(size.x, size.y, size.z, 2.0);
-                    if (this.currentCameraType === 'orthographic' && this.orthographicCamera) {
-                        const dir = this.camera.position.clone().sub(this.controls.target).normalize();
-                        if (dir.lengthSq() === 0) dir.set(0, 1, 0);
-                        this.controls.target.copy(center);
-                        this.camera.position.copy(center.clone().add(dir.multiplyScalar(maxDim * 3.0)));
-                        this.camera.lookAt(center);
-                        this.controls.update();
-                    } else {
-                        const fov = (this.perspectiveCamera ? this.perspectiveCamera.fov : 45) * (Math.PI / 180);
-                        let cameraDist = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 2.2;
-                        if (isNaN(cameraDist) || cameraDist < 4) cameraDist = 8;
-
-                        const dir = this.camera.position.clone().sub(this.controls.target).normalize();
-                        if (dir.lengthSq() === 0) dir.set(1, 1, 1).normalize();
-
-                        this.camera.position.copy(center.clone().add(dir.multiplyScalar(cameraDist)));
-                        this.camera.lookAt(center);
-                        this.controls.target.copy(center);
-                        this.controls.update();
-                    }
-                }
+                this.focusElements(validIds);
             }
 
             // 5. Ocultar menú contextual
@@ -4513,8 +5427,13 @@
             // 6. Actualizar barra de información
             const label = document.getElementById('v3dSelectedLabel');
             if (label) {
-                const displayTitle = this._formatDisplayTitle(elemObj, expressId);
-                label.textContent = `👁️‍🗨️ Elemento Aislado: ${displayTitle} (Pulsa 'Restaurar' para volver)`;
+                if (validIds.length === 1) {
+                    const elemObj = this.expressIdToElementMap[validIds[0]];
+                    const displayTitle = this._formatDisplayTitle(elemObj, validIds[0]);
+                    label.textContent = `👁️‍🗨️ Elemento Aislado: ${displayTitle} (Pulsa 'Restaurar' para volver)`;
+                } else {
+                    label.textContent = `👁️‍🗨️ ${validIds.length} Elementos Aislados (Pulsa 'Restaurar' para volver)`;
+                }
             }
         },
 
@@ -4523,46 +5442,50 @@
          */
         hideElement: function (idOrGlobalId) {
             let expressId = this._resolveExpressId(idOrGlobalId) || this.selectedExpressId;
-            if (!expressId || !this.ifcModel) return;
+            if (!expressId) return;
+            this.hideElements([expressId]);
+        },
 
-            this.hiddenElementIds.add(expressId);
+        /**
+         * Oculta un grupo de elementos de la escena
+         */
+        hideElements: function (ids) {
+            if (!ids || ids.length === 0 || !this.ifcModel) return;
 
-            // Si estaba en modo aislado este elemento y se oculta, restaurar vista
-            if (this.isIsolated && this.isolatedExpressId === expressId) {
+            const validIds = ids.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+            if (validIds.length === 0) return;
+
+            validIds.forEach(id => this.hiddenElementIds.add(id));
+
+            // Si estábamos en modo aislado y se ocultan los elementos aislados, restaurar vista
+            if (this.isIsolated && this.isolatedExpressIds && this.isolatedExpressIds.some(id => validIds.includes(id))) {
                 this.restoreView();
                 return;
             }
 
-            // Buscar categoría correspondiente y reconstruir sin este elemento
-            let targetCatKey = null;
+            // Buscar categorías afectadas y reconstruir
             for (const key in this.categorySubsets) {
                 const cat = this.categorySubsets[key];
-                if (cat && cat.ids && cat.ids.includes(expressId)) {
-                    targetCatKey = key;
-                    break;
+                if (cat && cat.ids) {
+                    const hasHidden = cat.ids.some(id => validIds.includes(id));
+                    if (hasHidden) {
+                        const remainingIds = cat.ids.filter(id => !this.hiddenElementIds.has(id));
+                        if (remainingIds.length === 0) {
+                            cat.mesh.visible = false;
+                        } else {
+                            this._rebuildCategorySubset(key, remainingIds);
+                        }
+                    }
                 }
             }
 
-            if (targetCatKey) {
-                const cat = this.categorySubsets[targetCatKey];
-                const remainingIds = cat.ids.filter(id => !this.hiddenElementIds.has(id));
-                if (remainingIds.length === 0) {
-                    cat.mesh.visible = false;
-                } else {
-                    this._rebuildCategorySubset(targetCatKey, remainingIds);
-                }
-            }
-
-            // Deseleccionar si coincide con el elemento activo
-            if (this.selectedExpressId === expressId) {
-                this.resetHighlight();
-            }
-
+            // Deseleccionar si coincide con la selección activa
+            this.resetHighlight();
             this.hideContextMenu();
 
             const label = document.getElementById('v3dSelectedLabel');
             if (label) {
-                label.textContent = `🚫 Elemento #${expressId} ocultado (${this.hiddenElementIds.size} ocultados · Pulsa 'Restaurar vista' para ver todo)`;
+                label.textContent = `🚫 ${validIds.length} elementos ocultados (${this.hiddenElementIds.size} ocultados en total · Pulsa 'Restaurar vista')`;
             }
         },
 
@@ -4704,6 +5627,865 @@
             if (label) {
                 label.textContent = 'Vista restaurada: Mostrando todo el modelo';
             }
+        },
+
+        /**
+         * Renderiza una probeta 3D axonométrica interactiva del elemento multicapa.
+         * Muestra la estratigrafía volumétrica con caras 3D, texturas constructivas, indicación
+         * clara de CARA EXTERIOR e INTERIOR, elevación dinámica de capa en hover y cotas en mm.
+         */
+        _renderIsometricMultilayer: function(canvas, layers, activeIdx, isHorizontal) {
+            if (!canvas || !layers || layers.length === 0) return;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            const dpr = window.devicePixelRatio || 1;
+            const w = canvas.clientWidth || 340;
+            const h = canvas.clientHeight || 128;
+
+            if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+                canvas.width = Math.round(w * dpr);
+                canvas.height = Math.round(h * dpr);
+            }
+
+            ctx.save();
+            ctx.scale(dpr, dpr);
+            ctx.clearRect(0, 0, w, h);
+
+            // 1. Fondo técnico Blueprint con cuadrícula sutil
+            const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+            bgGrad.addColorStop(0, '#0a1022');
+            bgGrad.addColorStop(1, '#060a17');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, w, h);
+
+            // Rejilla de fondo
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.05)';
+            ctx.lineWidth = 1;
+            for (let x = 15; x < w; x += 20) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, h);
+                ctx.stroke();
+            }
+            for (let y = 15; y < h; y += 20) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(w, y);
+                ctx.stroke();
+            }
+
+            const totalThickM = layers.reduce((sum, l) => sum + (l.thickness || 0), 0);
+            const totalThickMm = Math.round(totalThickM * 1000) || 300;
+
+            // Paleta y tramas de materiales constructivos
+            const getMatStyle = (matName, isExt, isInt) => {
+                const mn = (matName || '').toLowerCase();
+                if (mn.includes('ladrillo') || mn.includes('fábrica') || mn.includes('fabrica') || mn.includes('tocho') || mn.includes('termoarcilla') || mn.includes('perforado') || mn.includes('bovedilla')) {
+                    return { base: '#c2410c', top: '#ea580c', side: '#9a3412', pattern: 'brick', name: 'Ladrillo / Bovedilla' };
+                }
+                if (mn.includes('aisl') || mn.includes('xps') || mn.includes('eps') || mn.includes('lana') || mn.includes('poliuretano') || mn.includes('mineral')) {
+                    return { base: '#eab308', top: '#fde047', side: '#ca8a04', pattern: 'insul', name: 'Aislamiento Térmico' };
+                }
+                if (mn.includes('aire') || mn.includes('cámara') || mn.includes('camara') || mn.includes('ventilada')) {
+                    return { base: 'rgba(56, 189, 248, 0.22)', top: 'rgba(56, 189, 248, 0.4)', side: 'rgba(14, 116, 144, 0.3)', pattern: 'air', name: 'Cámara de Aire' };
+                }
+                if (mn.includes('yeso') || mn.includes('enlucido') || mn.includes('guarnecido') || mn.includes('pintura')) {
+                    return { base: '#e2e8f0', top: '#f8fafc', side: '#cbd5e1', pattern: 'smooth', name: 'Acabado Interior' };
+                }
+                if (mn.includes('placa') || mn.includes('pyl') || mn.includes('pladur') || mn.includes('cartón') || mn.includes('carton') || mn.includes('trasdosado') || mn.includes('techo')) {
+                    return { base: '#94a3b8', top: '#cbd5e1', side: '#64748b', pattern: 'board', name: 'Placa Yeso / Falso Techo' };
+                }
+                if (mn.includes('mortero') || mn.includes('cemento') || mn.includes('enfoscado') || mn.includes('hormigón') || mn.includes('hormigon') || mn.includes('chapa') || mn.includes('compresion') || mn.includes('forjado')) {
+                    return { base: '#64748b', top: '#94a3b8', side: '#475569', pattern: 'concrete', name: 'Hormigón / Mortero' };
+                }
+                if (mn.includes('pavimento') || mn.includes('baldosa') || mn.includes('gres') || mn.includes('tarima') || mn.includes('madera') || mn.includes('parquet')) {
+                    return { base: '#b45309', top: '#d97706', side: '#78350f', pattern: 'wood', name: 'Pavimento' };
+                }
+                if (mn.includes('piedra') || mn.includes('granito') || mn.includes('mármol') || mn.includes('marmol') || mn.includes('pizarra')) {
+                    return { base: '#475569', top: '#64748b', side: '#334155', pattern: 'stone', name: 'Piedra Natural' };
+                }
+                if (mn.includes('impermeabiliz') || mn.includes('asfalt') || mn.includes('lamina') || mn.includes('lámina') || mn.includes('epdm')) {
+                    return { base: '#334155', top: '#475569', side: '#1e293b', pattern: 'smooth', name: 'Lámina Impermeabilizante' };
+                }
+                if (isExt) {
+                    return { base: '#d97706', top: '#fbbf24', side: '#b45309', pattern: 'facade', name: 'Rev. Exterior / Pavimento' };
+                }
+                if (isInt) {
+                    return { base: '#38bdf8', top: '#7dd3fc', side: '#0284c7', pattern: 'smooth', name: 'Rev. Interior / Techo' };
+                }
+                return { base: '#0284c7', top: '#38bdf8', side: '#0369a1', pattern: 'hatch', name: matName };
+            };
+
+            if (isHorizontal) {
+                // =========================================================================
+                // A) MODO FORJADO / CUBIERTA / PAVIMENTO (Giro 90°: Exterior Arriba, Interior Abajo)
+                // =========================================================================
+                const badgeW = 72;
+                const badgeH = 18;
+                const depth = 22;
+                const D_projX = Math.round(depth * 0.707);            // Fuga Caballera a 45° (X) ~16px
+                const D_projY = Math.round(depth * 0.707);            // Fuga Caballera a 45° (Y) ~16px
+                const gapLeft = 10;
+                const gapRight = 10;
+                const cotaTextW = 46;                                 // Ancho estimado para texto 'e = XXX mm'
+
+                // Cálculo óptico de centrado simétrico global: [Badges Izq] + [Bloque 3D] + [Cota Dcha]
+                const nonBlockW = badgeW + gapLeft + D_projX + gapRight + cotaTextW;
+                const W_block = Math.max(110, Math.min(180, w - nonBlockW - 24)); // Ancho frontal del forjado adaptativo
+                const totalCompW = badgeW + gapLeft + W_block + D_projX + gapRight + cotaTextW;
+                const startX = Math.max(6, Math.round((w - totalCompW) / 2));
+
+                const ox = startX + badgeW + gapLeft;
+                const H_thick = Math.min(Math.round(h * 0.48), 62);  // Espesor total en vertical acotado a 128px
+                const oy = Math.round((h - H_thick + D_projY) / 2);  // Centrado vertical exacto
+
+                const minH = Math.max(7, Math.floor(H_thick / (layers.length * 2.2)));
+                let rawHeights = layers.map(l => {
+                    const ratio = totalThickM > 0 ? ((l.thickness || 0.01) / totalThickM) : (1 / layers.length);
+                    return Math.max(minH, ratio * H_thick);
+                });
+                const sumRawH = rawHeights.reduce((a, b) => a + b, 0);
+                const heights = rawHeights.map(rh => (rh / sumRawH) * H_thick);
+
+                this._layerPolygons = [];
+                let currentY = 0;
+
+                const layerGeoms = layers.map((layer, idx) => {
+                    const isExt = (idx === 0);
+                    const isInt = (idx === layers.length - 1);
+                    const y0 = currentY;
+                    const y1 = currentY + heights[idx];
+                    currentY = y1;
+
+                    const isHovered = (activeIdx === idx);
+                    const liftY = isHovered ? 6 : 0; // Elevación vertical sutil en hover
+
+                    // Coordenadas frontales (sección transversal perpendicular 100% CAD)
+                    const fTL = { x: ox, y: oy + y0 - liftY };
+                    const fTR = { x: ox + W_block, y: oy + y0 - liftY };
+                    const fBR = { x: ox + W_block, y: oy + y1 - liftY };
+                    const fBL = { x: ox, y: oy + y1 - liftY };
+
+                    // Coordenadas posteriores (Fuga Caballera a 45°)
+                    const bTL = { x: fTL.x + D_projX, y: fTL.y - D_projY };
+                    const bTR = { x: fTR.x + D_projX, y: fTR.y - D_projY };
+                    const bBR = { x: fBR.x + D_projX, y: fBR.y - D_projY };
+                    const bBL = { x: fBL.x + D_projX, y: fBL.y - D_projY };
+
+                    const style = getMatStyle(layer.materialName, isExt, isInt);
+                    const thickMm = Math.round((layer.thickness || 0) * 1000);
+
+                    // Polígono de detección interactiva
+                    const poly = isExt
+                        ? [[fBL.x, fBL.y], [fTL.x, fTL.y], [bTL.x, bTL.y], [bTR.x, bTR.y], [bBR.x, bBR.y], [fBR.x, fBR.y]]
+                        : [[fBL.x, fBL.y], [fTL.x, fTL.y], [fTR.x, fTR.y], [bTR.x, bTR.y], [bBR.x, bBR.y], [fBR.x, fBR.y]];
+
+                    return {
+                        layer,
+                        idx,
+                        isExt,
+                        isInt,
+                        isHovered,
+                        liftY,
+                        thickMm,
+                        style,
+                        fBL, fBR, fTR, fTL,
+                        bTL, bTR, bBR, bBL,
+                        poly
+                    };
+                });
+
+                this._layerPolygons = layerGeoms.map(lg => ({
+                    index: lg.idx,
+                    poly: lg.poly,
+                    layer: lg.layer,
+                    thickMm: lg.thickMm
+                }));
+
+                // Sombra si hay capa elevada
+                layerGeoms.forEach(lg => {
+                    if (lg.isHovered) {
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.rect(lg.fBL.x, lg.fBL.y + 2, W_block + D_projX, 4);
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+                        ctx.shadowBlur = 6;
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                });
+
+                // Dibujar capas ordenadas (no-hovered primero, hovered al final)
+                const sortedGeoms = [...layerGeoms].sort((a, b) => (a.isHovered ? 1 : 0) - (b.isHovered ? 1 : 0));
+
+                sortedGeoms.forEach(lg => {
+                    const { style, isHovered, fBL, fBR, fTR, fTL, bTL, bTR, bBR, bBL, isExt } = lg;
+
+                    // 1. CARA SUPERIOR (Canto superior / superficie)
+                    if (isExt || isHovered) {
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.moveTo(fTL.x, fTL.y);
+                        ctx.lineTo(bTL.x, bTL.y);
+                        ctx.lineTo(bTR.x, bTR.y);
+                        ctx.lineTo(fTR.x, fTR.y);
+                        ctx.closePath();
+                        ctx.fillStyle = isHovered ? '#38bdf8' : style.top;
+                        ctx.fill();
+
+                        ctx.strokeStyle = isHovered ? '#ffffff' : 'rgba(255, 255, 255, 0.35)';
+                        ctx.lineWidth = isHovered ? 1.5 : 0.8;
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+
+                    // 2. CARA LATERAL DERECHA (Canto del forjado fugando a 45°)
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.moveTo(fTR.x, fTR.y);
+                    ctx.lineTo(bTR.x, bTR.y);
+                    ctx.lineTo(bBR.x, bBR.y);
+                    ctx.lineTo(fBR.x, fBR.y);
+                    ctx.closePath();
+                    ctx.fillStyle = isHovered ? '#0284c7' : style.side;
+                    ctx.fill();
+
+                    ctx.strokeStyle = isHovered ? '#ffffff' : 'rgba(255, 255, 255, 0.25)';
+                    ctx.lineWidth = isHovered ? 1.5 : 0.8;
+                    ctx.stroke();
+                    ctx.restore();
+
+                    // 3. CARA LATERAL IZQUIERDA (si está elevada en hover)
+                    if (isHovered) {
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.moveTo(fBL.x, fBL.y);
+                        ctx.lineTo(fTL.x, fTL.y);
+                        ctx.lineTo(bTL.x, bTL.y);
+                        ctx.lineTo(bBL.x, bBL.y);
+                        ctx.closePath();
+                        ctx.fillStyle = style.side;
+                        ctx.fill();
+
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 1.2;
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+
+                    // 4. CARA FRONTAL: SECCIÓN 100% PERPENDICULAR (Rectángulo en Verdadera Magnitud)
+                    ctx.save();
+                    const rectW = fBR.x - fBL.x;
+                    const rectH = fBL.y - fTL.y;
+
+                    ctx.beginPath();
+                    ctx.rect(fTL.x, fTL.y, rectW, rectH);
+                    ctx.fillStyle = isHovered ? 'rgba(56, 189, 248, 0.9)' : style.base;
+                    ctx.fill();
+
+                    // Tramas constructivas según tipología
+                    ctx.save();
+                    ctx.clip();
+
+                    if (style.pattern === 'concrete') {
+                        // Hormigón / mortero en forjados
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                        for (let px = fTL.x + 10; px < fBR.x; px += 18) {
+                            ctx.fillRect(px, fTL.y + rectH * 0.35, 2, 2);
+                            ctx.fillRect(px + 8, fTL.y + rectH * 0.65, 1.5, 1.5);
+                        }
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+                        ctx.lineWidth = 0.8;
+                        for (let px = fTL.x + 14; px < fBR.x; px += 24) {
+                            ctx.beginPath();
+                            ctx.moveTo(px, fTL.y + rectH * 0.2);
+                            ctx.lineTo(px + 4, fTL.y + rectH * 0.8);
+                            ctx.stroke();
+                        }
+                    } else if (style.pattern === 'brick') {
+                        // Bovedillas cerámicas
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                        ctx.lineWidth = 0.8;
+                        for (let x = fTL.x + 16; x < fBR.x; x += 16) {
+                            ctx.beginPath();
+                            ctx.moveTo(x, fTL.y);
+                            ctx.lineTo(x, fBL.y);
+                            ctx.stroke();
+                        }
+                    } else if (style.pattern === 'insul') {
+                        // Aislamiento (zigzag horizontal)
+                        ctx.strokeStyle = 'rgba(0, 0, 0, 0.55)';
+                        ctx.lineWidth = 1.2;
+                        const midY = (fTL.y + fBL.y) / 2;
+                        ctx.beginPath();
+                        ctx.moveTo(fTL.x, midY);
+                        let zig = false;
+                        for (let x = fTL.x + 4; x < fBR.x; x += 4) {
+                            const y = midY + (zig ? 2.5 : -2.5);
+                            ctx.lineTo(x, y);
+                            zig = !zig;
+                        }
+                        ctx.lineTo(fBR.x, midY);
+                        ctx.stroke();
+                    } else if (style.pattern === 'air') {
+                        // Cámara de aire / falso techo
+                        ctx.strokeStyle = '#38bdf8';
+                        ctx.lineWidth = 1;
+                        ctx.setLineDash([4, 4]);
+                        const midY = (fTL.y + fBL.y) / 2;
+                        ctx.beginPath();
+                        ctx.moveTo(fTL.x, midY);
+                        ctx.lineTo(fBR.x, midY);
+                        ctx.stroke();
+                    } else if (style.pattern === 'wood') {
+                        // Tarima / pavimento
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+                        ctx.lineWidth = 0.8;
+                        for (let x = fTL.x + 22; x < fBR.x; x += 22) {
+                            ctx.beginPath();
+                            ctx.moveTo(x, fTL.y);
+                            ctx.lineTo(x, fBL.y);
+                            ctx.stroke();
+                        }
+                    }
+
+                    ctx.restore();
+
+                    // Contorno frontal nítido
+                    ctx.strokeStyle = isHovered ? '#ffffff' : 'rgba(255, 255, 255, 0.5)';
+                    ctx.lineWidth = isHovered ? 2 : 1;
+                    ctx.stroke();
+
+                    if (isHovered) {
+                        ctx.strokeStyle = '#38bdf8';
+                        ctx.lineWidth = 2.5;
+                        ctx.stroke();
+                    }
+                    ctx.restore();
+
+                    // Número identificativo de capa
+                    ctx.save();
+                    const centerX = (fTL.x + fBR.x) / 2;
+                    const centerY = (fTL.y + fBL.y) / 2;
+                    ctx.fillStyle = isHovered ? '#ffffff' : (style.pattern === 'insul' || style.pattern === 'smooth' ? '#0f172a' : '#ffffff');
+                    ctx.font = 'bold 9px system-ui, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(`${lg.idx + 1}`, centerX, centerY);
+                    ctx.restore();
+                });
+
+                // CARTELAS: ☀️ EXTERIOR (Arriba) y 🏠 INTERIOR (Abajo) en margen izquierdo centrado
+                const extGeom = layerGeoms[0];
+                const intGeom = layerGeoms[layerGeoms.length - 1];
+                if (extGeom && intGeom) {
+                    const callXExt = startX;
+                    const callXInt = startX;
+
+                    // A) EXTERIOR (Arriba, alineada a la capa 0)
+                    const midYExt = (extGeom.fTL.y + extGeom.fBL.y) / 2;
+                    const callYExt = Math.round(midYExt - badgeH / 2);
+
+                    ctx.save();
+                    // Línea directriz horizontal hacia la capa 0
+                    ctx.strokeStyle = '#fbbf24';
+                    ctx.lineWidth = 1.2;
+                    ctx.setLineDash([2, 2]);
+                    ctx.beginPath();
+                    ctx.moveTo(callXExt + badgeW, midYExt);
+                    ctx.lineTo(ox - 3, midYExt);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    // Punto snap
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.beginPath();
+                    ctx.arc(ox - 3, midYExt, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Insignia EXTERIOR
+                    ctx.fillStyle = 'rgba(245, 158, 11, 0.2)';
+                    ctx.strokeStyle = '#fbbf24';
+                    ctx.lineWidth = 1.2;
+                    ctx.beginPath();
+                    if (ctx.roundRect) ctx.roundRect(callXExt, callYExt, badgeW, badgeH, 4);
+                    else ctx.rect(callXExt, callYExt, badgeW, badgeH);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.font = 'bold 8px system-ui, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('☀️ EXTERIOR', callXExt + badgeW / 2, callYExt + badgeH / 2);
+                    ctx.restore();
+
+                    // B) INTERIOR (Abajo, alineada a la capa N-1)
+                    const midYInt = (intGeom.fTL.y + intGeom.fBL.y) / 2;
+                    const callYInt = Math.round(midYInt - badgeH / 2);
+
+                    ctx.save();
+                    // Línea directriz horizontal hacia la capa N-1
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 1.2;
+                    ctx.setLineDash([2, 2]);
+                    ctx.beginPath();
+                    ctx.moveTo(callXInt + badgeW, midYInt);
+                    ctx.lineTo(ox - 3, midYInt);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    // Punto snap
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.beginPath();
+                    ctx.arc(ox - 3, midYInt, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Insignia INTERIOR
+                    ctx.fillStyle = 'rgba(56, 189, 248, 0.2)';
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 1.2;
+                    ctx.beginPath();
+                    if (ctx.roundRect) ctx.roundRect(callXInt, callYInt, badgeW, badgeH, 4);
+                    else ctx.rect(callXInt, callYInt, badgeW, badgeH);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.font = 'bold 8px system-ui, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('🏠 INTERIOR', callXInt + badgeW / 2, callYInt + badgeH / 2);
+                    ctx.restore();
+
+                    // C) COTA TÉCNICA DE ESPESOR TOTAL (Vertical en margen derecho perfectamente equilibrado)
+                    ctx.save();
+                    const dimX = ox + W_block + D_projX + gapRight;
+                    const dimY0 = extGeom.fTL.y;
+                    const dimY1 = intGeom.fBL.y;
+
+                    ctx.strokeStyle = 'rgba(148, 163, 184, 0.6)';
+                    ctx.lineWidth = 1;
+
+                    // Líneas de referencia horizontales
+                    ctx.beginPath();
+                    ctx.moveTo(ox + W_block + 3, dimY0);
+                    ctx.lineTo(dimX + 3, dimY0);
+                    ctx.moveTo(ox + W_block + 3, dimY1);
+                    ctx.lineTo(dimX + 3, dimY1);
+                    ctx.stroke();
+
+                    // Línea de cota vertical
+                    ctx.beginPath();
+                    ctx.moveTo(dimX, dimY0);
+                    ctx.lineTo(dimX, dimY1);
+                    ctx.stroke();
+
+                    // Flechas técnicas verticales
+                    const vArrow = (y, dir) => {
+                        ctx.beginPath();
+                        ctx.moveTo(dimX, y);
+                        ctx.lineTo(dimX - 2.5, y + dir * 4);
+                        ctx.lineTo(dimX + 2.5, y + dir * 4);
+                        ctx.closePath();
+                        ctx.fillStyle = 'rgba(148, 163, 184, 0.9)';
+                        ctx.fill();
+                    };
+                    vArrow(dimY0, 1);
+                    vArrow(dimY1, -1);
+
+                    // Texto de cota
+                    ctx.fillStyle = '#e2e8f0';
+                    ctx.font = '600 8.5px "JetBrains Mono", monospace';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(`e = ${totalThickMm} mm`, dimX + 5, (dimY0 + dimY1) / 2);
+                    ctx.restore();
+                }
+            } else {
+                // =========================================================================
+                // B) MODO MURO / CERRAMIENTO VERTICAL (Exterior Izquierda, Interior Derecha)
+                // =========================================================================
+                const badgeW = 70;
+                const badgeH = 18;
+                const depth = 22;                                     // Profundidad caballera
+                const D_projX = Math.round(depth * 0.707);            // Fuga a 45° (X) ~16px
+                const D_projY = Math.round(depth * 0.707);            // Fuga a 45° (Y) ~16px
+                const gapL = 8;
+                const gapR = 8;
+
+                // Ancho del bloque ajustado para encajar con las dos cartelas a los lados
+                const nonWallW = badgeW * 2 + gapL + gapR + D_projX;
+                const W_thick = Math.max(105, Math.min(155, w - nonWallW - 20)); // Ancho frontal del muro
+                const H_block = 64;                                   // Altura del corte de muro acotada a 128px
+
+                // Centrado simétrico horizontal: [Badge Ext] + [Bloque Muro] + [Badge Int]
+                const totalCompW = badgeW + gapL + W_thick + D_projX + gapR + badgeW;
+                const startX = Math.max(6, Math.round((w - totalCompW) / 2));
+
+                const callXExt = startX;
+                const ox = startX + badgeW + gapL;
+                const callXInt = ox + W_thick + D_projX + gapR;
+                const oy = Math.round(h * 0.78);                      // ~100px en canvas h=128
+
+                // Calcular ancho proporcional de cada capa garantizando un mínimo visible
+                const minW = Math.max(8, Math.floor(W_thick / (layers.length * 2.2)));
+                let rawWidths = layers.map(l => {
+                    const ratio = totalThickM > 0 ? ((l.thickness || 0.01) / totalThickM) : (1 / layers.length);
+                    return Math.max(minW, ratio * W_thick);
+                });
+                const sumRaw = rawWidths.reduce((a, b) => a + b, 0);
+                const widths = rawWidths.map(rw => (rw / sumRaw) * W_thick);
+
+                this._layerPolygons = [];
+                let currentX = 0;
+
+                const layerGeoms = layers.map((layer, idx) => {
+                    const isExt = (idx === 0);
+                    const isInt = (idx === layers.length - 1);
+                    const x0 = currentX;
+                    const x1 = currentX + widths[idx];
+                    currentX = x1;
+
+                    const isHovered = (activeIdx === idx);
+                    const liftY = isHovered ? 6 : 0; // Elevación vertical en hover
+
+                    // Coordenadas frontales (Verdadera Magnitud)
+                    const fBL = { x: ox + x0, y: oy - liftY };
+                    const fBR = { x: ox + x1, y: oy - liftY };
+                    const fTR = { x: ox + x1, y: oy - H_block - liftY };
+                    const fTL = { x: ox + x0, y: oy - H_block - liftY };
+
+                    // Coordenadas posteriores (Fuga Caballera a 45°)
+                    const bTL = { x: fTL.x + D_projX, y: fTL.y - D_projY };
+                    const bTR = { x: fTR.x + D_projX, y: fTR.y - D_projY };
+                    const bBR = { x: fBR.x + D_projX, y: fBR.y - D_projY };
+                    const bBL = { x: fBL.x + D_projX, y: fBL.y - D_projY };
+
+                    const style = getMatStyle(layer.materialName, isExt, isInt);
+                    const thickMm = Math.round((layer.thickness || 0) * 1000);
+
+                    // Polígono de detección interactiva
+                    const poly = isInt
+                        ? [[fTL.x, fTL.y], [bTL.x, bTL.y], [bTR.x, bTR.y], [bBR.x, bBR.y], [fBR.x, fBR.y], [fBL.x, fBL.y]]
+                        : [[fTL.x, fTL.y], [bTL.x, bTL.y], [bTR.x, bTR.y], [fTR.x, fTR.y], [fBR.x, fBR.y], [fBL.x, fBL.y]];
+
+                    return {
+                        layer,
+                        idx,
+                        isExt,
+                        isInt,
+                        isHovered,
+                        liftY,
+                        thickMm,
+                        style,
+                        fBL, fBR, fTR, fTL,
+                        bTL, bTR, bBR, bBL,
+                        poly
+                    };
+                });
+
+                this._layerPolygons = layerGeoms.map(lg => ({
+                    index: lg.idx,
+                    poly: lg.poly,
+                    layer: lg.layer,
+                    thickMm: lg.thickMm
+                }));
+
+                // Sombra suave de la base cuando hay una capa elevada
+                layerGeoms.forEach(lg => {
+                    if (lg.isHovered) {
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.rect(lg.fBL.x, oy + 2, lg.fBR.x - lg.fBL.x, 3);
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+                        ctx.shadowBlur = 6;
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                });
+
+                // Dibujar capas constructivas
+                layerGeoms.forEach(lg => {
+                    const { style, isHovered, fBL, fBR, fTR, fTL, bTL, bTR, bBR, bBL, isExt, isInt } = lg;
+
+                    // A) CARA SUPERIOR (Canto superior en caballera)
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.moveTo(fTL.x, fTL.y);
+                    ctx.lineTo(bTL.x, bTL.y);
+                    ctx.lineTo(bTR.x, bTR.y);
+                    ctx.lineTo(fTR.x, fTR.y);
+                    ctx.closePath();
+                    ctx.fillStyle = isHovered ? '#38bdf8' : style.top;
+                    ctx.fill();
+
+                    ctx.strokeStyle = isHovered ? '#ffffff' : 'rgba(255, 255, 255, 0.35)';
+                    ctx.lineWidth = isHovered ? 1.5 : 0.8;
+                    ctx.stroke();
+                    ctx.restore();
+
+                    // B) CARA LATERAL DERECHA (Cara interior del muro o lateral en hover)
+                    if (isInt || isHovered) {
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.moveTo(fBR.x, fBR.y);
+                        ctx.lineTo(fTR.x, fTR.y);
+                        ctx.lineTo(bTR.x, bTR.y);
+                        ctx.lineTo(bBR.x, bBR.y);
+                        ctx.closePath();
+                        ctx.fillStyle = isHovered ? '#0284c7' : style.side;
+                        ctx.fill();
+
+                        ctx.strokeStyle = isHovered ? '#ffffff' : 'rgba(255, 255, 255, 0.25)';
+                        ctx.lineWidth = isHovered ? 1.5 : 0.8;
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+
+                    // C) CARA LATERAL IZQUIERDA (si está elevada en hover)
+                    if (isHovered && !isExt) {
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.moveTo(fBL.x, fBL.y);
+                        ctx.lineTo(fTL.x, fTL.y);
+                        ctx.lineTo(bTL.x, bTL.y);
+                        ctx.lineTo(bBL.x, bBL.y);
+                        ctx.closePath();
+                        ctx.fillStyle = style.side;
+                        ctx.fill();
+
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 1.2;
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+
+                    // D) CARA FRONTAL: SECCIÓN TRANSVERSAL 100% PERPENDICULAR (Rectángulo perfecto)
+                    ctx.save();
+                    const rectW = fBR.x - fBL.x;
+                    const rectH = fBL.y - fTL.y;
+
+                    ctx.beginPath();
+                    ctx.rect(fTL.x, fTL.y, rectW, rectH);
+                    ctx.fillStyle = isHovered ? 'rgba(56, 189, 248, 0.9)' : style.base;
+                    ctx.fill();
+
+                    // Tramas arquitectónicas según material
+                    ctx.save();
+                    ctx.clip();
+
+                    if (style.pattern === 'brick') {
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                        ctx.lineWidth = 0.8;
+                        let row = 0;
+                        for (let y = fTL.y + 5; y < fBL.y; y += 6) {
+                            ctx.beginPath();
+                            ctx.moveTo(fTL.x, y);
+                            ctx.lineTo(fBR.x, y);
+                            ctx.stroke();
+
+                            const step = 12;
+                            const offset = (row % 2) * (step / 2);
+                            for (let x = fTL.x + offset; x < fBR.x; x += step) {
+                                ctx.beginPath();
+                                ctx.moveTo(x, y - 6);
+                                ctx.lineTo(x, y);
+                                ctx.stroke();
+                            }
+                            row++;
+                        }
+                    } else if (style.pattern === 'insul') {
+                        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+                        ctx.lineWidth = 1.2;
+                        const midX = (fTL.x + fBR.x) / 2;
+                        ctx.beginPath();
+                        ctx.moveTo(midX, fTL.y);
+                        let zig = false;
+                        for (let y = fTL.y + 4; y < fBL.y; y += 4) {
+                            const x = midX + (zig ? 2.5 : -2.5);
+                            ctx.lineTo(x, y);
+                            zig = !zig;
+                        }
+                        ctx.lineTo(midX, fBL.y);
+                        ctx.stroke();
+                    } else if (style.pattern === 'air') {
+                        ctx.strokeStyle = '#38bdf8';
+                        ctx.lineWidth = 1;
+                        ctx.setLineDash([3, 4]);
+                        const midX = (fTL.x + fBR.x) / 2;
+                        ctx.beginPath();
+                        ctx.moveTo(midX, fTL.y);
+                        ctx.lineTo(midX, fBL.y);
+                        ctx.stroke();
+                    } else if (style.pattern === 'concrete') {
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                        const cx = (fTL.x + fBR.x) / 2;
+                        ctx.fillRect(cx - 2, fTL.y + 8, 2, 2);
+                        ctx.fillRect(cx + 3, fTL.y + 20, 2, 2);
+                        ctx.fillRect(cx - 3, fTL.y + 30, 2, 2);
+                    }
+
+                    ctx.restore();
+
+                    ctx.strokeStyle = isHovered ? '#ffffff' : 'rgba(255, 255, 255, 0.5)';
+                    ctx.lineWidth = isHovered ? 2 : 1;
+                    ctx.stroke();
+
+                    if (isHovered) {
+                        ctx.strokeStyle = '#38bdf8';
+                        ctx.lineWidth = 2.5;
+                        ctx.stroke();
+                    }
+                    ctx.restore();
+
+                    // Número de capa
+                    ctx.save();
+                    const centerX = (fTL.x + fBR.x) / 2;
+                    const centerY = (fTL.y + fBL.y) / 2;
+                    ctx.fillStyle = isHovered ? '#ffffff' : (style.pattern === 'insul' || style.pattern === 'smooth' ? '#0f172a' : '#ffffff');
+                    ctx.font = 'bold 9px system-ui, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(`${lg.idx + 1}`, centerX, centerY);
+                    ctx.restore();
+                });
+
+                // CARTELAS: ☀️ EXTERIOR e 🏠 INTERIOR (Alineadas en el eje horizontal del muro)
+                const extGeom = layerGeoms[0];
+                const intGeom = layerGeoms[layerGeoms.length - 1];
+                if (extGeom && intGeom) {
+                    const midY = Math.round(oy - H_block / 2);
+                    const callYExt = Math.round(midY - badgeH / 2);
+                    const callYInt = Math.round(midY - badgeH / 2);
+
+                    // A) EXTERIOR (Izquierda)
+                    ctx.save();
+                    ctx.strokeStyle = '#fbbf24';
+                    ctx.lineWidth = 1.2;
+                    ctx.setLineDash([2, 2]);
+                    ctx.beginPath();
+                    ctx.moveTo(callXExt + badgeW, midY);
+                    ctx.lineTo(ox - 3, midY);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.beginPath();
+                    ctx.arc(ox - 3, midY, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = 'rgba(245, 158, 11, 0.2)';
+                    ctx.strokeStyle = '#fbbf24';
+                    ctx.lineWidth = 1.2;
+                    ctx.beginPath();
+                    if (ctx.roundRect) ctx.roundRect(callXExt, callYExt, badgeW, badgeH, 4);
+                    else ctx.rect(callXExt, callYExt, badgeW, badgeH);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.font = 'bold 8px system-ui, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('☀️ EXTERIOR', callXExt + badgeW / 2, callYExt + badgeH / 2);
+                    ctx.restore();
+
+                    // B) INTERIOR (Derecha)
+                    ctx.save();
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 1.2;
+                    ctx.setLineDash([2, 2]);
+                    ctx.beginPath();
+                    ctx.moveTo(ox + W_thick + 3, midY);
+                    ctx.lineTo(callXInt, midY);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.beginPath();
+                    ctx.arc(ox + W_thick + 3, midY, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = 'rgba(56, 189, 248, 0.2)';
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.lineWidth = 1.2;
+                    ctx.beginPath();
+                    if (ctx.roundRect) ctx.roundRect(callXInt, callYInt, badgeW, badgeH, 4);
+                    else ctx.rect(callXInt, callYInt, badgeW, badgeH);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.font = 'bold 8px system-ui, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('🏠 INTERIOR', callXInt + badgeW / 2, callYInt + badgeH / 2);
+                    ctx.restore();
+                }
+
+                // COTA TÉCNICA DE ESPESOR TOTAL (Base inferior 100% horizontal)
+                if (extGeom && intGeom) {
+                    ctx.save();
+                    const dimY = oy + 12;
+                    const dimX0 = extGeom.fBL.x;
+                    const dimX1 = intGeom.fBR.x;
+
+                    ctx.strokeStyle = 'rgba(148, 163, 184, 0.6)';
+                    ctx.lineWidth = 1;
+
+                    ctx.beginPath();
+                    ctx.moveTo(dimX0, extGeom.fBL.y + 2);
+                    ctx.lineTo(dimX0, dimY + 3);
+                    ctx.moveTo(dimX1, intGeom.fBR.y + 2);
+                    ctx.lineTo(dimX1, dimY + 3);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(dimX0, dimY);
+                    ctx.lineTo(dimX1, dimY);
+                    ctx.stroke();
+
+                    const arrow = (x, dir) => {
+                        ctx.beginPath();
+                        ctx.moveTo(x, dimY);
+                        ctx.lineTo(x + dir * 4, dimY - 2.5);
+                        ctx.lineTo(x + dir * 4, dimY + 2.5);
+                        ctx.closePath();
+                        ctx.fillStyle = 'rgba(148, 163, 184, 0.9)';
+                        ctx.fill();
+                    };
+                    arrow(dimX0, 1);
+                    arrow(dimX1, -1);
+
+                    ctx.fillStyle = '#e2e8f0';
+                    ctx.font = '600 8.5px "JetBrains Mono", monospace';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(`e = ${totalThickMm} mm`, (dimX0 + dimX1) / 2, dimY - 6);
+                    ctx.restore();
+                }
+            }
+
+            ctx.restore();
+        },
+
+        /**
+         * Comprobación de inclusión punto-en-polígono mediante Ray-Casting.
+         */
+        _isPointInPoly: function(x, y, poly) {
+            if (!poly || poly.length < 3) return false;
+            let inside = false;
+            for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+                const xi = poly[i][0], yi = poly[i][1];
+                const xj = poly[j][0], yj = poly[j][1];
+                const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
         }
     };
 
