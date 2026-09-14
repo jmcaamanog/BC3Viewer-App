@@ -35,7 +35,7 @@ const server = http.createServer((req, res) => {
 
     const ROOT_DIR = __dirname;
     let filePath = path.join(WWW_DIR, safePath);
-    if (safePath === '/landing.html' || safePath.startsWith('/CAPTURAS/') || safePath.startsWith('/assets/')) {
+    if (safePath.startsWith('/www/') || safePath === '/landing.html' || safePath.startsWith('/CAPTURAS/') || safePath.startsWith('/assets/') || safePath.startsWith('/PROGRAMAS/')) {
         filePath = path.join(ROOT_DIR, safePath);
     }
 

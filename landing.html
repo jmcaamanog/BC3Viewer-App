@@ -5,8 +5,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=device-width, initial-scale=1.0">
     <meta name="description"
-        content="BC3 Viewer Premium - Visualizador y Editor Avanzado offline de presupuestos FIEBDC-3 (.bc3) para profesionales de la construcción y Arquitectos Técnicos.">
-    <title>BC3 Viewer Premium - Visualizador y Editor de Presupuestos FIEBDC-3</title>
+        content="BC3 Viewer Premium v3.0 - Visualizador y Editor Avanzado offline de presupuestos FIEBDC-3 (.bc3) con Visor IFC 3D nativo, BIM Takeoff 5D y Asesor IA ConTech.">
+    <meta name="author" content="Jose Manuel Caamaño González">
+    <meta name="keywords" content="BC3, FIEBDC-3, BIM 5D, IFC, Visor 3D, Presupuestos Construcción, Arquitectura Técnica, Three.js, Presto, Arquímedes, OpenBIM">
+
+    <!-- Open Graph / Facebook / LinkedIn -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://jmcaamanog.github.io/BC3Viewer-App/landing.html">
+    <meta property="og:title" content="BC3 Viewer Premium v3.0 — Suite BIM 5D & Visualizador FIEBDC-3">
+    <meta property="og:description" content="Visualizador y editor offline de presupuestos FIEBDC-3 (.bc3) con visor IFC 3D nativo, mediciones Takeoff y Asesor IA ConTech. 100% gratuito y de código abierto.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/jmcaamanog/BC3Viewer-App/main/CAPTURAS/V3.0/WINDOWS_V3.0/019_VISOR_3D_BIM_MODELO_BLUEPRINT.png">
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="BC3 Viewer Premium v3.0 — Suite BIM 5D & Visualizador FIEBDC-3">
+    <meta name="twitter:description" content="Visualizador y editor offline de presupuestos FIEBDC-3 (.bc3) con visor IFC 3D nativo, mediciones Takeoff y Asesor IA ConTech.">
+    <meta name="twitter:image" content="https://raw.githubusercontent.com/jmcaamanog/BC3Viewer-App/main/CAPTURAS/V3.0/WINDOWS_V3.0/019_VISOR_3D_BIM_MODELO_BLUEPRINT.png">
+
+    <!-- Schema.org SoftwareApplication JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "BC3 Viewer Premium",
+      "operatingSystem": "Web, Windows, Android",
+      "applicationCategory": "BusinessApplication",
+      "softwareVersion": "3.0.0",
+      "offers": {
+        "@type": "Offer",
+        "price": "0.00",
+        "priceCurrency": "EUR"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Jose Manuel Caamaño González",
+        "jobTitle": "Arquitecto Técnico & BIM Manager",
+        "url": "https://jmcaamanog.pages.dev/"
+      },
+      "description": "Visualizador y editor avanzado de presupuestos FIEBDC-3 (.bc3) con Visor BIM IFC 3D nativo, mediciones Takeoff 5D y Asesor IA ConTech."
+    }
+    </script>
+
+    <title>BC3 Viewer Premium v3.0 - Visualizador y Editor FIEBDC-3 & Visor BIM 5D</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -153,8 +193,13 @@
         .navbar.scrolled {
             top: 10px;
             width: 95%;
-            background: rgba(9, 13, 22, 0.85);
-            border-color: rgba(59, 130, 246, 0.2);
+            max-width: 1240px;
+            height: 58px;
+            background: rgba(9, 13, 22, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-color: rgba(59, 130, 246, 0.35);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 24px rgba(59, 130, 246, 0.15);
         }
 
         .nav-logo {
@@ -204,16 +249,38 @@
         .nav-cta {
             background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
             color: var(--text-white);
-            padding: 10px 22px;
+            padding: 9px 20px;
             border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 600;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-cta::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .nav-cta:hover::before {
+            left: 100%;
         }
 
         .nav-cta:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 22px rgba(59, 130, 246, 0.55);
         }
 
         /* HERO SECTION */
@@ -515,6 +582,367 @@
             font-size: 0.9rem;
             color: var(--text-muted);
             line-height: 1.5;
+        }
+
+        /* COMPARATIVE TABLE SECTION */
+        .comparison-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            margin-bottom: 60px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            min-width: 720px;
+        }
+
+        .comparison-table th {
+            padding: 22px 24px;
+            font-family: var(--font-display);
+            font-size: 1.05rem;
+            font-weight: 700;
+            border-bottom: 2px solid var(--border-color);
+            background: rgba(15, 23, 42, 0.6);
+        }
+
+        .comparison-table th.col-feature {
+            width: 30%;
+            color: var(--text-white);
+        }
+
+        .comparison-table th.col-traditional {
+            width: 35%;
+            color: #94a3b8;
+            background: rgba(30, 41, 59, 0.4);
+        }
+
+        .comparison-table th.col-bc3 {
+            width: 35%;
+            color: #38bdf8;
+            background: rgba(59, 130, 246, 0.12);
+            border-top: 3px solid var(--accent-primary);
+            position: relative;
+        }
+
+        .comparison-table td {
+            padding: 18px 24px;
+            font-size: 0.92rem;
+            line-height: 1.5;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            vertical-align: middle;
+        }
+
+        .comparison-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .comparison-table td.col-traditional {
+            color: #94a3b8;
+            background: rgba(15, 23, 42, 0.2);
+        }
+
+        .comparison-table td.col-bc3 {
+            color: #f1f5f9;
+            background: rgba(59, 130, 246, 0.04);
+            font-weight: 500;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comp-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .comp-tag.tag-bad {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .comp-tag.tag-good {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        /* PROFILES / ROLES SECTION */
+        .profiles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 28px;
+            margin-top: 40px;
+        }
+
+        .profile-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 32px 28px;
+            transition: var(--transition);
+            backdrop-filter: blur(14px);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .profile-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(59, 130, 246, 0.35);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 25px rgba(59, 130, 246, 0.12);
+        }
+
+        .profile-card:hover::before {
+            opacity: 1;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .profile-avatar-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            flex-shrink: 0;
+        }
+
+        .profile-title-block h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-white);
+            margin-bottom: 4px;
+        }
+
+        .profile-role-badge {
+            font-size: 0.78rem;
+            color: #38bdf8;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .profile-card p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .profile-benefits-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: auto;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            padding-top: 16px;
+        }
+
+        .profile-benefits-list li {
+            font-size: 0.88rem;
+            color: #cbd5e1;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            line-height: 1.45;
+        }
+
+        .profile-benefits-list li span.check-icon {
+            color: #38bdf8;
+            font-weight: bold;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        /* GALLERY CATEGORY FILTER CHIPS */
+        .gallery-category-chips {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 0 auto 28px auto;
+            max-width: 1000px;
+        }
+
+        .category-chip {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            padding: 7px 16px;
+            border-radius: 25px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            user-select: none;
+        }
+
+        .category-chip:hover {
+            background: rgba(59, 130, 246, 0.12);
+            border-color: rgba(59, 130, 246, 0.35);
+            color: var(--text-white);
+            transform: translateY(-1px);
+        }
+
+        .category-chip.active {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(6, 182, 212, 0.25));
+            border-color: #38bdf8;
+            color: #ffffff;
+            box-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
+        }
+
+        .category-chip .chip-count {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1px 7px;
+            border-radius: 10px;
+            font-size: 0.72rem;
+            color: #93c5fd;
+        }
+
+        .category-chip.active .chip-count {
+            background: rgba(59, 130, 246, 0.5);
+            color: #ffffff;
+        }
+
+        /* MODAL SANDBOX 1-CLICK */
+        .sandbox-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 8, 15, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            z-index: 99999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+        }
+
+        .sandbox-modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .sandbox-modal-card {
+            background: #090d16;
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            border-radius: 20px;
+            width: min(1400px, 96vw);
+            height: 92vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 35px rgba(59, 130, 246, 0.25);
+            animation: modalPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.92); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .sandbox-modal-header {
+            padding: 14px 22px;
+            background: rgba(17, 24, 39, 0.9);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sandbox-modal-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            color: var(--text-white);
+            font-size: 1.05rem;
+        }
+
+        .sandbox-modal-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sandbox-btn-ctrl {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--text-muted);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .sandbox-btn-ctrl:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #ffffff;
+        }
+
+        .sandbox-iframe-container {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #060911;
+        }
+
+        .sandbox-iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
         }
 
         /* INTERACTIVE GALLERY */
@@ -2165,6 +2593,407 @@
             text-align: center;
             padding: 20px;
         }
+
+        /* =======================================================
+           CONTECH SUITE: COMPARATIVA, PERFILES, CHIPS & SANDBOX
+           ======================================================= */
+
+        /* --- COMPARISON TABLE --- */
+        .comparison-table-wrapper {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.92rem;
+        }
+
+        .comparison-table th, 
+        .comparison-table td {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            line-height: 1.5;
+        }
+
+        .comparison-table th {
+            background: rgba(30, 41, 59, 0.8);
+            font-family: var(--font-display);
+            font-weight: 700;
+            color: var(--text-white);
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tr:hover td {
+            background: rgba(56, 189, 248, 0.03);
+        }
+
+        .comparison-table td.feature-col {
+            font-weight: 600;
+            color: var(--text-white);
+        }
+
+        .comparison-table th.highlight-col,
+        .comparison-table td.highlight-col {
+            background: rgba(56, 189, 248, 0.08);
+            border-left: 1px solid rgba(56, 189, 248, 0.25);
+            border-right: 1px solid rgba(56, 189, 248, 0.25);
+            color: var(--text-white);
+        }
+
+        .comp-check {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-right: 8px;
+        }
+
+        .comp-cross {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-right: 8px;
+        }
+
+        .comp-neutral {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-right: 8px;
+        }
+
+        /* --- PROFILES GRID --- */
+        .profiles-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 22px;
+            max-width: 1240px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 1180px) {
+            .profiles-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .profiles-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .profile-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 24px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .profile-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(56, 189, 248, 0.4);
+            background: var(--bg-card-hover);
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35), 0 0 20px rgba(56, 189, 248, 0.15);
+        }
+
+        .profile-card:hover::before {
+            opacity: 1;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .profile-icon {
+            font-size: 2rem;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+
+        .profile-role {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: var(--text-white);
+            line-height: 1.2;
+        }
+
+        .profile-tagline {
+            font-size: 0.78rem;
+            color: #38bdf8;
+            font-weight: 600;
+            margin-top: 3px;
+        }
+
+        .profile-benefits-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex-grow: 1;
+        }
+
+        .profile-benefits-list li {
+            position: relative;
+            padding-left: 18px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+        }
+
+        .profile-benefits-list li::before {
+            content: '›';
+            position: absolute;
+            left: 0;
+            top: -1px;
+            color: #38bdf8;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        /* --- GALLERY CATEGORY CHIPS --- */
+        .gallery-category-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin: 0 auto 24px auto;
+            max-width: 1100px;
+            padding: 0 10px;
+        }
+
+        .category-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 24px;
+            color: var(--text-muted);
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            backdrop-filter: blur(8px);
+        }
+
+        .category-chip:hover {
+            color: var(--text-white);
+            border-color: rgba(56, 189, 248, 0.4);
+            background: rgba(30, 41, 59, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .category-chip.active {
+            color: #38bdf8;
+            border-color: #38bdf8;
+            background: rgba(56, 189, 248, 0.15);
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
+        }
+
+        .chip-count {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            padding: 2px 7px;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .category-chip.active .chip-count {
+            background: rgba(56, 189, 248, 0.3);
+            color: #fff;
+        }
+
+        /* --- SANDBOX 1-CLICK MODAL --- */
+        .sandbox-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+        }
+
+        .sandbox-modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .sandbox-modal-card {
+            width: 100%;
+            max-width: 1380px;
+            height: 90vh;
+            background: #0b1120;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(56, 189, 248, 0.2);
+            transform: scale(0.96);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .sandbox-modal-overlay.active .sandbox-modal-card {
+            transform: scale(1);
+        }
+
+        .sandbox-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .sandbox-modal-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-white);
+        }
+
+        .sandbox-modal-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sandbox-btn-ext {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .sandbox-btn-ext:hover {
+            color: #38bdf8;
+            border-color: #38bdf8;
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        .sandbox-modal-close {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--text-muted);
+            border-radius: 8px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sandbox-modal-close:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        .sandbox-iframe-container {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #0f172a;
+        }
+
+        .sandbox-iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
     </style>
 </head>
 
@@ -2197,19 +3026,18 @@
         </a>
         <ul class="nav-links">
             <li><a href="#caracteristicas">Características</a></li>
-            <li><a href="#galeria">Capturas V3.0</a></li>
+            <li><a href="#comparativa">Comparativa</a></li>
+            <li><a href="#perfiles">Perfiles</a></li>
+            <li><a href="#galeria">Capturas</a></li>
             <li><a href="#demo">Vídeo Demo</a></li>
             <li><a href="#descargas">Descargar</a></li>
             <li><a href="#versiones">Versiones</a></li>
-            <li><a href="#roadmap">Coming Soon</a></li>
-            <li><a href="#comunidad">Comunidad</a></li>
+            <li><a href="#roadmap">Roadmap</a></li>
             <li><a href="#autor">Autor</a></li>
         </ul>
-        <a href="www/index.html" class="nav-cta" target="_blank" id="nav-cta"
-            style="display: flex; align-items: center; gap: 6px;">
-            <img src="assets/icon-only.png" alt="App icon"
-                style="height: 18px; width: 18px; border-radius: 3px; filter: brightness(0) invert(1);">
-            <span>App Online</span>
+        <a href="www/index.html" class="nav-cta" target="_blank" id="nav-cta">
+            <span style="font-size: 1rem;">🚀</span>
+            <span>Probar Gratis</span>
         </a>
     </nav>
 
@@ -2250,6 +3078,11 @@
                     style="padding: 12px 20px; font-size: 0.9rem;">
                     <span>⚡</span> App Online
                 </a>
+                <button type="button" class="btn btn-secondary" id="open-sandbox-btn"
+                    style="display: inline-flex; align-items: center; gap: 6px; padding: 12px 18px; font-size: 0.9rem; border-color: rgba(56, 189, 248, 0.6); color: #38bdf8; background: rgba(56, 189, 248, 0.08); cursor: pointer; transition: all 0.3s ease;">
+                    <span style="font-size: 1rem;">🖥️</span>
+                    <span>Probar Sandbox</span>
+                </button>
                 <a href="PROGRAMAS/BC3_Viewer_Windows_Installer.exe" class="btn btn-secondary" id="hero-download-win"
                     style="display: inline-flex; align-items: center; gap: 6px; padding: 12px 20px; font-size: 0.9rem;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"
@@ -2498,6 +3331,143 @@
         </div>
     </section>
 
+    <!-- SECCIÓN COMPARATIVA CONTECH -->
+    <section class="section" id="comparativa">
+        <div class="section-header">
+            <span class="section-subtitle">Valor Diferencial</span>
+            <h2 class="section-title">¿Por qué elegir BC3 Viewer v3.0?</h2>
+            <p class="section-desc">Comparativa frente al software tradicional de presupuestos y visores de escritorio estándar.</p>
+        </div>
+
+        <div class="comparison-table-wrapper">
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th style="width: 32%;">Capacidad / Característica</th>
+                        <th style="width: 34%;">Software Tradicional (Presto / Arquímedes)</th>
+                        <th style="width: 34%;" class="highlight-col">BC3 Viewer v3.0 (ConTech Suite)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="feature-col">Coste de Licencia & Renovación</td>
+                        <td><span class="comp-cross">✕</span> Licencias costosas (400€ - 1.500€/año) o llaves USB</td>
+                        <td class="highlight-col"><span class="comp-check">✓</span> <strong>100% Gratuito y Open Source (MIT)</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="feature-col">Privacidad y Soberanía de Datos</td>
+                        <td><span class="comp-neutral">~</span> Algunos exigen login en nube privativa del proveedor</td>
+                        <td class="highlight-col"><span class="comp-check">✓</span> <strong>100% Offline & Local</strong> (Zero Data Leak)</td>
+                    </tr>
+                    <tr>
+                        <td class="feature-col">Visor BIM IFC 3D Integrado</td>
+                        <td><span class="comp-cross">✕</span> Requiere módulos de pago adicionales</td>
+                        <td class="highlight-col"><span class="comp-check">✓</span> <strong>Motor web-ifc 3D nativo</strong> con Takeoff y acotación</td>
+                    </tr>
+                    <tr>
+                        <td class="feature-col">Asesor IA Especializado en Obra</td>
+                        <td><span class="comp-cross">✕</span> No disponible o complementos externos inconexos</td>
+                        <td class="highlight-col"><span class="comp-check">✓</span> <strong>Asesor IA ConTech</strong> (CTE, descompuestos, Pareto)</td>
+                    </tr>
+                    <tr>
+                        <td class="feature-col">Portabilidad Multiplataforma</td>
+                        <td><span class="comp-cross">✕</span> Exclusivo de Windows x86 con instalaciones pesadas</td>
+                        <td class="highlight-col"><span class="comp-check">✓</span> <strong>Web, PWA, Windows (.exe/.msi) y Android (.apk)</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="feature-col">Visualización Analítica Avanzada</td>
+                        <td><span class="comp-neutral">~</span> Tablas clásicas y gráficos rígidos heredados</td>
+                        <td class="highlight-col"><span class="comp-check">✓</span> <strong>Sunburst, Sankey, CO₂, Gantt EVM y Curva S</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="feature-col">Velocidad de Carga y Peso</td>
+                        <td><span class="comp-cross">✕</span> Instaladores de más de 800 MB - 2 GB</td>
+                        <td class="highlight-col"><span class="comp-check">✓</span> <strong>Ultra ligero (~3 MB)</strong>, arranca en &lt; 1 segundo</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- CASOS DE USO Y PERFILES PROFESIONALES -->
+    <section class="section" id="perfiles" style="background: radial-gradient(circle at 50% 30%, rgba(30, 41, 59, 0.5) 0%, transparent 70%);">
+        <div class="section-header">
+            <span class="section-subtitle">Especialización Sectorial</span>
+            <h2 class="section-title">Diseñado para Cada Rol de la Edificación</h2>
+            <p class="section-desc">Descubre cómo BC3 Viewer resuelve los retos diarios de los profesionales del ciclo constructivo.</p>
+        </div>
+
+        <div class="profiles-grid">
+            <!-- Perfil 1 -->
+            <div class="profile-card">
+                <div class="profile-header">
+                    <div class="profile-icon">📐</div>
+                    <div>
+                        <div class="profile-role">Aparejadores & DEO</div>
+                        <div class="profile-tagline">Dirección de Ejecución Material</div>
+                    </div>
+                </div>
+                <ul class="profile-benefits-list">
+                    <li>Revisa mediciones y descompuestos a pie de obra en tablet Android sin conexión.</li>
+                    <li>Registra certificaciones mensuales parciales y acumuladas con cálculo matemático inmediato.</li>
+                    <li>Compara en segundos la versión de proyecto frente a la versión reformada o contradictorio.</li>
+                    <li>Audita la coherencia de partidas y materiales con el Asesor IA normativo.</li>
+                </ul>
+            </div>
+
+            <!-- Perfil 2 -->
+            <div class="profile-card">
+                <div class="profile-header">
+                    <div class="profile-icon">🏗️</div>
+                    <div>
+                        <div class="profile-role">Jefes de Obra & Contratistas</div>
+                        <div class="profile-tagline">Gestión de Producción & Costes</div>
+                    </div>
+                </div>
+                <ul class="profile-benefits-list">
+                    <li>Planificación Gantt interactiva con cálculo de Ruta Crítica y Curva S de avance (EVM).</li>
+                    <li>Control riguroso de Gastos Generales (13%) y Beneficio Industrial (6%) en tiempo real.</li>
+                    <li>Diagramas Sankey y Sunburst para identificar de un vistazo las partidas del 80/20 del coste.</li>
+                    <li>Exportación ágil a Excel (.xlsx) estructurado para subcontratas y compras.</li>
+                </ul>
+            </div>
+
+            <!-- Perfil 3 -->
+            <div class="profile-card">
+                <div class="profile-header">
+                    <div class="profile-icon">🏛️</div>
+                    <div>
+                        <div class="profile-role">Arquitectos & Proyectistas</div>
+                        <div class="profile-tagline">Diseño, BIM & Prescripción</div>
+                    </div>
+                </div>
+                <ul class="profile-benefits-list">
+                    <li>Vinculación directa entre el modelo BIM IFC y las partidas presupuestarias FIEBDC-3.</li>
+                    <li>Extracción de mediciones Takeoff con comprobación de probetas multicapa y volúmenes 3D.</li>
+                    <li>Cálculo automático de la huella de carbono estimada (kg CO₂ eq) de los materiales.</li>
+                    <li>Listados ejecutivos limpios y listos para adjuntar a la Memoria del Proyecto.</li>
+                </ul>
+            </div>
+
+            <!-- Perfil 4 -->
+            <div class="profile-card">
+                <div class="profile-header">
+                    <div class="profile-icon">🎓</div>
+                    <div>
+                        <div class="profile-role">Estudiantes & Docentes ConTech</div>
+                        <div class="profile-tagline">Enseñanza Abierta de Edificación</div>
+                    </div>
+                </div>
+                <ul class="profile-benefits-list">
+                    <li>Acceso universal inmediato sin pagar licencias de estudiante ni trámites burocráticos.</li>
+                    <li>Comprensión intuitiva de la estructura de árbol FIEBDC-3 y la descomposición de precios.</li>
+                    <li>Práctica con proyectos modelo y archivos IFC reales directamente desde el navegador web.</li>
+                    <li>Interacción didáctica con el Asesor IA para aprender rendimientos de obra y normativa CTE.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
     <!-- INTERACTIVE GALLERY SECTION -->
     <section class="section" id="galeria">
         <div class="section-header">
@@ -2518,6 +3488,11 @@
                 <span class="ia-sparkle-icon">✨</span>
                 <span>Asesor IA</span>
             </button>
+        </div>
+
+        <!-- Filter Chips by Category -->
+        <div class="gallery-category-chips" id="gallery-category-chips">
+            <!-- Dynamically populated via JS -->
         </div>
 
         <div class="gallery-container">
@@ -3318,85 +4293,132 @@
         </div>
     </footer>
 
+    <!-- SANDBOX 1-CLICK MODAL -->
+    <div class="sandbox-modal-overlay" id="sandbox-modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="sandbox-modal-card">
+            <div class="sandbox-modal-header">
+                <div class="sandbox-modal-title">
+                    <img src="assets/icon-only.png" alt="BC3 Icon" style="width:24px; height:24px; border-radius:4px;">
+                    <span>BC3 Viewer v3.0 — Entorno Sandbox Interactivo</span>
+                    <span style="font-size:0.75rem; background:rgba(56,189,248,0.2); color:#38bdf8; border:1px solid rgba(56,189,248,0.4); padding:2px 8px; border-radius:12px; font-weight:600;">100% Local</span>
+                </div>
+                <div class="sandbox-modal-actions">
+                    <a href="www/index.html" target="_blank" class="sandbox-btn-ext" title="Abrir en pestaña completa">
+                        <span>Pestaña Completa</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+                    </a>
+                    <button class="sandbox-modal-close" id="sandbox-close-btn" aria-label="Cerrar Sandbox">✕</button>
+                </div>
+            </div>
+            <div class="sandbox-iframe-container">
+                <iframe id="sandbox-iframe" src="about:blank" title="BC3 Viewer App Sandbox" allow="clipboard-read; clipboard-write; fullscreen"></iframe>
+            </div>
+        </div>
+    </div>
+
     <!-- INTERACTIVE SCRIPTS -->
     <script>
         // Array mapping the screenshots for Windows Desktop (Versión 3.0.0)
         const windowsScreenshots = [
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/000_ACCESO_SEGURIDAD_PIN_PORTADA.png', title: 'Acceso de Seguridad y Portada v3.0', desc: 'Pantalla de bienvenida y control de acceso seguro por PIN con distintivo oficial v3.0.0.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/001_INICIO_BIENVENIDA_CREAR_O_ABRIR.png', title: 'Nuevo Inicio: Crear, Cargar o BIM', desc: 'Pantalla de inicio rápido para abrir presupuestos FIEBDC-3, modelos BIM IFC o explorar el proyecto de demostración.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/002_PRESUPUESTO_ARBOL_JERARQUICO.png', title: 'Árbol Jerárquico de Presupuesto', desc: 'Estructura multinivel de capítulos, subcapítulos y partidas con cómputo en vivo de importes y mediciones.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/003_PRECIOS_DESCOMPUESTOS_CUADRO.png', title: 'Cuadro de Precios Descompuestos', desc: 'Análisis detallado de rendimientos, costes unitarios de mano de obra, materiales, maquinaria y otros.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/004_COEFICIENTES_ECONOMICOS_CONTRATA.png', title: 'Coeficientes Económicos de Contrata', desc: 'Desglose y cuadratura matemática en vivo de PEM, Gastos Generales (13%), Beneficio Industrial (6%) y PEC.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/005_DASHBOARD_ANALITICA_KPIS.png', title: 'Dashboard de Control Analítico y KPIs', desc: 'Panel ejecutivo con indicadores clave, distribución porcentual de costes y acceso a herramientas avanzadas.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/006_VISUALIZADOR_CONCENTRICO_SUNBURST.png', title: 'Visualizador Concéntrico Sunburst', desc: 'Exploración radial jerárquica con selector multinivel de 1 a 5 niveles de profundidad y zoom interactivo.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/007_VISUALIZADOR_FLUJO_SANKEY.png', title: 'Diagrama de Flujo Sankey', desc: 'Visualización continua de flujo de costes y reparto proporcional por capítulos y naturalezas de recursos.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/008_IMPACTO_AMBIENTAL_HUELLA_CO2.png', title: 'Impacto Ambiental y Huella de CO₂', desc: 'Evaluación de emisiones en kg CO₂ eq y desglose tipológico de sostenibilidad de materiales.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/009_PLANNING_CRONOGRAMA_GANTT.png', title: 'Planning de Obra y Cronograma Gantt', desc: 'Cronograma dinámico con dependencias Fin→Inicio, ruta crítica, tareas activas hoy y desplazamiento fluido.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/010_PLANNING_VALOR_GANADO_EVM.png', title: 'Valor Ganado (EVM) y Curva S', desc: 'Seguimiento financiero con 8 KPIs estándar (BAC, PV, EV, AC, CPI, SPI, CV, EAC) y semana de corte.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/011_CERTIFICACIONES_MENSUALES_OBRA.png', title: 'Control de Certificaciones de Obra', desc: 'Registro mensual acumulado de unidades ejecutadas a pie de obra y comparativa directa con el PEM.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/012_COMPARADOR_PRESUPUESTOS_BC3.png', title: 'Comparador de Presupuestos BC3', desc: 'Contraste paralelo de dos archivos FIEBDC-3 para detectar variaciones de precios y mediciones.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/013_SISTEMA_MULTIPESTANA_PROYECTOS.png', title: 'Sistema Multi-Presupuesto con Pestañas', desc: 'Trabajo simultáneo con varios presupuestos abiertos a la vez con pestañas dinámicas en memoria.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/014_PALETA_COMANDOS_BUSCADOR_CTRL_K.png', title: 'Paleta de Comandos Rápida (Ctrl+K)', desc: 'Búsqueda global inteligente de partidas, ejecución de atajos de teclado y navegación instantánea.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/015_ASISTENTE_CREADOR_NUEVOS_PRESUPUESTOS.png', title: 'Asistente de Creación de Presupuestos', desc: 'Configuración guiada paso a paso para parametrizar tipologías, superficies y estructura de obra.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/016_CATALOGO_BANCO_PRECIOS_PLANTILLAS.png', title: 'Catálogo ConTech y Plantillas Prediseñadas', desc: 'Banco de precios incorporado y modelos completos para unifamiliares, reformas y naves.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/017_ASISTENTE_IA_CONTECH_GEMINI.png', title: 'Asistente IA ConTech Oficial (jmcaamanog)', desc: 'Inteligencia artificial Google Gemini integrada para auditoría técnica, generación y redacción de partidas.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/018_ASISTENTE_BIM_IMPORTACION_IFC.png', title: 'Asistente BIM de Importación IFC', desc: 'Carga técnica de modelos digitales con conteo de elementos constructivos y métricas espaciales.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/019_VISOR_3D_BIM_MODELO_BLUEPRINT.png', title: 'Visor 3D BIM Estilo Blueprint ConTech', desc: 'Renderizado tridimensional en azul marino técnico (#0f2b5c) con iluminación optimizada e interacción orbital.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/020_VISOR_3D_SELECCION_ELEMENTO_MENU_CONTEXTUAL.png', title: 'Selección 3D y Menú Contextual ConTech', desc: 'Interacción directa con elementos constructivos con menú contextual para aislar, medir o presupuestar.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/021_VISOR_3D_PANEL_LATERAL_PROPIEDADES_BIM.png', title: 'Panel Lateral de Propiedades BIM', desc: 'Inspección de datos IFC: tipo, dimensiones geométricas, capas de materiales y Property Sets.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/022_VISOR_3D_FILTRO_CATEGORIAS_CONSTRUCTIVAS.png', title: 'Filtro de Categorías Constructivas', desc: 'Visibilidad selectiva por disciplinas y familias IFC (muros, forjados, pilares, ventanas, puertas).' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/023_VISOR_3D_AISLAMIENTO_ELEMENTO_BLUEPRINT.png', title: 'Aislamiento de Elementos 3D', desc: 'Modo de visualización focalizado para examinar componentes singulares sin interferencias del modelo.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/024_VISOR_3D_SELECCIONAR_SIMILARES_CRITERIOS.png', title: 'Selección de Similares por 11 Criterios', desc: 'Submenú avanzado para agrupar elementos por familia, tipo, nivel/planta, material o dimensiones idénticas.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/025_VISOR_3D_SELECCION_MULTIPLE_PANEL_RESUMEN.png', title: 'Panel Resumen de Selección Múltiple', desc: 'Cómputo instantáneo de unidades totales, suma de superficies (m²), volúmenes (m³) e importes presupuestados.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/026_VISOR_3D_VISTA_TECNICA_PLANTA_CAD.png', title: 'Vista Técnica CAD: Planta Superior', desc: 'Proyección ortogonal ortocéntrica 2D para visualización arquitectónica de plantas de distribución.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/027_VISOR_3D_VISTA_TECNICA_ALZADO_FRONTAL.png', title: 'Vista Técnica CAD: Alzado Frontal', desc: 'Proyección ortogonal plana para comprobación de alturas, niveles y fachadas del edificio.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/028_VISOR_3D_PLANOS_SECCION_MULTIEJE.png', title: 'Planos de Sección Dinámicos Multieje', desc: 'Cortes interactivos en los tres ejes espaciales (X, Y, Z) para inspección interior del modelo.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/029_VISOR_3D_SECCION_MACIZA_STENCIL.png', title: 'Tapado Macizo Stencil de Secciones', desc: 'Relleno sólido de corte en tono azul oscuro (#0f2b5c) simulando sección arquitectónica real sin huecos.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/030_VISOR_3D_ACOTACION_CAD_SNAP_PUNTOS.png', title: 'Acotación CAD 3D con Snap Magnético', desc: 'Medición de distancias en tiempo real con atracción magnética a vértices y cotas persistentes.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/031_VISOR_3D_BIM_TAKEOFF_MEDICION_SUPERFICIE.png', title: 'BIM Takeoff 5D: Medición de Superficies y Volúmenes', desc: 'Extracción geométrica automática para vincular directamente líneas de medición al presupuesto BC3.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/032_VISOR_3D_ASISTENTE_CREAR_PARTIDA_BC3.png', title: 'Asistente de Creación de Partida desde BIM', desc: 'Vinculación directa 5D: genera una nueva unidad de obra a partir del elemento IFC seleccionado.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/033_PROBETA_MULTICAPA_3D_MURO_COMPACTA.png', title: 'Probeta Multicapa 3D: Muros y Cerramientos', desc: 'Visualización axonométrica compacta con tramas arquitectónicas y elevación interactiva de capas.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/034_PROBETA_MULTICAPA_3D_FORJADO_GIRO_90.png', title: 'Probeta Multicapa 3D: Forjados Horizontales', desc: 'Orientación horizontal a 90° con márgenes simétricos y cotas verticales de espesor para forjados y cubiertas.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/035_INFORMACION_VERSION_V3.png', title: 'Diagnóstico del Sistema y Versión 3.0', desc: 'Panel de control de actualizaciones OTA, estado del entorno y registro oficial de versiones.' },
-            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/036_SOBRE_MI_Y_FILOSOFIA_CONTECH.png', title: 'Sobre el Autor y Filosofía ConTech', desc: 'Perfil profesional de José Manuel Caamaño González, visión open-source y enlaces comunitarios.' }
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/000_ACCESO_SEGURIDAD_PIN_PORTADA.png', title: 'Acceso de Seguridad y Portada v3.0', desc: 'Pantalla de bienvenida y control de acceso seguro por PIN con distintivo oficial v3.0.0.', category: 'gestion' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/001_INICIO_BIENVENIDA_CREAR_O_ABRIR.png', title: 'Nuevo Inicio: Crear, Cargar o BIM', desc: 'Pantalla de inicio rápido para abrir presupuestos FIEBDC-3, modelos BIM IFC o explorar el proyecto de demostración.', category: 'gestion' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/002_PRESUPUESTO_ARBOL_JERARQUICO.png', title: 'Árbol Jerárquico de Presupuesto', desc: 'Estructura multinivel de capítulos, subcapítulos y partidas con cómputo en vivo de importes y mediciones.', category: 'costes' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/003_PRECIOS_DESCOMPUESTOS_CUADRO.png', title: 'Cuadro de Precios Descompuestos', desc: 'Análisis detallado de rendimientos, costes unitarios de mano de obra, materiales, maquinaria y otros.', category: 'costes' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/004_COEFICIENTES_ECONOMICOS_CONTRATA.png', title: 'Coeficientes Económicos de Contrata', desc: 'Desglose y cuadratura matemática en vivo de PEM, Gastos Generales (13%), Beneficio Industrial (6%) y PEC.', category: 'costes' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/005_DASHBOARD_ANALITICA_KPIS.png', title: 'Dashboard de Control Analítico y KPIs', desc: 'Panel ejecutivo con indicadores clave, distribución porcentual de costes y acceso a herramientas avanzadas.', category: 'costes' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/006_VISUALIZADOR_CONCENTRICO_SUNBURST.png', title: 'Visualizador Concéntrico Sunburst', desc: 'Exploración radial jerárquica con selector multinivel de 1 a 5 niveles de profundidad y zoom interactivo.', category: 'costes' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/007_VISUALIZADOR_FLUJO_SANKEY.png', title: 'Diagrama de Flujo Sankey', desc: 'Visualización continua de flujo de costes y reparto proporcional por capítulos y naturalezas de recursos.', category: 'costes' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/008_IMPACTO_AMBIENTAL_HUELLA_CO2.png', title: 'Impacto Ambiental y Huella de CO₂', desc: 'Evaluación de emisiones en kg CO₂ eq y desglose tipológico de sostenibilidad de materiales.', category: 'costes' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/009_PLANNING_CRONOGRAMA_GANTT.png', title: 'Planning de Obra y Cronograma Gantt', desc: 'Cronograma dinámico con dependencias Fin→Inicio, ruta crítica, tareas activas hoy y desplazamiento fluido.', category: 'gantt' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/010_PLANNING_VALOR_GANADO_EVM.png', title: 'Valor Ganado (EVM) y Curva S', desc: 'Seguimiento financiero con 8 KPIs estándar (BAC, PV, EV, AC, CPI, SPI, CV, EAC) y semana de corte.', category: 'gantt' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/011_CERTIFICACIONES_MENSUALES_OBRA.png', title: 'Control de Certificaciones de Obra', desc: 'Registro mensual acumulado de unidades ejecutadas a pie de obra y comparativa directa con el PEM.', category: 'gestion' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/012_COMPARADOR_PRESUPUESTOS_BC3.png', title: 'Comparador de Presupuestos BC3', desc: 'Contraste paralelo de dos archivos FIEBDC-3 para detectar variaciones de precios y mediciones.', category: 'gestion' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/013_SISTEMA_MULTIPESTANA_PROYECTOS.png', title: 'Sistema Multi-Presupuesto con Pestañas', desc: 'Trabajo simultáneo con varios presupuestos abiertos a la vez con pestañas dinámicas en memoria.', category: 'gestion' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/014_PALETA_COMANDOS_BUSCADOR_CTRL_K.png', title: 'Paleta de Comandos Rápida (Ctrl+K)', desc: 'Búsqueda global inteligente de partidas, ejecución de atajos de teclado y navegación instantánea.', category: 'gestion' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/015_ASISTENTE_CREADOR_NUEVOS_PRESUPUESTOS.png', title: 'Asistente de Creación de Presupuestos', desc: 'Configuración guiada paso a paso para parametrizar tipologías, superficies y estructura de obra.', category: 'costes' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/016_CATALOGO_BANCO_PRECIOS_PLANTILLAS.png', title: 'Catálogo ConTech y Plantillas Prediseñadas', desc: 'Banco de precios incorporado y modelos completos para unifamiliares, reformas y naves.', category: 'costes' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/017_ASISTENTE_IA_CONTECH_GEMINI.png', title: 'Asistente IA ConTech Oficial (jmcaamanog)', desc: 'Inteligencia artificial Google Gemini integrada para auditoría técnica, generación y redacción de partidas.', category: 'ia' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/018_ASISTENTE_BIM_IMPORTACION_IFC.png', title: 'Asistente BIM de Importación IFC', desc: 'Carga técnica de modelos digitales con conteo de elementos constructivos y métricas espaciales.', category: 'bim3d' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/019_VISOR_3D_BIM_MODELO_BLUEPRINT.png', title: 'Visor 3D BIM Estilo Blueprint ConTech', desc: 'Renderizado tridimensional en azul marino técnico (#0f2b5c) con iluminación optimizada e interacción orbital.', category: 'bim3d' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/020_VISOR_3D_SELECCION_ELEMENTO_MENU_CONTEXTUAL.png', title: 'Selección 3D y Menú Contextual ConTech', desc: 'Interacción directa con elementos constructivos con menú contextual para aislar, medir o presupuestar.', category: 'bim3d' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/021_VISOR_3D_PANEL_LATERAL_PROPIEDADES_BIM.png', title: 'Panel Lateral de Propiedades BIM', desc: 'Inspección de datos IFC: tipo, dimensiones geométricas, capas de materiales y Property Sets.', category: 'bim3d' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/022_VISOR_3D_FILTRO_CATEGORIAS_CONSTRUCTIVAS.png', title: 'Filtro de Categorías Constructivas', desc: 'Visibilidad selectiva por disciplinas y familias IFC (muros, forjados, pilares, ventanas, puertas).', category: 'bim3d' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/023_VISOR_3D_AISLAMIENTO_ELEMENTO_BLUEPRINT.png', title: 'Aislamiento de Elementos 3D', desc: 'Modo de visualización focalizado para examinar componentes singulares sin interferencias del modelo.', category: 'bim3d' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/024_VISOR_3D_SELECCIONAR_SIMILARES_CRITERIOS.png', title: 'Selección de Similares por 11 Criterios', desc: 'Submenú avanzado para agrupar elementos por familia, tipo, nivel/planta, material o dimensiones idénticas.', category: 'bim3d' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/025_VISOR_3D_SELECCION_MULTIPLE_PANEL_RESUMEN.png', title: 'Panel Resumen de Selección Múltiple', desc: 'Cómputo instantáneo de unidades totales, suma de superficies (m²), volúmenes (m³) e importes presupuestados.', category: 'bim3d' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/026_VISOR_3D_VISTA_TECNICA_PLANTA_CAD.png', title: 'Vista Técnica CAD: Planta Superior', desc: 'Proyección ortogonal ortocéntrica 2D para visualización arquitectónica de plantas de distribución.', category: 'bim3d' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/027_VISOR_3D_VISTA_TECNICA_ALZADO_FRONTAL.png', title: 'Vista Técnica CAD: Alzado Frontal', desc: 'Proyección ortogonal plana para comprobación de alturas, niveles y fachadas del edificio.', category: 'bim3d' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/028_VISOR_3D_PLANOS_SECCION_MULTIEJE.png', title: 'Planos de Sección Dinámicos Multieje', desc: 'Cortes interactivos en los tres ejes espaciales (X, Y, Z) para inspección interior del modelo.', category: 'bim3d' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/029_VISOR_3D_SECCION_MACIZA_STENCIL.png', title: 'Tapado Macizo Stencil de Secciones', desc: 'Relleno sólido de corte en tono azul oscuro (#0f2b5c) simulando sección arquitectónica real sin huecos.', category: 'bim3d' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/030_VISOR_3D_ACOTACION_CAD_SNAP_PUNTOS.png', title: 'Acotación CAD 3D con Snap Magnético', desc: 'Medición de distancias en tiempo real con atracción magnética a vértices y cotas persistentes.', category: 'bim3d' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/031_VISOR_3D_BIM_TAKEOFF_MEDICION_SUPERFICIE.png', title: 'BIM Takeoff 5D: Medición de Superficies y Volúmenes', desc: 'Extracción geométrica automática para vincular directamente líneas de medición al presupuesto BC3.', category: 'bim3d' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/032_VISOR_3D_ASISTENTE_CREAR_PARTIDA_BC3.png', title: 'Asistente de Creación de Partida desde BIM', desc: 'Vinculación directa 5D: genera una nueva unidad de obra a partir del elemento IFC seleccionado.', category: 'bim3d' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/033_PROBETA_MULTICAPA_3D_MURO_COMPACTA.png', title: 'Probeta Multicapa 3D: Muros y Cerramientos', desc: 'Visualización axonométrica compacta con tramas arquitectónicas y elevación interactiva de capas.', category: 'bim3d' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/034_PROBETA_MULTICAPA_3D_FORJADO_GIRO_90.png', title: 'Probeta Multicapa 3D: Forjados Horizontales', desc: 'Orientación horizontal a 90° con márgenes simétricos y cotas verticales de espesor para forjados y cubiertas.', category: 'bim3d' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/035_INFORMACION_VERSION_V3.png', title: 'Diagnóstico del Sistema y Versión 3.0', desc: 'Panel de control de actualizaciones OTA, estado del entorno y registro oficial de versiones.', category: 'gestion' },
+            { src: 'CAPTURAS/V3.0/WINDOWS_V3.0/036_SOBRE_MI_Y_FILOSOFIA_CONTECH.png', title: 'Sobre el Autor y Filosofía ConTech', desc: 'Perfil profesional de José Manuel Caamaño González, visión open-source y enlaces comunitarios.', category: 'gestion' }
         ];
 
         // Array mapping the screenshots for Android Mobile
         const androidScreenshots = [
-            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/001_PORTADA_android.png', title: 'Acceso de Seguridad Táctil', desc: 'Pantalla de bienvenida y control de acceso con seguridad PIN optimizada para dispositivos móviles y tabletas.' },
-            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/002_PRESUPUESTO_android.png', title: 'Visualización del Árbol de Partidas', desc: 'Navegación intuitiva del presupuesto adaptada a gestos táctiles y pantallas verticales.' },
-            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/003_BANCO DE PRECIOS_android.png', title: 'Consulta de Precios Rápida', desc: 'Explorador y gestor interactivo de la base de precios para verificar costes directamente en obra.' },
-            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/004_PRESUPUESTO_android.png', title: 'Detalle de Partidas en Obra', desc: 'Consulta en caliente de descompuestos, mediciones detalladas e importes unitarios en movilidad.' },
-            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/005_DASHBOARD_android.png', title: 'Dashboard de Análisis Móvil', desc: 'Métricas de PEM y PEC con distribución visual de costes adaptada a pantallas de smartphone.' },
-            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/006_PLANNING DE OBRA_android.png', title: 'Cronograma Gantt Adaptativo', desc: 'Planning de obra y tareas de hoy rediseñadas para fácil consulta sobre el terreno.' },
-            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/007_PLANNING DE OBRA _android.png', title: 'Visualización de Plazos y Tareas', desc: 'Seguimiento visual del cronograma para control de plazos diarios en cualquier lugar.' },
-            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/008_PLANNING DE OBRA AJUSTABLE_android.png', title: 'Ajuste de Tareas Táctil', desc: 'Modificación de plazos de tareas directamente arrastrando barras con control táctil.' },
-            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/009_PLANNING DE OBRA EDITABLE_android.png', title: 'Planificación de Obra en Mano', desc: 'Edición rápida de duraciones y relaciones de tareas desde dispositivo móvil.' },
-            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/010_PLANNING DE OBRA REPLEGABLE_android.png', title: 'Estructura Gantt Desplegable', desc: 'Optimización de espacio mediante expansión y contracción de capítulos en el Gantt móvil.' },
-            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/011_COMPARAR PRESUPUESTOS_android.png', title: 'Comparador de Presupuestos Móvil', desc: 'Contraste paralelo de dos archivos .bc3 para identificar variaciones de precios directamente en obra.' },
-            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/012_CERTIFICACION DE OBRA REVISABLE_android.png', title: 'Certificación en Campo', desc: 'Registro y control del avance físico y financiero de las partidas a pie de obra.' },
-            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/013_CERTIFICACION DE OBRA.png', title: 'Control de Unidades de Obra', desc: 'Avance acumulado calculado localmente sin depender de conexión a servidores.' },
-            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/014_AJUSTES GLOBALES_android.png', title: 'Configuración del Tema en Móvil', desc: 'Ajustes del visualizador y cambio de tema (Claro / Oscuro) para exteriores con alta luminosidad.' },
-            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/015_INFORMACION APP_android.png', title: 'Diagnóstico e Información', desc: 'Comprobación de actualizaciones (OTA) y panel de créditos desde la app de Android.' }
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/001_PORTADA_android.png', title: 'Acceso de Seguridad Táctil', desc: 'Pantalla de bienvenida y control de acceso con seguridad PIN optimizada para dispositivos móviles y tabletas.', category: 'general' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/002_PRESUPUESTO_android.png', title: 'Visualización del Árbol de Partidas', desc: 'Navegación intuitiva del presupuesto adaptada a gestos táctiles y pantallas verticales.', category: 'general' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/003_BANCO DE PRECIOS_android.png', title: 'Consulta de Precios Rápida', desc: 'Explorador y gestor interactivo de la base de precios para verificar costes directamente en obra.', category: 'general' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/004_PRESUPUESTO_android.png', title: 'Detalle de Partidas en Obra', desc: 'Consulta en caliente de descompuestos, mediciones detalladas e importes unitarios en movilidad.', category: 'general' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/005_DASHBOARD_android.png', title: 'Dashboard de Análisis Móvil', desc: 'Métricas de PEM y PEC con distribución visual de costes adaptada a pantallas de smartphone.', category: 'general' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/006_PLANNING DE OBRA_android.png', title: 'Cronograma Gantt Adaptativo', desc: 'Planning de obra y tareas de hoy rediseñadas para fácil consulta sobre el terreno.', category: 'gantt' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/007_PLANNING DE OBRA _android.png', title: 'Visualización de Plazos y Tareas', desc: 'Seguimiento visual del cronograma para control de plazos diarios en cualquier lugar.', category: 'gantt' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/008_PLANNING DE OBRA AJUSTABLE_android.png', title: 'Ajuste de Tareas Táctil', desc: 'Modificación de plazos de tareas directamente arrastrando barras con control táctil.', category: 'gantt' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/009_PLANNING DE OBRA EDITABLE_android.png', title: 'Planificación de Obra en Mano', desc: 'Edición rápida de duraciones y relaciones de tareas desde dispositivo móvil.', category: 'gantt' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/010_PLANNING DE OBRA REPLEGABLE_android.png', title: 'Estructura Gantt Desplegable', desc: 'Optimización de espacio mediante expansión y contracción de capítulos en el Gantt móvil.', category: 'gantt' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/011_COMPARAR PRESUPUESTOS_android.png', title: 'Comparador de Presupuestos Móvil', desc: 'Contraste paralelo de dos archivos .bc3 para identificar variaciones de precios directamente en obra.', category: 'certificaciones' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/012_CERTIFICACION DE OBRA REVISABLE_android.png', title: 'Certificación en Campo', desc: 'Registro y control del avance físico y financiero de las partidas a pie de obra.', category: 'certificaciones' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/013_CERTIFICACION DE OBRA.png', title: 'Control de Unidades de Obra', desc: 'Avance acumulado calculado localmente sin depender de conexión a servidores.', category: 'certificaciones' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/014_AJUSTES GLOBALES_android.png', title: 'Configuración del Tema en Móvil', desc: 'Ajustes del visualizador y cambio de tema (Claro / Oscuro) para exteriores con alta luminosidad.', category: 'general' },
+            { src: 'CAPTURAS/V1.5/ANDROID_V1.5/015_INFORMACION APP_android.png', title: 'Diagnóstico e Información', desc: 'Comprobación de actualizaciones (OTA) y panel de créditos desde la app de Android.', category: 'general' }
         ];
 
         // Array mapping the screenshots for Asesor IA ConTech
         const iaScreenshots = [
-            { src: 'CAPTURAS/V3.0/IA/IA BOTON.png', title: 'Acceso Directo al Asesor IA en Barra Superior', desc: 'Botón interactivo con el avatar oficial en la cabecera superior para invocar al Asesor IA en cualquier momento sobre el presupuesto activo.' },
-            { src: 'CAPTURAS/V3.0/IA/inicio ia.png', title: 'Bienvenida y Saludo del Asesor IA (jmcaamanog)', desc: 'Interfaz modal interactiva con saludo inicial personalizado, detección de presupuesto activo y botones de acción rápida para auditoría y generación de partidas.' },
-            { src: 'CAPTURAS/V3.0/IA/IA INFO.png', title: 'Panel Informativo del Sistema e Integración IA', desc: 'Cuadro de diálogo de información de la app con el distintivo oficial del Asesor IA, características clave de la versión 3.0 y período de cortesía gratuito activo.' },
-            { src: 'CAPTURAS/V3.0/IA/IA consulta 1.png', title: 'Auditoría de Omisiones y Desfases Críticos', desc: 'Detección inteligente de omisiones de instalaciones exigidas por normativa CTE/REBT (climatización, VMC, fontanería) con sugerencias accionables para incorporar al presupuesto.' },
-            { src: 'CAPTURAS/V3.0/IA/IA consulta 2.png', title: 'Ingeniería de Valor y Regla de Pareto (80/20)', desc: 'Identificación de las partidas con mayor impacto económico (SATE, pavimento porcelánico, impermeabilización) y estrategias técnicas para ahorrar hasta un 40% del coste.' },
-            { src: 'CAPTURAS/V3.0/IA/IA consulta 3.png', title: 'Generación Automática de Partida Descompuesta', desc: 'Desglose FIEBDC-3 completo para tabiquería de placa de yeso laminado (PYL) con rendimientos de oficiales, peones, montantes, placas y aislamiento mineral a 39,68 €/m².' },
-            { src: 'CAPTURAS/V3.0/IA/IA consulta 4.png', title: 'Resumen Ejecutivo Comercial para Clientes (I)', desc: 'Estructuración formal y ejecutiva del presupuesto por capítulos, porcentaje sobre PEM e importes claros para presentación ante promotores e inversores.' },
-            { src: 'CAPTURAS/V3.0/IA/IA consulta 5.png', title: 'Estrategia de Envolvente y Confort Térmico (II)', desc: 'Justificación técnica del reparto presupuestario, argumentando la inversión en aislamiento exterior y estanqueidad como ahorro energético y confort a largo plazo.' },
-            { src: 'CAPTURAS/V3.0/IA/IA consulta 6.png', title: 'Consultoría Técnica de Carpinterías y Ventanas', desc: 'Matriz comparativa de sistemas practicables, oscilobatientes y correderas elevadoras con análisis de transmitancia térmica (U), hermeticidad y mantenimiento.' },
-            { src: 'CAPTURAS/V3.0/IA/IA consulta 7.png', title: 'Auditoría de Puertas Especiales y Gama Alta', desc: 'Análisis de viabilidad técnica y sobrecostes en puertas de acceso pivotantes de gran formato (>350 kg), correderas elevadoras y puertas enrasadas con bisagras ocultas.' },
-            { src: 'CAPTURAS/V3.0/IA/IA consulta 8.png', title: 'Comparativa de Aislamientos: Grueso vs. Fino', desc: 'Contraste técnico y económico entre aislamientos de alta masa/espesor (XPS 120 mm en cubierta) y láminas acústicas de desolidarización de 5 mm con precios unitarios.' },
-            { src: 'CAPTURAS/V3.0/IA/IA consulta 9.png', title: 'Distribución de Aislamientos por Planta y Retorno BIM', desc: 'Cómputo desagregado por niveles (sótano, planta baja, primera) y recomendaciones constructivas para amortización energética y retorno de inversión.' }
+            { src: 'CAPTURAS/V3.0/IA/IA BOTON.png', title: 'Acceso Directo al Asesor IA en Barra Superior', desc: 'Botón interactivo con el avatar oficial en la cabecera superior para invocar al Asesor IA en cualquier momento sobre el presupuesto activo.', category: 'inicio' },
+            { src: 'CAPTURAS/V3.0/IA/inicio ia.png', title: 'Bienvenida y Saludo del Asesor IA (jmcaamanog)', desc: 'Interfaz modal interactiva con saludo inicial personalizado, detección de presupuesto activo y botones de acción rápida para auditoría y generación de partidas.', category: 'inicio' },
+            { src: 'CAPTURAS/V3.0/IA/IA INFO.png', title: 'Panel Informativo del Sistema e Integración IA', desc: 'Cuadro de diálogo de información de la app con el distintivo oficial del Asesor IA, características clave de la versión 3.0 y período de cortesía gratuito activo.', category: 'inicio' },
+            { src: 'CAPTURAS/V3.0/IA/IA consulta 1.png', title: 'Auditoría de Omisiones y Desfases Críticos', desc: 'Detección inteligente de omisiones de instalaciones exigidas por normativa CTE/REBT (climatización, VMC, fontanería) con sugerencias accionables para incorporar al presupuesto.', category: 'normativa' },
+            { src: 'CAPTURAS/V3.0/IA/IA consulta 2.png', title: 'Ingeniería de Valor y Regla de Pareto (80/20)', desc: 'Identificación de las partidas con mayor impacto económico (SATE, pavimento porcelánico, impermeabilización) y estrategias técnicas para ahorrar hasta un 40% del coste.', category: 'costes' },
+            { src: 'CAPTURAS/V3.0/IA/IA consulta 3.png', title: 'Generación Automática de Partida Descompuesta', desc: 'Desglose FIEBDC-3 completo para tabiquería de placa de yeso laminado (PYL) con rendimientos de oficiales, peones, montantes, placas y aislamiento mineral a 39,68 €/m².', category: 'costes' },
+            { src: 'CAPTURAS/V3.0/IA/IA consulta 4.png', title: 'Resumen Ejecutivo Comercial para Clientes (I)', desc: 'Estructuración formal y ejecutiva del presupuesto por capítulos, porcentaje sobre PEM e importes claros para presentación ante promotores e inversores.', category: 'comercial' },
+            { src: 'CAPTURAS/V3.0/IA/IA consulta 5.png', title: 'Estrategia de Envolvente y Confort Térmico (II)', desc: 'Justificación técnica del reparto presupuestario, argumentando la inversión en aislamiento exterior y estanqueidad como ahorro energético y confort a largo plazo.', category: 'normativa' },
+            { src: 'CAPTURAS/V3.0/IA/IA consulta 6.png', title: 'Consultoría Técnica de Carpinterías y Ventanas', desc: 'Matriz comparativa de sistemas practicables, oscilobatientes y correderas elevadoras con análisis de transmitancia térmica (U), hermeticidad y mantenimiento.', category: 'normativa' },
+            { src: 'CAPTURAS/V3.0/IA/IA consulta 7.png', title: 'Auditoría de Puertas Especiales y Gama Alta', desc: 'Análisis de viabilidad técnica y sobrecostes en puertas de acceso pivotantes de gran formato (>350 kg), correderas elevadoras y puertas enrasadas con bisagras ocultas.', category: 'costes' },
+            { src: 'CAPTURAS/V3.0/IA/IA consulta 8.png', title: 'Comparativa de Aislamientos: Grueso vs. Fino', desc: 'Contraste técnico y económico entre aislamientos de alta masa/espesor (XPS 120 mm en cubierta) y láminas acústicas de desolidarización de 5 mm con precios unitarios.', category: 'normativa' },
+            { src: 'CAPTURAS/V3.0/IA/IA consulta 9.png', title: 'Distribución de Aislamientos por Planta y Retorno BIM', desc: 'Cómputo desagregado por niveles (sótano, planta baja, primera) y recomendaciones constructivas para amortización energética y retorno de inversión.', category: 'costes' }
         ];
 
-        let screenshots = windowsScreenshots;
+        // Definición de filtros de categorías por plataforma
+        const categoryFilters = {
+            windows: [
+                { id: 'all', label: 'Todas las Capturas', icon: '🔍' },
+                { id: 'bim3d', label: 'BIM 3D & Takeoff', icon: '🏛️' },
+                { id: 'costes', label: 'Presupuestos & Analítica', icon: '📊' },
+                { id: 'gantt', label: 'Planificación Gantt', icon: '📅' },
+                { id: 'ia', label: 'Asesor IA', icon: '✨' },
+                { id: 'gestion', label: 'Gestión & Herramientas', icon: '⚙️' }
+            ],
+            ia: [
+                { id: 'all', label: 'Todas las Consultas', icon: '🔍' },
+                { id: 'inicio', label: 'Acceso & Bienvenida', icon: '🚀' },
+                { id: 'normativa', label: 'Auditoría CTE & Envolvente', icon: '📜' },
+                { id: 'costes', label: 'Descompuestos & Pareto', icon: '💰' },
+                { id: 'comercial', label: 'Informes Ejecutivos', icon: '📈' }
+            ],
+            android: [
+                { id: 'all', label: 'Todas las Capturas Móviles', icon: '📱' }
+            ]
+        };
+
+        let currentPlatform = 'windows';
+        let currentCategory = 'all';
+        let filteredScreenshots = windowsScreenshots;
         let currentIndex = 0;
 
         // Elements
@@ -3419,9 +4441,66 @@
         const lightboxNext = document.getElementById('lightbox-next');
         const zoomTrigger = document.getElementById('gallery-zoom-trigger');
 
+        // Render Category Chips
+        function renderCategoryChips() {
+            const chipsContainer = document.getElementById('gallery-category-chips');
+            if (!chipsContainer) return;
+
+            const list = categoryFilters[currentPlatform] || [];
+            chipsContainer.innerHTML = '';
+
+            list.forEach(item => {
+                let count = 0;
+                if (currentPlatform === 'windows') {
+                    count = (item.id === 'all') ? windowsScreenshots.length : windowsScreenshots.filter(s => s.category === item.id).length;
+                } else if (currentPlatform === 'ia') {
+                    count = (item.id === 'all') ? iaScreenshots.length : iaScreenshots.filter(s => s.category === item.id).length;
+                } else {
+                    count = androidScreenshots.length;
+                }
+
+                const chip = document.createElement('button');
+                chip.type = 'button';
+                chip.className = `category-chip ${item.id === currentCategory ? 'active' : ''}`;
+                chip.dataset.categoryId = item.id;
+                chip.innerHTML = `<span>${item.icon}</span> <span>${item.label}</span> <span class="chip-count">${count}</span>`;
+
+                chip.addEventListener('click', () => {
+                    if (currentCategory === item.id) return;
+                    currentCategory = item.id;
+                    updateGalleryFilter();
+                });
+
+                chipsContainer.appendChild(chip);
+            });
+        }
+
+        // Filter and update gallery display
+        function updateGalleryFilter() {
+            const chipsContainer = document.getElementById('gallery-category-chips');
+            if (chipsContainer) {
+                chipsContainer.querySelectorAll('.category-chip').forEach(c => {
+                    c.classList.toggle('active', c.dataset.categoryId === currentCategory);
+                });
+            }
+
+            const baseList = (currentPlatform === 'windows') ? windowsScreenshots : (currentPlatform === 'ia' ? iaScreenshots : androidScreenshots);
+            if (currentCategory === 'all') {
+                filteredScreenshots = baseList;
+            } else {
+                filteredScreenshots = baseList.filter(s => s.category === currentCategory);
+            }
+
+            initSidebar();
+            setGalleryImage(0);
+        }
+
         // Initialize Sidebar
         function initSidebar() {
-            screenshots.forEach((item, index) => {
+            if (!sidebar) return;
+            sidebar.innerHTML = '';
+
+            filteredScreenshots.forEach((item, index) => {
                 const card = document.createElement('div');
                 card.className = `thumb-card ${index === 0 ? 'active' : ''}`;
                 card.dataset.index = index;
@@ -3446,110 +4525,125 @@
 
         // Set active image
         function setGalleryImage(index) {
-            if (index < 0 || index >= screenshots.length) return;
+            if (index < 0 || index >= filteredScreenshots.length) return;
 
             currentIndex = index;
-            const item = screenshots[currentIndex];
+            const item = filteredScreenshots[currentIndex];
 
             // Apply fade effect
-            mainImg.style.opacity = 0;
-            setTimeout(() => {
-                mainImg.src = item.src;
-                galleryTitle.textContent = item.title;
-                galleryDesc.textContent = item.desc;
-                galleryIndexText.textContent = `${currentIndex + 1} / ${screenshots.length}`;
-                mainImg.style.opacity = 1;
-            }, 150);
+            if (mainImg) {
+                mainImg.style.opacity = 0;
+                setTimeout(() => {
+                    mainImg.src = item.src;
+                    if (galleryTitle) galleryTitle.textContent = item.title;
+                    if (galleryDesc) galleryDesc.textContent = item.desc;
+                    if (galleryIndexText) galleryIndexText.textContent = `${currentIndex + 1} / ${filteredScreenshots.length}`;
+                    mainImg.style.opacity = 1;
+                }, 150);
+            }
 
             // Update active state in sidebar
-            const cards = sidebar.querySelectorAll('.thumb-card');
-            cards.forEach(card => card.classList.remove('active'));
+            if (sidebar) {
+                const cards = sidebar.querySelectorAll('.thumb-card');
+                cards.forEach(card => card.classList.remove('active'));
 
-            const activeCard = cards[currentIndex];
-            if (activeCard) {
-                activeCard.classList.add('active');
-
-                // Scroll thumbnail into view smoothly
-                sidebar.scrollTo({
-                    top: activeCard.offsetTop - sidebar.offsetTop - 100,
-                    behavior: 'smooth'
-                });
+                const activeCard = cards[currentIndex];
+                if (activeCard) {
+                    activeCard.classList.add('active');
+                    sidebar.scrollTo({
+                        top: activeCard.offsetTop - sidebar.offsetTop - 100,
+                        behavior: 'smooth'
+                    });
+                }
             }
         }
 
         // Event Listeners for Nav Buttons
-        prevBtn.addEventListener('click', () => {
-            let nextIdx = currentIndex - 1;
-            if (nextIdx < 0) nextIdx = screenshots.length - 1;
-            setGalleryImage(nextIdx);
-        });
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                let nextIdx = currentIndex - 1;
+                if (nextIdx < 0) nextIdx = filteredScreenshots.length - 1;
+                setGalleryImage(nextIdx);
+            });
+        }
 
-        nextBtn.addEventListener('click', () => {
-            let nextIdx = currentIndex + 1;
-            if (nextIdx >= screenshots.length) nextIdx = 0;
-            setGalleryImage(nextIdx);
-        });
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                let nextIdx = currentIndex + 1;
+                if (nextIdx >= filteredScreenshots.length) nextIdx = 0;
+                setGalleryImage(nextIdx);
+            });
+        }
 
         // Lightbox functions
         function updateLightboxContent() {
-            const item = screenshots[currentIndex];
-            lightboxImg.src = item.src;
-            lightboxTitle.textContent = item.title;
-            lightboxDesc.textContent = item.desc;
+            const item = filteredScreenshots[currentIndex];
+            if (!item) return;
+            if (lightboxImg) lightboxImg.src = item.src;
+            if (lightboxTitle) lightboxTitle.textContent = item.title;
+            if (lightboxDesc) lightboxDesc.textContent = item.desc;
         }
 
         function openLightbox() {
             updateLightboxContent();
-            lightbox.classList.add('active');
+            if (lightbox) lightbox.classList.add('active');
         }
 
         function closeLightbox() {
-            lightbox.classList.remove('active');
+            if (lightbox) lightbox.classList.remove('active');
         }
 
-        zoomTrigger.addEventListener('dblclick', openLightbox);
-        zoomTrigger.addEventListener('click', (e) => {
-            // Only trigger on simple click if not clicking arrows
-            if (e.target.classList.contains('gallery-nav-btn')) return;
-            // Let a helper overlay or single-click option open it
-            openLightbox();
-        });
+        if (zoomTrigger) {
+            zoomTrigger.addEventListener('dblclick', openLightbox);
+            zoomTrigger.addEventListener('click', (e) => {
+                if (e.target.classList.contains('gallery-nav-btn')) return;
+                openLightbox();
+            });
+        }
 
-        lightboxClose.addEventListener('click', closeLightbox);
+        if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
 
-        lightboxPrev.addEventListener('click', (e) => {
-            e.stopPropagation();
-            let nextIdx = currentIndex - 1;
-            if (nextIdx < 0) nextIdx = screenshots.length - 1;
-            setGalleryImage(nextIdx);
-            updateLightboxContent();
-        });
+        if (lightboxPrev) {
+            lightboxPrev.addEventListener('click', (e) => {
+                e.stopPropagation();
+                let nextIdx = currentIndex - 1;
+                if (nextIdx < 0) nextIdx = filteredScreenshots.length - 1;
+                setGalleryImage(nextIdx);
+                updateLightboxContent();
+            });
+        }
 
-        lightboxNext.addEventListener('click', (e) => {
-            e.stopPropagation();
-            let nextIdx = currentIndex + 1;
-            if (nextIdx >= screenshots.length) nextIdx = 0;
-            setGalleryImage(nextIdx);
-            updateLightboxContent();
-        });
+        if (lightboxNext) {
+            lightboxNext.addEventListener('click', (e) => {
+                e.stopPropagation();
+                let nextIdx = currentIndex + 1;
+                if (nextIdx >= filteredScreenshots.length) nextIdx = 0;
+                setGalleryImage(nextIdx);
+                updateLightboxContent();
+            });
+        }
 
-        lightbox.addEventListener('click', (e) => {
-            if (e.target === lightbox) closeLightbox();
-        });
+        if (lightbox) {
+            lightbox.addEventListener('click', (e) => {
+                if (e.target === lightbox) closeLightbox();
+            });
+        }
 
         // Keyboard navigation
         document.addEventListener('keydown', (e) => {
-            if (lightbox.classList.contains('active')) {
+            if (lightbox && lightbox.classList.contains('active')) {
                 if (e.key === 'Escape') closeLightbox();
-                if (e.key === 'ArrowLeft') lightboxPrev.click();
-                if (e.key === 'ArrowRight') lightboxNext.click();
+                if (e.key === 'ArrowLeft' && lightboxPrev) lightboxPrev.click();
+                if (e.key === 'ArrowRight' && lightboxNext) lightboxNext.click();
             } else {
-                // If scroll position is near the gallery, enable arrow controls
-                const rect = document.getElementById('galeria').getBoundingClientRect();
-                const inView = rect.top < window.innerHeight && rect.bottom > 0;
-                if (inView) {
-                    if (e.key === 'ArrowLeft') prevBtn.click();
-                    if (e.key === 'ArrowRight') nextBtn.click();
+                const galSec = document.getElementById('galeria');
+                if (galSec) {
+                    const rect = galSec.getBoundingClientRect();
+                    const inView = rect.top < window.innerHeight && rect.bottom > 0;
+                    if (inView) {
+                        if (e.key === 'ArrowLeft' && prevBtn) prevBtn.click();
+                        if (e.key === 'ArrowRight' && nextBtn) nextBtn.click();
+                    }
                 }
             }
         });
@@ -3557,7 +4651,9 @@
         // Sticky Navbar scroll behavior
         window.addEventListener('scroll', () => {
             const navbar = document.getElementById('navbar');
-            navbar.classList.toggle('scrolled', window.scrollY > 50);
+            if (navbar) {
+                navbar.classList.toggle('scrolled', window.scrollY > 50);
+            }
 
             // Update active menu link based on scroll position
             const sections = document.querySelectorAll('section, header');
@@ -3610,9 +4706,57 @@
         // Rotate every 6 seconds
         setInterval(rotateHeroMockup, 6000);
 
+        // === SANDBOX 1-CLICK MODAL CONTROLLER ===
+        function initSandboxModal() {
+            const modal = document.getElementById('sandbox-modal');
+            const openBtn = document.getElementById('open-sandbox-btn');
+            const closeBtn = document.getElementById('sandbox-close-btn');
+            const iframe = document.getElementById('sandbox-iframe');
+
+            if (!modal || !iframe) return;
+
+            function openModal() {
+                if (iframe.src === 'about:blank' || iframe.src === '' || iframe.src.endsWith('about:blank')) {
+                    iframe.src = 'www/index.html';
+                }
+                modal.classList.add('active');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeModal() {
+                modal.classList.remove('active');
+                modal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+            }
+
+            if (openBtn) {
+                openBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    openModal();
+                });
+            }
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', closeModal);
+            }
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modal.classList.contains('active')) {
+                    closeModal();
+                }
+            });
+        }
+
         // Initialize on load
         window.addEventListener('DOMContentLoaded', () => {
-            initSidebar();
+            renderCategoryChips();
+            updateGalleryFilter();
+            initSandboxModal();
 
             // Tab switching logic for gallery
             document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -3620,21 +4764,10 @@
                     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
 
-                    const platform = btn.dataset.platform;
-                    if (platform === 'windows') {
-                        screenshots = windowsScreenshots;
-                    } else if (platform === 'ia') {
-                        screenshots = iaScreenshots;
-                    } else {
-                        screenshots = androidScreenshots;
-                    }
-
-                    // Re-initialize sidebar thumbnails
-                    sidebar.innerHTML = '';
-                    initSidebar();
-
-                    // Reset to first image
-                    setGalleryImage(0);
+                    currentPlatform = btn.dataset.platform;
+                    currentCategory = 'all'; // reset to all when switching platform
+                    renderCategoryChips();
+                    updateGalleryFilter();
                 });
             });
 
@@ -3645,7 +4778,7 @@
             }
 
             // Add custom animation styles for transitions
-            mainImg.style.transition = 'opacity 0.15s ease-in-out';
+            if (mainImg) mainImg.style.transition = 'opacity 0.15s ease-in-out';
 
             // Video Facade click-to-play handler (Clean embed without YouTube links/overlays)
             const videoFacade = document.getElementById('video-facade');
