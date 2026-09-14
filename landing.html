@@ -574,63 +574,283 @@
             font-size: 1rem;
         }
 
-        /* FEATURES SECTION (GRID) */
+        /* FEATURES SECTION (CHIPS & GRID) */
+        .features-filter-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            margin: 0 auto 36px auto;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .features-category-chips {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .feat-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(17, 24, 39, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            padding: 9px 18px;
+            border-radius: 9999px;
+            font-size: 0.86rem;
+            font-weight: 600;
+            cursor: pointer;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            position: relative;
+        }
+
+        .feat-chip:hover {
+            color: var(--text-white);
+            border-color: rgba(56, 189, 248, 0.4);
+            background: rgba(26, 36, 57, 0.85);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+        }
+
+        .feat-chip .feat-chip-icon {
+            font-size: 0.95rem;
+        }
+
+        .feat-chip .feat-chip-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 1px 7px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+        }
+
+        .feat-chip.active {
+            color: #ffffff;
+            border-color: rgba(56, 189, 248, 0.6);
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.35), rgba(56, 189, 248, 0.25));
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.35), 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .feat-chip.active .feat-chip-count {
+            background: rgba(56, 189, 248, 0.3);
+            color: #ffffff;
+        }
+
+        /* Specific active chip colors */
+        .feat-chip[data-cat="bim"].active {
+            border-color: rgba(56, 189, 248, 0.7);
+            background: linear-gradient(135deg, rgba(2, 132, 199, 0.35), rgba(56, 189, 248, 0.25));
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.35);
+        }
+
+        .feat-chip[data-cat="costes"].active {
+            border-color: rgba(16, 185, 129, 0.7);
+            background: linear-gradient(135deg, rgba(5, 150, 105, 0.35), rgba(16, 185, 129, 0.25));
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
+        }
+
+        .feat-chip[data-cat="ia"].active {
+            border-color: rgba(192, 132, 252, 0.7);
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.35), rgba(192, 132, 252, 0.25));
+            box-shadow: 0 0 20px rgba(192, 132, 252, 0.4);
+        }
+
+        .feat-chip[data-cat="planificacion"].active {
+            border-color: rgba(59, 130, 246, 0.7);
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.35), rgba(96, 165, 250, 0.25));
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.35);
+        }
+
+        .feat-chip[data-cat="productividad"].active {
+            border-color: rgba(245, 158, 11, 0.7);
+            background: linear-gradient(135deg, rgba(217, 119, 6, 0.35), rgba(251, 191, 36, 0.25));
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.35);
+        }
+
+        .features-status-indicator {
+            font-size: 0.84rem;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 4px 14px;
+            border-radius: 20px;
+        }
+
+        .features-status-indicator strong {
+            color: #38bdf8;
+        }
+
         .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
+            gap: 24px;
+            transition: all 0.3s ease;
         }
 
         .feature-card {
-            background: var(--bg-card);
+            background: linear-gradient(180deg, rgba(17, 24, 39, 0.75) 0%, rgba(13, 19, 33, 0.85) 100%);
             border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 30px;
-            transition: var(--transition);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            border-radius: 18px;
+            padding: 26px 28px;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 14px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                        border-color 0.25s ease,
+                        box-shadow 0.25s ease,
+                        background 0.25s ease;
+        }
+
+        .feature-card.card-hidden {
+            display: none !important;
+        }
+
+        .feature-card.card-fade-in {
+            animation: cardFadeIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes cardFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(0.97);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .feature-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .feature-category-tag {
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .cat-tag-bim {
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            color: #38bdf8;
+        }
+
+        .cat-tag-costes {
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            color: #34d399;
+        }
+
+        .cat-tag-ia {
+            background: rgba(192, 132, 252, 0.14);
+            border: 1px solid rgba(192, 132, 252, 0.4);
+            color: #c084fc;
+        }
+
+        .cat-tag-planificacion {
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            color: #60a5fa;
+        }
+
+        .cat-tag-productividad {
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            color: #fbbf24;
         }
 
         .feature-card:hover {
             transform: translateY(-5px);
-            background: var(--bg-card-hover);
-            border-color: var(--border-hover);
-            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.1);
+            background: linear-gradient(180deg, rgba(26, 36, 57, 0.85) 0%, rgba(17, 24, 39, 0.95) 100%);
+        }
+
+        .feature-card[data-category="bim"]:hover {
+            border-color: rgba(56, 189, 248, 0.45);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 24px rgba(56, 189, 248, 0.16);
+        }
+
+        .feature-card[data-category="costes"]:hover {
+            border-color: rgba(16, 185, 129, 0.45);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 24px rgba(16, 185, 129, 0.16);
+        }
+
+        .feature-card[data-category="ia"]:hover {
+            border-color: rgba(192, 132, 252, 0.5);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 26px rgba(192, 132, 252, 0.2);
+        }
+
+        .feature-card[data-category="planificacion"]:hover {
+            border-color: rgba(59, 130, 246, 0.45);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 24px rgba(59, 130, 246, 0.16);
+        }
+
+        .feature-card[data-category="productividad"]:hover {
+            border-color: rgba(245, 158, 11, 0.45);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 24px rgba(245, 158, 11, 0.16);
         }
 
         .feature-icon-wrapper {
-            width: 50px;
-            height: 50px;
+            width: 48px;
+            height: 48px;
             border-radius: 12px;
             background: rgba(59, 130, 246, 0.1);
             color: var(--accent-primary);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: bold;
             border: 1px solid rgba(59, 130, 246, 0.15);
-        }
-
-        .feature-card:hover .feature-icon-wrapper {
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            color: var(--text-white);
-            transform: rotate(5deg) scale(1.1);
             transition: var(--transition);
         }
 
+        .feat-icon-bim { background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.25); color: #38bdf8; }
+        .feat-icon-costes { background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.25); color: #34d399; }
+        .feat-icon-ia { background: rgba(192, 132, 252, 0.1); border-color: rgba(192, 132, 252, 0.25); color: #c084fc; }
+        .feat-icon-planificacion { background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.25); color: #60a5fa; }
+        .feat-icon-productividad { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.25); color: #fbbf24; }
+
+        .feature-card:hover .feature-icon-wrapper {
+            transform: rotate(5deg) scale(1.08);
+        }
+
         .feature-card h3 {
-            font-size: 1.25rem;
-            font-weight: 600;
+            font-size: 1.22rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0;
+            letter-spacing: -0.01em;
         }
 
         .feature-card p {
             font-size: 0.9rem;
             color: var(--text-muted);
-            line-height: 1.5;
+            line-height: 1.55;
+            margin: 0;
         }
 
         /* COMPARATIVE TABLE SECTION */
@@ -3240,13 +3460,55 @@
                 rendimiento.</p>
         </div>
 
-        <div class="features-grid">
-            <!-- 0 (Destacada Principal: Visor 3D BIM & Mediciones Takeoff 5D) -->
-            <div class="feature-card featured-highlight-card" style="grid-column: 1 / -1; border: 1px solid rgba(59, 130, 246, 0.6); background: linear-gradient(135deg, rgba(30, 58, 138, 0.25) 0%, rgba(37, 99, 235, 0.18) 50%, rgba(56, 189, 248, 0.12) 100%); box-shadow: 0 10px 35px rgba(37, 99, 235, 0.25); position: relative; overflow: hidden; padding: 28px 32px; display: flex; flex-direction: column; gap: 12px;">
+        <!-- Features Filter Chips Bar -->
+        <div class="features-filter-wrapper">
+            <div class="features-category-chips" id="features-category-chips">
+                <button type="button" class="feat-chip active" data-cat="all">
+                    <span class="feat-chip-icon">🌟</span>
+                    <span class="feat-chip-label">Todas</span>
+                    <span class="feat-chip-count">18</span>
+                </button>
+                <button type="button" class="feat-chip" data-cat="bim">
+                    <span class="feat-chip-icon">🏢</span>
+                    <span class="feat-chip-label">BIM 5D & 3D</span>
+                    <span class="feat-chip-count">5</span>
+                </button>
+                <button type="button" class="feat-chip" data-cat="costes">
+                    <span class="feat-chip-icon">💰</span>
+                    <span class="feat-chip-label">Presupuestos & BC3</span>
+                    <span class="feat-chip-count">4</span>
+                </button>
+                <button type="button" class="feat-chip" data-cat="ia">
+                    <span class="feat-chip-icon">✨</span>
+                    <span class="feat-chip-label">Asesor IA</span>
+                    <span class="feat-chip-count">1</span>
+                </button>
+                <button type="button" class="feat-chip" data-cat="planificacion">
+                    <span class="feat-chip-icon">📊</span>
+                    <span class="feat-chip-label">Planificación & Obra</span>
+                    <span class="feat-chip-count">5</span>
+                </button>
+                <button type="button" class="feat-chip" data-cat="productividad">
+                    <span class="feat-chip-icon">⚡</span>
+                    <span class="feat-chip-label">Productividad & Nube</span>
+                    <span class="feat-chip-count">3</span>
+                </button>
+            </div>
+            <div class="features-status-indicator" id="features-status-indicator">
+                Mostrando <strong id="features-visible-count">18</strong> de 18 herramientas
+            </div>
+        </div>
+
+        <div class="features-grid" id="features-grid">
+            <!-- 1 (Destacada Principal: Visor 3D BIM & Mediciones Takeoff 5D) -->
+            <div class="feature-card featured-highlight-card" data-category="bim" style="grid-column: 1 / -1; border: 1px solid rgba(59, 130, 246, 0.6); background: linear-gradient(135deg, rgba(30, 58, 138, 0.25) 0%, rgba(37, 99, 235, 0.18) 50%, rgba(56, 189, 248, 0.12) 100%); box-shadow: 0 10px 35px rgba(37, 99, 235, 0.25); position: relative; overflow: hidden; padding: 28px 32px; display: flex; flex-direction: column; gap: 12px;">
                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                     <div style="display: flex; align-items: center; gap: 14px;">
-                        <div class="feature-icon-wrapper" style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.35), rgba(56, 189, 248, 0.35)); color: #60a5fa; font-size: 1.8rem; width: 56px; height: 56px; margin: 0;">🏢</div>
+                        <div class="feature-icon-wrapper feat-icon-bim" style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.35), rgba(56, 189, 248, 0.35)); color: #60a5fa; font-size: 1.8rem; width: 56px; height: 56px; margin: 0;">🏢</div>
                         <div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                <span class="feature-category-tag cat-tag-bim">BIM 5D & 3D</span>
+                            </div>
                             <h3 style="font-size: 1.35rem; margin: 0; color: #fff; display: flex; align-items: center; gap: 10px;">
                                 Visor 3D BIM (IFC) & Mediciones Takeoff 5D
                             </h3>
@@ -3257,12 +3519,16 @@
                 </div>
                 <p style="font-size: 0.95rem; line-height: 1.6; color: var(--text-main); margin: 0;">Abre modelos <strong>IFC 3D</strong> directamente en tu navegador sin plugins externos ni servidores. Incluye <strong>BIM Takeoff 5D</strong> para calcular superficies y volúmenes con inserción directa en el presupuesto BC3, <strong>acotación técnica CAD con snap magnético</strong>, <strong>planos de sección multieje con tapado macizo stencil (#0f2b5c)</strong>, <strong>vistas ortogonales CAD 2D/3D</strong>, probeta volumétrica multicapa para muros y forjados, y <strong>selección inteligente de similares</strong> con 11 criterios y suma acumulada de mediciones y precios.</p>
             </div>
-            <!-- 0 (Destacada Principal: Asesor de IA ConTech jmcaamanog) -->
-            <div class="feature-card featured-highlight-card" style="grid-column: 1 / -1; border: 1px solid rgba(56, 189, 248, 0.5); background: linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(37, 99, 235, 0.1) 50%, rgba(139, 92, 246, 0.08) 100%); box-shadow: 0 10px 35px rgba(56, 189, 248, 0.2); position: relative; overflow: hidden; padding: 28px 32px; display: flex; flex-direction: column; gap: 12px;">
+
+            <!-- 2 (Destacada Principal: Asesor de IA ConTech jmcaamanog) -->
+            <div class="feature-card featured-highlight-card" data-category="ia" style="grid-column: 1 / -1; border: 1px solid rgba(56, 189, 248, 0.5); background: linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(37, 99, 235, 0.1) 50%, rgba(139, 92, 246, 0.08) 100%); box-shadow: 0 10px 35px rgba(56, 189, 248, 0.2); position: relative; overflow: hidden; padding: 28px 32px; display: flex; flex-direction: column; gap: 12px;">
                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                     <div style="display: flex; align-items: center; gap: 14px;">
                         <img src="www/img/jmcaamanog.png" alt="jmcaamanog" style="width: 54px; height: 54px; object-fit: contain; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4)); margin: 0; flex-shrink: 0;" />
                         <div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                <span class="feature-category-tag cat-tag-ia">Asesor IA</span>
+                            </div>
                             <h3 style="font-size: 1.35rem; margin: 0; color: #fff; display: flex; align-items: center; gap: 10px;">
                                 Asesor de IA ConTech Oficial (jmcaamanog)
                             </h3>
@@ -3274,12 +3540,15 @@
                 <p style="font-size: 0.95rem; line-height: 1.6; color: var(--text-main); margin: 0;">Un asistente de inteligencia artificial senior integrado en tu navegador que lee tu presupuesto en tiempo real: responde consultas técnicas, audita posibles partidas faltantes, analiza las unidades más caras y <strong>redacta e inserta nuevas partidas descompuestas</strong> en tus capítulos con un solo clic (100% Gratuito y Privado con tu clave API de Gemini).</p>
             </div>
 
-            <!-- 1 (Destacada: Creador de Presupuestos) -->
-            <div class="feature-card featured-highlight-card" style="grid-column: 1 / -1; border: 1px solid rgba(59, 130, 246, 0.4); background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.08) 50%, rgba(6, 182, 212, 0.08) 100%); box-shadow: 0 10px 35px rgba(59, 130, 246, 0.18); position: relative; overflow: hidden; padding: 28px 32px; display: flex; flex-direction: column; gap: 12px;">
+            <!-- 3 (Destacada: Creador de Presupuestos) -->
+            <div class="feature-card featured-highlight-card" data-category="costes" style="grid-column: 1 / -1; border: 1px solid rgba(59, 130, 246, 0.4); background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.08) 50%, rgba(6, 182, 212, 0.08) 100%); box-shadow: 0 10px 35px rgba(59, 130, 246, 0.18); position: relative; overflow: hidden; padding: 28px 32px; display: flex; flex-direction: column; gap: 12px;">
                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                     <div style="display: flex; align-items: center; gap: 14px;">
-                        <div class="feature-icon-wrapper" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(147, 51, 234, 0.25)); color: #60a5fa; font-size: 1.8rem; width: 56px; height: 56px; margin: 0;">🧙‍♂️</div>
+                        <div class="feature-icon-wrapper feat-icon-costes" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(147, 51, 234, 0.25)); color: #60a5fa; font-size: 1.8rem; width: 56px; height: 56px; margin: 0;">🧙‍♂️</div>
                         <div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                <span class="feature-category-tag cat-tag-costes">Presupuestos & BC3</span>
+                            </div>
                             <h3 style="font-size: 1.35rem; margin: 0; color: #fff; display: flex; align-items: center; gap: 10px;">
                                 Creador de Nuevos Presupuestos
                             </h3>
@@ -3291,91 +3560,151 @@
                 <p style="font-size: 0.95rem; line-height: 1.6; color: var(--text-main); margin: 0;">Genera proyectos completos desde cero en segundos. Elige entre el <strong>Asistente Inteligente paso a paso</strong> (que parametriza calidades, tipología y calcula automáticamente las mediciones y partidas necesarias) o selecciona <strong>Plantillas Tipológicas prediseñadas</strong> con un catálogo exhaustivo de precios descompuestos.</p>
             </div>
 
-            <!-- Novedades BIM 5D Integradas de Coming Soon -->
-            <div class="feature-card">
-                <div class="feature-icon-wrapper">📏</div>
+            <!-- 4 -->
+            <div class="feature-card" data-category="bim">
+                <div class="feature-card-header">
+                    <div class="feature-icon-wrapper feat-icon-bim">📏</div>
+                    <span class="feature-category-tag cat-tag-bim">BIM 5D & 3D</span>
+                </div>
                 <h3>Acotación CAD 3D con Snap</h3>
                 <p>Comprobación dimensional milimétrica en el espacio 3D. Trazado de líneas de cota dinámicas con imantación magnética a vértices, activas en perspectiva y en vistas técnicas ortogonales CAD.</p>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon-wrapper">✂️</div>
+
+            <!-- 5 -->
+            <div class="feature-card" data-category="bim">
+                <div class="feature-card-header">
+                    <div class="feature-icon-wrapper feat-icon-bim">✂️</div>
+                    <span class="feature-category-tag cat-tag-bim">BIM 5D & 3D</span>
+                </div>
                 <h3>Secciones Stencil con Masa Maciza</h3>
                 <p>Planos de corte en tiempo real en los ejes X, Y y Z. El estarcido por GPU (Stencil Capping) muestra muros y forjados cortados como masas sólidas en azul (#0f2b5c) sin huecos vacíos.</p>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon-wrapper">✨</div>
+
+            <!-- 6 -->
+            <div class="feature-card" data-category="bim">
+                <div class="feature-card-header">
+                    <div class="feature-icon-wrapper feat-icon-bim">✨</div>
+                    <span class="feature-category-tag cat-tag-bim">BIM 5D & 3D</span>
+                </div>
                 <h3>Selección por Similitud y Resumen 5D</h3>
                 <p>Agrupación de elementos por 11 criterios (familia, tipo, planta, superficie o volumen) y panel ejecutivo con suma en tiempo real de mediciones (m², m³) e impacto económico en euros (€).</p>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon-wrapper">🧱</div>
+
+            <!-- 7 -->
+            <div class="feature-card" data-category="bim">
+                <div class="feature-card-header">
+                    <div class="feature-icon-wrapper feat-icon-bim">🧱</div>
+                    <span class="feature-category-tag cat-tag-bim">BIM 5D & 3D</span>
+                </div>
                 <h3>Probeta Multicapa 3D Axonométrica</h3>
                 <p>Inspección interactiva de la composición estratigráfica de muros y forjados con tramas CAD, espesores acotados, elevación de capas y giro automático a 90° para forjados y cubiertas.</p>
             </div>
 
-            <!-- 2 -->
-            <div class="feature-card">
-                <div class="feature-icon-wrapper">📑</div>
+            <!-- 8 -->
+            <div class="feature-card" data-category="costes">
+                <div class="feature-card-header">
+                    <div class="feature-icon-wrapper feat-icon-costes">📑</div>
+                    <span class="feature-category-tag cat-tag-costes">Presupuestos & BC3</span>
+                </div>
                 <h3>Sistema Multi-Presupuesto</h3>
                 <p>Gestiona múltiples presupuestos .bc3 abiertos simultáneamente en pestañas paralelas con guardado nativo directo en disco mediante File System Access API.</p>
             </div>
-            <!-- 3 -->
-            <div class="feature-card">
-                <div class="feature-icon-wrapper">☀️</div>
+
+            <!-- 9 -->
+            <div class="feature-card" data-category="planificacion">
+                <div class="feature-card-header">
+                    <div class="feature-icon-wrapper feat-icon-planificacion">☀️</div>
+                    <span class="feature-category-tag cat-tag-planificacion">Planificación & Obra</span>
+                </div>
                 <h3>Dashboard Sunburst & Sankey</h3>
                 <p>Explora la jerarquía de costes con el gráfico concéntrico Sunburst de 1 a 5 niveles de profundidad y visualiza el flujo y distribución con el diagrama Sankey.</p>
             </div>
-            <!-- 4 -->
-            <div class="feature-card">
-                <div class="feature-icon-wrapper">🌿</div>
+
+            <!-- 10 -->
+            <div class="feature-card" data-category="planificacion">
+                <div class="feature-icon-wrapper feat-icon-planificacion">🌿</div>
+                <span class="feature-category-tag cat-tag-planificacion">Planificación & Obra</span>
+                </div>
                 <h3>Impacto Ambiental & CO₂</h3>
                 <p>Estimación analítica de la huella de carbono (kg CO₂ eq) y reparto por tipología de materiales constructivos con soporte sincronizado para tema claro y oscuro.</p>
             </div>
-            <!-- 5 -->
-            <div class="feature-card">
-                <div class="feature-icon-wrapper">📈</div>
+
+            <!-- 11 -->
+            <div class="feature-card" data-category="planificacion">
+                <div class="feature-card-header">
+                    <div class="feature-icon-wrapper feat-icon-planificacion">📈</div>
+                    <span class="feature-category-tag cat-tag-planificacion">Planificación & Obra</span>
+                </div>
                 <h3>Valor Ganado (EVM) y Curva S</h3>
                 <p>Control financiero avanzado con 8 KPIs (BAC, PV, EV, AC, CPI, SPI, CV, EAC), deslizador interactivo de semana de corte y exportación a informe Excel.</p>
             </div>
-            <!-- 6 -->
-            <div class="feature-card">
-                <div class="feature-icon-wrapper">📅</div>
+
+            <!-- 12 -->
+            <div class="feature-card" data-category="planificacion">
+                <div class="feature-card-header">
+                    <div class="feature-icon-wrapper feat-icon-planificacion">📅</div>
+                    <span class="feature-category-tag cat-tag-planificacion">Planificación & Obra</span>
+                </div>
                 <h3>Planning Gantt y Ruta Crítica</h3>
                 <p>Generación automática de cronogramas, cálculo de camino crítico, tareas activas hoy, enlaces de dependencia y desplazamiento libre por arrastre (pan).</p>
             </div>
-            <!-- 7 -->
-            <div class="feature-card">
-                <div class="feature-icon-wrapper">📝</div>
+
+            <!-- 13 -->
+            <div class="feature-card" data-category="costes">
+                <div class="feature-card-header">
+                    <div class="feature-icon-wrapper feat-icon-costes">📝</div>
+                    <span class="feature-category-tag cat-tag-costes">Presupuestos & BC3</span>
+                </div>
                 <h3>Mediciones Dinámicas y Fórmulas</h3>
                 <p>Líneas de medición (~M) con deducciones automáticas (-1), evaluador de fórmulas matemáticas <code>fx</code> y formato inteligente de decimales por magnitud física.</p>
             </div>
-            <!-- 8 -->
-            <div class="feature-card">
-                <div class="feature-icon-wrapper">⚖️</div>
+
+            <!-- 14 -->
+            <div class="feature-card" data-category="costes">
+                <div class="feature-card-header">
+                    <div class="feature-icon-wrapper feat-icon-costes">⚖️</div>
+                    <span class="feature-category-tag cat-tag-costes">Presupuestos & BC3</span>
+                </div>
                 <h3>Comparador de Presupuestos</h3>
                 <p>Carga y contrasta en paralelo dos archivos .bc3 para identificar al instante variaciones de precio, diferencias de medición y desviaciones de partidas.</p>
             </div>
-            <!-- 9 -->
-            <div class="feature-card">
-                <div class="feature-icon-wrapper">🏗️</div>
+
+            <!-- 15 -->
+            <div class="feature-card" data-category="planificacion">
+                <div class="feature-card-header">
+                    <div class="feature-icon-wrapper feat-icon-planificacion">🏗️</div>
+                    <span class="feature-category-tag cat-tag-planificacion">Planificación & Obra</span>
+                </div>
                 <h3>Certificaciones Mensuales de Obra</h3>
                 <p>Registro y certificación acumulada mes a mes, control de unidades ejecutadas en campo y sincronización automática del avance real con el cronograma.</p>
             </div>
-            <!-- 10 -->
-            <div class="feature-card">
-                <div class="feature-icon-wrapper">☁️</div>
+
+            <!-- 16 -->
+            <div class="feature-card" data-category="productividad">
+                <div class="feature-card-header">
+                    <div class="feature-icon-wrapper feat-icon-productividad">☁️</div>
+                    <span class="feature-category-tag cat-tag-productividad">Productividad & Nube</span>
+                </div>
                 <h3>Google Drive Sync Gratuito E2E</h3>
                 <p>Sincronización directa en tu Google Drive personal a coste cero con API oficial OAuth 2.0 y cifrado militar local hermético AES-256 GCM.</p>
             </div>
-            <!-- 11 -->
-            <div class="feature-card">
-                <div class="feature-icon-wrapper">⚡</div>
+
+            <!-- 17 -->
+            <div class="feature-card" data-category="productividad">
+                <div class="feature-card-header">
+                    <div class="feature-icon-wrapper feat-icon-productividad">⚡</div>
+                    <span class="feature-category-tag cat-tag-productividad">Productividad & Nube</span>
+                </div>
                 <h3>Paleta de Comandos Ctrl+K</h3>
                 <p>Acceso instantáneo a cualquier herramienta, buscador global inteligente de conceptos, configuración rápida de decimales y cambio de tema.</p>
             </div>
-            <!-- 12 -->
-            <div class="feature-card">
-                <div class="feature-icon-wrapper">📥</div>
+
+            <!-- 18 -->
+            <div class="feature-card" data-category="productividad">
+                <div class="feature-card-header">
+                    <div class="feature-icon-wrapper feat-icon-productividad">📥</div>
+                    <span class="feature-category-tag cat-tag-productividad">Productividad & Nube</span>
+                </div>
                 <h3>Exportación Multiformato Homogénea</h3>
                 <p>Genera y descarga listados estandarizados con paleta de color única en PDF (A4) formateado, Excel (.xlsx), CSV (.csv) y FIEBDC-3 (.bc3).</p>
             </div>
@@ -4803,11 +5132,75 @@
             });
         }
 
+        // === FEATURES ADVANCED FILTER CONTROLLER ===
+        function initFeaturesFilter() {
+            const chipContainer = document.getElementById('features-category-chips');
+            const cards = document.querySelectorAll('.features-grid .feature-card');
+            const countIndicator = document.getElementById('features-visible-count');
+            if (!chipContainer || !cards.length) return;
+
+            let activeCategories = new Set(); // Empty Set = "Todas"
+
+            const chips = chipContainer.querySelectorAll('.feat-chip');
+
+            function applyFilter() {
+                let visibleCount = 0;
+                const isAll = activeCategories.size === 0;
+
+                cards.forEach((card) => {
+                    const cardCat = card.dataset.category;
+                    const matches = isAll || activeCategories.has(cardCat);
+                    if (matches) {
+                        card.classList.remove('card-hidden');
+                        card.classList.remove('card-fade-in');
+                        void card.offsetWidth; // Force CSS reflow to restart animation
+                        card.classList.add('card-fade-in');
+                        card.style.animationDelay = `${(visibleCount % 6) * 0.04}s`;
+                        visibleCount++;
+                    } else {
+                        card.classList.add('card-hidden');
+                        card.classList.remove('card-fade-in');
+                    }
+                });
+
+                if (countIndicator) {
+                    countIndicator.textContent = visibleCount;
+                }
+
+                // Update active state on chips
+                chips.forEach(chip => {
+                    const cat = chip.dataset.cat;
+                    if (cat === 'all') {
+                        chip.classList.toggle('active', isAll);
+                    } else {
+                        chip.classList.toggle('active', activeCategories.has(cat));
+                    }
+                });
+            }
+
+            chips.forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const cat = chip.dataset.cat;
+                    if (cat === 'all') {
+                        activeCategories.clear();
+                    } else {
+                        if (activeCategories.has(cat)) {
+                            activeCategories.delete(cat);
+                        } else {
+                            activeCategories.add(cat);
+                        }
+                    }
+                    applyFilter();
+                });
+            });
+        }
+
         // Initialize on load
         window.addEventListener('DOMContentLoaded', () => {
             renderCategoryChips();
             updateGalleryFilter();
             initSandboxModal();
+            initFeaturesFilter();
 
             // Tab switching logic for gallery
             document.querySelectorAll('.tab-btn').forEach(btn => {
