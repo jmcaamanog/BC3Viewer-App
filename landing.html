@@ -360,6 +360,44 @@
             max-width: 620px;
         }
 
+        .hero-pin-capsule {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(59, 130, 246, 0.18));
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            padding: 3px 12px;
+            border-radius: 9999px;
+            margin-left: 6px;
+            vertical-align: middle;
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.2);
+            backdrop-filter: blur(8px);
+            white-space: nowrap;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: all;
+            cursor: pointer;
+        }
+
+        .hero-pin-capsule:hover {
+            border-color: rgba(56, 189, 248, 0.7);
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(59, 130, 246, 0.3));
+            box-shadow: 0 0 22px rgba(56, 189, 248, 0.45);
+            transform: translateY(-1px);
+        }
+
+        .hero-pin-capsule .pin-num {
+            font-size: 0.95rem;
+            font-weight: 800;
+            font-family: 'Outfit', monospace;
+            color: #ffffff;
+            background: rgba(56, 189, 248, 0.25);
+            padding: 1px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(56, 189, 248, 0.5);
+            letter-spacing: 0.08em;
+            text-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+        }
+
         .hero-actions {
             display: flex;
             flex-wrap: wrap;
@@ -3080,7 +3118,11 @@
                 La herramienta web definitiva, libre, gratuita y 100% offline para profesionales de la edificación.
                 Importa, edita, compara, planifica y exporta tus archivos <strong>.bc3</strong> desde cualquier
                 dispositivo sin enviar tus datos a la nube.
-                ** PIN -> 1234 ** .
+                <span class="hero-pin-capsule" title="PIN oficial de acceso a la App (haz clic para copiar)" onclick="navigator.clipboard && navigator.clipboard.writeText('1234'); const h = this.querySelector('.pin-copy-hint'); if(h){ h.textContent='¡Copiado!'; setTimeout(() => h.textContent='PIN:', 1500); }">
+                    <span style="font-size: 0.85rem;">🔑</span>
+                    <span class="pin-copy-hint" style="font-size: 0.78rem; font-weight: 700; color: #bae6fd; text-transform: uppercase; letter-spacing: 0.04em;">PIN:</span>
+                    <strong class="pin-num">1234</strong>
+                </span>
             </p>
             <div class="hero-actions" style="gap: 12px; margin-bottom: 30px;">
                 <a href="www/index.html" class="btn btn-primary" target="_blank" id="hero-btn-online"
