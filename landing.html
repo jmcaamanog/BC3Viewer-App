@@ -1463,6 +1463,148 @@
             top: 2px;
         }
 
+        /* COLLAPSIBLE TIMELINE CARDS */
+        .timeline-item.collapsible {
+            margin-bottom: 12px;
+            transition: margin-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .timeline-item.collapsible.expanded {
+            margin-bottom: 30px;
+        }
+
+        .timeline-item.collapsible .timeline-dot {
+            top: 18px;
+            width: 12px;
+            height: 12px;
+            left: -31px;
+            border-color: rgba(96, 165, 250, 0.5);
+            background: var(--bg-dark);
+            transition: all 0.3s ease;
+        }
+
+        .timeline-item.collapsible.expanded .timeline-dot {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+        .timeline-item.collapsible .timeline-content {
+            padding: 14px 22px;
+            cursor: pointer;
+            user-select: none;
+            border-radius: 12px;
+            background: rgba(17, 24, 39, 0.65);
+            border-color: rgba(255, 255, 255, 0.06);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .timeline-item.collapsible .timeline-content:hover {
+            border-color: rgba(59, 130, 246, 0.4);
+            background: rgba(26, 36, 57, 0.85);
+            transform: translateX(4px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+        }
+
+        .timeline-item.collapsible.expanded .timeline-content {
+            padding: 20px 24px;
+            background: var(--bg-card);
+            border-color: rgba(59, 130, 246, 0.25);
+            cursor: default;
+            user-select: auto;
+        }
+
+        .timeline-item.collapsible .timeline-content:focus-visible {
+            outline: 2px solid var(--accent-primary);
+            outline-offset: 2px;
+        }
+
+        .timeline-item.collapsible .timeline-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 6px;
+            cursor: pointer;
+        }
+
+        .timeline-item.collapsible .timeline-header-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .timeline-item.collapsible .version-title {
+            font-size: 1.02rem;
+            font-weight: 600;
+            color: #d1d5db;
+            margin-bottom: 0;
+            transition: color 0.2s ease, margin-bottom 0.25s ease;
+            cursor: pointer;
+            line-height: 1.4;
+        }
+
+        .timeline-item.collapsible:hover .version-title {
+            color: #93c5fd;
+        }
+
+        .timeline-item.collapsible.expanded .timeline-header {
+            margin-bottom: 8px;
+        }
+
+        .timeline-item.collapsible.expanded .version-title {
+            margin-bottom: 14px;
+            color: var(--text-white);
+            font-size: 1.08rem;
+        }
+
+        /* Chevron indicator */
+        .timeline-toggle-chevron {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #93c5fd;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .timeline-item.collapsible:hover .timeline-toggle-chevron {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.4);
+            color: #ffffff;
+        }
+
+        .timeline-item.collapsible.expanded .timeline-toggle-chevron {
+            transform: rotate(180deg);
+            background: rgba(59, 130, 246, 0.25);
+            border-color: rgba(59, 130, 246, 0.5);
+            color: #38bdf8;
+        }
+
+        /* Modern Grid-based Smooth Height Transition */
+        .timeline-item.collapsible .timeline-body {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+            opacity: 0;
+        }
+
+        .timeline-item.collapsible .timeline-body-inner {
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .timeline-item.collapsible.expanded .timeline-body {
+            grid-template-rows: 1fr;
+            opacity: 1;
+        }
+
         /* TIMELINE LATEST VERSION BUTTONS GRID */
         .version-actions-grid {
             display: grid;
@@ -2464,8 +2606,7 @@
         <div class="section-header">
             <span class="section-subtitle">Evolución Continua</span>
             <h2 class="section-title">Historial de Versiones</h2>
-            <p class="section-desc">BC3 Viewer ha evolucionado desde un visualizador básico hasta una plataforma premium
-                multiplataforma, con mejoras continuas semanales.</p>
+            <p class="section-desc">BC3 Viewer ha evolucionado desde un visualizador básico hasta una suite BIM 5D integrada. Pulsa en cualquier versión anterior para desplegar su registro completo de novedades y mejoras.</p>
         </div>
 
         <div class="timeline">
@@ -2525,250 +2666,362 @@
             </div>
 
             <!-- v2.3.3 -->
-            <div class="timeline-item">
+            <div class="timeline-item collapsible">
                 <div class="timeline-dot"></div>
-                <div class="timeline-content">
+                <div class="timeline-content" role="button" tabindex="0" aria-expanded="false" aria-label="Desplegar detalles de versión v2.3.3">
                     <div class="timeline-header">
-                        <span class="version-badge">v2.3.3</span>
-                        <span class="version-date">17 Ago 2026</span>
+                        <div class="timeline-header-info">
+                            <span class="version-badge">v2.3.3</span>
+                            <span class="version-date">17 Ago 2026</span>
+                        </div>
+                        <span class="timeline-toggle-chevron" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </span>
                     </div>
                     <h3 class="version-title">Asesor de IA Oficial ConTech (jmcaamanog) & Personalización de Usuario</h3>
-
-                    <ul class="version-items">
-                        <li><strong>🎁 IA de Cortesía Gratis de Serie:</strong> Acceso instantáneo a Google Gemini AI sin necesidad de configurar clave propia (cuenta atrás en vivo hasta el 21 de Octubre de 2026).</li>
-                        <li><strong>📊 Motor de Tablas Técnicas ConTech:</strong> Renderizado automático de tablas comparativas de costes, precios y rendimientos con formato profesional responsive.</li>
-                        <li><strong>👨‍💻 Asesor de IA Oficial (jmcaamanog):</strong> Identidad y rigor técnico del autor integrado con avatar transparente oficial recortado y contextualización en tiempo real del presupuesto abierto.</li>
-                        <li><strong>💬 Interfaz en Azul Pizarra ConTech:</strong> Fondo marino oscuro (#111e38) y textos en azul hielo (#e0f2fe) con alto contraste y legibilidad absoluta.</li>
-                        <li><strong>👤 Personalización de Usuario con Google Sign-In:</strong> Saludo de bienvenida por nombre de pila y foto de perfil oficial cargada con <code>referrerpolicy="no-referrer"</code>.</li>
-                        <li><strong>📍 Acceso Rápido en Cabecera Superior Derecha:</strong> Botón fijo siempre accesible ubicado junto a la Paleta de Comandos (Ctrl+K).</li>
-                        <li><strong>🤖 Generador de Presupuestos desde Lenguaje Natural:</strong> Creación inteligente de obras completas con descompuestos FIEBDC-3 mediante Google Gemini.</li>
-                    </ul>
+                    <div class="timeline-body">
+                        <div class="timeline-body-inner">
+                            <ul class="version-items">
+                                <li><strong>🎁 IA de Cortesía Gratis de Serie:</strong> Acceso instantáneo a Google Gemini AI sin necesidad de configurar clave propia (cuenta atrás en vivo hasta el 21 de Octubre de 2026).</li>
+                                <li><strong>📊 Motor de Tablas Técnicas ConTech:</strong> Renderizado automático de tablas comparativas de costes, precios y rendimientos con formato profesional responsive.</li>
+                                <li><strong>👨‍💻 Asesor de IA Oficial (jmcaamanog):</strong> Identidad y rigor técnico del autor integrado con avatar transparente oficial recortado y contextualización en tiempo real del presupuesto abierto.</li>
+                                <li><strong>💬 Interfaz en Azul Pizarra ConTech:</strong> Fondo marino oscuro (#111e38) y textos en azul hielo (#e0f2fe) con alto contraste y legibilidad absoluta.</li>
+                                <li><strong>👤 Personalización de Usuario con Google Sign-In:</strong> Saludo de bienvenida por nombre de pila y foto de perfil oficial cargada con <code>referrerpolicy="no-referrer"</code>.</li>
+                                <li><strong>📍 Acceso Rápido en Cabecera Superior Derecha:</strong> Botón fijo siempre accesible ubicado junto a la Paleta de Comandos (Ctrl+K).</li>
+                                <li><strong>🤖 Generador de Presupuestos desde Lenguaje Natural:</strong> Creación inteligente de obras completas con descompuestos FIEBDC-3 mediante Google Gemini.</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- v2.2.0 -->
-            <div class="timeline-item">
+            <div class="timeline-item collapsible">
                 <div class="timeline-dot"></div>
-                <div class="timeline-content">
+                <div class="timeline-content" role="button" tabindex="0" aria-expanded="false" aria-label="Desplegar detalles de versión v2.2.0">
                     <div class="timeline-header">
-                        <span class="version-badge">v2.2.0</span>
-                        <span class="version-date">16 Ago 2026</span>
+                        <div class="timeline-header-info">
+                            <span class="version-badge">v2.2.0</span>
+                            <span class="version-date">16 Ago 2026</span>
+                        </div>
+                        <span class="timeline-toggle-chevron" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </span>
                     </div>
                     <h3 class="version-title">Lanzamiento del Motor Gemini AI y Auditoría ConTech</h3>
-                    <ul class="version-items">
-                        <li><strong>Asistente Generativo con IA (Google Gemini):</strong> Creación inteligente de presupuestos completos desde lenguaje natural con árbol FIEBDC-3, precios descompuestos y mediciones estimadas (BYOK 100% gratuito).</li>
-                        <li><strong>Asistente IA Interactivo:</strong> Chat en vivo que lee el presupuesto activo para resolver dudas técnicas, auditar partidas faltantes y crear/insertar partidas con un solo clic.</li>
-                        <li><strong>Indicador de Estado en Vivo (Punto Verde Pulsante):</strong> Estado de conexión en tiempo real con halo luminoso en Ajustes y en el Asistente.</li>
-                        <li><strong>Guía de Conexión en 30s:</strong> Asistente visual paso a paso para obtener la clave API gratuita y almacenamiento 100% privado en local.</li>
-                    </ul>
+                    <div class="timeline-body">
+                        <div class="timeline-body-inner">
+                            <ul class="version-items">
+                                <li><strong>Asistente Generativo con IA (Google Gemini):</strong> Creación inteligente de presupuestos completos desde lenguaje natural con árbol FIEBDC-3, precios descompuestos y mediciones estimadas (BYOK 100% gratuito).</li>
+                                <li><strong>Asistente IA Interactivo:</strong> Chat en vivo que lee el presupuesto activo para resolver dudas técnicas, auditar partidas faltantes y crear/insertar partidas con un solo clic.</li>
+                                <li><strong>Indicador de Estado en Vivo (Punto Verde Pulsante):</strong> Estado de conexión en tiempo real con halo luminoso en Ajustes y en el Asistente.</li>
+                                <li><strong>Guía de Conexión en 30s:</strong> Asistente visual paso a paso para obtener la clave API gratuita y almacenamiento 100% privado en local.</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- v2.1.0 -->
-            <div class="timeline-item">
+            <div class="timeline-item collapsible">
                 <div class="timeline-dot"></div>
-                <div class="timeline-content">
+                <div class="timeline-content" role="button" tabindex="0" aria-expanded="false" aria-label="Desplegar detalles de versión v2.1.0">
                     <div class="timeline-header">
-                        <span class="version-badge">v2.1.0</span>
-                        <span class="version-date">16 Ago 2026</span>
+                        <div class="timeline-header-info">
+                            <span class="version-badge">v2.1.0</span>
+                            <span class="version-date">16 Ago 2026</span>
+                        </div>
+                        <span class="timeline-toggle-chevron" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </span>
                     </div>
                     <h3 class="version-title">Google Drive Sync E2E Oficial, Curva S y Rendimiento</h3>
-                    <ul class="version-items">
-                        <li><strong>Integración Oficial con Google Drive API:</strong> Autenticación OAuth 2.0 y sincronización automática en la carpeta dedicada <code>/BC3Viewer/</code> de tu Drive personal.</li>
-                        <li><strong>Cifrado E2E Militar (AES-256 GCM):</strong> Cifrado local en origen con IndexedDB de alto rendimiento sin saturación de memoria ni cuotas.</li>
-                        <li><strong>Valor Ganado (EVM) y Curva S Interactiva:</strong> Cálculo de los 8 KPIs financieros estándar (BAC, PV, EV, AC, CPI, SPI, CV, EAC) y exportación a Excel.</li>
-                        <li><strong>Desplazamiento Suave (Pan) en Gantt:</strong> Arrastre horizontal y vertical sincronizado en el cronograma de obra.</li>
-                    </ul>
+                    <div class="timeline-body">
+                        <div class="timeline-body-inner">
+                            <ul class="version-items">
+                                <li><strong>Integración Oficial con Google Drive API:</strong> Autenticación OAuth 2.0 y sincronización automática en la carpeta dedicada <code>/BC3Viewer/</code> de tu Drive personal.</li>
+                                <li><strong>Cifrado E2E Militar (AES-256 GCM):</strong> Cifrado local en origen con IndexedDB de alto rendimiento sin saturación de memoria ni cuotas.</li>
+                                <li><strong>Valor Ganado (EVM) y Curva S Interactiva:</strong> Cálculo de los 8 KPIs financieros estándar (BAC, PV, EV, AC, CPI, SPI, CV, EAC) y exportación a Excel.</li>
+                                <li><strong>Desplazamiento Suave (Pan) en Gantt:</strong> Arrastre horizontal y vertical sincronizado en el cronograma de obra.</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- v2.0.0 -->
-            <div class="timeline-item">
+            <div class="timeline-item collapsible">
                 <div class="timeline-dot"></div>
-                <div class="timeline-content">
+                <div class="timeline-content" role="button" tabindex="0" aria-expanded="false" aria-label="Desplegar detalles de versión v2.0.0">
                     <div class="timeline-header">
-                        <span class="version-badge">v2.0.0</span>
-                        <span class="version-date">16 Ago 2026</span>
+                        <div class="timeline-header-info">
+                            <span class="version-badge">v2.0.0</span>
+                            <span class="version-date">16 Ago 2026</span>
+                        </div>
+                        <span class="timeline-toggle-chevron" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </span>
                     </div>
                     <h3 class="version-title">Gran Salto a la v2.0: Multi-Presupuesto, Sunburst, Sankey e Impacto Ambiental</h3>
-                    <ul class="version-items">
-                        <li><strong>Multi-Presupuesto:</strong> Pestañas simultáneas para trabajar con varios proyectos .bc3 y guardado directo en disco con File System Access API.</li>
-                        <li><strong>Visualizador Sunburst Multinivel:</strong> Zoom concéntrico con selector de 1 a 5 niveles de detalle y tabla inferior de descompuestos con scroll dinámico.</li>
-                        <li><strong>Diagrama Sankey:</strong> Flujo interactivo de costes y distribución jerárquica de la obra.</li>
-                        <li><strong>Impacto Ambiental & CO₂:</strong> Huella de carbono (kg CO₂ eq) y distribución tipológica de materiales con gráficos sincronizados en modo claro y oscuro.</li>
-                        <li><strong>Tarjetas Económicas Completas:</strong> Cuadratura matemática de PEM + GG (13%) + BI (6%) = PEC en la barra superior.</li>
-                        <li><strong>Mediciones con Fórmulas Dinámicas:</strong> Deducciones de huecos automáticas (-1), evaluador de fórmulas <code>fx</code> y formato inteligente de decimales por unidad física.</li>
-                        <li><strong>Menú de Importación / Exportación Homogéneo:</strong> 6 opciones con paleta de colores temáticos (PDF .pdf, Excel .xlsx, CSV .csv, FIEBDC-3 .bc3).</li>
-                        <li><strong>Paleta de Comandos Rápida:</strong> Acceso instantáneo a todas las herramientas con Ctrl+K.</li>
-                    </ul>
+                    <div class="timeline-body">
+                        <div class="timeline-body-inner">
+                            <ul class="version-items">
+                                <li><strong>Multi-Presupuesto:</strong> Pestañas simultáneas para trabajar con varios proyectos .bc3 y guardado directo en disco con File System Access API.</li>
+                                <li><strong>Visualizador Sunburst Multinivel:</strong> Zoom concéntrico con selector de 1 a 5 niveles de detalle y tabla inferior de descompuestos con scroll dinámico.</li>
+                                <li><strong>Diagrama Sankey:</strong> Flujo interactivo de costes y distribución jerárquica de la obra.</li>
+                                <li><strong>Impacto Ambiental & CO₂:</strong> Huella de carbono (kg CO₂ eq) y distribución tipológica de materiales con gráficos sincronizados en modo claro y oscuro.</li>
+                                <li><strong>Tarjetas Económicas Completas:</strong> Cuadratura matemática de PEM + GG (13%) + BI (6%) = PEC en la barra superior.</li>
+                                <li><strong>Mediciones con Fórmulas Dinámicas:</strong> Deducciones de huecos automáticas (-1), evaluador de fórmulas <code>fx</code> y formato inteligente de decimales por unidad física.</li>
+                                <li><strong>Menú de Importación / Exportación Homogéneo:</strong> 6 opciones con paleta de colores temáticos (PDF .pdf, Excel .xlsx, CSV .csv, FIEBDC-3 .bc3).</li>
+                                <li><strong>Paleta de Comandos Rápida:</strong> Acceso instantáneo a todas las herramientas con Ctrl+K.</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- v1.5.2 -->
-            <div class="timeline-item">
+            <div class="timeline-item collapsible">
                 <div class="timeline-dot"></div>
-                <div class="timeline-content">
+                <div class="timeline-content" role="button" tabindex="0" aria-expanded="false" aria-label="Desplegar detalles de versión v1.5.2">
                     <div class="timeline-header">
-                        <span class="version-badge">v1.5.2</span>
-                        <span class="version-date">13 Ago 2026</span>
+                        <div class="timeline-header-info">
+                            <span class="version-badge">v1.5.2</span>
+                            <span class="version-date">13 Ago 2026</span>
+                        </div>
+                        <span class="timeline-toggle-chevron" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </span>
                     </div>
                     <h3 class="version-title">Estabilidad de Carga y Fix de Conceptos</h3>
-                    <ul class="version-items">
-                        <li>Corrección del fallo Cannot read properties of undefined al abrir presupuestos BC3 con elementos no definidos.</li>
-                        <li>Verificación segura de existencia de partidas previa al recálculo ascendente de precios.</li>
-                        <li>Actualización directa OTA para Web, Android y ejecutable de Windows.</li>
-                    </ul>
+                    <div class="timeline-body">
+                        <div class="timeline-body-inner">
+                            <ul class="version-items">
+                                <li>Corrección del fallo Cannot read properties of undefined al abrir presupuestos BC3 con elementos no definidos.</li>
+                                <li>Verificación segura de existencia de partidas previa al recálculo ascendente de precios.</li>
+                                <li>Actualización directa OTA para Web, Android y ejecutable de Windows.</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- v1.5.0 -->
-            <div class="timeline-item">
+            <div class="timeline-item collapsible">
                 <div class="timeline-dot"></div>
-                <div class="timeline-content">
+                <div class="timeline-content" role="button" tabindex="0" aria-expanded="false" aria-label="Desplegar detalles de versión v1.5.0">
                     <div class="timeline-header">
-                        <span class="version-badge">v1.5.0</span>
-                        <span class="version-date">11 Jul 2026</span>
+                        <div class="timeline-header-info">
+                            <span class="version-badge">v1.5.0</span>
+                            <span class="version-date">11 Jul 2026</span>
+                        </div>
+                        <span class="timeline-toggle-chevron" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </span>
                     </div>
                     <h3 class="version-title">Gantt Fluid y Windows Premium</h3>
-                    <ul class="version-items">
-                        <li>Zoom táctil continuo (pinch-to-zoom) fluido con requestAnimationFrame en dispositivos
-                            móviles</li>
-                        <li>Preservación de scroll horizontal (semana centrada) y scroll vertical al cambiar zoom o
-                            enlazar tareas</li>
-                        <li>Botón flotante conmutador animado inferior izquierdo adaptado al ancho de columna del Gantt
-                        </li>
-                        <li>Logotipo y marca unificada de la aplicación (icon.png) en el ejecutable y barra de tareas de
-                            Windows</li>
-                        <li>Detección de telemetría y descargas directas OTA en la versión de Windows</li>
-                    </ul>
+                    <div class="timeline-body">
+                        <div class="timeline-body-inner">
+                            <ul class="version-items">
+                                <li>Zoom táctil continuo (pinch-to-zoom) fluido con requestAnimationFrame en dispositivos móviles</li>
+                                <li>Preservación de scroll horizontal (semana centrada) y scroll vertical al cambiar zoom o enlazar tareas</li>
+                                <li>Botón flotante conmutador animado inferior izquierdo adaptado al ancho de columna del Gantt</li>
+                                <li>Logotipo y marca unificada de la aplicación (icon.png) en el ejecutable y barra de tareas de Windows</li>
+                                <li>Detección de telemetría y descargas directas OTA en la versión de Windows</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- v1.4.7 -->
-            <div class="timeline-item">
+            <div class="timeline-item collapsible">
                 <div class="timeline-dot"></div>
-                <div class="timeline-content">
+                <div class="timeline-content" role="button" tabindex="0" aria-expanded="false" aria-label="Desplegar detalles de versión v1.4.7">
                     <div class="timeline-header">
-                        <span class="version-badge">v1.4.7</span>
-                        <span class="version-date">10 Jul 2026</span>
+                        <div class="timeline-header-info">
+                            <span class="version-badge">v1.4.7</span>
+                            <span class="version-date">10 Jul 2026</span>
+                        </div>
+                        <span class="timeline-toggle-chevron" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </span>
                     </div>
                     <h3 class="version-title">Estabilidad, OTA y Rediseño Visual</h3>
-                    <ul class="version-items">
-                        <li>Corrección de error de referencia temporal (TDZ) en carga de archivos</li>
-                        <li>Nombre del archivo activo integrado en el menú ⚙️ Ajustes</li>
-                        <li>Botón de búsqueda manual y diagnóstico OTA en panel de información</li>
-                        <li>Logo reescalado a la altura de PEM/PEC y rediseño del acceso PIN</li>
-                        <li>Botón flotante (FAB) adaptativo para contraer/expandir la cabecera</li>
-                    </ul>
+                    <div class="timeline-body">
+                        <div class="timeline-body-inner">
+                            <ul class="version-items">
+                                <li>Corrección de error de referencia temporal (TDZ) en carga de archivos</li>
+                                <li>Nombre del archivo activo integrado en el menú ⚙️ Ajustes</li>
+                                <li>Botón de búsqueda manual y diagnóstico OTA en panel de información</li>
+                                <li>Logo reescalado a la altura de PEM/PEC y rediseño del acceso PIN</li>
+                                <li>Botón flotante (FAB) adaptativo para contraer/expandir la cabecera</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- v1.4.0 -->
-            <div class="timeline-item">
+            <div class="timeline-item collapsible">
                 <div class="timeline-dot"></div>
-                <div class="timeline-content">
+                <div class="timeline-content" role="button" tabindex="0" aria-expanded="false" aria-label="Desplegar detalles de versión v1.4.0">
                     <div class="timeline-header">
-                        <span class="version-badge">v1.4.0</span>
-                        <span class="version-date">10 Jul 2026</span>
+                        <div class="timeline-header-info">
+                            <span class="version-badge">v1.4.0</span>
+                            <span class="version-date">10 Jul 2026</span>
+                        </div>
+                        <span class="timeline-toggle-chevron" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </span>
                     </div>
                     <h3 class="version-title">Acceso Protegido, FAB y Firma Premium</h3>
-                    <ul class="version-items">
-                        <li>Pantalla de acceso por PIN con logotipo corporativo y firma del autor</li>
-                        <li>Botón flotante (FAB) unificado con cambio dinámico de icono 🔼/🔽</li>
-                        <li>Exportación XML para MS Project y Primavera integrada en el menú</li>
-                        <li>Gantt y modal de partidas adaptados para evitar desbordamiento en móviles</li>
-                    </ul>
+                    <div class="timeline-body">
+                        <div class="timeline-body-inner">
+                            <ul class="version-items">
+                                <li>Pantalla de acceso por PIN con logotipo corporativo y firma del autor</li>
+                                <li>Botón flotante (FAB) unificado con cambio dinámico de icono 🔼/🔽</li>
+                                <li>Exportación XML para MS Project y Primavera integrada en el menú</li>
+                                <li>Gantt y modal de partidas adaptados para evitar desbordamiento en móviles</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- v1.3.3 -->
-            <div class="timeline-item">
+            <div class="timeline-item collapsible">
                 <div class="timeline-dot"></div>
-                <div class="timeline-content">
+                <div class="timeline-content" role="button" tabindex="0" aria-expanded="false" aria-label="Desplegar detalles de versión v1.3.3">
                     <div class="timeline-header">
-                        <span class="version-badge">v1.3.3</span>
-                        <span class="version-date">08 Jul 2026</span>
+                        <div class="timeline-header-info">
+                            <span class="version-badge">v1.3.3</span>
+                            <span class="version-date">08 Jul 2026</span>
+                        </div>
+                        <span class="timeline-toggle-chevron" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </span>
                     </div>
                     <h3 class="version-title">App Nativa Android + Windows + Certificaciones</h3>
-                    <ul class="version-items">
-                        <li>🤖 Lanzamiento de la <strong>App Android (.apk)</strong> 100% offline</li>
-                        <li>💻 Instalador <strong>Windows nativo</strong> (.exe y .msi)</li>
-                        <li>📋 Módulo de <strong>certificaciones de obra</strong> integrado en la App</li>
-                        <li>Actualizaciones automáticas OTA sin reinstalar la app</li>
-                    </ul>
+                    <div class="timeline-body">
+                        <div class="timeline-body-inner">
+                            <ul class="version-items">
+                                <li>🤖 Lanzamiento de la <strong>App Android (.apk)</strong> 100% offline</li>
+                                <li>💻 Instalador <strong>Windows nativo</strong> (.exe y .msi)</li>
+                                <li>📋 Módulo de <strong>certificaciones de obra</strong> integrado en la App</li>
+                                <li>Actualizaciones automáticas OTA sin reinstalar la app</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- v1.2.0 -->
-            <div class="timeline-item">
+            <div class="timeline-item collapsible">
                 <div class="timeline-dot"></div>
-                <div class="timeline-content">
+                <div class="timeline-content" role="button" tabindex="0" aria-expanded="false" aria-label="Desplegar detalles de versión v1.2.0">
                     <div class="timeline-header">
-                        <span class="version-badge">v1.2.0</span>
-                        <span class="version-date">03 Jul 2026</span>
+                        <div class="timeline-header-info">
+                            <span class="version-badge">v1.2.0</span>
+                            <span class="version-date">03 Jul 2026</span>
+                        </div>
+                        <span class="timeline-toggle-chevron" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </span>
                     </div>
                     <h3 class="version-title">Certificaciones Mensuales, Curva S y Auditoría</h3>
-                    <ul class="version-items">
-                        <li>Certificaciones mensuales (Mes 1-12) con acumulados y % de avance</li>
-                        <li>Sincronización del avance real con barras de progreso del Gantt</li>
-                        <li>Curva S dinámica calculada a partir de certificaciones reales</li>
-                        <li>Ruta crítica resaltada con badge animado ⚡ CRÍTICO en el árbol</li>
-                        <li>Auditoría en tiempo real de cambios con desviación acumulada PEM</li>
-                        <li>Exportación directa a XML compatible con MS Project y Primavera</li>
-                    </ul>
+                    <div class="timeline-body">
+                        <div class="timeline-body-inner">
+                            <ul class="version-items">
+                                <li>Certificaciones mensuales (Mes 1-12) con acumulados y % de avance</li>
+                                <li>Sincronización del avance real con barras de progreso del Gantt</li>
+                                <li>Curva S dinámica calculada a partir de certificaciones reales</li>
+                                <li>Ruta crítica resaltada con badge animado ⚡ CRÍTICO en el árbol</li>
+                                <li>Auditoría en tiempo real de cambios con desviación acumulada PEM</li>
+                                <li>Exportación directa a XML compatible con MS Project y Primavera</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- v1.1.0 -->
-            <div class="timeline-item">
+            <div class="timeline-item collapsible">
                 <div class="timeline-dot"></div>
-                <div class="timeline-content">
+                <div class="timeline-content" role="button" tabindex="0" aria-expanded="false" aria-label="Desplegar detalles de versión v1.1.0">
                     <div class="timeline-header">
-                        <span class="version-badge">v1.1.0</span>
-                        <span class="version-date">03 Jul 2026</span>
+                        <div class="timeline-header-info">
+                            <span class="version-badge">v1.1.0</span>
+                            <span class="version-date">03 Jul 2026</span>
+                        </div>
+                        <span class="timeline-toggle-chevron" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </span>
                     </div>
                     <h3 class="version-title">Creación de Partidas, Buscador Global y Curva S</h3>
-                    <ul class="version-items">
-                        <li>Creación de partidas en caliente directamente en el árbol visual</li>
-                        <li>Control jerárquico de posicionamiento (▲/▼/◀/▶)</li>
-                        <li>Gantt: enlaces y dependencias Fin→Inicio con propagación de retrasos</li>
-                        <li>Buscador global flotante (Ctrl+F) con resaltado en el árbol</li>
-                        <li>Curva S en Dashboard con comparativa planificación vs. ejecución real</li>
-                    </ul>
+                    <div class="timeline-body">
+                        <div class="timeline-body-inner">
+                            <ul class="version-items">
+                                <li>Creación de partidas en caliente directamente en el árbol visual</li>
+                                <li>Control jerárquico de posicionamiento (▲/▼/◀/▶)</li>
+                                <li>Gantt: enlaces y dependencias Fin→Inicio con propagación de retrasos</li>
+                                <li>Buscador global flotante (Ctrl+F) con resaltado en el árbol</li>
+                                <li>Curva S en Dashboard con comparativa planificación vs. ejecución real</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- v1.0.0 -->
-            <div class="timeline-item">
+            <div class="timeline-item collapsible">
                 <div class="timeline-dot"></div>
-                <div class="timeline-content">
+                <div class="timeline-content" role="button" tabindex="0" aria-expanded="false" aria-label="Desplegar detalles de versión v1.0.0">
                     <div class="timeline-header">
-                        <span class="version-badge">v1.0.0</span>
-                        <span class="version-date">03 Jul 2026</span>
+                        <div class="timeline-header-info">
+                            <span class="version-badge">v1.0.0</span>
+                            <span class="version-date">03 Jul 2026</span>
+                        </div>
+                        <span class="timeline-toggle-chevron" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </span>
                     </div>
                     <h3 class="version-title">Lanzamiento Premium: Dashboard, Gantt y PEM/PEC</h3>
-                    <ul class="version-items">
-                        <li>Rediseño completo de la cabecera en secciones funcionales</li>
-                        <li>Dashboard técnico con 6 gráficas de distribución de costes</li>
-                        <li>Gantt premium con ruta crítica, línea de «Hoy» y avance financiero</li>
-                        <li>Tarjetas PEM y PEC con etiquetas destacadas e importes en tiempo real</li>
-                    </ul>
+                    <div class="timeline-body">
+                        <div class="timeline-body-inner">
+                            <ul class="version-items">
+                                <li>Rediseño completo de la cabecera en secciones funcionales</li>
+                                <li>Dashboard técnico con 6 gráficas de distribución de costes</li>
+                                <li>Gantt premium con ruta crítica, línea de «Hoy» y avance financiero</li>
+                                <li>Tarjetas PEM y PEC con etiquetas destacadas e importes en tiempo real</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- v0.1.0 -->
-            <div class="timeline-item">
+            <div class="timeline-item collapsible">
                 <div class="timeline-dot first"></div>
-                <div class="timeline-content">
+                <div class="timeline-content" role="button" tabindex="0" aria-expanded="false" aria-label="Desplegar detalles de versión v0.1.0">
                     <div class="timeline-header">
-                        <span class="version-badge old-badge">v0.1.0</span>
-                        <span class="version-date">10 Dic 2025</span>
+                        <div class="timeline-header-info">
+                            <span class="version-badge old-badge">v0.1.0</span>
+                            <span class="version-date">10 Dic 2025</span>
+                        </div>
+                        <span class="timeline-toggle-chevron" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </span>
                     </div>
                     <h3 class="version-title">Lanzamiento Inicial del Visualizador</h3>
-                    <ul class="version-items">
-                        <li>Visualizador jerárquico de archivos BC3 en forma de árbol</li>
-                        <li>Búsqueda local de partidas, mediciones (~M) y descripciones (~T)</li>
-                    </ul>
+                    <div class="timeline-body">
+                        <div class="timeline-body-inner">
+                            <ul class="version-items">
+                                <li>Visualizador jerárquico de archivos BC3 en forma de árbol</li>
+                                <li>Búsqueda local de partidas, mediciones (~M) y descripciones (~T)</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -3424,6 +3677,7 @@
             initHeroParticles(); // D: hero particles
             initStarToast();    // E: star toast
             fetchContributors(); // F: contributors
+            initCollapsibleTimeline(); // G: collapsible changelog timeline
         });
 
         // === GITHUB API: Stars, Forks & Downloads ===
@@ -3744,6 +3998,34 @@
             } catch (e) {
                 grid.innerHTML = '<div class="contributors-loading"><a href="https://github.com/jmcaamanog/BC3Viewer-App" target="_blank" style="color:var(--accent-primary);">Ver contribuidores en GitHub →</a></div>';
             }
+        }
+
+        // === G: COLLAPSIBLE TIMELINE ===
+        function initCollapsibleTimeline() {
+            const items = document.querySelectorAll('.timeline-item.collapsible');
+            items.forEach(item => {
+                const content = item.querySelector('.timeline-content');
+                if (!content) return;
+
+                content.addEventListener('click', (e) => {
+                    // Prevent collapse if clicking inside body when already expanded (e.g. copying text or clicking link)
+                    const bodyInner = item.querySelector('.timeline-body-inner');
+                    if (item.classList.contains('expanded') && bodyInner && bodyInner.contains(e.target)) {
+                        return;
+                    }
+
+                    const isNowExpanded = item.classList.toggle('expanded');
+                    content.setAttribute('aria-expanded', isNowExpanded ? 'true' : 'false');
+                });
+
+                content.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        const isNowExpanded = item.classList.toggle('expanded');
+                        content.setAttribute('aria-expanded', isNowExpanded ? 'true' : 'false');
+                    }
+                });
+            });
         }
 
     </script>
