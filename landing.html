@@ -559,6 +559,56 @@
             box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
         }
 
+        /* Aura Effect for Asesor IA Tab */
+        .tab-btn.ia-tab-aura-btn {
+            position: relative;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.12));
+            border: 1px solid rgba(168, 85, 247, 0.55);
+            color: #f3e8ff;
+            box-shadow: 0 0 14px rgba(168, 85, 247, 0.35), inset 0 0 8px rgba(168, 85, 247, 0.15);
+            animation: iaAuraPulse 2.8s infinite ease-in-out;
+        }
+
+        @keyframes iaAuraPulse {
+            0% {
+                box-shadow: 0 0 12px rgba(168, 85, 247, 0.35), 0 0 22px rgba(59, 130, 246, 0.2), inset 0 0 6px rgba(168, 85, 247, 0.15);
+                border-color: rgba(168, 85, 247, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 24px rgba(168, 85, 247, 0.75), 0 0 38px rgba(59, 130, 246, 0.45), inset 0 0 12px rgba(168, 85, 247, 0.3);
+                border-color: rgba(192, 132, 252, 0.95);
+            }
+            100% {
+                box-shadow: 0 0 12px rgba(168, 85, 247, 0.35), 0 0 22px rgba(59, 130, 246, 0.2), inset 0 0 6px rgba(168, 85, 247, 0.15);
+                border-color: rgba(168, 85, 247, 0.5);
+            }
+        }
+
+        .tab-btn.ia-tab-aura-btn:hover {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(59, 130, 246, 0.22));
+            color: #ffffff;
+            border-color: rgba(192, 132, 252, 0.9);
+            box-shadow: 0 0 26px rgba(168, 85, 247, 0.8), 0 0 45px rgba(59, 130, 246, 0.5);
+        }
+
+        .tab-btn.ia-tab-aura-btn.active {
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.32), rgba(37, 99, 235, 0.28));
+            border-color: #c084fc;
+            color: #ffffff;
+            box-shadow: 0 0 28px rgba(168, 85, 247, 0.85), 0 0 45px rgba(59, 130, 246, 0.55), inset 0 0 12px rgba(192, 132, 252, 0.3);
+        }
+
+        .tab-btn.ia-tab-aura-btn .ia-sparkle-icon {
+            display: inline-block;
+            filter: drop-shadow(0 0 6px rgba(192, 132, 252, 0.8));
+            animation: iaSparkleSpin 4s infinite ease-in-out;
+        }
+
+        @keyframes iaSparkleSpin {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.18) rotate(12deg); }
+        }
+
         .gallery-container {
             display: grid;
             grid-template-columns: 1.8fr 1fr;
@@ -2379,10 +2429,13 @@
 
         <div class="gallery-tabs">
             <button class="tab-btn active" data-platform="windows">
-                <span>💻</span> Windows Desktop
+                <span>💻</span> Windows / Online
             </button>
             <button class="tab-btn" data-platform="android">
                 <span>📱</span> Android Mobile
+            </button>
+            <button class="tab-btn ia-tab-aura-btn" data-platform="ia">
+                <span class="ia-sparkle-icon">✨</span> Asesor IA
             </button>
         </div>
 
@@ -3162,6 +3215,19 @@
             { src: 'CAPTURAS/V1.5/ANDROID_V1.5/015_INFORMACION APP_android.png', title: 'Diagnóstico e Información', desc: 'Comprobación de actualizaciones (OTA) y panel de créditos desde la app de Android.' }
         ];
 
+        // Array mapping the screenshots for Asesor IA ConTech
+        const iaScreenshots = [
+            { src: 'CAPTURAS/V3.0/IA/IA consulta 1.png', title: 'Auditoría de Omisiones y Desfases Críticos', desc: 'Detección inteligente de omisiones de instalaciones exigidas por normativa CTE/REBT (climatización, VMC, fontanería) con sugerencias accionables para incorporar al presupuesto.' },
+            { src: 'CAPTURAS/V3.0/IA/IA consulta 2.png', title: 'Ingeniería de Valor y Regla de Pareto (80/20)', desc: 'Identificación de las partidas con mayor impacto económico (SATE, pavimento porcelánico, impermeabilización) y estrategias técnicas para ahorrar hasta un 40% del coste.' },
+            { src: 'CAPTURAS/V3.0/IA/IA consulta 3.png', title: 'Generación Automática de Partida Descompuesta', desc: 'Desglose FIEBDC-3 completo para tabiquería de placa de yeso laminado (PYL) con rendimientos de oficiales, peones, montantes, placas y aislamiento mineral a 39,68 €/m².' },
+            { src: 'CAPTURAS/V3.0/IA/IA consulta 4.png', title: 'Resumen Ejecutivo Comercial para Clientes (I)', desc: 'Estructuración formal y ejecutiva del presupuesto por capítulos, porcentaje sobre PEM e importes claros para presentación ante promotores e inversores.' },
+            { src: 'CAPTURAS/V3.0/IA/IA consulta 5.png', title: 'Estrategia de Envolvente y Confort Térmico (II)', desc: 'Justificación técnica del reparto presupuestario, argumentando la inversión en aislamiento exterior y estanqueidad como ahorro energético y confort a largo plazo.' },
+            { src: 'CAPTURAS/V3.0/IA/IA consulta 6.png', title: 'Consultoría Técnica de Carpinterías y Ventanas', desc: 'Matriz comparativa de sistemas practicables, oscilobatientes y correderas elevadoras con análisis de transmitancia térmica (U), hermeticidad y mantenimiento.' },
+            { src: 'CAPTURAS/V3.0/IA/IA consulta 7.png', title: 'Auditoría de Puertas Especiales y Gama Alta', desc: 'Análisis de viabilidad técnica y sobrecostes en puertas de acceso pivotantes de gran formato (>350 kg), correderas elevadoras y puertas enrasadas con bisagras ocultas.' },
+            { src: 'CAPTURAS/V3.0/IA/IA consulta 8.png', title: 'Comparativa de Aislamientos: Grueso vs. Fino', desc: 'Contraste técnico y económico entre aislamientos de alta masa/espesor (XPS 120 mm en cubierta) y láminas acústicas de desolidarización de 5 mm con precios unitarios.' },
+            { src: 'CAPTURAS/V3.0/IA/IA consulta 9.png', title: 'Distribución de Aislamientos por Planta y Retorno BIM', desc: 'Cómputo desagregado por niveles (sótano, planta baja, primera) y recomendaciones constructivas para amortización energética y retorno de inversión.' }
+        ];
+
         let screenshots = windowsScreenshots;
         let currentIndex = 0;
 
@@ -3389,6 +3455,8 @@
                     const platform = btn.dataset.platform;
                     if (platform === 'windows') {
                         screenshots = windowsScreenshots;
+                    } else if (platform === 'ia') {
+                        screenshots = iaScreenshots;
                     } else {
                         screenshots = androidScreenshots;
                     }
