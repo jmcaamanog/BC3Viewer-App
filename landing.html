@@ -604,6 +604,24 @@
             animation: iaSparkleSpin 4s infinite ease-in-out;
         }
 
+        .tab-btn.ia-tab-aura-btn .ia-btn-avatar {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1.5px solid #c084fc;
+            box-shadow: 0 0 8px rgba(192, 132, 252, 0.75);
+            vertical-align: middle;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+            flex-shrink: 0;
+        }
+
+        .tab-btn.ia-tab-aura-btn:hover .ia-btn-avatar {
+            transform: scale(1.18) rotate(-6deg);
+            box-shadow: 0 0 14px rgba(192, 132, 252, 1);
+            border-color: #ffffff;
+        }
+
         @keyframes iaSparkleSpin {
             0%, 100% { transform: scale(1) rotate(0deg); }
             50% { transform: scale(1.18) rotate(12deg); }
@@ -1610,6 +1628,57 @@
             overflow: hidden;
         }
 
+        .video-facade {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: #000000;
+            z-index: 2;
+        }
+
+        .video-facade-thumb {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.4s ease, filter 0.4s ease;
+        }
+
+        .video-facade:hover .video-facade-thumb {
+            transform: scale(1.02);
+            filter: brightness(1.08);
+        }
+
+        .video-facade-play-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.25s ease;
+            filter: drop-shadow(0 6px 20px rgba(255, 0, 0, 0.5));
+        }
+
+        .video-facade:hover .video-facade-play-btn {
+            transform: translate(-50%, -50%) scale(1.15);
+            filter: drop-shadow(0 8px 30px rgba(255, 0, 0, 0.85));
+        }
+
+        .video-facade:hover .yt-play-shape {
+            fill: #cc0000;
+        }
+
         .video-frame-container iframe {
             position: absolute;
             top: -72px;
@@ -2303,7 +2372,9 @@
                 <span>📱</span> Android Mobile
             </button>
             <button class="tab-btn ia-tab-aura-btn" data-platform="ia">
-                <span class="ia-sparkle-icon">✨</span> Asesor IA
+                <img src="www/img/jmcaamanog.png" alt="jmcaamanog" class="ia-btn-avatar">
+                <span class="ia-sparkle-icon">✨</span>
+                <span>Asesor IA</span>
             </button>
         </div>
 
@@ -2824,13 +2895,16 @@
         </div>
 
         <div class="video-player-card reveal">
-            <div class="video-frame-container">
-                <iframe 
-                    src="https://www.youtube-nocookie.com/embed/y5XKgrUpI1g?rel=0&modestbranding=1&color=white" 
-                    title="BC3 Viewer v3.0 - Demo Oficial en Vídeo" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                    allowfullscreen>
-                </iframe>
+            <div class="video-frame-container" id="video-frame-container">
+                <div class="video-facade" id="video-facade" title="Haz clic para reproducir el vídeo demostración (4 min)">
+                    <img src="https://i.ytimg.com/vi/y5XKgrUpI1g/hqdefault.jpg" alt="BC3 Viewer v3.0 - Demo Oficial en Vídeo" class="video-facade-thumb">
+                    <div class="video-facade-play-btn" aria-label="Reproducir vídeo">
+                        <svg viewBox="0 0 68 48" width="68" height="48">
+                            <path class="yt-play-shape" d="M66.52,7.74c-0.78-2.93-2.49-5.41-5.42-6.19C55.79,.13,34,0,34,0S12.21,.13,6.9,1.55 C3.97,2.33,2.27,4.81,1.48,7.74C0.06,13.05,0,24,0,24s0.06,10.95,1.48,16.26c0.78,2.93,2.49,5.41,5.42,6.19 C12.21,47.87,34,48,34,48s21.79-0.13,27.1-1.55c2.93-0.78,4.64-3.26,5.42-6.19C67.94,34.95,68,24,68,24S67.94,13.05,66.52,7.74z" fill="#ff0000"></path>
+                            <path d="M 45,24 27,14 27,34" fill="#ffffff"></path>
+                        </svg>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -3055,6 +3129,9 @@
 
         // Array mapping the screenshots for Asesor IA ConTech
         const iaScreenshots = [
+            { src: 'CAPTURAS/V3.0/IA/IA BOTON.png', title: 'Acceso Directo al Asesor IA en Barra Superior', desc: 'Botón interactivo con el avatar oficial en la cabecera superior para invocar al Asesor IA en cualquier momento sobre el presupuesto activo.' },
+            { src: 'CAPTURAS/V3.0/IA/inicio ia.png', title: 'Bienvenida y Saludo del Asesor IA (jmcaamanog)', desc: 'Interfaz modal interactiva con saludo inicial personalizado, detección de presupuesto activo y botones de acción rápida para auditoría y generación de partidas.' },
+            { src: 'CAPTURAS/V3.0/IA/IA INFO.png', title: 'Panel Informativo del Sistema e Integración IA', desc: 'Cuadro de diálogo de información de la app con el distintivo oficial del Asesor IA, características clave de la versión 3.0 y período de cortesía gratuito activo.' },
             { src: 'CAPTURAS/V3.0/IA/IA consulta 1.png', title: 'Auditoría de Omisiones y Desfases Críticos', desc: 'Detección inteligente de omisiones de instalaciones exigidas por normativa CTE/REBT (climatización, VMC, fontanería) con sugerencias accionables para incorporar al presupuesto.' },
             { src: 'CAPTURAS/V3.0/IA/IA consulta 2.png', title: 'Ingeniería de Valor y Regla de Pareto (80/20)', desc: 'Identificación de las partidas con mayor impacto económico (SATE, pavimento porcelánico, impermeabilización) y estrategias técnicas para ahorrar hasta un 40% del coste.' },
             { src: 'CAPTURAS/V3.0/IA/IA consulta 3.png', title: 'Generación Automática de Partida Descompuesta', desc: 'Desglose FIEBDC-3 completo para tabiquería de placa de yeso laminado (PYL) con rendimientos de oficiales, peones, montantes, placas y aislamiento mineral a 39,68 €/m².' },
@@ -3316,6 +3393,24 @@
 
             // Add custom animation styles for transitions
             mainImg.style.transition = 'opacity 0.15s ease-in-out';
+
+            // Video Facade click-to-play handler (Clean embed without YouTube links/overlays)
+            const videoFacade = document.getElementById('video-facade');
+            if (videoFacade) {
+                videoFacade.addEventListener('click', () => {
+                    const container = document.getElementById('video-frame-container');
+                    if (container) {
+                        container.innerHTML = `
+                            <iframe 
+                                src="https://www.youtube-nocookie.com/embed/y5XKgrUpI1g?autoplay=1&rel=0&modestbranding=1&color=white" 
+                                title="BC3 Viewer v3.0 - Demo Oficial en Vídeo" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                allowfullscreen>
+                            </iframe>
+                        `;
+                    }
+                });
+            }
 
             // Fetch GitHub Stats via API
             fetchGitHubStats();

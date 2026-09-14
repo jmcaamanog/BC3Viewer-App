@@ -23,7 +23,12 @@ const MIME_TYPES = {
 
 const server = http.createServer((req, res) => {
     // Normalizar URL
-    let safePath = req.url.split('?')[0];
+    let safePath = '';
+    try {
+        safePath = decodeURIComponent(req.url.split('?')[0]);
+    } catch (e) {
+        safePath = req.url.split('?')[0];
+    }
     if (safePath === '/' || safePath === '') {
         safePath = '/index.html';
     }
