@@ -13,10 +13,11 @@
 
 | 🌟 Recurso | 🚀 Acción / Enlace | 📝 Descripción |
 | :--- | :--- | :--- |
-| **Landing Page** | 👉 **[Visitar Presentación Web](https://jmcaamanog.github.io/BC3Viewer-App/landing.html)** | Web interactiva con galería de 32 capturas y descargas. |
+| **Vídeo Demostración** | 🎬 **[Ver en YouTube (Demo v3.0)](https://www.youtube.com/watch?v=y5XKgrUpI1g)** | Recorrido visual en vídeo por todas las funciones de la Revolución BIM 5D. |
+| **Landing Page** | 👉 **[Visitar Presentación Web](https://jmcaamanog.github.io/BC3Viewer-App/landing.html)** | Web interactiva con galería de 37 capturas, vídeo demo y descargas. |
 | **App Online** | 👉 **[Abrir App Web (v3.0.0)](https://jmcaamanog.github.io/BC3Viewer-App/www/index.html)** | Utiliza la versión en la nube directo en tu navegador. |
 | **Web Personal** | 🌐 **[jmcaamanog.pages.dev](https://jmcaamanog.pages.dev/)** | Portfolio profesional y proyectos ConTech del autor. |
-| **Capturas Windows** | 💻 **[Ver Galería Windows (V2.0)](./CAPTURAS/V2.0/WINDOWS_V2.0)** | Capturas de pantalla de la interfaz de escritorio Premium. |
+| **Capturas Windows** | 💻 **[Ver Galería Windows (V3.0)](./CAPTURAS/V3.0/WINDOWS_V3.0)** | 37 capturas oficiales en resolución 1080p del ecosistema completo. |
 | **Capturas Android** | 📱 **[Ver Galería Android (V1.5)](./CAPTURAS/V1.5/ANDROID_V1.5)** | Capturas de pantalla de la app en móvil/tableta. |
 
 ---
