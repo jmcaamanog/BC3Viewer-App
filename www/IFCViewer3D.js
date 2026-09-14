@@ -1148,19 +1148,23 @@
             this.isMeasuring = false;
             this.measureMode = 'linear'; // 'linear' | 'area' | 'volume'
             this.measureStartPoint = null;
-            this.measureAreaStep = 0; // 0: inicio, 1: P1 fijado, 2: L fijada, 3: P3 fijado
+            this.measureAreaStep = 0; // 0: inicio, 1: P1 fijado, 2: L fijada, 3: Cara fijada / definiendo espesor
             this.measureAreaP1 = null;
             this.measureAreaP2 = null;
             this.measureAreaP3 = null;
             this.measureAreaP4 = null;
             this.measureAreaL = 0;
             this.measureAreaH = 0;
+            this.measureAreaS = 0;
+            this.measureVolumeNormal = null;
             this.lastMeasurementData = null;
             this.currentMeasuredElement = null;
             this.measurements = [];
             this.measureGroup = null;
             this.measurePreviewLine = null;
             this.measureAreaPreviewMesh = null;
+            this.measureVolumePreviewMesh = null;
+            this.measureVolumePreviewLines = null;
             this.measureSnapMarker = null;
 
             const measureBtn = document.getElementById('v3dMeasureBtn');
@@ -1169,6 +1173,7 @@
             const modeLinearBtn = document.getElementById('v3dMeasureModeLinear');
             const modeAreaBtn = document.getElementById('v3dMeasureModeArea');
             const modeVolumeBtn = document.getElementById('v3dMeasureModeVolume');
+            const manualThickBtn = document.getElementById('v3dMeasureManualThickBtn');
             const addToBudgetBtn = document.getElementById('v3dMeasureAddToBudgetBtn');
 
             if (measureBtn) {
@@ -1210,6 +1215,24 @@
                 modeVolumeBtn.onclick = (e) => {
                     e.stopPropagation();
                     this.setMeasureMode('volume');
+                };
+            }
+
+            if (manualThickBtn) {
+                manualThickBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (this.measureMode === 'volume' && this.measureAreaStep === 3) {
+                        const defVal = (this.measureAreaL > 0 && this.measureAreaL < 1 ? '0.15' : '0.30');
+                        const userVal = prompt('Introduce el espesor / profundidad en metros (ej. 0.30 para 30 cm):', defVal);
+                        if (userVal !== null) {
+                            const parsed = parseFloat(userVal.replace(',', '.'));
+                            if (!isNaN(parsed) && parsed > 0) {
+                                this.setManualVolumeThickness(parsed);
+                            } else if (userVal.trim() !== '') {
+                                alert('Por favor introduce una cifra válida mayor que cero (ej. 0.30).');
+                            }
+                        }
+                    }
                 };
             }
 
@@ -1382,6 +1405,64 @@
         },
 
         /**
+         * Fija manualmente el espesor del volumen en metros (Paso 3/3)
+         */
+        setManualVolumeThickness: function (manualThick) {
+            const THREE = window.THREE;
+            if (this.measureMode !== 'volume' || this.measureAreaStep !== 3) return;
+            const thick = parseFloat(manualThick);
+            if (isNaN(thick) || thick <= 0) return;
+
+            const p1 = this.measureAreaP1;
+            const p2 = this.measureAreaP2;
+            const p3 = this.measureAreaP3;
+            const p4 = this.measureAreaP4;
+            const L = this.measureAreaL;
+            const H = this.measureAreaH;
+            const S = this.measureAreaS;
+            const normal = this.measureVolumeNormal || new THREE.Vector3(0, 0, 1);
+
+            const extrudeVec = normal.clone().multiplyScalar(thick);
+            const b1 = p1.clone();
+            const b2 = p2.clone();
+            const b3 = p3.clone();
+            const b4 = p4.clone();
+            const t1 = p1.clone().add(extrudeVec);
+            const t2 = p2.clone().add(extrudeVec);
+            const t3 = p3.clone().add(extrudeVec);
+            const t4 = p4.clone().add(extrudeVec);
+
+            const V = S * thick;
+
+            this._addVolumeMeasurement(b1, b2, b3, b4, t1, t2, t3, t4, L, H, thick, S, V);
+
+            const elem = this.currentMeasuredElement;
+
+            this.lastMeasurementData = {
+                type: 'volume',
+                unit: 'm³',
+                value: V,
+                l: L,
+                w: thick,
+                h: H,
+                units: 1,
+                element: elem,
+                p1: b1, p2: b2, p3: b3, p4: b4,
+                t1: t1, t2: t2, t3: t3, t4: t4,
+                description: `Volumen 3D: ${L.toFixed(2)} m × ${H.toFixed(2)} m × ${thick.toFixed(2)} m = ${V.toFixed(2)} m³`
+            };
+
+            const addToBudgetBtn = document.getElementById('v3dMeasureAddToBudgetBtn');
+            if (addToBudgetBtn) addToBudgetBtn.style.display = 'inline-flex';
+            this._cancelActiveMeasurementPoint();
+
+            const hudText = document.getElementById('v3dMeasureHudText');
+            if (hudText) {
+                hudText.textContent = `✅ Volumen fijado: ${V.toFixed(2)} m³ (${L.toFixed(2)} m × ${H.toFixed(2)} m × ${thick.toFixed(2)} m). Pulsa '➕ Añadir a Partida' para presupuestar`;
+            }
+        },
+
+        /**
          * Cancela el punto inicial provisional de la cota en curso
          */
         _cancelActiveMeasurementPoint: function () {
@@ -1393,6 +1474,8 @@
             this.measureAreaP4 = null;
             this.measureAreaL = 0;
             this.measureAreaH = 0;
+            this.measureAreaS = 0;
+            this.measureVolumeNormal = null;
 
             if (this.measurePreviewLine) {
                 this.scene.remove(this.measurePreviewLine);
@@ -1404,8 +1487,21 @@
                 if (this.measureAreaPreviewMesh.geometry) this.measureAreaPreviewMesh.geometry.dispose();
                 this.measureAreaPreviewMesh = null;
             }
+            if (this.measureVolumePreviewMesh) {
+                this.scene.remove(this.measureVolumePreviewMesh);
+                if (this.measureVolumePreviewMesh.geometry) this.measureVolumePreviewMesh.geometry.dispose();
+                this.measureVolumePreviewMesh = null;
+            }
+            if (this.measureVolumePreviewLines) {
+                this.scene.remove(this.measureVolumePreviewLines);
+                if (this.measureVolumePreviewLines.geometry) this.measureVolumePreviewLines.geometry.dispose();
+                this.measureVolumePreviewLines = null;
+            }
             const previewBadge = document.getElementById('v3dMeasurePreviewBadge');
             if (previewBadge) previewBadge.remove();
+
+            const manualThickBtn = document.getElementById('v3dMeasureManualThickBtn');
+            if (manualThickBtn) manualThickBtn.style.display = 'none';
 
             const hudText = document.getElementById('v3dMeasureHudText');
             if (hudText && this.isMeasuring) {
@@ -1453,7 +1549,26 @@
                 intersects = intersects.filter(hit => plane.distanceToPoint(hit.point) >= -0.001);
             }
 
-            if (intersects.length === 0) return null;
+            if (intersects.length === 0) {
+                // Si estamos en medio de un trazado activo (paso 1, 2 o 3) y el cursor apunta al fondo/aire,
+                // proyectamos sobre un plano virtual que pasa por el punto de anclaje inicial para mantener la preview suave
+                const anchor = (this.measureAreaStep > 0 && this.measureAreaP1) ? this.measureAreaP1 : this.measureStartPoint;
+                if (this.isMeasuring && anchor && this.camera) {
+                    const camDir = new THREE.Vector3();
+                    this.camera.getWorldDirection(camDir).negate();
+                    const vPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(camDir, anchor);
+                    const pt = new THREE.Vector3();
+                    if (raycaster.ray.intersectPlane(vPlane, pt)) {
+                        return {
+                            point: pt,
+                            isSnap: false,
+                            expressId: null,
+                            element: this.currentMeasuredElement || null
+                        };
+                    }
+                }
+                return null;
+            }
 
             const hit = intersects[0];
             let targetPoint = hit.point.clone();
@@ -1620,7 +1735,11 @@
                     const distL = p1.distanceTo(p2);
 
                     if (hudText) {
-                        hudText.textContent = `📐 Base L: ${distL.toFixed(2)} m (Clic para fijar longitud base L)`;
+                        if (this.measureMode === 'volume') {
+                            hudText.textContent = `🧊 Base L: ${distL.toFixed(2)} m (Paso 1/3: Clic para fijar longitud base L)`;
+                        } else {
+                            hudText.textContent = `📐 Base L: ${distL.toFixed(2)} m (Paso 1/2: Clic para fijar longitud base L)`;
+                        }
                     }
 
                     if (!this.measurePreviewLine) {
@@ -1675,11 +1794,9 @@
 
                     if (hudText) {
                         if (this.measureMode === 'volume') {
-                            const thick = 0.30;
-                            const V = S * thick;
-                            hudText.textContent = `🧊 Superficie L ${L.toFixed(2)} × H ${H.toFixed(2)} = ${S.toFixed(2)} m² (Vol ~ ${V.toFixed(2)} m³). Clic para fijar`;
+                            hudText.textContent = `🧊 Cara base: ${L.toFixed(2)} m × ${H.toFixed(2)} m = ${S.toFixed(2)} m² (Paso 2/3: Clic para fijar cara base y pasar al espesor)`;
                         } else {
-                            hudText.textContent = `📐 Superficie: L ${L.toFixed(2)} m × H ${H.toFixed(2)} m = ${S.toFixed(2)} m² (Clic para confirmar)`;
+                            hudText.textContent = `📐 Superficie: ${L.toFixed(2)} m × ${H.toFixed(2)} m = ${S.toFixed(2)} m² (Paso 2/2: Clic para confirmar)`;
                         }
                     }
 
@@ -1722,8 +1839,141 @@
                         overlay.appendChild(previewBadge);
                     }
                     if (previewBadge && this.container) {
-                        previewBadge.textContent = `${S.toFixed(2)} m²`;
+                        previewBadge.textContent = (this.measureMode === 'volume') ? `Base: ${S.toFixed(2)} m²` : `${S.toFixed(2)} m²`;
                         const centroid = new THREE.Vector3().add(p1).add(p2).add(p3).add(p4).multiplyScalar(0.25);
+                        const rect = this.container.getBoundingClientRect();
+                        const sPos = centroid.clone().project(this.camera);
+                        const px = (sPos.x * 0.5 + 0.5) * rect.width;
+                        const py = (-sPos.y * 0.5 + 0.5) * rect.height;
+                        previewBadge.style.left = `${px}px`;
+                        previewBadge.style.top = `${py}px`;
+                        previewBadge.style.display = 'flex';
+                    }
+                } else if (this.measureMode === 'volume' && this.measureAreaStep === 3 && this.measureAreaP1 && this.measureAreaP2 && this.measureAreaP3 && this.measureAreaP4 && this.measureVolumeNormal) {
+                    const p1 = this.measureAreaP1;
+                    const p2 = this.measureAreaP2;
+                    const p3 = this.measureAreaP3;
+                    const p4 = this.measureAreaP4;
+                    const S = this.measureAreaS;
+                    const normal = this.measureVolumeNormal;
+
+                    const diff = pt.clone().sub(p1);
+                    let signedThick = diff.dot(normal);
+                    let thick = Math.abs(signedThick);
+
+                    if (thick < 0.005) {
+                        signedThick = (signedThick >= 0 ? 0.005 : -0.005);
+                        thick = 0.005;
+                    }
+
+                    const extrudeVec = normal.clone().multiplyScalar(signedThick);
+                    const b1 = p1;
+                    const b2 = p2;
+                    const b3 = p3;
+                    const b4 = p4;
+                    const t1 = p1.clone().add(extrudeVec);
+                    const t2 = p2.clone().add(extrudeVec);
+                    const t3 = p3.clone().add(extrudeVec);
+                    const t4 = p4.clone().add(extrudeVec);
+
+                    const V = S * thick;
+
+                    if (hudText) {
+                        hudText.textContent = `🧊 Paso 3/3: Espesor E = ${thick.toFixed(2)} m | Volumen = ${V.toFixed(2)} m³ (Clic en cara opuesta o pulsa 'Espesor manual')`;
+                    }
+
+                    // 1. Malla 3D translúcida del prisma
+                    const boxPositions = new Float32Array([
+                        // Base
+                        b1.x, b1.y, b1.z,  b4.x, b4.y, b4.z,  b3.x, b3.y, b3.z,
+                        b1.x, b1.y, b1.z,  b3.x, b3.y, b3.z,  b2.x, b2.y, b2.z,
+                        // Superior
+                        t1.x, t1.y, t1.z,  t2.x, t2.y, t2.z,  t3.x, t3.y, t3.z,
+                        t1.x, t1.y, t1.z,  t3.x, t3.y, t3.z,  t4.x, t4.y, t4.z,
+                        // Lateral 1
+                        b1.x, b1.y, b1.z,  b2.x, b2.y, b2.z,  t2.x, t2.y, t2.z,
+                        b1.x, b1.y, b1.z,  t2.x, t2.y, t2.z,  t1.x, t1.y, t1.z,
+                        // Lateral 2
+                        b2.x, b2.y, b2.z,  b3.x, b3.y, b3.z,  t3.x, t3.y, t3.z,
+                        b2.x, b2.y, b2.z,  t3.x, t3.y, t3.z,  t2.x, t2.y, t2.z,
+                        // Lateral 3
+                        b3.x, b3.y, b3.z,  b4.x, b4.y, b4.z,  t4.x, t4.y, t4.z,
+                        b3.x, b3.y, b3.z,  t4.x, t4.y, t4.z,  t3.x, t3.y, t3.z,
+                        // Lateral 4
+                        b4.x, b4.y, b4.z,  b1.x, b1.y, b1.z,  t1.x, t1.y, t1.z,
+                        b4.x, b4.y, b4.z,  t1.x, t1.y, t1.z,  t4.x, t4.y, t4.z
+                    ]);
+
+                    if (!this.measureVolumePreviewMesh) {
+                        const boxGeom = new THREE.BufferGeometry();
+                        boxGeom.setAttribute('position', new THREE.BufferAttribute(boxPositions, 3));
+                        const boxMat = new THREE.MeshBasicMaterial({
+                            color: 0x38bdf8,
+                            side: THREE.DoubleSide,
+                            transparent: true,
+                            opacity: 0.28,
+                            depthWrite: false
+                        });
+                        this.measureVolumePreviewMesh = new THREE.Mesh(boxGeom, boxMat);
+                        this.measureVolumePreviewMesh.renderOrder = 10;
+                        this.scene.add(this.measureVolumePreviewMesh);
+                    } else {
+                        const pos = this.measureVolumePreviewMesh.geometry.attributes.position;
+                        pos.copyArray(boxPositions);
+                        pos.needsUpdate = true;
+                    }
+
+                    // 2. Aristas alámbricas del prisma
+                    const boxLines = new Float32Array([
+                        // Base
+                        b1.x, b1.y, b1.z,  b2.x, b2.y, b2.z,
+                        b2.x, b2.y, b2.z,  b3.x, b3.y, b3.z,
+                        b3.x, b3.y, b3.z,  b4.x, b4.y, b4.z,
+                        b4.x, b4.y, b4.z,  b1.x, b1.y, b1.z,
+                        // Superior
+                        t1.x, t1.y, t1.z,  t2.x, t2.y, t2.z,
+                        t2.x, t2.y, t2.z,  t3.x, t3.y, t3.z,
+                        t3.x, t3.y, t3.z,  t4.x, t4.y, t4.z,
+                        t4.x, t4.y, t4.z,  t1.x, t1.y, t1.z,
+                        // Pilares
+                        b1.x, b1.y, b1.z,  t1.x, t1.y, t1.z,
+                        b2.x, b2.y, b2.z,  t2.x, t2.y, t2.z,
+                        b3.x, b3.y, b3.z,  t3.x, t3.y, t3.z,
+                        b4.x, b4.y, b4.z,  t4.x, t4.y, t4.z
+                    ]);
+
+                    if (!this.measureVolumePreviewLines) {
+                        const linesGeom = new THREE.BufferGeometry();
+                        linesGeom.setAttribute('position', new THREE.BufferAttribute(boxLines, 3));
+                        const linesMat = new THREE.LineBasicMaterial({
+                            color: 0x38bdf8,
+                            depthTest: false,
+                            transparent: true,
+                            opacity: 0.95,
+                            linewidth: 2
+                        });
+                        this.measureVolumePreviewLines = new THREE.LineSegments(linesGeom, linesMat);
+                        this.measureVolumePreviewLines.renderOrder = 11;
+                        this.scene.add(this.measureVolumePreviewLines);
+                    } else {
+                        const pos = this.measureVolumePreviewLines.geometry.attributes.position;
+                        pos.copyArray(boxLines);
+                        pos.needsUpdate = true;
+                    }
+
+                    // 3. Badge flotante en el centroide del prisma
+                    if (!previewBadge && overlay) {
+                        previewBadge = document.createElement('div');
+                        previewBadge.id = 'v3dMeasurePreviewBadge';
+                        previewBadge.className = 'v3d-measure-badge preview';
+                        overlay.appendChild(previewBadge);
+                    }
+                    if (previewBadge && this.container) {
+                        previewBadge.textContent = `V: ${V.toFixed(2)} m³ (E: ${thick.toFixed(2)} m)`;
+                        const centroid = new THREE.Vector3()
+                            .add(b1).add(b2).add(b3).add(b4)
+                            .add(t1).add(t2).add(t3).add(t4)
+                            .multiplyScalar(0.125);
                         const rect = this.container.getBoundingClientRect();
                         const sPos = centroid.clone().project(this.camera);
                         const px = (sPos.x * 0.5 + 0.5) * rect.width;
@@ -1800,7 +2050,11 @@
                     this.measureAreaP1 = pt.clone();
                     this.measureAreaStep = 1;
                     if (hudText) {
-                        hudText.textContent = '📐 Base iniciada. Haz clic en el 2º punto para fijar la longitud base (L)';
+                        if (this.measureMode === 'volume') {
+                            hudText.textContent = '🧊 Base iniciada (Paso 1/3). Haz clic en el 2º punto para fijar la longitud base (L)';
+                        } else {
+                            hudText.textContent = '📐 Base iniciada. Haz clic en el 2º punto para fijar la longitud base (L)';
+                        }
                     }
                 } else if (this.measureAreaStep === 1) {
                     this.measureAreaP2 = pt.clone();
@@ -1808,7 +2062,11 @@
                     if (this.measureAreaL < 0.02) return;
                     this.measureAreaStep = 2;
                     if (hudText) {
-                        hudText.textContent = `📐 Base L = ${this.measureAreaL.toFixed(2)} m fijada. Ahora haz clic en la altura (H)`;
+                        if (this.measureMode === 'volume') {
+                            hudText.textContent = `🧊 Base L = ${this.measureAreaL.toFixed(2)} m fijada (Paso 2/3). Ahora haz clic en la altura (H)`;
+                        } else {
+                            hudText.textContent = `📐 Base L = ${this.measureAreaL.toFixed(2)} m fijada. Ahora haz clic en la altura (H)`;
+                        }
                     }
                 } else if (this.measureAreaStep === 2) {
                     const p1 = this.measureAreaP1;
@@ -1827,48 +2085,110 @@
                     const p4 = p1.clone().add(hVec);
                     const S = L * H;
 
+                    if (this.measureMode === 'volume') {
+                        // PASO 2 COMPLETADO: Guardar la cara base y pasar al PASO 3 (Espesor E)
+                        this.measureAreaP3 = p3;
+                        this.measureAreaP4 = p4;
+                        this.measureAreaH = H;
+                        this.measureAreaS = S;
+                        const vNorm = hVec.clone().normalize();
+                        this.measureVolumeNormal = new THREE.Vector3().crossVectors(u, vNorm).normalize();
+                        this.measureAreaStep = 3;
+
+                        // Limpiar la malla 2D provisional
+                        if (this.measureAreaPreviewMesh) {
+                            this.scene.remove(this.measureAreaPreviewMesh);
+                            if (this.measureAreaPreviewMesh.geometry) this.measureAreaPreviewMesh.geometry.dispose();
+                            this.measureAreaPreviewMesh = null;
+                        }
+
+                        const manualThickBtn = document.getElementById('v3dMeasureManualThickBtn');
+                        if (manualThickBtn) manualThickBtn.style.display = 'inline-flex';
+
+                        if (hudText) {
+                            hudText.textContent = `🧊 Base fijada (${L.toFixed(2)} m × ${H.toFixed(2)} m = ${S.toFixed(2)} m²). Paso 3/3: Mueve o haz clic en la cara opuesta para fijar el espesor (o pulsa 'Espesor manual')`;
+                        }
+                        return;
+                    }
+
+                    // Si es modo área, consolidar aquí directamente
                     this._addAreaMeasurement(p1, p2, p3, p4, L, H, S);
 
                     const elem = this.currentMeasuredElement || res.element;
-
-                    if (this.measureMode === 'volume') {
-                        const thick = 0.30;
-                        const V = S * thick;
-                        this.lastMeasurementData = {
-                            type: 'volume',
-                            unit: 'm³',
-                            value: V,
-                            l: L,
-                            w: thick,
-                            h: H,
-                            units: 1,
-                            element: elem,
-                            p1: p1, p2: p2, p3: p3, p4: p4,
-                            description: `Volumen 3D: ${L.toFixed(2)} m × ${H.toFixed(2)} m × ${thick.toFixed(2)} m = ${V.toFixed(2)} m³`
-                        };
-                        if (hudText) {
-                            hudText.textContent = `✅ Volumen fijado: ${V.toFixed(2)} m³. Pulsa '➕ Añadir a Partida' para presupuestar`;
-                        }
-                    } else {
-                        this.lastMeasurementData = {
-                            type: 'area',
-                            unit: 'm²',
-                            value: S,
-                            l: L,
-                            w: 0,
-                            h: H,
-                            units: 1,
-                            element: elem,
-                            p1: p1, p2: p2, p3: p3, p4: p4,
-                            description: `Superficie 3D: ${L.toFixed(2)} m × ${H.toFixed(2)} m = ${S.toFixed(2)} m²`
-                        };
-                        if (hudText) {
-                            hudText.textContent = `✅ Superficie fijada: ${S.toFixed(2)} m² (L: ${L.toFixed(2)} m × H: ${H.toFixed(2)} m). Pulsa '➕ Añadir a Partida'`;
-                        }
+                    this.lastMeasurementData = {
+                        type: 'area',
+                        unit: 'm²',
+                        value: S,
+                        l: L,
+                        w: 0,
+                        h: H,
+                        units: 1,
+                        element: elem,
+                        p1: p1, p2: p2, p3: p3, p4: p4,
+                        description: `Superficie 3D: ${L.toFixed(2)} m × ${H.toFixed(2)} m = ${S.toFixed(2)} m²`
+                    };
+                    if (hudText) {
+                        hudText.textContent = `✅ Superficie fijada: ${S.toFixed(2)} m² (L: ${L.toFixed(2)} m × H: ${H.toFixed(2)} m). Pulsa '➕ Añadir a Partida'`;
                     }
 
                     if (addToBudgetBtn) addToBudgetBtn.style.display = 'inline-flex';
                     this._cancelActiveMeasurementPoint();
+                } else if (this.measureAreaStep === 3 && this.measureMode === 'volume') {
+                    const p1 = this.measureAreaP1;
+                    const p2 = this.measureAreaP2;
+                    const p3 = this.measureAreaP3;
+                    const p4 = this.measureAreaP4;
+                    const L = this.measureAreaL;
+                    const H = this.measureAreaH;
+                    const S = this.measureAreaS;
+                    const normal = this.measureVolumeNormal;
+
+                    const diff = pt.clone().sub(p1);
+                    const signedThick = diff.dot(normal);
+                    const thick = Math.abs(signedThick);
+
+                    if (thick < 0.01) {
+                        if (hudText) {
+                            hudText.textContent = '⚠️ Espesor demasiado pequeño (< 1 cm). Haz clic en la cara opuesta o pulsa "Espesor manual"';
+                        }
+                        return;
+                    }
+
+                    const extrudeVec = normal.clone().multiplyScalar(signedThick);
+                    const b1 = p1.clone();
+                    const b2 = p2.clone();
+                    const b3 = p3.clone();
+                    const b4 = p4.clone();
+                    const t1 = p1.clone().add(extrudeVec);
+                    const t2 = p2.clone().add(extrudeVec);
+                    const t3 = p3.clone().add(extrudeVec);
+                    const t4 = p4.clone().add(extrudeVec);
+
+                    const V = S * thick;
+
+                    this._addVolumeMeasurement(b1, b2, b3, b4, t1, t2, t3, t4, L, H, thick, S, V);
+
+                    const elem = this.currentMeasuredElement || res.element;
+                    this.lastMeasurementData = {
+                        type: 'volume',
+                        unit: 'm³',
+                        value: V,
+                        l: L,
+                        w: thick,
+                        h: H,
+                        units: 1,
+                        element: elem,
+                        p1: b1, p2: b2, p3: b3, p4: b4,
+                        t1: t1, t2: t2, t3: t3, t4: t4,
+                        description: `Volumen 3D: ${L.toFixed(2)} m × ${H.toFixed(2)} m × ${thick.toFixed(2)} m = ${V.toFixed(2)} m³`
+                    };
+
+                    if (addToBudgetBtn) addToBudgetBtn.style.display = 'inline-flex';
+                    this._cancelActiveMeasurementPoint();
+
+                    if (hudText) {
+                        hudText.textContent = `✅ Volumen fijado: ${V.toFixed(2)} m³ (${L.toFixed(2)} m × ${H.toFixed(2)} m × ${thick.toFixed(2)} m). Pulsa '➕ Añadir a Partida' para presupuestar`;
+                    }
                 }
             }
         },
@@ -2066,6 +2386,147 @@
                 p4: p4,
                 midpoint: centroid,
                 area: s,
+                group: dimGroup,
+                badgeEl: badgeEl
+            });
+
+            this._updateMeasureOverlayPositions();
+        },
+
+        /**
+         * Añade una medición de volumen 3D (prisma recto / paralelepípedo) con caras translúcidas, aristas y badge en m³
+         */
+        _addVolumeMeasurement: function (b1, b2, b3, b4, t1, t2, t3, t4, l, h, thick, s, v) {
+            const THREE = window.THREE;
+            this._ensureMeasureGroup();
+
+            const id = 'meas_vol_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+            const dimGroup = new THREE.Group();
+            dimGroup.name = id;
+
+            // 1. Malla 3D semitransparente de las 6 caras del volumen (12 triángulos)
+            const boxPositions = new Float32Array([
+                // Base
+                b1.x, b1.y, b1.z,  b4.x, b4.y, b4.z,  b3.x, b3.y, b3.z,
+                b1.x, b1.y, b1.z,  b3.x, b3.y, b3.z,  b2.x, b2.y, b2.z,
+                // Superior
+                t1.x, t1.y, t1.z,  t2.x, t2.y, t2.z,  t3.x, t3.y, t3.z,
+                t1.x, t1.y, t1.z,  t3.x, t3.y, t3.z,  t4.x, t4.y, t4.z,
+                // Lateral 1
+                b1.x, b1.y, b1.z,  b2.x, b2.y, b2.z,  t2.x, t2.y, t2.z,
+                b1.x, b1.y, b1.z,  t2.x, t2.y, t2.z,  t1.x, t1.y, t1.z,
+                // Lateral 2
+                b2.x, b2.y, b2.z,  b3.x, b3.y, b3.z,  t3.x, t3.y, t3.z,
+                b2.x, b2.y, b2.z,  t3.x, t3.y, t3.z,  t2.x, t2.y, t2.z,
+                // Lateral 3
+                b3.x, b3.y, b3.z,  b4.x, b4.y, b4.z,  t4.x, t4.y, t4.z,
+                b3.x, b3.y, b3.z,  t4.x, t4.y, t4.z,  t3.x, t3.y, t3.z,
+                // Lateral 4
+                b4.x, b4.y, b4.z,  b1.x, b1.y, b1.z,  t1.x, t1.y, t1.z,
+                b4.x, b4.y, b4.z,  t1.x, t1.y, t1.z,  t4.x, t4.y, t4.z
+            ]);
+
+            const boxGeom = new THREE.BufferGeometry();
+            boxGeom.setAttribute('position', new THREE.BufferAttribute(boxPositions, 3));
+            boxGeom.computeVertexNormals();
+
+            const boxMat = new THREE.MeshBasicMaterial({
+                color: 0x38bdf8,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.28,
+                depthWrite: false
+            });
+            const boxMesh = new THREE.Mesh(boxGeom, boxMat);
+            boxMesh.renderOrder = 10;
+            dimGroup.add(boxMesh);
+
+            // 2. 12 Aristas alámbricas del prisma
+            const boxLines = new Float32Array([
+                // Base
+                b1.x, b1.y, b1.z,  b2.x, b2.y, b2.z,
+                b2.x, b2.y, b2.z,  b3.x, b3.y, b3.z,
+                b3.x, b3.y, b3.z,  b4.x, b4.y, b4.z,
+                b4.x, b4.y, b4.z,  b1.x, b1.y, b1.z,
+                // Superior
+                t1.x, t1.y, t1.z,  t2.x, t2.y, t2.z,
+                t2.x, t2.y, t2.z,  t3.x, t3.y, t3.z,
+                t3.x, t3.y, t3.z,  t4.x, t4.y, t4.z,
+                t4.x, t4.y, t4.z,  t1.x, t1.y, t1.z,
+                // Pilares
+                b1.x, b1.y, b1.z,  t1.x, t1.y, t1.z,
+                b2.x, b2.y, b2.z,  t2.x, t2.y, t2.z,
+                b3.x, b3.y, b3.z,  t3.x, t3.y, t3.z,
+                b4.x, b4.y, b4.z,  t4.x, t4.y, t4.z
+            ]);
+
+            const linesGeom = new THREE.BufferGeometry();
+            linesGeom.setAttribute('position', new THREE.BufferAttribute(boxLines, 3));
+            const linesMat = new THREE.LineBasicMaterial({
+                color: 0x38bdf8,
+                depthTest: false,
+                transparent: true,
+                opacity: 0.95,
+                linewidth: 2
+            });
+            const linesObj = new THREE.LineSegments(linesGeom, linesMat);
+            linesObj.renderOrder = 11;
+            dimGroup.add(linesObj);
+
+            // 3. Vértices esféricos en las 8 esquinas
+            const sphereGeom = new THREE.SphereGeometry(0.04, 12, 12);
+            const sphereMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, depthTest: false });
+            [b1, b2, b3, b4, t1, t2, t3, t4].forEach(pt => {
+                const sMesh = new THREE.Mesh(sphereGeom, sphereMat);
+                sMesh.position.copy(pt);
+                sMesh.renderOrder = 12;
+                dimGroup.add(sMesh);
+            });
+
+            this.measureGroup.add(dimGroup);
+
+            // 4. Badge flotante en el centroide del prisma
+            const centroid = new THREE.Vector3()
+                .add(b1).add(b2).add(b3).add(b4)
+                .add(t1).add(t2).add(t3).add(t4)
+                .multiplyScalar(0.125);
+
+            const overlay = document.getElementById('v3dMeasureOverlay');
+            let badgeEl = null;
+
+            if (overlay) {
+                overlay.style.display = 'block';
+                badgeEl = document.createElement('div');
+                badgeEl.id = `v3dBadge_${id}`;
+                badgeEl.className = 'v3d-measure-badge';
+                badgeEl.innerHTML = `
+                    <span>🧊</span>
+                    <span class="v3d-measure-badge-val">${v.toFixed(2)} m³ <small style="opacity:0.8;font-size:0.75em;">(${l.toFixed(2)}×${h.toFixed(2)}×${thick.toFixed(2)})</small></span>
+                    <span class="v3d-measure-badge-del" title="Eliminar esta medición">✕</span>
+                `;
+
+                const delBtn = badgeEl.querySelector('.v3d-measure-badge-del');
+                if (delBtn) {
+                    delBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        this.removeMeasurement(id);
+                    };
+                }
+
+                overlay.appendChild(badgeEl);
+            }
+
+            this.measurements.push({
+                id: id,
+                type: 'volume',
+                b1: b1, b2: b2, b3: b3, b4: b4,
+                t1: t1, t2: t2, t3: t3, t4: t4,
+                midpoint: centroid,
+                l: l,
+                h: h,
+                thickness: thick,
+                area: s,
+                volume: v,
                 group: dimGroup,
                 badgeEl: badgeEl
             });
