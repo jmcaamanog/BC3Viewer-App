@@ -1587,168 +1587,36 @@
 
         /* VIDEO DEMO SECTION */
         .video-player-card {
-            border: 1px solid rgba(56, 189, 248, 0.35);
+            border: 1px solid rgba(56, 189, 248, 0.4);
             border-radius: 20px;
             overflow: hidden;
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(16px);
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(56, 189, 248, 0.15);
+            background: #000000;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), 0 0 35px rgba(56, 189, 248, 0.2);
             transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
             max-width: 1060px;
             margin: 0 auto;
         }
 
         .video-player-card:hover {
-            border-color: rgba(56, 189, 248, 0.6);
-            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6), 0 0 50px rgba(56, 189, 248, 0.25);
+            border-color: rgba(56, 189, 248, 0.75);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.75), 0 0 55px rgba(56, 189, 248, 0.35);
         }
 
         .video-frame-container {
             position: relative;
             width: 100%;
             padding-top: 56.25%; /* 16:9 Aspect Ratio */
-            background: #000;
+            background: #000000;
+            overflow: hidden;
         }
 
         .video-frame-container iframe {
             position: absolute;
-            top: 0;
+            top: -72px;
             left: 0;
             width: 100%;
-            height: 100%;
+            height: calc(100% + 72px);
             border: none;
-        }
-
-        .video-info-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-            padding: 20px 28px;
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%);
-            border-top: 1px solid rgba(56, 189, 248, 0.2);
-            flex-wrap: wrap;
-        }
-
-        .video-info-left {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            min-width: 0;
-            flex: 1;
-        }
-
-        .video-badge-live {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: #ffffff;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.72rem;
-            font-weight: 800;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
-            flex-shrink: 0;
-        }
-
-        .video-badge-live .pulse-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: #fff;
-            animation: livePulse 1.5s infinite;
-        }
-
-        @keyframes livePulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(0.85); }
-        }
-
-        .video-info-title {
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: var(--text-white);
-            margin: 0;
-            line-height: 1.3;
-        }
-
-        .video-info-desc {
-            font-size: 0.82rem;
-            color: var(--text-muted);
-            margin: 4px 0 0 0;
-        }
-
-        .video-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-        }
-
-        .video-yt-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            border-radius: 10px;
-            font-size: 0.82rem;
-            font-weight: 700;
-            text-decoration: none;
-            background: #ff0000;
-            color: #ffffff;
-            box-shadow: 0 4px 14px rgba(255, 0, 0, 0.35);
-            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-        }
-
-        .video-yt-btn:hover {
-            background: #cc0000;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 0, 0, 0.5);
-            color: #ffffff;
-        }
-
-        .video-app-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            border-radius: 10px;
-            font-size: 0.82rem;
-            font-weight: 700;
-            text-decoration: none;
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            color: #ffffff;
-            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
-        }
-
-        .video-app-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
-            color: #ffffff;
-        }
-
-        .video-preview-strip {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 0;
-            opacity: 0.55;
-            transition: opacity 0.3s ease;
-            border-top: 1px solid rgba(56, 189, 248, 0.15);
-        }
-
-        .video-player-card:hover .video-preview-strip {
-            opacity: 0.8;
-        }
-
-        .strip-img {
-            width: 100%;
-            aspect-ratio: 16/9;
-            object-fit: cover;
-            display: block;
         }
 
         /* COMMUNITY SECTION */
@@ -2952,7 +2820,7 @@
             <span class="section-subtitle">En Acción</span>
             <h2 class="section-title">Vídeo Demostración</h2>
             <p class="section-desc">Mira cómo cargar un archivo BC3 o modelo IFC real, navegar el árbol, generar un planning Gantt y
-                medir en 3D en menos de 2 minutos.</p>
+                medir en 3D en apenas 4 minutos.</p>
         </div>
 
         <div class="video-player-card reveal">
@@ -2963,36 +2831,6 @@
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
                     allowfullscreen>
                 </iframe>
-            </div>
-            <div class="video-info-bar">
-                <div class="video-info-left">
-                    <span class="video-badge-live">
-                        <span class="pulse-dot"></span> VÍDEO OFICIAL
-                    </span>
-                    <div>
-                        <h3 class="video-info-title">Recorrido Visual y Funcional — BC3 Viewer v3.0 (BIM 5D)</h3>
-                        <p class="video-info-desc">Aprende paso a paso a cargar archivos BC3 e IFC, utilizar el visor 3D Blueprint, medir volúmenes en tiempo real y consultar descompuestos con IA.</p>
-                    </div>
-                </div>
-                <div class="video-actions">
-                    <a href="https://www.youtube.com/watch?v=y5XKgrUpI1g" target="_blank" rel="noopener noreferrer" class="video-yt-btn" title="Ver en YouTube en pantalla completa">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;">
-                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                        </svg>
-                        <span>Ver en YouTube</span>
-                    </a>
-                    <a href="www/index.html" target="_blank" class="video-app-btn" title="Probar la aplicación directamente en tu navegador">
-                        <span>🚀 Probar App Web</span>
-                    </a>
-                </div>
-            </div>
-            <div class="video-preview-strip">
-                <img src="CAPTURAS/V3.0/WINDOWS_V3.0/019_VISOR_3D_BIM_MODELO_BLUEPRINT.png" alt="Visor 3D BIM" class="strip-img" loading="lazy">
-                <img src="CAPTURAS/V3.0/WINDOWS_V3.0/002_PRESUPUESTO_ARBOL_JERARQUICO.png" alt="Presupuesto" class="strip-img" loading="lazy">
-                <img src="CAPTURAS/V3.0/WINDOWS_V3.0/005_DASHBOARD_ANALITICA_KPIS.png" alt="Dashboard" class="strip-img" loading="lazy">
-                <img src="CAPTURAS/V3.0/WINDOWS_V3.0/006_VISUALIZADOR_CONCENTRICO_SUNBURST.png" alt="Sunburst" class="strip-img" loading="lazy">
-                <img src="CAPTURAS/V3.0/WINDOWS_V3.0/009_PLANNING_CRONOGRAMA_GANTT.png" alt="Gantt" class="strip-img" loading="lazy">
-                <img src="CAPTURAS/V3.0/WINDOWS_V3.0/030_VISOR_3D_ACOTACION_CAD_SNAP_PUNTOS.png" alt="Acotación 3D" class="strip-img" loading="lazy">
             </div>
         </div>
     </section>
