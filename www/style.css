@@ -7077,6 +7077,14 @@ body.dark-theme #geminiAssistantModal .modal-content,
     border: 1px solid #1e293b !important;
 }
 
+#geminiAssistantModal .modal-content.maximized {
+    max-width: 98vw !important;
+    width: 98vw !important;
+    height: 96vh !important;
+    max-height: 96vh !important;
+    border-radius: 8px !important;
+}
+
 body.dark-theme #assistantChatHistory,
 .dark-mode #assistantChatHistory {
     background: #070c18 !important;
@@ -7086,7 +7094,6 @@ body.dark-theme #assistantChatHistory,
     display: flex;
     gap: 10px;
     align-items: flex-start;
-    max-width: 92%;
     animation: fadeInMsg 0.25s ease-out;
 }
 
@@ -7097,10 +7104,19 @@ body.dark-theme #assistantChatHistory,
 
 .assistant-msg.ai-msg {
     align-self: flex-start;
+    max-width: 100%;
+    width: 100%;
+}
+
+.assistant-msg.ai-msg .msg-bubble {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
 }
 
 .assistant-msg.user-msg {
     align-self: flex-end;
+    max-width: 88%;
     flex-direction: row-reverse;
 }
 
@@ -7304,8 +7320,8 @@ body.dark-theme .partida-action-card,
 .contech-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.78rem;
-    line-height: 1.45;
+    font-size: 0.8rem;
+    line-height: 1.48;
     text-align: left;
     color: #e0f2fe;
 }
@@ -7316,13 +7332,14 @@ body.dark-theme .partida-action-card,
 }
 
 .contech-table th {
-    padding: 10px 12px;
+    padding: 10px 14px;
     font-weight: 700;
     color: #38bdf8;
     text-transform: uppercase;
     font-size: 0.72rem;
     letter-spacing: 0.5px;
-    white-space: nowrap;
+    white-space: normal;
+    min-width: 95px;
     border-right: 1px solid rgba(56, 189, 248, 0.15);
 }
 
@@ -7344,9 +7361,10 @@ body.dark-theme .partida-action-card,
 }
 
 .contech-table td {
-    padding: 9px 12px;
+    padding: 10px 14px;
     border-right: 1px solid rgba(56, 189, 248, 0.1);
-    vertical-align: middle;
+    vertical-align: top;
+    word-break: normal;
 }
 
 .contech-table td:last-child {

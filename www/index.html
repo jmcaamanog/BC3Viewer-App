@@ -2437,7 +2437,7 @@
 
     <!-- Modal / Panel: Asistente IA ConTech (Consultoría, Auditoría y Edición) -->
     <div id="geminiAssistantModal" class="modal" style="display:none;" role="dialog" aria-modal="true" aria-label="Asistente IA ConTech">
-        <div class="modal-content" style="max-width: 760px; width: 95%; height: 85vh; max-height: 85vh; display: flex; flex-direction: column; padding: 0; overflow: hidden; border-radius: 12px;">
+        <div class="modal-content" id="geminiAssistantModalContent" style="max-width: 1240px; width: min(1240px, 94vw); height: 88vh; max-height: 88vh; display: flex; flex-direction: column; padding: 0; overflow: hidden; border-radius: 12px; transition: all 0.25s ease;">
             <!-- Header -->
             <div class="modal-header" style="padding: 12px 16px; border-bottom: 1px solid var(--border-color); background: var(--bg-hover); display: flex; justify-content: space-between; align-items: center;">
                 <div style="display:flex; align-items:center; gap:10px; min-width: 0;">
@@ -2450,7 +2450,7 @@
                                 <span id="assistantStatusText">Gemini 3.5 Flash</span>
                             </span>
                         </div>
-                        <div style="font-size:0.7rem; color:var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px;" id="assistantContextInfo">
+                        <div style="font-size:0.7rem; color:var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 480px;" id="assistantContextInfo">
                             Presupuesto activo: Ninguno (Modo asesoramiento general)
                         </div>
                     </div>
@@ -2458,6 +2458,9 @@
                 <div style="display:flex; align-items:center; gap:6px; flex-shrink: 0;">
                     <button type="button" id="assistantConfigKeyBtn" onclick="window.openGeminiConfigModal()" class="gantt-action-btn" title="Configurar Clave API de Gemini" style="padding:6px 10px; font-size:0.9rem; display:inline-flex; align-items:center; justify-content:center; border-radius:6px; background:var(--bg-color); border:1px solid var(--border-color); cursor:pointer;">
                         ⚙️
+                    </button>
+                    <button type="button" id="assistantMaximizeBtn" onclick="window.toggleAssistantModalMaximize()" class="gantt-action-btn" title="Maximizar / Restaurar ventana" style="padding:6px 10px; font-size:0.9rem; display:inline-flex; align-items:center; justify-content:center; border-radius:6px; background:var(--bg-color); border:1px solid var(--border-color); cursor:pointer;">
+                        ⛶
                     </button>
                     <button type="button" id="clearAssistantChatBtn" class="gantt-action-btn" title="Limpiar conversación" style="padding:6px 10px; font-size:0.9rem; display:inline-flex; align-items:center; justify-content:center; border-radius:6px; background:var(--bg-color); border:1px solid var(--border-color); cursor:pointer;">
                         🧹

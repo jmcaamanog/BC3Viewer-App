@@ -15566,14 +15566,37 @@ function formatMarkdownToHtml(markdown) {
     return html;
 }
 
+function toggleAssistantModalMaximize() {
+    const modalContent = document.getElementById('geminiAssistantModalContent');
+    const maxBtn = document.getElementById('assistantMaximizeBtn');
+    if (!modalContent) return;
+    const isMax = modalContent.classList.toggle('maximized');
+    if (maxBtn) {
+        maxBtn.textContent = isMax ? '🗗' : '⛶';
+        maxBtn.title = isMax ? 'Restaurar tamaño normal' : 'Maximizar ventana';
+    }
+}
+
 function formatInlineMarkdown(text) {
     if (!text) return '';
-    return text
+    let out = text;
+
+    // 1. Reemplazo de expresiones LaTeX matemáticas enviadas comúnmente por Gemini
+    out = out.replace(/\\times/g, '×');
+    out = out.replace(/\\cdot/g, '·');
+    out = out.replace(/\\approx/g, '≈');
+    out = out.replace(/\\le/g, '≤');
+    out = out.replace(/\\ge/g, '≥');
+    out = out.replace(/\\pm/g, '±');
+
+    // 2. Limpieza de delimitadores $...$ en expresiones matemáticas cortas (ej: $>80\times80$, $4/16/4$, $U_f$, $m^2$)
+    out = out.replace(/\$([^\$\n]+)\$/g, '$1');
+
+    return out
         .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="contech-link">$1 ↗</a>')
         .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
         .replace(/\*([^*]+)\*/g, '<em>$1</em>')
         .replace(/`([^`]+)`/g, '<code class="contech-inline-code">$1</code>')
-        .replace(/\$m\^2\$/g, 'm²')
         .replace(/m\^2/g, 'm²')
         .replace(/m\^3/g, 'm³');
 }
@@ -15802,6 +15825,7 @@ if (typeof updateSettingsUserHeaderUI === 'function') {
 // Exponer funciones de modales globales para acceso directo
 window.openAssistantModal = openAssistantModal;
 window.closeAssistantModal = closeAssistantModal;
+window.toggleAssistantModalMaximize = toggleAssistantModalMaximize;
 window.openGeminiConfigModal = openGeminiConfigModal;
 window.closeGeminiConfigModal = closeGeminiConfigModal;
 window.openCloudSyncModal = openCloudSyncModal;
